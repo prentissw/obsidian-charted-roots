@@ -1,0 +1,30 @@
+/* Canvas Roots CSS Variables */
+
+:root {
+  /* Spacing */
+  --cr-spacing-xs: 4px;
+  --cr-spacing-sm: 8px;
+  --cr-spacing-md: 16px;
+  --cr-spacing-lg: 24px;
+  --cr-spacing-xl: 32px;
+
+  /* Node dimensions */
+  --cr-node-width: 200px;
+  --cr-node-height: 100px;
+  --cr-node-padding: var(--cr-spacing-md);
+
+  /* Colors - using Obsidian's CSS variables for theme compatibility */
+  --cr-primary: var(--interactive-accent);
+  --cr-bg: var(--background-primary);
+  --cr-text: var(--text-normal);
+  --cr-border: var(--background-modifier-border);
+
+  /* Transitions */
+  --cr-transition-fast: 150ms ease;
+  --cr-transition-normal: 250ms ease;
+  --cr-transition-slow: 350ms ease;
+
+  /* Borders */
+  --cr-border-width: 1px;
+  --cr-border-radius: 6px;
+}

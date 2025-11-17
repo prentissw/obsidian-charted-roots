@@ -81,6 +81,28 @@ The plugin will offer flexibility when importing family data:
 - **Deep Queries:** By populating note properties with rich data (dates, locations, sources), you'll be able to run complex genealogical queries against your vault.
 
 
-## 🧑‍💻 Development Notes (Pre-Development Phase)
+## 📚 Documentation
 
-This project is currently in the specification and architecture phase. The future plugin relies on reading the vault's file structure, applying the layout logic of D3.js internally, and safely writing the positional data back into the Canvas JSON file. Careful handling of the Canvas Node ID and the person's `cr_id` is required for persistence.
+### For Contributors
+
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to Canvas Roots, including development setup, coding standards, and pull request process
+- **[Development Guide](docs/development.md)** - Complete development workflow, build commands, and testing procedures
+- **[CSS System](docs/css-system.md)** - CSS component architecture, build pipeline, and styling conventions
+- **[ESLint Setup](docs/eslint-setup.md)** - ESLint configuration details and compatibility notes
+
+### For Users
+
+- **[Bases Integration Guide](docs/bases-integration.md)** - How to use Obsidian Bases for efficient family tree data management
+- **[Security Policy](SECURITY.md)** - Important information about PII handling, data privacy, and security best practices
+
+## 🧑‍💻 Development Status
+
+Canvas Roots is in active development. The core plugin structure, build system, and documentation are in place. The plugin currently includes:
+
+- TypeScript-based plugin foundation with Obsidian API integration
+- Build system with esbuild and automated CSS compilation
+- Data models for Person and Canvas structures
+- Settings interface for layout customization
+- Command structure for tree generation and re-layout
+
+The plugin relies on reading the vault's file structure, applying the layout logic of D3.js internally, and safely writing the positional data back into the Canvas JSON file. Careful handling of the Canvas Node ID and the person's `cr_id` is required for persistence.

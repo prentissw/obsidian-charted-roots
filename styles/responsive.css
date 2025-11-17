@@ -1,0 +1,8 @@
+/* Responsive breakpoints */
+
+@media (max-width: 768px) {
+  :root {
+    --cr-node-width: 150px;
+    --cr-node-height: 80px;
+  }
+}
