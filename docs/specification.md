@@ -77,6 +77,9 @@ Additional properties for complex genealogical data:
 - Flexible date formats (§6.4)
 - Child ordering fields (§6.5)
 - Grandparent direct links (§6.7)
+- Relationship quality metadata (§6.8)
+- Medical and genetic information (§6.9)
+- Location and migration tracking (§6.10)
 
 ### 2.2 Bidirectional Link Automation
 
@@ -698,6 +701,333 @@ grandmother_maternal: "[[Sarah Doe]]"
 
 **Settings Toggle:** User control over displaying inferred/placeholder relationships
 
+### 6.8 Relationship Quality and Emotional Bonds
+
+**Requirement:** Track and visualize the quality of relationships between family members, inspired by GenoPro's genogram capabilities.
+
+#### 6.8.1 Relationship Quality Metadata
+
+**Data Structure:**
+
+```yaml
+relationships:
+  - person: "[[John Smith]]"
+    type: spouse
+    quality: harmonious
+    notes: "Married 50 years, very close relationship"
+
+  - person: "[[Jane Doe]]"
+    type: parent
+    quality: estranged
+    since: "1995"
+    notes: "No contact since 1995 due to family conflict"
+
+  - person: "[[Bob Smith]]"
+    type: sibling
+    quality: distant
+    contact_frequency: yearly
+```
+
+**Quality Types:**
+
+| Quality | Description | Visual Indicator |
+|---------|-------------|------------------|
+| `harmonious` | Close, positive relationship | Solid green edge |
+| `close` | Strong bond, frequent contact | Solid blue edge |
+| `neutral` | Standard relationship | Standard edge (default) |
+| `distant` | Infrequent contact, weak bond | Dashed gray edge |
+| `conflicted` | Active conflict, tension | Wavy orange edge |
+| `estranged` | No contact, severed relationship | Dotted red edge |
+| `hostile` | Active hostility or animosity | Zigzag red edge |
+| `deceased_close` | Was close before death | Faded blue edge |
+
+#### 6.8.2 Canvas Visualization
+
+**Edge Styling:**
+- **Color coding:** Different colors for relationship quality
+- **Line patterns:** Solid, dashed, dotted, wavy, zigzag
+- **Line thickness:** Thicker for closer relationships
+- **Opacity:** Faded for historical relationships
+
+**Hover/Click Information:**
+- Display relationship metadata on edge hover
+- Show quality, duration, notes
+- Timeline of relationship changes if tracked
+
+**Settings:**
+- Toggle relationship quality visualization on/off
+- Choose color scheme for relationship types
+- Adjust edge styling preferences
+
+#### 6.8.3 Relationship Evolution
+
+**Temporal Tracking:**
+
+```yaml
+relationship_history:
+  - person: "[[John Smith]]"
+    periods:
+      - from: "1985"
+        to: "1990"
+        quality: harmonious
+        notes: "Early marriage years"
+      - from: "1990"
+        to: "1995"
+        quality: conflicted
+        notes: "Career stress period"
+      - from: "1995"
+        to: "2020"
+        quality: harmonious
+        notes: "Reconciliation and renewed closeness"
+```
+
+**Use Cases:**
+- Track evolving relationships over time
+- Document family dynamics and changes
+- Understand patterns in family conflicts
+- Therapy and family counseling contexts
+
+### 6.9 Medical Genogram Support
+
+**Requirement:** Track medical, genetic, and health information for genealogical health pattern analysis, inspired by GenoPro's medical genogram features.
+
+#### 6.9.1 Health Data Structure
+
+**Medical Conditions:**
+
+```yaml
+medical:
+  conditions:
+    - name: "Type 2 Diabetes"
+      onset: "2010"
+      severity: moderate
+      status: managed
+
+    - name: "Coronary Heart Disease"
+      onset: "2015"
+      severity: severe
+      status: ongoing
+      treatment: "Bypass surgery 2016"
+
+  genetic_traits:
+    - trait: "Blue eyes"
+      inherited_from: maternal
+
+    - trait: "Red hair"
+      inherited_from: paternal
+
+    - trait: "Left-handedness"
+
+  cause_of_death: "Cardiac arrest"
+  death_circumstances: "Sudden, at home"
+
+  medical_history:
+    - date: "2010-03"
+      event: "Diagnosed with Type 2 Diabetes"
+      provider: "Dr. Johnson"
+
+    - date: "2016-08"
+      event: "Coronary bypass surgery"
+      hospital: "[[Massachusetts General Hospital]]"
+```
+
+#### 6.9.2 Genetic Pattern Tracking
+
+**Inheritance Tracking:**
+
+```yaml
+genetic_markers:
+  - marker: "BRCA1 mutation"
+    status: positive
+    tested: "2018-05"
+    inherited_from: "[[Mother]]"
+
+  - marker: "Hemochromatosis"
+    status: carrier
+    tested: "2019-02"
+```
+
+**Family Health Patterns:**
+- Auto-detect patterns across generations
+- Flag common conditions (e.g., "Diabetes appears in 3 generations")
+- Highlight genetic risk factors
+
+#### 6.9.3 Canvas Visualization
+
+**Medical Symbols:**
+- Icon overlays on person cards
+- Color-coded health indicators
+- Genetic trait badges
+
+**Symbol System:**
+
+| Condition Type | Symbol | Color |
+|----------------|--------|-------|
+| Heart disease | ❤️ | Red |
+| Diabetes | 🔵 | Blue |
+| Cancer | 🎗️ | Pink/purple |
+| Mental health | 🧠 | Teal |
+| Genetic marker | 🧬 | Green |
+| Deceased | † | Gray |
+
+**Genetic Inheritance Lines:**
+- Special edge styling for genetic traits
+- Trace inheritance paths across generations
+- Show carrier status vs. affected status
+
+#### 6.9.4 Privacy Considerations
+
+**Medical Data Sensitivity:**
+- Medical data automatically excluded from obfuscation exports by default
+- Option to fully strip medical data from exports
+- HIPAA-aware data handling recommendations
+- Special permissions for medical data access
+
+**Settings:**
+- Toggle medical symbol display
+- Control medical data export inclusion
+- Set medical data obfuscation separately from other PII
+
+#### 6.9.5 Use Cases
+
+**Clinical Genealogy:**
+- Genetic counseling and risk assessment
+- Family medicine and preventive care
+- Medical research and pattern analysis
+
+**Personal Health:**
+- Track family health history for medical appointments
+- Understand genetic risk factors
+- Plan preventive health measures
+
+**Research:**
+- Longitudinal health studies
+- Genetic pattern research
+- Epidemiological analysis
+
+### 6.10 Enhanced Location and Migration Tracking
+
+**Requirement:** Comprehensive location tracking and geographic migration pattern visualization.
+
+#### 6.10.1 Location Data Model
+
+**Core Location Properties:**
+
+```yaml
+locations:
+  birth_place: "[[Boston, Massachusetts, USA]]"
+  birth_coordinates: "42.3601,-71.0589"
+
+  death_place: "[[Seattle, Washington, USA]]"
+  death_coordinates: "47.6062,-122.3321"
+
+  residences:
+    - place: "[[New York City, New York, USA]]"
+      coordinates: "40.7128,-74.0060"
+      from: "1950"
+      to: "1965"
+      address: "123 Main Street, Manhattan"
+      residence_type: rental
+
+    - place: "[[Los Angeles, California, USA]]"
+      coordinates: "34.0522,-118.2437"
+      from: "1965"
+      to: "1980"
+      address: "456 Ocean Ave"
+      residence_type: owned
+      notes: "Moved for career opportunity"
+
+  current_location: "[[Portland, Oregon, USA]]"
+  current_coordinates: "45.5152,-122.6784"
+```
+
+**Migration Events:**
+
+```yaml
+migrations:
+  - from: "[[Ireland]]"
+    to: "[[United States]]"
+    date: "1890"
+    reason: "Irish Potato Famine emigration"
+    port_of_entry: "[[Ellis Island, New York]]"
+    ship: "SS Celtic"
+
+  - from: "[[Italy]]"
+    to: "[[Argentina]]"
+    date: "1910"
+    reason: "Economic opportunity"
+    traveling_with:
+      - "[[Giuseppe Romano]]"
+      - "[[Maria Romano]]"
+```
+
+#### 6.10.2 Geographic Visualization
+
+**Map Integration:**
+- Link to external mapping services (Google Maps, OpenStreetMap)
+- Show migration routes on separate canvas view
+- Timeline view with geographic distribution
+
+**Canvas Features:**
+- Color-code person nodes by birth location region
+- Migration path edges between parent/child nodes
+- Cluster view showing family members by location
+
+**Migration Patterns:**
+- Visualize family diaspora over generations
+- Show emigration/immigration waves
+- Track urbanization patterns
+
+#### 6.10.3 Place Notes
+
+**Centralized Place Management:**
+
+Create dedicated Place notes with standardized structure:
+
+```yaml
+# In Places/Boston-Massachusetts.md
+---
+place_type: city
+coordinates: "42.3601,-71.0589"
+country: "[[United States]]"
+region: "[[Massachusetts]]"
+aliases: ["Boston", "Beantown"]
+---
+
+## People Born Here
+- [[John Smith]]
+- [[Jane Doe]]
+
+## People Who Lived Here
+- [[Bob Johnson]] (1950-1965)
+
+## Historical Context
+Founded in 1630, Boston was a major center for...
+```
+
+**Benefits:**
+- Centralized location information
+- Easy queries by place
+- Historical context for locations
+- Automatic backlinks to people
+
+#### 6.10.4 Use Cases
+
+**Migration Research:**
+- Track family immigration patterns
+- Document refugee and displacement histories
+- Understand cultural diaspora
+
+**Social History:**
+- Urbanization trends within families
+- Economic migration patterns
+- Regional cultural influence
+
+**Medical Correlation:**
+- Environmental health factors by location
+- Regional disease patterns
+- Climate and health correlations
+
 ---
 
 ## Appendix A: Implementation Priorities
@@ -729,6 +1059,15 @@ grandmother_maternal: "[[Sarah Doe]]"
 - Advanced card templates (§6.6)
 - Multi-generational gaps (§6.7)
 - DataView template library (§5.4)
+- Basic location tracking (§6.10)
+
+### Phase 5 (GenoPro-Inspired Features)
+- Relationship quality visualization (§6.8)
+- Medical genogram support (§6.9)
+- Enhanced migration tracking (§6.10.2)
+- Place note system (§6.10.3)
+- Genetic pattern analysis (§6.9.2)
+- Medical privacy controls (§6.9.4)
 
 ---
 
