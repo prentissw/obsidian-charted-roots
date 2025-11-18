@@ -206,6 +206,10 @@ Canvas Roots includes comprehensive data obfuscation capabilities designed to pr
 
 ### Export Obfuscation (Planned - Phase 3)
 - **Multiple obfuscation levels**: None, Minimal, Standard, Full
+- **Selective filters**: Choose to obfuscate all individuals, living only, minors only, or both
+  - **Living individuals**: Auto-detected based on dates or manually marked with `cr_living` property
+  - **Minors**: Configurable age threshold (default: under 18 years old)
+  - **Combined protection**: Apply filters together for maximum privacy
 - **Selective anonymization**: Names, dates, locations, notes, media
 - **Structure preservation**: Family relationships and graph structure maintained
 - **Reversible mapping**: Optional JSON mapping file for de-obfuscation
@@ -218,11 +222,12 @@ Canvas Roots includes comprehensive data obfuscation capabilities designed to pr
 - **Configurable levels**: Same obfuscation levels as export
 
 ### Use Cases
-- Share family tree structure on public forums or blogs
-- Create demonstrations for plugin support or tutorials
-- Collaborate with researchers who need structure without PII
-- Comply with privacy regulations (GDPR, CCPA)
-- Protect living individuals' information
+- **GDPR Compliance**: Share historical research while protecting living EU residents' data
+- **Child Protection**: Export family trees with automatic protection for minors
+- **Public Genealogy**: Share complete historical trees while protecting recent generations
+- **Professional Demonstrations**: Show family tree structures without exposing client PII
+- **Educational Materials**: Create teaching examples protecting all living individuals
+- **Collaborative Research**: Share tree structure with researchers who need patterns, not names
 
 See the [Technical Specification §5.5](docs/specification.md#55-privacy-and-data-obfuscation) for complete details.
 

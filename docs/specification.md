@@ -65,6 +65,7 @@ Each person in the family tree is represented by an individual Markdown note wit
 | `children` | Array<[[Link]]> | No | Links to children's note files (auto-maintained by bidirectional linking) |
 | `born` | Date | No | Birth date (see §6.4 for format details) |
 | `died` | Date | No | Death date (see §6.4 for format details) |
+| `cr_living` | Boolean | No | Explicitly mark if person is living (overrides auto-detection for obfuscation) |
 | `cr_root` | Boolean | No | Marks person as tree center (optional filter) |
 
 #### 2.1.2 Extended Properties (See §6)
@@ -317,6 +318,64 @@ The plugin must support optional obfuscation during export and canvas rendering:
 | **Standard** | Anonymized | Year only | Region only | Stripped | Excluded |
 | **Full** | Anonymized | Fuzzy ranges | Generic | Stripped | Excluded |
 
+#### 5.5.3 Selective Obfuscation Filters
+
+**Requirement:** Apply obfuscation selectively based on individual characteristics for targeted privacy protection.
+
+**Living Individuals Filter:**
+- **Auto-detection:** Calculate if person is likely living based on birth date and death date
+  - No `died` date AND (`born` within last 110 years OR no `born` date) = Presumed living
+  - Configurable threshold (default: 110 years)
+- **Manual override:** `cr_living: true/false` property to explicitly mark status
+- **Privacy protection:** When "Living individuals only" option is enabled, obfuscate only people marked as living
+- **GEDCOM standard:** Aligns with GEDCOM's "LIVING" tag convention
+
+**Children Filter:**
+- **Age-based:** Obfuscate individuals under specified age (e.g., under 18)
+- **Relationship-based:** Option to obfuscate all individuals in the youngest generation
+- **Custom threshold:** Configurable age threshold for minor protection
+- **Combined with living filter:** Can apply both filters simultaneously
+
+**Filter Combinations:**
+
+| Filter Setting | Who Gets Obfuscated |
+|----------------|---------------------|
+| **All individuals** | Everyone in the tree |
+| **Living only** | Anyone without death date or born within threshold |
+| **Children only** | Anyone under age threshold |
+| **Living + Children** | Union of both groups (more protective) |
+| **Deceased only** | Inverse - obfuscate historical records, show living (rare use case) |
+
+**Example Configuration:**
+
+```yaml
+# In plugin settings or export dialog
+obfuscation:
+  level: standard
+  filters:
+    living_only: true
+    living_threshold_years: 110
+    include_minors: true
+    minor_age_threshold: 18
+```
+
+**Use Cases:**
+
+**Legal Compliance:**
+- GDPR requires explicit consent for living individuals' data
+- Many jurisdictions have special protections for minors
+- Some genealogical societies restrict sharing living persons' data
+
+**Ethical Genealogy:**
+- Protect privacy of living relatives who didn't consent
+- Shield children from public exposure
+- Share historical research without exposing current family
+
+**Flexible Sharing:**
+- Share complete historical tree (deceased only)
+- Share structure with living relatives obfuscated for public demos
+- Create educational materials protecting recent generations
+
 **Obfuscation Strategies:**
 
 **Names:**
@@ -344,7 +403,7 @@ The plugin must support optional obfuscation during export and canvas rendering:
 - **Exclude links:** Remove all photo/document references
 - **Placeholder:** Replace with generic avatar/document icon
 
-#### 5.5.3 Obfuscation Mapping
+#### 5.5.4 Obfuscation Mapping
 
 **Mapping File Generation:**
 
@@ -369,7 +428,7 @@ When obfuscation is applied, optionally generate a JSON mapping file for reversi
 - Optional encryption of mapping file
 - Clear warning that mapping file is sensitive
 
-#### 5.5.4 Structural Integrity
+#### 5.5.5 Structural Integrity
 
 **What Must Be Preserved:**
 - Relationship structure (parent-child, spouse connections)
@@ -382,7 +441,7 @@ When obfuscation is applied, optionally generate a JSON mapping file for reversi
 - Relationship logic must be testable/verifiable
 - Canvas rendering must remain functional
 
-#### 5.5.5 User Interface
+#### 5.5.6 User Interface
 
 **Export Dialog:**
 ```
@@ -394,6 +453,12 @@ When obfuscation is applied, optionally generate a JSON mapping file for reversi
 │ ○ Minimal (year only)                   │
 │ ● Standard (names + dates)              │
 │ ○ Full (maximum privacy)                │
+│                                         │
+│ Apply to:                               │
+│ ● All individuals                       │
+│ ○ Living individuals only               │
+│ ○ Minors only (under 18)                │
+│ ○ Living individuals + Minors           │
 │                                         │
 │ ☑ Generate obfuscation mapping file    │
 │ ☑ Include structural statistics only   │
@@ -408,7 +473,7 @@ When obfuscation is applied, optionally generate a JSON mapping file for reversi
 - Status bar indicator when active
 - Automatic de-obfuscation on plugin reload
 
-#### 5.5.6 Use Cases
+#### 5.5.7 Use Cases
 
 **Public Sharing:**
 - Share family tree structure on forums/blogs
