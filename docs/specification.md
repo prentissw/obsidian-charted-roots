@@ -1,6 +1,6 @@
 # Canvas Roots Plugin - Technical Specification
 
-**Version:** 1.0
+**Version:** 1.1
 **Last Updated:** 2025-11-18
 **Status:** Draft
 
@@ -14,6 +14,7 @@
 4. [Technical Implementation](#4-technical-implementation)
 5. [GEDCOM Integration](#5-gedcom-integration)
 6. [Enhanced Relationship Modeling](#6-enhanced-relationship-modeling)
+7. [World-Building and Organizational Features](#7-world-building-and-organizational-features)
 
 ---
 
@@ -1030,6 +1031,658 @@ Founded in 1630, Boston was a major center for...
 
 ---
 
+## 7. World-Building and Organizational Features
+
+**Purpose:** Extend Canvas Roots beyond traditional genealogy to support fantasy world-building, historical dynasties, corporate succession tracking, and institutional evolution.
+
+### 7.1 Visual Grouping and Styling Rules
+
+**Requirement:** Apply conditional visual styling to canvas nodes based on custom properties, enabling multi-dimensional family tree analysis.
+
+#### 7.1.1 Property-Based Grouping
+
+**Data Structure:**
+
+```yaml
+# In person notes
+kingdom: "[[House Stark]]"
+lineage: "direct"
+succession_status: "eligible"
+allegiance: "[[The North]]"
+house: "[[Stark]]"
+region: "[[Winterfell]]"
+```
+
+**Grouping Criteria:**
+
+| Criterion | Description | Use Case |
+|-----------|-------------|----------|
+| **Kingdom/House** | Political affiliation | Royal dynasties, noble houses |
+| **Lineage Type** | Direct vs. cadet branches | Succession eligibility visualization |
+| **Geographic Region** | Location-based grouping | Regional power dynamics |
+| **Allegiance** | Factional loyalty | Civil wars, political divisions |
+| **Social Class** | Nobility, commoner, clergy | Class-based analysis |
+| **Organization** | Corporate divisions, departments | Organizational charts |
+
+#### 7.1.2 Styling Rules Engine
+
+**Settings Configuration:**
+
+```yaml
+# In plugin settings
+styling_rules:
+  - name: "House Colors"
+    property: kingdom
+    type: background_color
+    mappings:
+      "[[House Stark]]": "#808080"
+      "[[House Lannister]]": "#FFD700"
+      "[[House Targaryen]]": "#DC143C"
+      "[[House Baratheon]]": "#000000"
+
+  - name: "Succession Eligibility"
+    property: succession_status
+    type: border_style
+    mappings:
+      "eligible": "solid 3px gold"
+      "excluded": "dashed 1px gray"
+      "contested": "dotted 2px red"
+
+  - name: "Direct Lineage Indicator"
+    property: lineage
+    type: icon_overlay
+    mappings:
+      "direct": "👑"
+      "cadet": "🛡️"
+      "bastard": "⚔️"
+```
+
+**Visual Properties:**
+
+- **Background color:** Distinguish houses, factions, organizations
+- **Border styling:** Indicate status, eligibility, role
+- **Icon overlays:** Add symbolic indicators
+- **Node size:** Emphasize importance or power level
+- **Text color:** Improve contrast and readability
+- **Opacity:** De-emphasize extinct lines or minor branches
+
+#### 7.1.3 Multiple Overlay System
+
+**Requirement:** Toggle between different visual grouping schemes without recreating the tree.
+
+**Implementation:**
+
+- **Preset Overlays:** Save multiple styling rule sets
+- **Quick Toggle:** Keyboard shortcuts or UI buttons to switch
+- **Layer Combination:** Apply multiple overlays simultaneously
+
+**Example Overlays:**
+
+| Overlay Name | Visual Scheme | Purpose |
+|--------------|---------------|---------|
+| **House Allegiance** | Color by kingdom/house | Political structure |
+| **Succession Lines** | Border styles by eligibility | Inheritance tracking |
+| **Geographic Regions** | Color by location | Regional power analysis |
+| **Living vs. Deceased** | Opacity by status | Current vs. historical |
+| **Generation Depth** | Gradient by distance from root | Chronological visualization |
+
+**Canvas Display:**
+- Overlay selector toolbar in Canvas view
+- Legend panel showing current color/style mappings
+- Non-destructive visual changes (original data unchanged)
+
+### 7.2 Dual Relationship Trees
+
+**Requirement:** Display two different relationship types simultaneously on the same Canvas, supporting both biological and organizational/political connections.
+
+#### 7.2.1 Relationship Type System
+
+**Data Structure:**
+
+```yaml
+# Biological relationships (traditional)
+father: "[[Tywin Lannister]]"
+mother: "[[Joanna Lannister]]"
+
+# Organizational/political relationships
+political_predecessor: "[[Robert Baratheon]]"
+political_successor: "[[Tommen Baratheon]]"
+mentor: "[[Jon Arryn]]"
+heir_designated: "[[Joffrey Baratheon]]"
+```
+
+**Relationship Categories:**
+
+| Category | Edge Type | Use Cases |
+|----------|-----------|-----------|
+| **Biological** | `father`, `mother`, `children` | Traditional genealogy |
+| **Political** | `predecessor`, `successor`, `heir` | Royal succession |
+| **Organizational** | `reports_to`, `manages`, `replaced_by` | Corporate charts |
+| **Mentorship** | `mentor`, `apprentice`, `teacher` | Knowledge transfer |
+| **Legal** | `guardian`, `ward`, `adoptive_parent` | Guardianship chains |
+
+#### 7.2.2 Dual Tree Visualization
+
+**Display Modes:**
+
+1. **Overlay Mode:** Show both relationship types on same canvas with different edge styles
+2. **Side-by-Side Mode:** Split canvas showing two separate trees
+3. **Comparison Mode:** Highlight where biological and political lines diverge
+
+**Edge Differentiation:**
+
+```yaml
+# Visual styling for relationship types
+edge_styles:
+  biological:
+    color: "#4A90E2"
+    style: solid
+    width: 2
+    label: ""
+
+  political:
+    color: "#E24A4A"
+    style: dashed
+    width: 2
+    label: "👑"
+
+  organizational:
+    color: "#4AE290"
+    style: dotted
+    width: 2
+    label: "🏢"
+```
+
+**Canvas Features:**
+- Toggle biological/political edges on/off
+- Filter to show only one relationship type
+- Highlight nodes where relationships diverge
+- Show combined path from root person through both trees
+
+#### 7.2.3 Use Cases
+
+**Historical Dynasties:**
+- Show biological descent vs. actual succession
+- Track usurpations, elective monarchies, non-hereditary transfers
+- Example: "Charlemagne → biological children vs. actual Holy Roman Emperors"
+
+**Corporate Succession:**
+- Biological family ownership vs. management hierarchy
+- Track family businesses across generations
+- Show professional vs. familial relationships
+
+**Fantasy World-Building:**
+- Game of Thrones-style succession with multiple claimants
+- Track rightful vs. actual rulers
+- Show mentor chains alongside bloodlines
+
+**Institutional Evolution:**
+- Academic lineages (advisor → student)
+- Religious leadership (biological vs. spiritual succession)
+- Craft guilds (master → apprentice vs. family inheritance)
+
+### 7.3 Succession Rules Engine
+
+**Requirement:** Support complex, customizable succession rules beyond simple parent-to-child inheritance.
+
+#### 7.3.1 Rule Definition System
+
+**Data Structure:**
+
+```yaml
+# In settings or per-organization notes
+succession_rules:
+  - name: "Salic Law"
+    description: "Male-preference primogeniture, excludes females"
+    query: |
+      gender: male
+      AND parent: [current_ruler]
+      ORDER BY: birth_date ASC
+      LIMIT: 1
+
+  - name: "Agnatic-Cognatic Primogeniture"
+    description: "Male preference, females if no males"
+    priority:
+      - filter: "gender: male AND parent: [current_ruler]"
+        order: "birth_date ASC"
+      - filter: "gender: female AND parent: [current_ruler]"
+        order: "birth_date ASC"
+
+  - name: "Matrilineal Succession"
+    description: "Inheritance through female line only"
+    query: |
+      gender: female
+      AND mother: [current_ruler]
+      ORDER BY: birth_date ASC
+      LIMIT: 1
+
+  - name: "Elective Monarchy"
+    description: "Chosen from eligible candidates"
+    query: |
+      eligibility: eligible
+      AND house: [current_house]
+      ORDER BY: votes DESC, influence DESC
+```
+
+#### 7.3.2 Complex Query Support
+
+**Query Language Features:**
+
+```yaml
+# Example: "Next male descended from this woman through any path"
+succession_query:
+  base: "[[Queen Elizabeth]]"
+  filter: "gender: male"
+  path: "descendant"
+  lineage: "matrilineal"
+  order: "proximity ASC, age DESC"
+  exclude:
+    - "succession_excluded: true"
+    - "house: [[Enemy House]]"
+```
+
+**Supported Operators:**
+
+| Operator | Purpose | Example |
+|----------|---------|---------|
+| `AND`, `OR`, `NOT` | Logical combinations | `gender: male AND NOT excluded: true` |
+| `ORDER BY` | Priority sorting | `ORDER BY birth_date ASC, proximity DESC` |
+| `LIMIT` | Result count | `LIMIT 1` (single heir) or `LIMIT 5` (council) |
+| `FILTER` | Conditional filtering | `house: [[Current Dynasty]]` |
+| `PATH` | Relationship traversal | `descendant`, `matrilineal`, `patrilineal` |
+
+#### 7.3.3 Canvas Visualization
+
+**Succession Highlighting:**
+- Highlight eligible candidates based on current rule
+- Show succession order with numerical badges
+- Visual path from current ruler to next heir
+- Display excluded candidates with distinct styling
+
+**Rule Comparison View:**
+- Show different heirs under different succession laws
+- Side-by-side comparison of Salic vs. Agnatic-Cognatic
+- Historical "what-if" analysis
+
+**Settings:**
+- Select active succession rule
+- Toggle succession visualization on/off
+- Configure custom rules in UI
+
+#### 7.3.4 Use Cases
+
+**Historical Analysis:**
+- Track wars of succession
+- Analyze dynastic disputes
+- Compare cultural succession traditions
+
+**World-Building:**
+- Define fantasy kingdom inheritance laws
+- Create alien species succession rituals
+- Model post-apocalyptic leadership transfer
+
+**Organizational:**
+- CEO succession planning
+- Board member rotation rules
+- Academic department chair selection
+
+### 7.4 Co-Ruling and Shared Positions
+
+**Requirement:** Visualize situations where multiple individuals share power, rule jointly, or hold regencies.
+
+#### 7.4.1 Co-Ruling Data Model
+
+**Data Structure:**
+
+```yaml
+# Co-ruling configuration
+rulership:
+  - title: "King of England"
+    rulers:
+      - person: "[[William III]]"
+        role: primary
+      - person: "[[Mary II]]"
+        role: co_ruler
+    from: "1689"
+    to: "1694"
+    type: joint_sovereignty
+
+  - title: "Roman Emperor"
+    rulers:
+      - person: "[[Marcus Aurelius]]"
+        role: senior_augustus
+      - person: "[[Lucius Verus]]"
+        role: junior_augustus
+    from: "161 CE"
+    to: "169 CE"
+    type: co_emperorship
+```
+
+**Co-Ruling Types:**
+
+| Type | Description | Historical Examples |
+|------|-------------|---------------------|
+| **Joint Sovereignty** | Equal co-rulers | William & Mary of England |
+| **Senior/Junior** | Hierarchical co-rule | Roman co-emperors |
+| **Regency** | Temporary rule during minority | Queen Mother regencies |
+| **Triumvirate** | Rule by committee of 3+ | First Triumvirate (Rome) |
+| **Dual Monarchy** | Separate crowns, same person | Personal unions |
+| **Consort Rule** | Spouse with shared power | Spanish Catholic Monarchs |
+
+#### 7.4.2 Regency and Guardianship
+
+**Data Structure:**
+
+```yaml
+# Regency during minority or incapacity
+regency:
+  - ward: "[[Henry VI of England]]"
+    regent: "[[Humphrey, Duke of Gloucester]]"
+    from: "1422"
+    to: "1437"
+    reason: minority
+    regent_title: "Lord Protector"
+
+  - ward: "[[Louis IX of France]]"
+    regent: "[[Blanche of Castile]]"
+    from: "1226"
+    to: "1234"
+    reason: minority
+    relationship: mother
+```
+
+**Regency Types:**
+- **Minority:** Child ruler with adult regent
+- **Incapacity:** Illness or absence
+- **Interim:** Between deaths/abdications
+- **Ceremonial:** Symbolic rulership
+
+#### 7.4.3 Canvas Visualization
+
+**Co-Ruler Nodes:**
+- **Linked nodes:** Visual connector between co-rulers
+- **Merged node:** Single node with multiple portraits/names
+- **Hierarchical positioning:** Senior above junior rulers
+- **Temporal indicators:** Show duration of joint rule
+
+**Regency Indicators:**
+- **Overlay badge:** Crown with "R" for regent
+- **Dotted connection:** Ward to regent
+- **Timeline bar:** Show regency duration
+- **Age indicator:** Display ward's age during regency
+
+**Visual Styles:**
+
+```yaml
+co_ruler_style:
+  node_grouping: true
+  connection_type: "thick horizontal bar"
+  shared_title_display: true
+  individual_dates: true
+
+regency_style:
+  regent_badge: "R"
+  edge_style: "dotted"
+  edge_color: "purple"
+  temporal_overlay: true
+```
+
+#### 7.4.4 Triumvirate and Council Rule
+
+**Multi-Person Governance:**
+
+```yaml
+# Triumvirate or ruling council
+governance:
+  - body: "First Triumvirate"
+    members:
+      - "[[Julius Caesar]]"
+      - "[[Pompey]]"
+      - "[[Crassus]]"
+    from: "60 BCE"
+    to: "53 BCE"
+    type: informal_alliance
+
+  - body: "Swiss Federal Council"
+    members:
+      - "[[Member 1]]"
+      - "[[Member 2]]"
+      # ... (7 members total)
+    from: "1848"
+    to: "present"
+    type: collegial_government
+    rotation: true
+    rotating_president: true
+```
+
+**Canvas Features:**
+- Cluster visualization for councils
+- Radial layout around central institution node
+- Show member rotation over time
+- Highlight rotating presidency
+
+### 7.5 Organizational Evolution and Timeline Branching
+
+**Requirement:** Track organizations, kingdoms, corporations, and institutions as they merge, split, are conquered, or evolve over time.
+
+#### 7.5.1 Organizational Entity Model
+
+**Data Structure:**
+
+```yaml
+# Organization/institution as a separate entity type
+organization:
+  name: "Kingdom of Mercia"
+  type: kingdom
+  founded: "527 CE"
+  dissolved: "918 CE"
+  predecessor_of: "[[Kingdom of England]]"
+  absorbed_by: "[[Wessex]]"
+  territories:
+    - "[[East Midlands]]"
+    - "[[West Midlands]]"
+  rulers:
+    - person: "[[Penda of Mercia]]"
+      from: "626"
+      to: "655"
+    - person: "[[Offa of Mercia]]"
+      from: "757"
+      to: "796"
+```
+
+#### 7.5.2 Merger and Split Events
+
+**Data Structure:**
+
+```yaml
+# Organizational transformations
+transformations:
+  - type: merger
+    date: "1707"
+    entities_merged:
+      - "[[Kingdom of England]]"
+      - "[[Kingdom of Scotland]]"
+    result: "[[Kingdom of Great Britain]]"
+    legal_basis: "Acts of Union 1707"
+
+  - type: split
+    date: "1776"
+    source: "[[British Empire]]"
+    results:
+      - entity: "[[United States of America]]"
+        reason: independence
+      - entity: "[[British Empire]]"
+        status: continued
+
+  - type: conquest
+    date: "1066"
+    conqueror: "[[Norman Duchy]]"
+    conquered: "[[Kingdom of England]]"
+    result: "[[Norman England]]"
+    ruler: "[[William the Conqueror]]"
+
+  - type: partition
+    date: "1947"
+    source: "[[British India]]"
+    results:
+      - "[[India]]"
+      - "[[Pakistan]]"
+    reason: "Independence and religious partition"
+```
+
+#### 7.5.3 Canvas Visualization
+
+**Timeline Branching:**
+- **Horizontal timeline:** Organizations as horizontal nodes
+- **Split visualization:** Single node branches into multiple
+- **Merge visualization:** Multiple nodes converge into one
+- **Conquest overlay:** Show dominance relationships
+
+**Organizational Node Styling:**
+
+```yaml
+org_node_style:
+  shape: rectangular
+  size: larger_than_person_nodes
+  border: double_line
+  color: distinct_from_people
+  icon: institution_symbol
+```
+
+**Relationship Edges:**
+
+| Edge Type | Visual Style | Meaning |
+|-----------|--------------|---------|
+| `preceded_by` | Dotted arrow | Institutional succession |
+| `absorbed_by` | Solid arrow with X | Merger/conquest |
+| `split_into` | Branching arrow | Division/partition |
+| `ruled_by` | Dashed line | Governance connection |
+| `allied_with` | Double line | Alliance/partnership |
+
+#### 7.5.4 Corporate and Business Use Cases
+
+**Company Evolution:**
+
+```yaml
+company:
+  name: "Standard Oil"
+  founded: "1870"
+  founder: "[[John D. Rockefeller]]"
+  split_date: "1911"
+  split_reason: "Antitrust ruling"
+  successors:
+    - "[[Standard Oil of New Jersey]]" # (Exxon)
+    - "[[Standard Oil of New York]]" # (Mobil)
+    - "[[Standard Oil of California]]" # (Chevron)
+    - "[[Standard Oil of Indiana]]" # (Amoco)
+```
+
+**Modern Mergers:**
+
+```yaml
+merger:
+  date: "2015"
+  companies:
+    - "[[Kraft Foods]]"
+    - "[[Heinz]]"
+  result: "[[Kraft Heinz Company]]"
+  ceo: "[[Bernardo Hees]]"
+  market_cap: "$100 billion"
+```
+
+#### 7.5.5 Canvas Features
+
+**Timeline View:**
+- Horizontal organizational timeline
+- Show splits, mergers, conquests chronologically
+- Person nodes connected to organizational nodes
+- Filter by organization type (kingdom, corporation, institution)
+
+**Dual Layer Display:**
+- Bottom layer: Organizational entities and evolution
+- Top layer: Individual rulers/leaders/CEOs
+- Connections between person and organization layers
+
+**Query System:**
+- "Show all successors of Roman Empire"
+- "Display corporate family tree of Standard Oil"
+- "Track territory changes of Kingdom of France 800-1800"
+
+### 7.6 Use Case Examples
+
+#### 7.6.1 Fantasy World-Building
+
+**Scenario:** Game of Thrones-style dynasty tracking
+
+**Features Used:**
+- Visual grouping by house (§7.1)
+- Dual biological/political trees (§7.2)
+- Custom succession rules (§7.3)
+- Co-ruling visualization (§7.4)
+- Kingdom evolution (§7.5)
+
+**Implementation:**
+
+```yaml
+# Targaryen succession with multiple claimants
+person: "[[Daenerys Targaryen]]"
+house: "[[House Targaryen]]"
+succession_claim: legitimate
+biological_father: "[[Aerys II Targaryen]]"
+political_predecessor: null  # Usurped throne
+rivals:
+  - "[[Jon Snow]]"  # Better biological claim
+  - "[[Cersei Lannister]]"  # Current holder
+```
+
+#### 7.6.2 Historical Dynasty Research
+
+**Scenario:** European royal succession analysis
+
+**Features Used:**
+- Multiple overlays for different time periods (§7.1.3)
+- Salic law vs. Agnatic-Cognatic rules (§7.3)
+- Personal unions and co-rulership (§7.4)
+- Kingdom mergers (§7.5)
+
+**Example:** Habsburg dynasty tracking across Spain, Austria, Holy Roman Empire
+
+#### 7.6.3 Corporate Succession Planning
+
+**Scenario:** Family business transfer across generations
+
+**Features Used:**
+- Dual trees: biological family + management hierarchy (§7.2)
+- Organizational evolution: company splits/mergers (§7.5)
+- Custom succession rules: primogeniture vs. merit-based (§7.3)
+
+**Implementation:**
+
+```yaml
+company: "[[Smith & Sons Manufacturing]]"
+founder: "[[Robert Smith]]"
+current_ceo: "[[Jennifer Smith]]"
+succession_plan:
+  rule: "primogeniture with board approval"
+  candidates:
+    - "[[Michael Smith]]"  # Eldest child
+    - "[[Sarah Smith]]"  # Most qualified
+```
+
+#### 7.6.4 Civilization Evolution
+
+**Scenario:** Rise and fall of empires over millennia
+
+**Features Used:**
+- Organizational timeline (§7.5)
+- Conquest and partition visualization (§7.5.2)
+- Migration tracking (§6.10)
+- Geographic grouping (§7.1)
+
+**Example:** Roman Republic → Roman Empire → Eastern/Western split → Byzantine Empire
+
+---
+
 ## Appendix A: Implementation Priorities
 
 ### MVP (Minimum Viable Product)
@@ -1068,6 +1721,15 @@ Founded in 1630, Boston was a major center for...
 - Place note system (§6.10.3)
 - Genetic pattern analysis (§6.9.2)
 - Medical privacy controls (§6.9.4)
+
+### Phase 6 (World-Building and Organizational Features)
+- Visual grouping and styling rules (§7.1)
+- Property-based grouping and overlays (§7.1.1-7.1.3)
+- Dual relationship trees (§7.2)
+- Succession rules engine (§7.3)
+- Co-ruling and regency visualization (§7.4)
+- Organizational evolution tracking (§7.5)
+- Timeline branching for institutions (§7.5.2-7.5.3)
 
 ---
 

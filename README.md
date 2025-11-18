@@ -21,6 +21,8 @@ The core idea is a hybrid approach: the plugin will use the power of D3.js for a
 
 - **Privacy & Obfuscation:** Optional data obfuscation for exports and canvas display. Protect PII when sharing family trees publicly, for demonstrations, or for research collaboration while preserving relationship structure. Selectively obfuscate all individuals, living persons only, minors only, or combine filters for maximum privacy protection.
 
+- **World-Building & Organizations:** Beyond genealogy - track fantasy dynasties, corporate succession, institutional evolution, and historical kingdoms. Features include visual grouping by house/faction, dual relationship trees (biological vs. political), complex succession rules, co-ruling visualization, and organizational mergers/splits over time.
+
 - **YAML-First Data:** Uses native YAML frontmatter for maximum compatibility with Dataview, Bases, and other Obsidian tools.
 
 
