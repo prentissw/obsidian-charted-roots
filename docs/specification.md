@@ -1,6 +1,6 @@
 # Canvas Roots Plugin - Technical Specification
 
-**Version:** 1.4
+**Version:** 1.5
 **Last Updated:** 2025-11-19
 **Status:** Draft
 
@@ -724,8 +724,9 @@ class ControlCenterModal extends Modal {
 ├──────────┬──────────────────────────────────────────┤
 │ Status   │  Tab Content Area                        │
 │ Actions  │  (Dynamic content based on active tab)   │
-│ Tree     │                                           │
-│ GEDCOM   │  Cards, forms, buttons, etc.             │
+│ Data     │                                           │
+│ Tree     │  Cards, forms, buttons, etc.             │
+│ GEDCOM   │                                           │
 │ Person   │                                           │
 │ Advanced │                                           │
 └──────────┴──────────────────────────────────────────┘
@@ -740,6 +741,7 @@ class ControlCenterModal extends Modal {
 |--------|------|------|---------|
 | `status` | Status | `activity` | Vault statistics, data quality report |
 | `quick-actions` | Quick Actions | `zap` | Primary commands (Generate Tree, Re-Layout, etc.) |
+| `data-entry` | Data Entry | `user-plus` | Create new person notes with relationship linking |
 | `tree-generation` | Tree Generation | `git-branch` | Layout settings, filters, visual styling |
 | `gedcom` | GEDCOM | `file-text` | Import/export operations, merge tools |
 | `person-detail` | Person Details | `user` | Person Detail Panel settings and quick access |
@@ -840,6 +842,156 @@ const TAB_CONFIGS = [
    - Master volume/visibility toggles
    - Quick preset selection
    - Active overlay indicator
+
+##### Data Entry Tab
+
+**Purpose:** Streamlined interface for creating new person notes with automatic relationship linking
+
+**Use Cases:**
+- Building family trees from scratch
+- Quick data entry during research sessions
+- Creating test/dummy data during development
+- Transcribing from physical documents or records
+
+**Content:**
+
+1. **Person Information Form:**
+   ```
+   ┌─────────────────────────────────────┐
+   │ Create New Person                   │
+   ├─────────────────────────────────────┤
+   │ Name: [John Robert Smith         ]  │
+   │                                     │
+   │ ☑ Auto-generate cr_id               │
+   │ cr_id: [abc-123-def-456] (read-only)│
+   │                                     │
+   │ Birth Date: [1888-05-15      ] 📅  │
+   │ Death Date: [1952-08-20      ] 📅  │
+   │ ☐ Mark as living                    │
+   │                                     │
+   │ Birth Place: [Boston, MA         ]  │
+   │ Death Place: [Seattle, WA        ]  │
+   └─────────────────────────────────────┘
+   ```
+
+2. **Relationship Linking:**
+   ```
+   ┌─────────────────────────────────────┐
+   │ Relationships                       │
+   ├─────────────────────────────────────┤
+   │ Father: [Search existing...] [🔍]  │
+   │ Mother: [Search existing...] [🔍]  │
+   │                                     │
+   │ Spouse: [Search existing...] [🔍]  │
+   │         [+ Add another spouse]      │
+   │                                     │
+   │ Note: Relationships are automatically │
+   │ synced bidirectionally              │
+   └─────────────────────────────────────┘
+   ```
+
+3. **File Location:**
+   ```
+   ┌─────────────────────────────────────┐
+   │ Save Location                       │
+   ├─────────────────────────────────────┤
+   │ File: People/John Robert Smith.md   │
+   │ [📁 Change folder...]               │
+   └─────────────────────────────────────┘
+   ```
+
+4. **Action Buttons:**
+   ```
+   ┌─────────────────────────────────────┐
+   │ [Cancel]                            │
+   │ [Create & Open Note]                │
+   │ [Create & Add Another]              │
+   └─────────────────────────────────────┘
+   ```
+
+**Workflow:**
+
+1. **Create & Open Note:**
+   - Creates the person note with entered data
+   - Opens the note in editor
+   - Closes Control Center
+
+2. **Create & Add Another:**
+   - Creates the person note with entered data
+   - Shows success notification
+   - Clears the form for next entry
+   - Keeps Control Center open
+   - Pre-increments dates for sequential entry (e.g., siblings)
+
+**Features:**
+
+- **Person Search:** Type-ahead search with fuzzy matching
+  - Shows existing persons with same/similar names
+  - Displays birth/death dates for disambiguation
+  - Click to select and link
+
+- **Duplicate Detection:**
+  - Warns if similar person exists (name + birth date)
+  - Shows potential matches
+  - Option to proceed or cancel
+
+- **Validation:**
+  - Required: Name, cr_id (auto-generated if enabled)
+  - Optional: All other fields
+  - Date format validation
+  - Circular relationship detection
+
+- **Auto-generation:**
+  - cr_id: UUID v4 format
+  - File name: Sanitized from person name
+  - Folder: User-configurable default location
+
+**Success Notification:**
+
+```
+✓ Person created successfully!
+
+[[John Robert Smith]] has been created.
+
+[View on Canvas]  [Open Note]  [Open in Detail Panel]
+```
+
+**MVP Implementation:**
+- Simple form with all fields visible
+- Auto-generate cr_id (mandatory)
+- Basic person search for relationships
+- "Create & Open" and "Create & Add Another" buttons
+- File location configuration
+- Duplicate name warning
+
+**Phase 2 Enhancements:**
+- Context-aware creation modes:
+  - "Create child of [Person]"
+  - "Create spouse of [Person]"
+  - "Create sibling of [Person]"
+- Inline creation of related persons
+- Template support (Standard, Detailed, Minimal)
+- Batch entry mode for siblings
+
+**Phase 3+ Enhancements:**
+- Import from clipboard/CSV
+- Research mode (mark fields as uncertain)
+- Source citation fields
+- Extended properties (medical, location, etc.)
+
+**Command Integration:**
+
+```typescript
+// Opens Control Center to Data Entry tab
+this.addCommand({
+  id: 'create-new-person',
+  name: 'Create New Person',
+  callback: () => {
+    const modal = new ControlCenterModal(this.app, this);
+    modal.openToTab('data-entry');
+  }
+});
+```
 
 ##### Tree Generation Tab
 
@@ -3154,6 +3306,7 @@ succession_plan:
   - Modal structure with navigation drawer
   - Status tab (basic stats)
   - Quick Actions tab (Generate Tree, Re-Layout)
+  - Data Entry tab (Create new persons with "Add Another" workflow)
   - Material components library (Card, Button, Slider)
   - Basic CSS styling
 
