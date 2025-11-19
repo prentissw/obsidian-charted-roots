@@ -35,9 +35,16 @@ export type LucideIconName =
 	| 'download'      // Download/export
 	| 'upload'        // Upload/import
 	| 'link'          // Link relationship
+	| 'unlink'        // Unlink relationship
 	| 'external-link' // Open external
 	| 'eye'           // View
-	| 'eye-off';      // Hide
+	| 'eye-off'       // Hide
+	| 'file-plus'     // Create file
+	| 'hash'          // ID/identifier
+	| 'heart'         // Health/status
+	| 'layout'        // Layout options
+	| 'file'          // File/canvas
+	| 'play';         // Generate/run action
 
 /**
  * Tab configuration for Control Center navigation

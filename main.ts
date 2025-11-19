@@ -2,9 +2,6 @@ import { Plugin, Notice } from 'obsidian';
 import { CanvasRootsSettings, DEFAULT_SETTINGS, CanvasRootsSettingTab } from './src/settings';
 import { ControlCenterModal } from './src/ui/control-center';
 
-// Import Control Center CSS
-import './src/ui/control-center.css';
-
 export default class CanvasRootsPlugin extends Plugin {
 	settings: CanvasRootsSettings;
 
@@ -15,6 +12,11 @@ export default class CanvasRootsPlugin extends Plugin {
 
 		// Add settings tab
 		this.addSettingTab(new CanvasRootsSettingTab(this.app, this));
+
+		// Add ribbon icon for Control Center
+		this.addRibbonIcon('users', 'Open Canvas Roots Control Center', () => {
+			new ControlCenterModal(this.app, this).open();
+		});
 
 		// Add command: Open Control Center
 		this.addCommand({

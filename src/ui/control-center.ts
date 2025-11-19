@@ -1,6 +1,22 @@
-import { App, Modal } from 'obsidian';
+import { App, Modal, Notice, TFile } from 'obsidian';
 import CanvasRootsPlugin from '../../main';
 import { TAB_CONFIGS, createLucideIcon, setLucideIcon, LucideIconName } from './lucide-icons';
+import { createPersonNote, PersonData } from '../core/person-note-writer';
+import { PersonPickerModal, PersonInfo } from './person-picker';
+import { VaultStatsService, FullVaultStats } from '../core/vault-stats';
+import { FamilyGraphService, TreeOptions } from '../core/family-graph';
+import { CanvasGenerator, LayoutOptions } from '../core/canvas-generator';
+import { getLogger, LoggerFactory, type LogLevel } from '../core/logging';
+
+const logger = getLogger('ControlCenter');
+
+/**
+ * Relationship field data
+ */
+interface RelationshipField {
+	name: string;
+	crId?: string;
+}
 
 /**
  * Canvas Roots Control Center Modal
@@ -12,6 +28,11 @@ export class ControlCenterModal extends Modal {
 	private drawer: HTMLElement;
 	private contentContainer: HTMLElement;
 	private appBar: HTMLElement;
+
+	// Relationship field data
+	private fatherField: RelationshipField = { name: '' };
+	private motherField: RelationshipField = { name: '' };
+	private spouseField: RelationshipField = { name: '' };
 
 	constructor(app: App, plugin: CanvasRootsPlugin) {
 		super(app);
@@ -79,12 +100,9 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Create header action buttons
 	 */
-	private createHeaderActions(container: HTMLElement): void {
-		// Close button (icon only, no text)
-		const closeBtn = container.createEl('button', { cls: 'crc-btn crc-btn--secondary' });
-		const closeIcon = createLucideIcon('x', 16);
-		closeBtn.appendChild(closeIcon);
-		closeBtn.addEventListener('click', () => this.close());
+	private createHeaderActions(_container: HTMLElement): void {
+		// Reserved for future header actions (e.g., help, settings)
+		// The modal's native close button (X) is sufficient
 	}
 
 	/**
@@ -197,21 +215,136 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Show Status tab
 	 */
-	private showStatusTab(): void {
+	private async showStatusTab(): Promise<void> {
 		const container = this.contentContainer;
 
-		// Create a simple card
-		const card = this.createCard({
+		// Show loading state
+		const loadingCard = this.createCard({
 			title: 'Vault Statistics',
 			icon: 'activity'
 		});
+		const loadingContent = loadingCard.querySelector('.crc-card__content') as HTMLElement;
+		loadingContent.createEl('p', { text: 'Loading statistics...', cls: 'crc-text-muted' });
+		container.appendChild(loadingCard);
 
-		const content = card.querySelector('.crc-card__content') as HTMLElement;
-		content.createEl('p', { text: 'Total People: 0', cls: 'crc-mb-2' });
-		content.createEl('p', { text: 'Total Families: 0', cls: 'crc-mb-2' });
-		content.createEl('p', { text: 'Relationship Links: 0', cls: 'crc-mb-2' });
+		// Collect statistics
+		const statsService = new VaultStatsService(this.app);
+		const stats = await statsService.collectStats();
 
-		container.appendChild(card);
+		// Clear loading state
+		container.empty();
+
+		// People Statistics Card
+		const peopleCard = this.createCard({
+			title: 'People',
+			icon: 'users'
+		});
+		const peopleContent = peopleCard.querySelector('.crc-card__content') as HTMLElement;
+
+		this.createStatRow(peopleContent, 'Total People', stats.people.totalPeople);
+		this.createStatRow(peopleContent, 'With Birth Date', stats.people.peopleWithBirthDate);
+		this.createStatRow(peopleContent, 'With Death Date', stats.people.peopleWithDeathDate);
+		this.createStatRow(peopleContent, 'Living', stats.people.livingPeople, 'crc-text-success');
+		this.createStatRow(peopleContent, 'Orphaned (No Relationships)', stats.people.orphanedPeople,
+			stats.people.orphanedPeople > 0 ? 'crc-text-warning' : undefined);
+
+		container.appendChild(peopleCard);
+
+		// Relationships Card
+		const relCard = this.createCard({
+			title: 'Relationships',
+			icon: 'link'
+		});
+		const relContent = relCard.querySelector('.crc-card__content') as HTMLElement;
+
+		this.createStatRow(relContent, 'Total Relationships', stats.relationships.totalRelationships);
+		this.createStatRow(relContent, 'Father Links', stats.relationships.totalFatherLinks);
+		this.createStatRow(relContent, 'Mother Links', stats.relationships.totalMotherLinks);
+		this.createStatRow(relContent, 'Spouse Links', stats.relationships.totalSpouseLinks);
+		this.createStatRow(relContent, 'People with Father', stats.people.peopleWithFather);
+		this.createStatRow(relContent, 'People with Mother', stats.people.peopleWithMother);
+		this.createStatRow(relContent, 'People with Spouse', stats.people.peopleWithSpouse);
+
+		container.appendChild(relCard);
+
+		// Vault Health Card
+		const healthCard = this.createCard({
+			title: 'Vault Health',
+			icon: 'heart'
+		});
+		const healthContent = healthCard.querySelector('.crc-card__content') as HTMLElement;
+
+		const completeness = this.calculateCompleteness(stats);
+		const healthBar = this.createHealthBar(healthContent, completeness);
+
+		const healthInfo = healthContent.createDiv({ cls: 'crc-mt-4' });
+		healthInfo.createEl('p', {
+			text: `Data Completeness: ${completeness}%`,
+			cls: 'crc-mb-2'
+		});
+
+		const lastUpdated = healthContent.createDiv({ cls: 'crc-text-muted crc-mt-2' });
+		lastUpdated.createEl('small', {
+			text: `Last updated: ${stats.lastUpdated.toLocaleTimeString()}`
+		});
+
+		container.appendChild(healthCard);
+	}
+
+	/**
+	 * Create a statistic row
+	 */
+	private createStatRow(
+		container: HTMLElement,
+		label: string,
+		value: number,
+		valueClass?: string
+	): void {
+		const row = container.createDiv({ cls: 'crc-stat-row' });
+		row.createDiv({ cls: 'crc-stat-label', text: label });
+		const valueEl = row.createDiv({ cls: 'crc-stat-value', text: value.toString() });
+		if (valueClass) {
+			valueEl.addClass(valueClass);
+		}
+	}
+
+	/**
+	 * Calculate data completeness percentage
+	 */
+	private calculateCompleteness(stats: FullVaultStats): number {
+		if (stats.people.totalPeople === 0) return 0;
+
+		const withBirth = stats.people.peopleWithBirthDate;
+		const withDeath = stats.people.peopleWithDeathDate;
+		const withRelationships = stats.people.totalPeople - stats.people.orphanedPeople;
+
+		// Weight: 40% birth dates, 30% death dates, 30% relationships
+		const birthScore = (withBirth / stats.people.totalPeople) * 40;
+		const deathScore = (withDeath / stats.people.totalPeople) * 30;
+		const relScore = (withRelationships / stats.people.totalPeople) * 30;
+
+		return Math.round(birthScore + deathScore + relScore);
+	}
+
+	/**
+	 * Create health bar visualization
+	 */
+	private createHealthBar(container: HTMLElement, percentage: number): HTMLElement {
+		const barContainer = container.createDiv({ cls: 'crc-health-bar-container' });
+		const bar = barContainer.createDiv({ cls: 'crc-health-bar' });
+		const fill = bar.createDiv({ cls: 'crc-health-bar-fill' });
+		fill.style.width = `${percentage}%`;
+
+		// Color based on percentage
+		if (percentage >= 80) {
+			fill.addClass('crc-health-bar-fill--success');
+		} else if (percentage >= 50) {
+			fill.addClass('crc-health-bar-fill--warning');
+		} else {
+			fill.addClass('crc-health-bar-fill--error');
+		}
+
+		return barContainer;
 	}
 
 	/**
@@ -225,14 +358,567 @@ export class ControlCenterModal extends Modal {
 	 * Show Data Entry tab
 	 */
 	private showDataEntryTab(): void {
-		this.showPlaceholderTab('data-entry');
+		const container = this.contentContainer;
+
+		// Create card for person entry form
+		const card = this.createCard({
+			title: 'Create New Person',
+			icon: 'user-plus'
+		});
+
+		const content = card.querySelector('.crc-card__content') as HTMLElement;
+
+		// Name field
+		const nameGroup = content.createDiv({ cls: 'crc-form-group' });
+		nameGroup.createDiv({ cls: 'crc-form-label', text: 'Name' });
+		const nameInput = nameGroup.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'text',
+				placeholder: 'John Robert Smith'
+			}
+		});
+
+		// Auto-generate cr_id checkbox
+		const uuidGroup = content.createDiv({ cls: 'crc-form-group' });
+		const checkboxContainer = uuidGroup.createDiv({ cls: 'crc-checkbox-container' });
+		const autoGenCheckbox = checkboxContainer.createEl('input', {
+			cls: 'crc-checkbox',
+			attr: {
+				type: 'checkbox',
+				id: 'auto-gen-uuid',
+				checked: true
+			}
+		});
+		checkboxContainer.createEl('label', {
+			cls: 'crc-checkbox-label',
+			text: 'Auto-generate cr_id',
+			attr: { for: 'auto-gen-uuid' }
+		});
+
+		// cr_id field (read-only when auto-generate is checked)
+		const uuidFieldGroup = content.createDiv({ cls: 'crc-form-group' });
+		uuidFieldGroup.createDiv({ cls: 'crc-form-label', text: 'cr_id' });
+		const uuidInput = uuidFieldGroup.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'text',
+				placeholder: 'abc-123-def-456',
+				readonly: true
+			}
+		});
+		uuidFieldGroup.createDiv({
+			cls: 'crc-form-help',
+			text: 'Unique identifier for this person'
+		});
+
+		// Toggle UUID field based on checkbox
+		autoGenCheckbox.addEventListener('change', () => {
+			if (autoGenCheckbox.checked) {
+				uuidInput.setAttribute('readonly', 'true');
+				uuidInput.value = '';
+			} else {
+				uuidInput.removeAttribute('readonly');
+			}
+		});
+
+		// Birth date field
+		const birthGroup = content.createDiv({ cls: 'crc-form-group' });
+		birthGroup.createDiv({ cls: 'crc-form-label', text: 'Birth Date' });
+		const birthInput = birthGroup.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'date',
+				placeholder: 'YYYY-MM-DD'
+			}
+		});
+		birthGroup.createDiv({
+			cls: 'crc-form-help',
+			text: 'Optional. Format: YYYY-MM-DD'
+		});
+
+		// Death date field
+		const deathGroup = content.createDiv({ cls: 'crc-form-group' });
+		deathGroup.createDiv({ cls: 'crc-form-label', text: 'Death Date' });
+		const deathInput = deathGroup.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'date',
+				placeholder: 'YYYY-MM-DD'
+			}
+		});
+		deathGroup.createDiv({
+			cls: 'crc-form-help',
+			text: 'Optional. Format: YYYY-MM-DD'
+		});
+
+		// Relationship fields with person picker
+		this.createRelationshipField(content, 'Father', 'Click "Link" to select father', this.fatherField);
+		this.createRelationshipField(content, 'Mother', 'Click "Link" to select mother', this.motherField);
+		this.createRelationshipField(content, 'Spouse', 'Click "Link" to select spouse', this.spouseField);
+
+		// Action buttons
+		const actions = card.createDiv({ cls: 'crc-card__actions' });
+
+		// Create & Open button
+		const createOpenBtn = actions.createEl('button', {
+			cls: 'crc-btn crc-btn--primary',
+			text: 'Create & Open Note'
+		});
+		const createOpenIcon = createLucideIcon('file-plus', 16);
+		createOpenBtn.prepend(createOpenIcon);
+		createOpenBtn.addEventListener('click', () => {
+			this.createPersonNote(
+				nameInput.value,
+				birthInput.value,
+				deathInput.value,
+				autoGenCheckbox.checked,
+				uuidInput.value,
+				this.fatherField.crId,
+				this.motherField.crId,
+				this.spouseField.crId,
+				true
+			);
+		});
+
+		// Create & Add Another button
+		const createAnotherBtn = actions.createEl('button', {
+			cls: 'crc-btn crc-btn--secondary',
+			text: 'Create & Add Another'
+		});
+		const createAnotherIcon = createLucideIcon('plus', 16);
+		createAnotherBtn.prepend(createAnotherIcon);
+		createAnotherBtn.addEventListener('click', () => {
+			this.createPersonNote(
+				nameInput.value,
+				birthInput.value,
+				deathInput.value,
+				autoGenCheckbox.checked,
+				uuidInput.value,
+				this.fatherField.crId,
+				this.motherField.crId,
+				this.spouseField.crId,
+				false
+			);
+			// Clear form
+			nameInput.value = '';
+			birthInput.value = '';
+			deathInput.value = '';
+			uuidInput.value = '';
+			this.clearRelationshipFields();
+			autoGenCheckbox.checked = true;
+			uuidInput.setAttribute('readonly', 'true');
+			nameInput.focus();
+		});
+
+		container.appendChild(card);
+	}
+
+	/**
+	 * Create a person note
+	 */
+	private async createPersonNote(
+		name: string,
+		birthDate: string,
+		deathDate: string,
+		autoGenUuid: boolean,
+		manualUuid: string,
+		fatherCrId: string | undefined,
+		motherCrId: string | undefined,
+		spouseCrId: string | undefined,
+		openNote: boolean
+	): Promise<void> {
+		// Validate required fields
+		if (!name || name.trim() === '') {
+			new Notice('⚠️ Name is required');
+			return;
+		}
+
+		// Validate manual UUID if provided
+		if (!autoGenUuid && manualUuid) {
+			const { validateCrId } = await import('../core/uuid');
+			if (!validateCrId(manualUuid)) {
+				new Notice('⚠️ Invalid cr_id format. Expected: abc-123-def-456');
+				return;
+			}
+		}
+
+		// Build person data
+		const personData: PersonData = {
+			name: name.trim(),
+			crId: autoGenUuid ? undefined : manualUuid || undefined,
+			birthDate: birthDate || undefined,
+			deathDate: deathDate || undefined,
+			fatherCrId: fatherCrId || undefined,
+			motherCrId: motherCrId || undefined,
+			spouseCrId: spouseCrId ? [spouseCrId] : undefined
+		};
+
+		try {
+			// Create the note
+			const file = await createPersonNote(this.app, personData, {
+				directory: this.plugin.settings.peopleFolder || '',
+				openAfterCreate: openNote
+			});
+
+			// Show success message
+			new Notice(`✅ Created person note: ${file.basename}`);
+
+			// Close modal if opening the note
+			if (openNote) {
+				this.close();
+			}
+		} catch (error) {
+			console.error('Failed to create person note:', error);
+			new Notice(`❌ Failed to create person note: ${error.message}`);
+		}
 	}
 
 	/**
 	 * Show Tree Generation tab
 	 */
+	/**
+	 * Show Tree Generation tab
+	 */
 	private showTreeGenerationTab(): void {
-		this.showPlaceholderTab('tree-generation');
+		const container = this.contentContainer;
+
+		// Title
+		const title = container.createEl('h2', { text: 'Generate Family Tree' });
+		title.style.marginTop = '0';
+
+		// Intro text
+		const intro = container.createEl('p', {
+			text: 'Generate a visual family tree on an Obsidian Canvas. Select a root person and configure the tree options below.',
+			cls: 'crc-text-muted'
+		});
+
+		// Configuration Card
+		const configCard = container.createDiv({ cls: 'crc-card' });
+		const configHeader = configCard.createDiv({ cls: 'crc-card__header' });
+		const configTitle = configHeader.createEl('h3', {
+			cls: 'crc-card__title',
+			text: 'Tree Configuration'
+		});
+		const configIcon = createLucideIcon('settings', 20);
+		configTitle.prepend(configIcon);
+
+		const configContent = configCard.createDiv({ cls: 'crc-card__content' });
+
+		// Root person selection
+		const rootPersonField: RelationshipField = { name: '' };
+		const rootGroup = configContent.createDiv({ cls: 'crc-form-group' });
+		const rootLabel = rootGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Root Person'
+		});
+		const rootLabelBadge = rootLabel.createSpan({ cls: 'crc-help-badge', text: 'Required' });
+		rootLabelBadge.style.marginLeft = '8px';
+
+		const rootFieldResult = this.createRelationshipField(
+			rootGroup,
+			'',
+			'Select the person to center the tree on',
+			rootPersonField
+		);
+
+		// Tree type selection
+		const typeGroup = configContent.createDiv({ cls: 'crc-form-group' });
+		typeGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Tree Type'
+		});
+
+		const typeSelect = typeGroup.createEl('select', { cls: 'crc-form-input' });
+		[
+			{ value: 'ancestors', label: 'Ancestors (Parents, Grandparents, etc.)' },
+			{ value: 'descendants', label: 'Descendants (Children, Grandchildren, etc.)' },
+			{ value: 'full', label: 'Full Family Tree (Ancestors + Descendants)' }
+		].forEach(option => {
+			const opt = typeSelect.createEl('option', {
+				value: option.value,
+				text: option.label
+			});
+		});
+
+		// Max generations
+		const genGroup = configContent.createDiv({ cls: 'crc-form-group' });
+		genGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Maximum Generations'
+		});
+		const genInput = genGroup.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'number',
+				min: '0',
+				max: '20',
+				value: '5',
+				placeholder: '0 = unlimited'
+			}
+		});
+		genGroup.createDiv({
+			cls: 'crc-form-help',
+			text: 'Set to 0 for unlimited generations (use with caution on large trees)'
+		});
+
+		// Include spouses checkbox
+		const spouseGroup = configContent.createDiv({ cls: 'crc-form-group' });
+		const spouseContainer = spouseGroup.createDiv({ cls: 'crc-checkbox-container' });
+		const spouseCheckbox = spouseContainer.createEl('input', {
+			cls: 'crc-checkbox',
+			attr: {
+				type: 'checkbox',
+				id: 'include-spouses',
+				checked: 'true'
+			}
+		});
+		spouseContainer.createEl('label', {
+			cls: 'crc-checkbox-label',
+			text: 'Include spouses in tree',
+			attr: { for: 'include-spouses' }
+		});
+
+		// Layout Options Card
+		const layoutCard = container.createDiv({ cls: 'crc-card' });
+		const layoutHeader = layoutCard.createDiv({ cls: 'crc-card__header' });
+		const layoutTitle = layoutHeader.createEl('h3', {
+			cls: 'crc-card__title',
+			text: 'Layout Options'
+		});
+		const layoutIcon = createLucideIcon('layout', 20);
+		layoutTitle.prepend(layoutIcon);
+
+		const layoutContent = layoutCard.createDiv({ cls: 'crc-card__content' });
+
+		// Direction selection
+		const dirGroup = layoutContent.createDiv({ cls: 'crc-form-group' });
+		dirGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Tree Direction'
+		});
+
+		const dirSelect = dirGroup.createEl('select', { cls: 'crc-form-input' });
+		[
+			{ value: 'vertical', label: 'Vertical (Top to Bottom)' },
+			{ value: 'horizontal', label: 'Horizontal (Left to Right)' }
+		].forEach(option => {
+			dirSelect.createEl('option', {
+				value: option.value,
+				text: option.label
+			});
+		});
+
+		// Node spacing
+		const spacingXGroup = layoutContent.createDiv({ cls: 'crc-form-group' });
+		spacingXGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Horizontal Spacing'
+		});
+		const spacingXInput = spacingXGroup.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'number',
+				min: '100',
+				max: '1000',
+				value: '300',
+				step: '50'
+			}
+		});
+
+		const spacingYGroup = layoutContent.createDiv({ cls: 'crc-form-group' });
+		spacingYGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Vertical Spacing'
+		});
+		const spacingYInput = spacingYGroup.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'number',
+				min: '100',
+				max: '1000',
+				value: '200',
+				step: '50'
+			}
+		});
+
+		// Output Card
+		const outputCard = container.createDiv({ cls: 'crc-card' });
+		const outputHeader = outputCard.createDiv({ cls: 'crc-card__header' });
+		const outputTitle = outputHeader.createEl('h3', {
+			cls: 'crc-card__title',
+			text: 'Output Options'
+		});
+		const outputIcon = createLucideIcon('file', 20);
+		outputTitle.prepend(outputIcon);
+
+		const outputContent = outputCard.createDiv({ cls: 'crc-card__content' });
+
+		// Canvas file name
+		const nameGroup = outputContent.createDiv({ cls: 'crc-form-group' });
+		nameGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Canvas File Name'
+		});
+		const nameInput = nameGroup.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'text',
+				placeholder: 'Leave blank for auto-naming'
+			}
+		});
+		nameGroup.createDiv({
+			cls: 'crc-form-help',
+			text: 'Auto-naming format: "Family Tree - [Root Person Name]"'
+		});
+
+		// Generate Button
+		const generateBtn = outputContent.createEl('button', {
+			cls: 'crc-btn crc-btn--primary crc-mt-4',
+			text: 'Generate Family Tree'
+		});
+		const generateIcon = createLucideIcon('play', 16);
+		generateBtn.prepend(generateIcon);
+
+		generateBtn.addEventListener('click', async () => {
+			await this.handleTreeGeneration(
+				rootPersonField,
+				typeSelect.value as 'ancestors' | 'descendants' | 'full',
+				parseInt(genInput.value) || 0,
+				spouseCheckbox.checked,
+				dirSelect.value as 'vertical' | 'horizontal',
+				parseInt(spacingXInput.value),
+				parseInt(spacingYInput.value),
+				nameInput.value
+			);
+		});
+	}
+
+	/**
+	 * Handles tree generation logic
+	 */
+	private async handleTreeGeneration(
+		rootPersonField: RelationshipField,
+		treeType: 'ancestors' | 'descendants' | 'full',
+		maxGenerations: number,
+		includeSpouses: boolean,
+		direction: 'vertical' | 'horizontal',
+		spacingX: number,
+		spacingY: number,
+		canvasFileName: string
+	): Promise<void> {
+		// Validate root person
+		if (!rootPersonField.crId) {
+			new Notice('Please select a root person');
+			return;
+		}
+
+		try {
+			new Notice('Generating family tree...');
+
+			// Create tree options
+			const treeOptions: TreeOptions = {
+				rootCrId: rootPersonField.crId,
+				treeType,
+				maxGenerations: maxGenerations || undefined,
+				includeSpouses
+			};
+
+			// Create layout options
+			const layoutOptions: LayoutOptions = {
+				direction,
+				nodeSpacingX: spacingX,
+				nodeSpacingY: spacingY,
+				colorByGender: true,
+				showLabels: true
+			};
+
+			// Generate tree
+			logger.info('tree-generation', 'Starting tree generation', {
+				rootCrId: treeOptions.rootCrId,
+				treeType: treeOptions.treeType,
+				maxGenerations: treeOptions.maxGenerations
+			});
+
+			const graphService = new FamilyGraphService(this.app);
+			const familyTree = await graphService.generateTree(treeOptions);
+
+			if (!familyTree) {
+				logger.error('tree-generation', 'Failed to generate tree: root person not found');
+				new Notice('Failed to generate tree: root person not found');
+				return;
+			}
+
+			// Log tree structure
+			logger.info('tree-generation', 'Family tree generated', {
+				rootPerson: familyTree.root.name,
+				rootCrId: familyTree.root.crId,
+				totalNodes: familyTree.nodes.size,
+				totalEdges: familyTree.edges.length,
+				nodeList: Array.from(familyTree.nodes.values()).map(n => ({
+					name: n.name,
+					crId: n.crId,
+					hasFather: !!n.fatherCrId,
+					hasMother: !!n.motherCrId,
+					childrenCount: n.childrenCrIds.length
+				})),
+				edgeList: familyTree.edges.map(e => ({
+					from: familyTree.nodes.get(e.from)?.name || e.from,
+					to: familyTree.nodes.get(e.to)?.name || e.to,
+					type: e.type
+				}))
+			});
+
+			// Generate canvas
+			const canvasGenerator = new CanvasGenerator();
+			const canvasData = canvasGenerator.generateCanvas(familyTree, layoutOptions);
+
+			// Log canvas generation
+			logger.info('canvas-generation', 'Canvas data generated', {
+				nodeCount: canvasData.nodes.length,
+				edgeCount: canvasData.edges.length,
+				canvasNodes: canvasData.nodes.map(n => ({
+					id: n.id,
+					file: n.file
+				}))
+			});
+
+			// Determine canvas file name
+			let fileName = canvasFileName.trim();
+			if (!fileName) {
+				fileName = `Family Tree - ${rootPersonField.name}`;
+			}
+			if (!fileName.endsWith('.canvas')) {
+				fileName += '.canvas';
+			}
+
+			// Create canvas file
+			const canvasContent = JSON.stringify(canvasData, null, 2);
+			const filePath = `${fileName}`;
+
+			let file: TFile;
+			const existingFile = this.app.vault.getAbstractFileByPath(filePath);
+			if (existingFile instanceof TFile) {
+				// Update existing file
+				await this.app.vault.modify(existingFile, canvasContent);
+				file = existingFile;
+				new Notice(`Updated existing canvas: ${fileName}`);
+			} else {
+				// Create new file
+				file = await this.app.vault.create(filePath, canvasContent);
+				new Notice(`Created canvas: ${fileName}`);
+			}
+
+			// Open the canvas file
+			const leaf = this.app.workspace.getLeaf(false);
+			await leaf.openFile(file);
+
+			new Notice('Family tree generated successfully!');
+			this.close();
+		} catch (error) {
+			console.error('Error generating tree:', error);
+			new Notice(`Error generating tree: ${error.message}`);
+		}
 	}
 
 	/**
@@ -253,7 +939,234 @@ export class ControlCenterModal extends Modal {
 	 * Show Advanced tab
 	 */
 	private showAdvancedTab(): void {
-		this.showPlaceholderTab('advanced');
+		const container = this.contentContainer;
+
+		// Logging Card
+		const loggingCard = this.createCard({
+			title: 'Logging',
+			icon: 'file-text'
+		});
+
+		const loggingContent = loggingCard.querySelector('.crc-card__content') as HTMLElement;
+
+		// Log Level Selector
+		const logLevelGroup = loggingContent.createDiv({ cls: 'crc-form-group' });
+		logLevelGroup.createEl('label', {
+			text: 'Log Level',
+			cls: 'crc-form-label'
+		});
+
+		const logLevelSelect = logLevelGroup.createEl('select', {
+			cls: 'crc-form-input'
+		});
+
+		const logLevels: LogLevel[] = ['off', 'error', 'warn', 'info', 'debug'];
+		logLevels.forEach(level => {
+			const option = logLevelSelect.createEl('option', {
+				text: level.toUpperCase(),
+				value: level
+			});
+			if (level === LoggerFactory.getLogLevel()) {
+				option.selected = true;
+			}
+		});
+
+		logLevelSelect.addEventListener('change', () => {
+			const newLevel = logLevelSelect.value as LogLevel;
+			LoggerFactory.setLogLevel(newLevel);
+			logger.info('settings', 'Log level changed from Control Center', {
+				level: newLevel
+			});
+			new Notice(`Log level set to ${newLevel.toUpperCase()}`);
+		});
+
+		const helpText = logLevelGroup.createEl('div', {
+			cls: 'crc-form-help'
+		});
+		helpText.createEl('p', {
+			text: 'Controls console output verbosity. Logs are always collected for export.'
+		});
+
+		// Export Path Display
+		const exportPathGroup = loggingContent.createDiv({ cls: 'crc-form-group crc-mt-4' });
+		exportPathGroup.createEl('label', {
+			text: 'Export Directory',
+			cls: 'crc-form-label'
+		});
+
+		const exportPathDisplay = exportPathGroup.createEl('div', {
+			cls: 'crc-input-with-button'
+		});
+
+		const pathInput = exportPathDisplay.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'text',
+				readonly: 'true',
+				placeholder: 'No directory selected (will prompt on export)'
+			}
+		});
+
+		if (this.plugin.settings.logExportPath) {
+			pathInput.value = this.plugin.settings.logExportPath;
+		}
+
+		const changePathBtn = exportPathDisplay.createEl('button', {
+			text: 'Change',
+			cls: 'crc-btn crc-btn--secondary crc-input-button'
+		});
+
+		changePathBtn.addEventListener('click', async () => {
+			try {
+				// Access Electron dialog (Obsidian provides this via require)
+				const { remote } = require('electron');
+				const result = await remote.dialog.showOpenDialog({
+					properties: ['openDirectory', 'createDirectory'],
+					title: 'Select Log Export Directory',
+					buttonLabel: 'Select Directory'
+				});
+
+				if (!result.canceled && result.filePaths && result.filePaths.length > 0) {
+					this.plugin.settings.logExportPath = result.filePaths[0];
+					await this.plugin.saveSettings();
+					pathInput.value = result.filePaths[0];
+					logger.info('settings', 'Log export path changed', { path: result.filePaths[0] });
+					new Notice('Export directory updated');
+				}
+			} catch (error) {
+				console.error('Error selecting directory:', error);
+				new Notice('Could not open directory picker');
+			}
+		});
+
+		// Log Statistics
+		const statsGroup = loggingContent.createDiv({ cls: 'crc-form-group crc-mt-4' });
+		const logs = LoggerFactory.getLogs();
+		const logCount = logs.length;
+		const errorCount = logs.filter(l => l.level === 'error').length;
+		const warnCount = logs.filter(l => l.level === 'warn').length;
+
+		statsGroup.createEl('p', {
+			text: `Total logs collected: ${logCount}`,
+			cls: 'crc-text-muted'
+		});
+		statsGroup.createEl('p', {
+			text: `Errors: ${errorCount} | Warnings: ${warnCount}`,
+			cls: 'crc-text-muted'
+		});
+
+		// Export and Clear Buttons
+		const buttonGroup = loggingContent.createDiv({
+			cls: 'crc-form-group crc-mt-4'
+		});
+		buttonGroup.setAttr('style', 'display: flex; gap: 8px;');
+
+		const exportButton = buttonGroup.createEl('button', {
+			text: 'Export Logs',
+			cls: 'crc-btn crc-btn--primary'
+		});
+		const exportIcon = createLucideIcon('download', 16);
+		exportButton.prepend(exportIcon);
+
+		exportButton.addEventListener('click', () => {
+			this.handleExportLogs();
+		});
+
+		const clearButton = buttonGroup.createEl('button', {
+			text: 'Clear Logs',
+			cls: 'crc-btn crc-btn--secondary'
+		});
+		const clearIcon = createLucideIcon('trash', 16);
+		clearButton.prepend(clearIcon);
+
+		clearButton.addEventListener('click', () => {
+			LoggerFactory.clearLogs();
+			logger.info('maintenance', 'Logs cleared from Control Center');
+			new Notice('Logs cleared');
+			this.showAdvancedTab(); // Refresh the tab
+		});
+
+		container.appendChild(loggingCard);
+
+		// Debug Card
+		const debugCard = this.createCard({
+			title: 'Debug Information',
+			icon: 'info'
+		});
+
+		const debugContent = debugCard.querySelector('.crc-card__content') as HTMLElement;
+
+		debugContent.createEl('p', {
+			text: 'Plugin Version: 0.1.0',
+			cls: 'crc-text-muted'
+		});
+
+		debugContent.createEl('p', {
+			text: `Obsidian Version: ${this.app.vault.getName()}`,
+			cls: 'crc-text-muted'
+		});
+
+		container.appendChild(debugCard);
+	}
+
+	/**
+	 * Export logs to a file
+	 */
+	private async handleExportLogs(): Promise<void> {
+		try {
+			logger.info('export', 'Exporting logs from Control Center');
+
+			const now = new Date();
+			const pad = (n: number) => n.toString().padStart(2, '0');
+			const filename = `canvas-roots-logs-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.json`;
+
+			const logs = LoggerFactory.getLogs();
+			const logData = JSON.stringify(logs, null, 2);
+
+			// Prompt for directory if not set
+			let exportDir = this.plugin.settings.logExportPath;
+
+			if (!exportDir) {
+				// Use Electron's dialog to select directory
+				const { remote } = require('electron');
+				const result = await remote.dialog.showOpenDialog({
+					properties: ['openDirectory', 'createDirectory'],
+					title: 'Select Log Export Directory',
+					buttonLabel: 'Select Directory'
+				});
+
+				if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+					new Notice('Log export cancelled');
+					return;
+				}
+
+				exportDir = result.filePaths[0];
+
+				// Save the selected path for future use
+				this.plugin.settings.logExportPath = exportDir;
+				await this.plugin.saveSettings();
+
+				logger.info('settings', 'Log export path saved', { path: exportDir });
+			}
+
+			const exportPath = require('path').join(exportDir, filename);
+
+			// Use Node.js fs to write to the selected path
+			const fs = require('fs');
+			fs.writeFileSync(exportPath, logData, 'utf-8');
+
+			logger.info('export', 'Logs exported successfully', {
+				filename,
+				path: exportPath,
+				logCount: logs.length
+			});
+
+			new Notice(`Logs exported to ${filename}`);
+		} catch (error) {
+			console.error('Error exporting logs:', error);
+			logger.error('export', 'Failed to export logs', error);
+			new Notice(`Error exporting logs: ${error.message}`);
+		}
 	}
 
 	/**
@@ -317,5 +1230,112 @@ export class ControlCenterModal extends Modal {
 		card.createDiv({ cls: 'crc-card__content' });
 
 		return card;
+	}
+
+	/**
+	 * Create a relationship field with link button
+	 */
+	private createRelationshipField(
+		container: HTMLElement,
+		label: string,
+		placeholder: string,
+		fieldData: RelationshipField
+	): { input: HTMLInputElement; linkBtn: HTMLButtonElement } {
+		const group = container.createDiv({ cls: 'crc-form-group' });
+		group.createDiv({ cls: 'crc-form-label', text: label });
+
+		// Input container with button
+		const inputContainer = group.createDiv({ cls: 'crc-input-with-button' });
+
+		const input = inputContainer.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'text',
+				placeholder: placeholder,
+				readonly: true
+			}
+		});
+
+		const linkBtn = inputContainer.createEl('button', {
+			cls: 'crc-btn crc-btn--secondary crc-input-button',
+			attr: {
+				type: 'button'
+			}
+		});
+		const linkIcon = createLucideIcon('link', 16);
+		linkBtn.appendChild(linkIcon);
+		linkBtn.appendText('Link');
+
+		// Help text
+		const helpText = group.createDiv({ cls: 'crc-form-help' });
+		this.updateHelpText(helpText, fieldData);
+
+		// Link button handler
+		linkBtn.addEventListener('click', () => {
+			const picker = new PersonPickerModal(this.app, (person: PersonInfo) => {
+				fieldData.name = person.name;
+				fieldData.crId = person.crId;
+				input.value = person.name;
+				input.addClass('crc-input--linked');
+				linkBtn.textContent = '';
+				const unlinkIcon = createLucideIcon('unlink', 16);
+				linkBtn.appendChild(unlinkIcon);
+				linkBtn.appendText('Unlink');
+				this.updateHelpText(helpText, fieldData);
+			});
+			picker.open();
+		});
+
+		return { input, linkBtn };
+	}
+
+	/**
+	 * Update help text for relationship field
+	 */
+	private updateHelpText(helpEl: HTMLElement, fieldData: RelationshipField): void {
+		helpEl.empty();
+		if (fieldData.crId) {
+			helpEl.appendText('Linked to: ');
+			const badge = helpEl.createEl('code', {
+				text: fieldData.crId,
+				cls: 'crc-help-badge'
+			});
+		} else {
+			helpEl.appendText('Click "Link" to select a person from your vault');
+		}
+	}
+
+	/**
+	 * Setup unlink functionality for a relationship field
+	 */
+	private setupUnlinkButton(
+		input: HTMLInputElement,
+		button: HTMLButtonElement,
+		fieldData: RelationshipField,
+		helpEl: HTMLElement
+	): void {
+		button.addEventListener('click', () => {
+			if (fieldData.crId) {
+				// Unlink
+				fieldData.name = '';
+				fieldData.crId = undefined;
+				input.value = '';
+				input.removeClass('crc-input--linked');
+				button.textContent = '';
+				const linkIcon = createLucideIcon('link', 16);
+				button.appendChild(linkIcon);
+				button.appendText('Link');
+				this.updateHelpText(helpEl, fieldData);
+			}
+		});
+	}
+
+	/**
+	 * Clear all relationship fields
+	 */
+	private clearRelationshipFields(): void {
+		this.fatherField = { name: '' };
+		this.motherField = { name: '' };
+		this.spouseField = { name: '' };
 	}
 }

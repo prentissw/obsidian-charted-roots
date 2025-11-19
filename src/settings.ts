@@ -8,6 +8,8 @@ export interface CanvasRootsSettings {
 	verticalSpacing: number;
 	gedcomImportMode: 'canvas-only' | 'vault-sync';
 	autoGenerateCrId: boolean;
+	peopleFolder: string;
+	logExportPath: string;
 }
 
 export const DEFAULT_SETTINGS: CanvasRootsSettings = {
@@ -16,7 +18,9 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	horizontalSpacing: 50,
 	verticalSpacing: 100,
 	gedcomImportMode: 'canvas-only',
-	autoGenerateCrId: true
+	autoGenerateCrId: true,
+	peopleFolder: '',
+	logExportPath: ''
 };
 
 export class CanvasRootsSettingTab extends PluginSettingTab {
@@ -95,6 +99,17 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 
 		// Data Settings
 		containerEl.createEl('h3', { text: 'Data Settings' });
+
+		new Setting(containerEl)
+			.setName('People Folder')
+			.setDesc('Folder path for person notes (leave empty for vault root)')
+			.addText(text => text
+				.setPlaceholder('People')
+				.setValue(this.plugin.settings.peopleFolder)
+				.onChange(async (value) => {
+					this.plugin.settings.peopleFolder = value;
+					await this.plugin.saveSettings();
+				}));
 
 		new Setting(containerEl)
 			.setName('Auto-generate CR ID')
