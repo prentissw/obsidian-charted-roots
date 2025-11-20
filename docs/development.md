@@ -131,7 +131,7 @@ canvas-roots/
 
 | Component | Status | Purpose |
 |-----------|--------|---------|
-| `control-center.ts` | 🟡 Partial | Main Control Center modal (skeleton complete) |
+| `control-center.ts` | ✅ Complete | Main Control Center modal with Status, Tree Generation, Quick Actions, and Data Entry tabs |
 | `person-picker.ts` | ✅ Complete | Person search modal with fuzzy matching |
 | `lucide-icons.ts` | ✅ Complete | Lucide icon integration helpers |
 | **To Be Implemented** | | |
@@ -155,10 +155,9 @@ canvas-roots/
 | Command | Status | Purpose |
 |---------|--------|---------|
 | Open Control Center | ✅ Complete | Opens main Control Center modal |
-| Export Logs | ✅ Complete | Exports structured logs to JSON |
+| Generate Tree for Current Note | 🟡 Partial | Opens Control Center to Tree Generation tab (stub implementation) |
+| Re-Layout Canvas | 🟡 Partial | Placeholder for recalculating layout (stub implementation) |
 | **To Be Implemented** | | |
-| Generate Tree to Canvas | 🔴 Needed | Generates family tree to Canvas file |
-| Re-Layout Canvas | 🔴 Needed | Recalculates layout for existing Canvas |
 | Open Tree View | 🔴 Needed | Opens D3 preview for collection/tree |
 | Create Person Note | 🔴 Needed | Quick person note creation |
 
@@ -167,6 +166,17 @@ canvas-roots/
 | Menu Item | Status | Trigger | Purpose |
 |-----------|--------|---------|---------|
 | "Generate Family Tree" | ✅ Complete | Right-click on person note | Opens Control Center with person pre-selected as tree root |
+
+### Control Center Tabs
+
+| Tab | Status | Purpose |
+|-----|--------|---------|
+| Status | ✅ Complete | Displays vault statistics (people, relationships, health metrics) |
+| Tree Generation | ✅ Complete | Full tree generation UI with layout options and canvas export |
+| Quick Actions | ✅ Complete | Shortcuts to common operations (generate tree, re-layout, create person) |
+| Data Entry | ✅ Complete | Person note creation with relationship fields |
+| **To Be Implemented** | | |
+| Collections | 🔴 Needed | Browse and manage family collections and trees |
 
 ### Planned Features (See specification.md)
 
