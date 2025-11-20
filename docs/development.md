@@ -24,48 +24,23 @@ npm run lint && npm run lint:css
 
 See [Coding Standards](docs/developer/coding-standards.md) for detailed style guidelines.
 
-## Deployment to Obsidian Vault
+## Manual Deployment to Obsidian Vault
 
-### Quick Deploy
-Deploy the built plugin to your Obsidian vault:
+To deploy the plugin to your Obsidian vault for testing:
 
-```bash
-npm run deploy
-```
+1. Build the plugin:
+   ```bash
+   npm run build
+   ```
 
-This will:
-1. Build the plugin (`npm run build`)
-2. Copy `main.js`, `manifest.json`, and `styles.css` to your vault's plugin directory
-3. You'll need to reload Obsidian to see changes (Ctrl+R or Cmd+R)
+2. Manually copy the built files to your vault's plugin directory:
+   ```bash
+   cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/canvas-roots/
+   ```
 
-### Development with Auto-Deploy
-For active development with automatic deployment on file changes:
+3. Reload Obsidian (Ctrl+R or Cmd+R) to see changes
 
-```bash
-npm run dev:deploy
-```
-
-**Note:** This requires `inotify-tools` to be installed:
-```bash
-sudo apt-get install inotify-tools
-```
-
-The script will:
-- Watch for TypeScript file changes
-- Automatically rebuild
-- Auto-deploy to vault
-- Show build status and timestamp
-
-### Vault Path Configuration
-
-The deployment scripts target:
-```
-/mnt/d/Vaults/Banister/.obsidian/plugins/canvas-roots
-```
-
-To change this, edit the `VAULT_PATH` variable in:
-- [deploy.sh](../deploy.sh)
-- [dev-deploy.sh](../dev-deploy.sh)
+**Note:** You can create custom deploy scripts if needed. The package.json references `deploy.sh` and `dev-deploy.sh` scripts that are not currently in the repository
 
 ## Project Structure
 
@@ -232,17 +207,20 @@ When contributing or implementing features, follow this order:
 
 ## Testing in Obsidian
 
-1. Build and deploy the plugin: `npm run deploy`
-2. Open Obsidian
-3. Go to Settings → Community plugins
-4. Enable "Canvas Roots"
-5. The plugin commands will be available in the Command Palette (Ctrl/Cmd+P):
+1. Build the plugin: `npm run build`
+2. Copy built files to your vault's plugin directory (see Manual Deployment section above)
+3. Open Obsidian
+4. Go to Settings → Community plugins
+5. Enable "Canvas Roots"
+6. The plugin commands will be available in the Command Palette (Ctrl/Cmd+P):
+   - "Canvas Roots: Open Control Center"
    - "Canvas Roots: Generate Tree for Current Note"
    - "Canvas Roots: Re-Layout Current Canvas"
+   - "Canvas Roots: Create Person Note"
 
 ### Reloading After Changes
 
-After deploying changes, reload Obsidian:
+After copying changes to your vault, reload Obsidian:
 - **Quick reload**: Press Ctrl+R (Windows/Linux) or Cmd+R (Mac)
 - **Full reload**: Settings → Community plugins → Toggle plugin off/on
 
@@ -252,7 +230,7 @@ For instant plugin reloading without restarting Obsidian:
 
 1. Install the [Hot Reload](https://github.com/pjeby/hot-reload) plugin
 2. It will automatically detect changes to `main.js` in your vault's plugin directory
-3. Use `npm run dev:deploy` to build and deploy on file changes
+3. After running `npm run build`, copy the files to your vault
 4. Hot Reload will automatically reload the plugin
 
 ## Context Menu Implementation
