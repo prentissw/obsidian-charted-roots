@@ -127,8 +127,10 @@ export class CanvasGenerator {
 			});
 		}
 
-		// Add spouse nodes that weren't in the hierarchical layout
+		// Add nodes that appear in edges but weren't positioned by the layout engine
 		const spouseSpacing = opts.nodeWidth + (opts.nodeSpacingX * 0.3); // 30% of horizontal spacing
+
+		// First pass: add spouse nodes next to their positioned partners
 		for (const edge of familyTree.edges) {
 			if (edge.type === 'spouse') {
 				const fromPos = nodeMap.get(edge.from);
@@ -136,7 +138,6 @@ export class CanvasGenerator {
 
 				// If one spouse is positioned but the other isn't, add the missing spouse
 				if (fromPos && !toPos) {
-					// Add 'to' spouse next to 'from'
 					const spouse = familyTree.nodes.get(edge.to);
 					if (spouse) {
 						const canvasId = this.generateId();
@@ -156,7 +157,6 @@ export class CanvasGenerator {
 						});
 					}
 				} else if (toPos && !fromPos) {
-					// Add 'from' spouse next to 'to'
 					const spouse = familyTree.nodes.get(edge.from);
 					if (spouse) {
 						const canvasId = this.generateId();
@@ -174,6 +174,54 @@ export class CanvasGenerator {
 							height: opts.nodeHeight,
 							color: opts.colorByGender ? this.getPersonColor(spouse) : undefined
 						});
+					}
+				} else if (!fromPos && !toPos) {
+					// Both spouses are missing - find a child to position relative to
+					const spouse1 = familyTree.nodes.get(edge.from);
+					const spouse2 = familyTree.nodes.get(edge.to);
+					if (spouse1 && spouse2) {
+						let childPos: { x: number; y: number } | undefined;
+						for (const childEdge of familyTree.edges) {
+							if (childEdge.type === 'parent' &&
+								(childEdge.from === edge.from || childEdge.from === edge.to)) {
+								childPos = nodeMap.get(childEdge.to);
+								if (childPos) break;
+							}
+						}
+
+						if (childPos) {
+							// Position parents above child
+							const parent1Pos = { x: childPos.x - spouseSpacing / 2, y: childPos.y - opts.nodeSpacingY };
+							const parent2Pos = { x: childPos.x + spouseSpacing / 2, y: childPos.y - opts.nodeSpacingY };
+
+							const canvasId1 = this.generateId();
+							crIdToCanvasId.set(edge.from, canvasId1);
+							nodeMap.set(edge.from, parent1Pos);
+							canvasNodes.push({
+								id: canvasId1,
+								type: 'file',
+								file: spouse1.file.path,
+								x: parent1Pos.x,
+								y: parent1Pos.y,
+								width: opts.nodeWidth,
+								height: opts.nodeHeight,
+								color: opts.colorByGender ? this.getPersonColor(spouse1) : undefined
+							});
+
+							const canvasId2 = this.generateId();
+							crIdToCanvasId.set(edge.to, canvasId2);
+							nodeMap.set(edge.to, parent2Pos);
+							canvasNodes.push({
+								id: canvasId2,
+								type: 'file',
+								file: spouse2.file.path,
+								x: parent2Pos.x,
+								y: parent2Pos.y,
+								width: opts.nodeWidth,
+								height: opts.nodeHeight,
+								color: opts.colorByGender ? this.getPersonColor(spouse2) : undefined
+							});
+						}
 					}
 				}
 			}

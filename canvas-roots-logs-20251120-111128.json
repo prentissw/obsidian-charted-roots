@@ -1,326 +1,326 @@
 [
   {
-    "timestamp": "2025-11-20T19:00:08.974Z",
+    "timestamp": "2025-11-20T19:09:32.753Z",
     "level": "info",
     "component": "ControlCenter",
     "category": "gedcom",
     "message": "Starting GEDCOM import: gedcom-sample.ged"
   },
   {
-    "timestamp": "2025-11-20T19:00:08.997Z",
+    "timestamp": "2025-11-20T19:09:32.769Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "relationships",
     "message": "Processing - fatherCrId: I8, motherCrId: I9, spouseCrId: I2"
   },
   {
-    "timestamp": "2025-11-20T19:00:08.998Z",
+    "timestamp": "2025-11-20T19:09:32.769Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "father",
     "message": "Added (dual): wikilink=Thomas Smith, id=I8"
   },
   {
-    "timestamp": "2025-11-20T19:00:08.998Z",
+    "timestamp": "2025-11-20T19:09:32.769Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "mother",
     "message": "Added (dual): wikilink=Elizabeth Brown, id=I9"
   },
   {
-    "timestamp": "2025-11-20T19:00:08.998Z",
+    "timestamp": "2025-11-20T19:09:32.769Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "spouse",
     "message": "Added (dual): wikilinks=[\"Mary Johnson\"], ids=[\"I2\"]"
   },
   {
-    "timestamp": "2025-11-20T19:00:08.998Z",
+    "timestamp": "2025-11-20T19:09:32.769Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "frontmatter",
-    "message": "Final: {\"cr_id\":\"fka-352-utf-053\",\"name\":\"John Smith\",\"born\":\"1950-03-15\",\"died\":\"2020-07-22\",\"father\":\"\\\"[[Thomas Smith]]\\\"\",\"father_id\":\"I8\",\"mother\":\"\\\"[[Elizabeth Brown]]\\\"\",\"mother_id\":\"I9\",\"spouse\":\"\\\"[[Mary Johnson]]\\\"\",\"spouse_id\":\"I2\"}"
+    "message": "Final: {\"cr_id\":\"kwd-135-yfj-695\",\"name\":\"John Smith\",\"born\":\"1950-03-15\",\"died\":\"2020-07-22\",\"father\":\"\\\"[[Thomas Smith]]\\\"\",\"father_id\":\"I8\",\"mother\":\"\\\"[[Elizabeth Brown]]\\\"\",\"mother_id\":\"I9\",\"spouse\":\"\\\"[[Mary Johnson]]\\\"\",\"spouse_id\":\"I2\"}"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.011Z",
+    "timestamp": "2025-11-20T19:09:32.778Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "relationships",
     "message": "Processing - fatherCrId: I10, motherCrId: I11, spouseCrId: I1"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.011Z",
+    "timestamp": "2025-11-20T19:09:32.778Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "father",
     "message": "Added (dual): wikilink=James Johnson, id=I10"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.011Z",
+    "timestamp": "2025-11-20T19:09:32.778Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "mother",
     "message": "Added (dual): wikilink=Margaret Davis, id=I11"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.011Z",
+    "timestamp": "2025-11-20T19:09:32.778Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "spouse",
     "message": "Added (dual): wikilinks=[\"John Smith\"], ids=[\"I1\"]"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.011Z",
+    "timestamp": "2025-11-20T19:09:32.778Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "frontmatter",
-    "message": "Final: {\"cr_id\":\"axp-508-aiq-475\",\"name\":\"Mary Johnson\",\"born\":\"1952-06-08\",\"father\":\"\\\"[[James Johnson]]\\\"\",\"father_id\":\"I10\",\"mother\":\"\\\"[[Margaret Davis]]\\\"\",\"mother_id\":\"I11\",\"spouse\":\"\\\"[[John Smith]]\\\"\",\"spouse_id\":\"I1\"}"
+    "message": "Final: {\"cr_id\":\"kbn-873-znu-664\",\"name\":\"Mary Johnson\",\"born\":\"1952-06-08\",\"father\":\"\\\"[[James Johnson]]\\\"\",\"father_id\":\"I10\",\"mother\":\"\\\"[[Margaret Davis]]\\\"\",\"mother_id\":\"I11\",\"spouse\":\"\\\"[[John Smith]]\\\"\",\"spouse_id\":\"I1\"}"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.038Z",
+    "timestamp": "2025-11-20T19:09:32.804Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "relationships",
     "message": "Processing - fatherCrId: I1, motherCrId: I2, spouseCrId: I5"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.038Z",
+    "timestamp": "2025-11-20T19:09:32.804Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "father",
     "message": "Added (dual): wikilink=John Smith, id=I1"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.038Z",
+    "timestamp": "2025-11-20T19:09:32.804Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "mother",
     "message": "Added (dual): wikilink=Mary Johnson, id=I2"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.038Z",
+    "timestamp": "2025-11-20T19:09:32.804Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "spouse",
     "message": "Added (dual): wikilinks=[\"Sarah Williams\"], ids=[\"I5\"]"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.038Z",
+    "timestamp": "2025-11-20T19:09:32.804Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "frontmatter",
-    "message": "Final: {\"cr_id\":\"xfw-036-vpt-070\",\"name\":\"Robert Smith\",\"born\":\"1975-04-12\",\"father\":\"\\\"[[John Smith]]\\\"\",\"father_id\":\"I1\",\"mother\":\"\\\"[[Mary Johnson]]\\\"\",\"mother_id\":\"I2\",\"spouse\":\"\\\"[[Sarah Williams]]\\\"\",\"spouse_id\":\"I5\"}"
+    "message": "Final: {\"cr_id\":\"avh-207-jhb-487\",\"name\":\"Robert Smith\",\"born\":\"1975-04-12\",\"father\":\"\\\"[[John Smith]]\\\"\",\"father_id\":\"I1\",\"mother\":\"\\\"[[Mary Johnson]]\\\"\",\"mother_id\":\"I2\",\"spouse\":\"\\\"[[Sarah Williams]]\\\"\",\"spouse_id\":\"I5\"}"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.053Z",
+    "timestamp": "2025-11-20T19:09:32.825Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "relationships",
     "message": "Processing - fatherCrId: I1, motherCrId: I2, spouseCrId: undefined"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.053Z",
+    "timestamp": "2025-11-20T19:09:32.825Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "father",
     "message": "Added (dual): wikilink=John Smith, id=I1"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.053Z",
+    "timestamp": "2025-11-20T19:09:32.825Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "mother",
     "message": "Added (dual): wikilink=Mary Johnson, id=I2"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.053Z",
+    "timestamp": "2025-11-20T19:09:32.825Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "frontmatter",
-    "message": "Final: {\"cr_id\":\"tws-534-rnj-346\",\"name\":\"Jennifer Smith\",\"born\":\"1978-09-03\",\"father\":\"\\\"[[John Smith]]\\\"\",\"father_id\":\"I1\",\"mother\":\"\\\"[[Mary Johnson]]\\\"\",\"mother_id\":\"I2\"}"
+    "message": "Final: {\"cr_id\":\"kbf-779-bvn-354\",\"name\":\"Jennifer Smith\",\"born\":\"1978-09-03\",\"father\":\"\\\"[[John Smith]]\\\"\",\"father_id\":\"I1\",\"mother\":\"\\\"[[Mary Johnson]]\\\"\",\"mother_id\":\"I2\"}"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.073Z",
+    "timestamp": "2025-11-20T19:09:32.842Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "relationships",
     "message": "Processing - fatherCrId: undefined, motherCrId: undefined, spouseCrId: I3"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.073Z",
+    "timestamp": "2025-11-20T19:09:32.842Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "spouse",
     "message": "Added (dual): wikilinks=[\"Robert Smith\"], ids=[\"I3\"]"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.073Z",
+    "timestamp": "2025-11-20T19:09:32.842Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "frontmatter",
-    "message": "Final: {\"cr_id\":\"tac-127-pkf-548\",\"name\":\"Sarah Williams\",\"born\":\"1977-11-22\",\"spouse\":\"\\\"[[Robert Smith]]\\\"\",\"spouse_id\":\"I3\"}"
+    "message": "Final: {\"cr_id\":\"twk-567-lre-180\",\"name\":\"Sarah Williams\",\"born\":\"1977-11-22\",\"spouse\":\"\\\"[[Robert Smith]]\\\"\",\"spouse_id\":\"I3\"}"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.090Z",
+    "timestamp": "2025-11-20T19:09:32.861Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "relationships",
     "message": "Processing - fatherCrId: I3, motherCrId: I5, spouseCrId: undefined"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.090Z",
+    "timestamp": "2025-11-20T19:09:32.861Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "father",
     "message": "Added (dual): wikilink=Robert Smith, id=I3"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.090Z",
+    "timestamp": "2025-11-20T19:09:32.861Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "mother",
     "message": "Added (dual): wikilink=Sarah Williams, id=I5"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.090Z",
+    "timestamp": "2025-11-20T19:09:32.861Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "frontmatter",
-    "message": "Final: {\"cr_id\":\"kan-560-coj-866\",\"name\":\"Emily Smith\",\"born\":\"2005-01-05\",\"father\":\"\\\"[[Robert Smith]]\\\"\",\"father_id\":\"I3\",\"mother\":\"\\\"[[Sarah Williams]]\\\"\",\"mother_id\":\"I5\"}"
+    "message": "Final: {\"cr_id\":\"ywd-698-djm-900\",\"name\":\"Emily Smith\",\"born\":\"2005-01-05\",\"father\":\"\\\"[[Robert Smith]]\\\"\",\"father_id\":\"I3\",\"mother\":\"\\\"[[Sarah Williams]]\\\"\",\"mother_id\":\"I5\"}"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.110Z",
+    "timestamp": "2025-11-20T19:09:32.882Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "relationships",
     "message": "Processing - fatherCrId: I3, motherCrId: I5, spouseCrId: undefined"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.110Z",
+    "timestamp": "2025-11-20T19:09:32.882Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "father",
     "message": "Added (dual): wikilink=Robert Smith, id=I3"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.110Z",
+    "timestamp": "2025-11-20T19:09:32.882Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "mother",
     "message": "Added (dual): wikilink=Sarah Williams, id=I5"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.110Z",
+    "timestamp": "2025-11-20T19:09:32.882Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "frontmatter",
-    "message": "Final: {\"cr_id\":\"bsh-935-sir-876\",\"name\":\"Michael Smith\",\"born\":\"2008-08-18\",\"father\":\"\\\"[[Robert Smith]]\\\"\",\"father_id\":\"I3\",\"mother\":\"\\\"[[Sarah Williams]]\\\"\",\"mother_id\":\"I5\"}"
+    "message": "Final: {\"cr_id\":\"wni-567-hbn-479\",\"name\":\"Michael Smith\",\"born\":\"2008-08-18\",\"father\":\"\\\"[[Robert Smith]]\\\"\",\"father_id\":\"I3\",\"mother\":\"\\\"[[Sarah Williams]]\\\"\",\"mother_id\":\"I5\"}"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.125Z",
+    "timestamp": "2025-11-20T19:09:32.950Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "relationships",
     "message": "Processing - fatherCrId: undefined, motherCrId: undefined, spouseCrId: I9"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.125Z",
+    "timestamp": "2025-11-20T19:09:32.950Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "spouse",
     "message": "Added (dual): wikilinks=[\"Elizabeth Brown\"], ids=[\"I9\"]"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.125Z",
+    "timestamp": "2025-11-20T19:09:32.950Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "frontmatter",
-    "message": "Final: {\"cr_id\":\"tvd-578-qen-957\",\"name\":\"Thomas Smith\",\"born\":\"1920-02-05\",\"died\":\"1995-11-14\",\"spouse\":\"\\\"[[Elizabeth Brown]]\\\"\",\"spouse_id\":\"I9\"}"
+    "message": "Final: {\"cr_id\":\"qxj-091-bwo-167\",\"name\":\"Thomas Smith\",\"born\":\"1920-02-05\",\"died\":\"1995-11-14\",\"spouse\":\"\\\"[[Elizabeth Brown]]\\\"\",\"spouse_id\":\"I9\"}"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.202Z",
+    "timestamp": "2025-11-20T19:09:32.968Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "relationships",
     "message": "Processing - fatherCrId: undefined, motherCrId: undefined, spouseCrId: I8"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.202Z",
+    "timestamp": "2025-11-20T19:09:32.968Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "spouse",
     "message": "Added (dual): wikilinks=[\"Thomas Smith\"], ids=[\"I8\"]"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.202Z",
+    "timestamp": "2025-11-20T19:09:32.968Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "frontmatter",
-    "message": "Final: {\"cr_id\":\"yca-459-zsi-212\",\"name\":\"Elizabeth Brown\",\"born\":\"1925-05-12\",\"died\":\"2010-03-08\",\"spouse\":\"\\\"[[Thomas Smith]]\\\"\",\"spouse_id\":\"I8\"}"
+    "message": "Final: {\"cr_id\":\"xte-356-tne-775\",\"name\":\"Elizabeth Brown\",\"born\":\"1925-05-12\",\"died\":\"2010-03-08\",\"spouse\":\"\\\"[[Thomas Smith]]\\\"\",\"spouse_id\":\"I8\"}"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.221Z",
+    "timestamp": "2025-11-20T19:09:32.988Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "relationships",
     "message": "Processing - fatherCrId: undefined, motherCrId: undefined, spouseCrId: I11"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.221Z",
+    "timestamp": "2025-11-20T19:09:32.988Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "spouse",
     "message": "Added (dual): wikilinks=[\"Margaret Davis\"], ids=[\"I11\"]"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.221Z",
+    "timestamp": "2025-11-20T19:09:32.988Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "frontmatter",
-    "message": "Final: {\"cr_id\":\"wiw-560-ldf-839\",\"name\":\"James Johnson\",\"born\":\"1922-09-28\",\"died\":\"1998-01-03\",\"spouse\":\"\\\"[[Margaret Davis]]\\\"\",\"spouse_id\":\"I11\"}"
+    "message": "Final: {\"cr_id\":\"zjx-173-qof-932\",\"name\":\"James Johnson\",\"born\":\"1922-09-28\",\"died\":\"1998-01-03\",\"spouse\":\"\\\"[[Margaret Davis]]\\\"\",\"spouse_id\":\"I11\"}"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.238Z",
+    "timestamp": "2025-11-20T19:09:33.000Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "relationships",
     "message": "Processing - fatherCrId: undefined, motherCrId: undefined, spouseCrId: I10"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.238Z",
+    "timestamp": "2025-11-20T19:09:33.000Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "spouse",
     "message": "Added (dual): wikilinks=[\"James Johnson\"], ids=[\"I10\"]"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.238Z",
+    "timestamp": "2025-11-20T19:09:33.000Z",
     "level": "debug",
     "component": "PersonNoteWriter",
     "category": "frontmatter",
-    "message": "Final: {\"cr_id\":\"qza-065-srf-374\",\"name\":\"Margaret Davis\",\"born\":\"1928-12-14\",\"spouse\":\"\\\"[[James Johnson]]\\\"\",\"spouse_id\":\"I10\"}"
+    "message": "Final: {\"cr_id\":\"vir-505-ihn-923\",\"name\":\"Margaret Davis\",\"born\":\"1928-12-14\",\"spouse\":\"\\\"[[James Johnson]]\\\"\",\"spouse_id\":\"I10\"}"
   },
   {
-    "timestamp": "2025-11-20T19:00:09.433Z",
+    "timestamp": "2025-11-20T19:09:33.181Z",
     "level": "info",
     "component": "ControlCenter",
     "category": "gedcom",
     "message": "Import complete: 11 individuals processed"
   },
   {
-    "timestamp": "2025-11-20T19:00:20.065Z",
+    "timestamp": "2025-11-20T19:09:51.451Z",
     "level": "info",
     "component": "ControlCenter",
     "category": "tree-generation",
     "message": "Starting tree generation",
     "data": {
-      "rootCrId": "wiw-560-ldf-839",
+      "rootCrId": "zjx-173-qof-932",
       "treeType": "full",
       "maxGenerations": 5
     }
   },
   {
-    "timestamp": "2025-11-20T19:00:20.067Z",
+    "timestamp": "2025-11-20T19:09:51.452Z",
     "level": "info",
     "component": "FamilyGraph",
     "category": "generate-tree",
@@ -328,29 +328,29 @@
     "data": {
       "totalPeople": 11,
       "cacheIds": [
-        "qza-065-srf-374",
-        "wiw-560-ldf-839",
-        "yca-459-zsi-212",
-        "tvd-578-qen-957",
-        "bsh-935-sir-876",
-        "kan-560-coj-866",
-        "tac-127-pkf-548",
-        "tws-534-rnj-346",
-        "xfw-036-vpt-070",
-        "axp-508-aiq-475",
-        "fka-352-utf-053"
+        "vir-505-ihn-923",
+        "zjx-173-qof-932",
+        "xte-356-tne-775",
+        "qxj-091-bwo-167",
+        "wni-567-hbn-479",
+        "ywd-698-djm-900",
+        "twk-567-lre-180",
+        "kbf-779-bvn-354",
+        "avh-207-jhb-487",
+        "kbn-873-znu-664",
+        "kwd-135-yfj-695"
       ]
     }
   },
   {
-    "timestamp": "2025-11-20T19:00:20.067Z",
+    "timestamp": "2025-11-20T19:09:51.453Z",
     "level": "info",
     "component": "FamilyGraph",
     "category": "generate-tree",
     "message": "Root person found",
     "data": {
       "name": "James Johnson",
-      "crId": "wiw-560-ldf-839",
+      "crId": "zjx-173-qof-932",
       "hasFather": false,
       "hasMother": false,
       "fatherCrId": null,
@@ -358,21 +358,21 @@
     }
   },
   {
-    "timestamp": "2025-11-20T19:00:20.067Z",
+    "timestamp": "2025-11-20T19:09:51.453Z",
     "level": "info",
     "component": "FamilyGraph",
     "category": "build-tree",
     "message": "Building full tree"
   },
   {
-    "timestamp": "2025-11-20T19:00:20.067Z",
+    "timestamp": "2025-11-20T19:09:51.453Z",
     "level": "info",
     "component": "FamilyGraph",
     "category": "build-tree",
     "message": "Tree construction complete",
     "data": {
-      "nodeCount": 9,
-      "edgeCount": 8,
+      "nodeCount": 11,
+      "edgeCount": 28,
       "nodes": [
         "James Johnson",
         "Margaret Davis",
@@ -380,6 +380,8 @@
         "John Smith",
         "Jennifer Smith",
         "Robert Smith",
+        "Thomas Smith",
+        "Elizabeth Brown",
         "Sarah Williams",
         "Michael Smith",
         "Emily Smith"
@@ -387,76 +389,90 @@
     }
   },
   {
-    "timestamp": "2025-11-20T19:00:20.067Z",
+    "timestamp": "2025-11-20T19:09:51.453Z",
     "level": "info",
     "component": "ControlCenter",
     "category": "tree-generation",
     "message": "Family tree generated",
     "data": {
       "rootPerson": "James Johnson",
-      "rootCrId": "wiw-560-ldf-839",
-      "totalNodes": 9,
-      "totalEdges": 8,
+      "rootCrId": "zjx-173-qof-932",
+      "totalNodes": 11,
+      "totalEdges": 28,
       "nodeList": [
         {
           "name": "James Johnson",
-          "crId": "wiw-560-ldf-839",
+          "crId": "zjx-173-qof-932",
           "hasFather": false,
           "hasMother": false,
           "childrenCount": 1
         },
         {
           "name": "Margaret Davis",
-          "crId": "qza-065-srf-374",
+          "crId": "vir-505-ihn-923",
           "hasFather": false,
           "hasMother": false,
           "childrenCount": 1
         },
         {
           "name": "Mary Johnson",
-          "crId": "axp-508-aiq-475",
+          "crId": "kbn-873-znu-664",
           "hasFather": true,
           "hasMother": true,
           "childrenCount": 2
         },
         {
           "name": "John Smith",
-          "crId": "fka-352-utf-053",
+          "crId": "kwd-135-yfj-695",
           "hasFather": true,
           "hasMother": true,
           "childrenCount": 2
         },
         {
           "name": "Jennifer Smith",
-          "crId": "tws-534-rnj-346",
+          "crId": "kbf-779-bvn-354",
           "hasFather": true,
           "hasMother": true,
           "childrenCount": 0
         },
         {
           "name": "Robert Smith",
-          "crId": "xfw-036-vpt-070",
+          "crId": "avh-207-jhb-487",
           "hasFather": true,
           "hasMother": true,
           "childrenCount": 2
         },
         {
+          "name": "Thomas Smith",
+          "crId": "qxj-091-bwo-167",
+          "hasFather": false,
+          "hasMother": false,
+          "childrenCount": 1
+        },
+        {
+          "name": "Elizabeth Brown",
+          "crId": "xte-356-tne-775",
+          "hasFather": false,
+          "hasMother": false,
+          "childrenCount": 1
+        },
+        {
           "name": "Sarah Williams",
-          "crId": "tac-127-pkf-548",
+          "crId": "twk-567-lre-180",
           "hasFather": false,
           "hasMother": false,
           "childrenCount": 2
         },
         {
           "name": "Michael Smith",
-          "crId": "bsh-935-sir-876",
+          "crId": "wni-567-hbn-479",
           "hasFather": true,
           "hasMother": true,
           "childrenCount": 0
         },
         {
           "name": "Emily Smith",
-          "crId": "kan-560-coj-866",
+          "crId": "ywd-698-djm-900",
           "hasFather": true,
           "hasMother": true,
           "childrenCount": 0
@@ -474,6 +490,21 @@
           "type": "child"
         },
         {
+          "from": "Margaret Davis",
+          "to": "Mary Johnson",
+          "type": "child"
+        },
+        {
+          "from": "James Johnson",
+          "to": "Mary Johnson",
+          "type": "parent"
+        },
+        {
+          "from": "Margaret Davis",
+          "to": "Mary Johnson",
+          "type": "parent"
+        },
+        {
           "from": "Mary Johnson",
           "to": "John Smith",
           "type": "spouse"
@@ -489,6 +520,51 @@
           "type": "child"
         },
         {
+          "from": "Thomas Smith",
+          "to": "John Smith",
+          "type": "parent"
+        },
+        {
+          "from": "Elizabeth Brown",
+          "to": "John Smith",
+          "type": "parent"
+        },
+        {
+          "from": "Thomas Smith",
+          "to": "Elizabeth Brown",
+          "type": "spouse"
+        },
+        {
+          "from": "John Smith",
+          "to": "Jennifer Smith",
+          "type": "child"
+        },
+        {
+          "from": "John Smith",
+          "to": "Robert Smith",
+          "type": "child"
+        },
+        {
+          "from": "John Smith",
+          "to": "Jennifer Smith",
+          "type": "parent"
+        },
+        {
+          "from": "Mary Johnson",
+          "to": "Jennifer Smith",
+          "type": "parent"
+        },
+        {
+          "from": "John Smith",
+          "to": "Robert Smith",
+          "type": "parent"
+        },
+        {
+          "from": "Mary Johnson",
+          "to": "Robert Smith",
+          "type": "parent"
+        },
+        {
           "from": "Robert Smith",
           "to": "Sarah Williams",
           "type": "spouse"
@@ -502,74 +578,114 @@
           "from": "Robert Smith",
           "to": "Emily Smith",
           "type": "child"
+        },
+        {
+          "from": "Thomas Smith",
+          "to": "John Smith",
+          "type": "child"
+        },
+        {
+          "from": "Elizabeth Brown",
+          "to": "John Smith",
+          "type": "child"
+        },
+        {
+          "from": "Sarah Williams",
+          "to": "Michael Smith",
+          "type": "child"
+        },
+        {
+          "from": "Sarah Williams",
+          "to": "Emily Smith",
+          "type": "child"
+        },
+        {
+          "from": "Robert Smith",
+          "to": "Michael Smith",
+          "type": "parent"
+        },
+        {
+          "from": "Sarah Williams",
+          "to": "Michael Smith",
+          "type": "parent"
+        },
+        {
+          "from": "Robert Smith",
+          "to": "Emily Smith",
+          "type": "parent"
+        },
+        {
+          "from": "Sarah Williams",
+          "to": "Emily Smith",
+          "type": "parent"
         }
       ]
     }
   },
   {
-    "timestamp": "2025-11-20T19:00:20.068Z",
+    "timestamp": "2025-11-20T19:09:51.454Z",
     "level": "info",
     "component": "ControlCenter",
     "category": "canvas-generation",
     "message": "Canvas data generated",
     "data": {
       "nodeCount": 9,
-      "edgeCount": 8,
+      "edgeCount": 23,
       "canvasNodes": [
         {
-          "id": "gqz7j11qnr92hzw8f1p3jx",
+          "id": "7iozbyq0w8qbwamb0wpv2q",
           "file": "Canvas Roots Testing/James Johnson.md"
         },
         {
-          "id": "9i8a5gh168sn2dvsgse81",
+          "id": "c8ytbusbyzocatmyc1hzc",
           "file": "Canvas Roots Testing/Mary Johnson.md"
         },
         {
-          "id": "f6lyi6gog57ahzdetzp24m",
+          "id": "wdb1qprt1881ptiif94ppf",
           "file": "Canvas Roots Testing/Jennifer Smith.md"
         },
         {
-          "id": "xhxviq6yxni09n7860z0lg7",
+          "id": "qhy3a1hpe0bomwd12rh2jt",
           "file": "Canvas Roots Testing/Robert Smith.md"
         },
         {
-          "id": "mqwwagjwl6duyt7ncfu67c",
+          "id": "raicq4x2y3imuatcb09nqc",
           "file": "Canvas Roots Testing/Michael Smith.md"
         },
         {
-          "id": "nmpxaeh4s50wo8g5ehr4f",
+          "id": "4kefk52kgd7mza6ae4mw89",
           "file": "Canvas Roots Testing/Emily Smith.md"
         },
         {
-          "id": "kjrqzokzpfsrvyhkt3dsy",
+          "id": "55rko4qlmuxf60zbt02eck",
           "file": "Canvas Roots Testing/Margaret Davis.md"
         },
         {
-          "id": "a30a18a2vlfte0oj4xk47",
+          "id": "hzngxg6kzf83ca90ymt1tg",
           "file": "Canvas Roots Testing/John Smith.md"
         },
         {
-          "id": "hyhwuz6prozk4lseugur",
+          "id": "atmzz3le6r71jdcefhpd6p",
           "file": "Canvas Roots Testing/Sarah Williams.md"
         }
       ]
     }
   },
   {
-    "timestamp": "2025-11-20T19:00:20.068Z",
+    "timestamp": "2025-11-20T19:09:51.454Z",
     "level": "info",
     "component": "ControlCenter",
     "category": "canvas-generation",
     "message": "Canvas JSON content to write",
     "data": {
-      "contentLength": 3234,
-      "contentPreview": "{\n\t\"nodes\":[\n\t\t{\"id\":\"gqz7j11qnr92hzw8f1p3jx\",\"type\":\"file\",\"file\":\"Canvas Roots Testing/James Johnson.md\",\"x\":0,\"y\":0,\"width\":250,\"height\":120,\"color\":\"2\"},\n\t\t{\"id\":\"9i8a5gh168sn2dvsgse81\",\"type\":\"file\",\"file\":\"Canvas Roots Testing/Mary Johnson.md\",\"x\":0,\"y\":200,\"width\":250,\"height\":120,\"color\":\"2\"},\n\t\t{\"id\":\"f6lyi6gog57ahzdetzp24m\",\"type\":\"file\",\"file\":\"Canvas Roots Testing/Jennifer Smith.md\",\"x\":-150,\"y\":400,\"width\":250,\"height\":120,\"color\":\"2\"},\n\t\t{\"id\":\"xhxviq6yxni09n7860z0lg7\",\"type\":\"file",
+      "contentLength": 6670,
+      "contentPreview": "{\n\t\"nodes\":[\n\t\t{\"id\":\"7iozbyq0w8qbwamb0wpv2q\",\"type\":\"file\",\"file\":\"Canvas Roots Testing/James Johnson.md\",\"x\":0,\"y\":0,\"width\":250,\"height\":120,\"color\":\"2\"},\n\t\t{\"id\":\"c8ytbusbyzocatmyc1hzc\",\"type\":\"file\",\"file\":\"Canvas Roots Testing/Mary Johnson.md\",\"x\":0,\"y\":200,\"width\":250,\"height\":120,\"color\":\"2\"},\n\t\t{\"id\":\"wdb1qprt1881ptiif94ppf\",\"type\":\"file\",\"file\":\"Canvas Roots Testing/Jennifer Smith.md\",\"x\":-150,\"y\":400,\"width\":250,\"height\":120,\"color\":\"2\"},\n\t\t{\"id\":\"qhy3a1hpe0bomwd12rh2jt\",\"type\":\"file\"",
       "hasNodes": true,
       "hasEdges": true
     }
   },
   {
-    "timestamp": "2025-11-20T19:03:07.081Z",
+    "timestamp": "2025-11-20T19:11:28.357Z",
     "level": "info",
     "component": "ControlCenter",
     "category": "export",
