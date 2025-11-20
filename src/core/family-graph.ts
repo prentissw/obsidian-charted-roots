@@ -228,7 +228,7 @@ export class FamilyGraphService {
 	}
 
 	/**
-	 * Builds full family tree (ancestors + descendants)
+	 * Builds full family tree (complete connected network including in-laws)
 	 */
 	private buildFullTree(
 		node: PersonNode,
@@ -236,11 +236,86 @@ export class FamilyGraphService {
 		edges: FamilyEdge[],
 		options: TreeOptions
 	): void {
-		// Build ancestors from root
-		this.buildAncestorTree(node, nodes, edges, options, 0);
+		const visited = new Set<string>();
+		const toProcess: string[] = [node.crId];
 
-		// Build descendants from root
-		this.buildDescendantTree(node, nodes, edges, options, 0);
+		// Process all connected people using breadth-first traversal
+		while (toProcess.length > 0) {
+			const currentCrId = toProcess.shift()!;
+
+			if (visited.has(currentCrId)) {
+				continue;
+			}
+
+			visited.add(currentCrId);
+			const currentPerson = this.personCache.get(currentCrId);
+
+			if (!currentPerson) {
+				continue;
+			}
+
+			// Add current person to tree
+			nodes.set(currentCrId, currentPerson);
+
+			// Add edges and queue related people
+
+			// Parents
+			if (currentPerson.fatherCrId) {
+				const father = this.personCache.get(currentPerson.fatherCrId);
+				if (father) {
+					edges.push({ from: father.crId, to: currentCrId, type: 'parent' });
+					toProcess.push(father.crId);
+				}
+			}
+
+			if (currentPerson.motherCrId) {
+				const mother = this.personCache.get(currentPerson.motherCrId);
+				if (mother) {
+					edges.push({ from: mother.crId, to: currentCrId, type: 'parent' });
+					toProcess.push(mother.crId);
+				}
+			}
+
+			// Spouse edges between parents (avoid duplicates)
+			if (currentPerson.fatherCrId && currentPerson.motherCrId && options.includeSpouses) {
+				const father = this.personCache.get(currentPerson.fatherCrId);
+				const mother = this.personCache.get(currentPerson.motherCrId);
+				if (father && mother) {
+					if (!edges.some(e =>
+						(e.from === father.crId && e.to === mother.crId && e.type === 'spouse') ||
+						(e.from === mother.crId && e.to === father.crId && e.type === 'spouse')
+					)) {
+						edges.push({ from: father.crId, to: mother.crId, type: 'spouse' });
+					}
+				}
+			}
+
+			// Spouses
+			if (options.includeSpouses) {
+				for (const spouseCrId of currentPerson.spouseCrIds) {
+					const spouse = this.personCache.get(spouseCrId);
+					if (spouse) {
+						// Add spouse edge (avoid duplicates)
+						if (!edges.some(e =>
+							(e.from === currentCrId && e.to === spouseCrId && e.type === 'spouse') ||
+							(e.from === spouseCrId && e.to === currentCrId && e.type === 'spouse')
+						)) {
+							edges.push({ from: currentCrId, to: spouseCrId, type: 'spouse' });
+						}
+						toProcess.push(spouseCrId);
+					}
+				}
+			}
+
+			// Children
+			for (const childCrId of currentPerson.childrenCrIds) {
+				const child = this.personCache.get(childCrId);
+				if (child) {
+					edges.push({ from: currentCrId, to: childCrId, type: 'child' });
+					toProcess.push(childCrId);
+				}
+			}
+		}
 	}
 
 	/**
