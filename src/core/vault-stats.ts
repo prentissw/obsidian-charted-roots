@@ -151,9 +151,9 @@ export class VaultStatsService {
 				hasCrId: true,
 				hasBirthDate: !!(fm.born || fm.birth_date),
 				hasDeathDate: !!(fm.died || fm.death_date),
-				hasFather: !!fm.father,
-				hasMother: !!fm.mother,
-				spouseCount: this.getSpouseCount(fm.spouse)
+				hasFather: !!(fm.father || fm.father_id),
+				hasMother: !!(fm.mother || fm.mother_id),
+				spouseCount: this.getSpouseCount(fm.spouse || fm.spouse_id)
 			};
 		} catch (error) {
 			console.error('Error extracting person data from file:', file.path, error);
