@@ -7,7 +7,6 @@ export interface CanvasRootsSettings {
 	defaultNodeHeight: number;
 	horizontalSpacing: number;
 	verticalSpacing: number;
-	gedcomImportMode: 'canvas-only' | 'vault-sync';
 	autoGenerateCrId: boolean;
 	peopleFolder: string;
 	logExportPath: string;
@@ -19,7 +18,6 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	defaultNodeHeight: 100,
 	horizontalSpacing: 50,
 	verticalSpacing: 100,
-	gedcomImportMode: 'canvas-only',
 	autoGenerateCrId: true,
 	peopleFolder: '',
 	logExportPath: '',
@@ -123,23 +121,6 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.autoGenerateCrId)
 				.onChange(async (value) => {
 					this.plugin.settings.autoGenerateCrId = value;
-					await this.plugin.saveSettings();
-				}));
-
-		// GEDCOM import
-		new Setting(containerEl)
-			.setName('GEDCOM import')
-			.setHeading();
-
-		new Setting(containerEl)
-			.setName('Default import mode')
-			.setDesc('Canvas-only: quick visualization. Vault-sync: create notes for all individuals.')
-			.addDropdown(dropdown => dropdown
-				.addOption('canvas-only', 'Canvas Visualization Only')
-				.addOption('vault-sync', 'Full Vault Synchronization')
-				.setValue(this.plugin.settings.gedcomImportMode)
-				.onChange(async (value: 'canvas-only' | 'vault-sync') => {
-					this.plugin.settings.gedcomImportMode = value;
 					await this.plugin.saveSettings();
 				}));
 

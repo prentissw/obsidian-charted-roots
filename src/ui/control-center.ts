@@ -1178,12 +1178,9 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Handle GEDCOM file import
 	 */
-	private async handleGedcomImport(
-		file: File,
-		mode: 'canvas-only' | 'vault-sync'
-	): Promise<void> {
+	private async handleGedcomImport(file: File): Promise<void> {
 		try {
-			logger.info('gedcom', `Starting GEDCOM import: ${file.name}, mode: ${mode}`);
+			logger.info('gedcom', `Starting GEDCOM import: ${file.name}`);
 
 			// Read file content
 			const content = await file.text();
@@ -1191,9 +1188,9 @@ export class ControlCenterModal extends Modal {
 			// Create importer
 			const importer = new GedcomImporter(this.app);
 
-			// Import with options
+			// Import with vault-sync mode (always create notes)
 			const result = await importer.importFile(content, {
-				mode,
+				mode: 'vault-sync',
 				peopleFolder: this.plugin.settings.peopleFolder,
 				overwriteExisting: false
 			});
@@ -1207,18 +1204,12 @@ export class ControlCenterModal extends Modal {
 			}
 
 			// Show summary
-			if (mode === 'vault-sync') {
-				new Notice(
-					`GEDCOM imported: ${result.notesCreated} notes created, ${result.errors.length} errors`
-				);
-			} else {
-				new Notice(
-					`GEDCOM parsed: ${result.individualsProcessed} individuals ready for visualization`
-				);
-			}
+			new Notice(
+				`GEDCOM imported: ${result.notesCreated} notes created, ${result.errors.length} errors`
+			);
 
-			// Refresh status tab if we're in vault-sync mode
-			if (mode === 'vault-sync' && result.notesCreated > 0) {
+			// Refresh status tab
+			if (result.notesCreated > 0) {
 				this.showTab('status');
 			}
 		} catch (error) {
@@ -1241,30 +1232,9 @@ export class ControlCenterModal extends Modal {
 
 		const importContent = importCard.querySelector('.crc-card__content') as HTMLElement;
 
-		// Import mode selection
-		const modeGroup = importContent.createDiv({ cls: 'crc-form-group' });
-		modeGroup.createEl('label', {
-			cls: 'crc-form-label',
-			text: 'Import mode'
-		});
-
-		const modeSelect = modeGroup.createEl('select', { cls: 'crc-form-input' });
-		[
-			{ value: 'vault-sync', label: 'Full vault synchronization' },
-			{ value: 'canvas-only', label: 'Canvas visualization only' }
-		].forEach(option => {
-			const opt = modeSelect.createEl('option', {
-				value: option.value,
-				text: option.label
-			});
-			if (option.value === this.plugin.settings.gedcomImportMode) {
-				opt.selected = true;
-			}
-		});
-
-		modeGroup.createDiv({
-			cls: 'crc-form-help',
-			text: 'Vault sync creates person notes for all individuals'
+		importContent.createEl('p', {
+			text: 'Import creates person notes for all individuals in your GEDCOM file',
+			cls: 'crc-text-muted crc-mb-4'
 		});
 
 		// File selection button
@@ -1292,10 +1262,7 @@ export class ControlCenterModal extends Modal {
 			const target = event.target as HTMLInputElement;
 			const file = target.files?.[0];
 			if (file) {
-				await this.handleGedcomImport(
-					file,
-					modeSelect.value as 'canvas-only' | 'vault-sync'
-				);
+				await this.handleGedcomImport(file);
 			}
 		});
 
