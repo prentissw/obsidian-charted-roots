@@ -8,6 +8,7 @@ import { FamilyGraphService, TreeOptions } from '../core/family-graph';
 import { CanvasGenerator, CanvasData, LayoutOptions } from '../core/canvas-generator';
 import { getLogger, LoggerFactory, type LogLevel } from '../core/logging';
 import { GedcomImporter } from '../gedcom/gedcom-importer';
+import { BidirectionalLinker } from '../core/bidirectional-linker';
 
 const logger = getLogger('ControlCenter');
 
@@ -729,6 +730,10 @@ export class ControlCenterModal extends Modal {
 				directory: this.plugin.settings.peopleFolder || '',
 				openAfterCreate: openNote
 			});
+
+			// Sync bidirectional relationships
+			const bidirectionalLinker = new BidirectionalLinker(this.app);
+			await bidirectionalLinker.syncRelationships(file);
 
 			// Show success message
 			new Notice(`✅ Created person note: ${file.basename}`);
