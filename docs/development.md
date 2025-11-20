@@ -77,8 +77,9 @@ canvas-roots/
 ├── src/
 │   ├── settings.ts            # Plugin settings interface
 │   ├── core/                  # Core business logic
-│   │   ├── canvas-generator.ts   # Canvas file generation (partial)
-│   │   ├── family-graph.ts       # Relationship graph builder (partial)
+│   │   ├── canvas-generator.ts   # Canvas JSON generation from positioned nodes ✓
+│   │   ├── family-graph.ts       # Relationship graph builder ✓
+│   │   ├── layout-engine.ts      # D3.js hierarchy layout calculations ✓
 │   │   ├── logging.ts            # Structured logging system ✓
 │   │   ├── person-note-writer.ts # Person note creation ✓
 │   │   ├── uuid.ts               # UUID generation ✓
@@ -117,15 +118,15 @@ canvas-roots/
 | Component | Status | Purpose |
 |-----------|--------|---------|
 | `bidirectional-linker.ts` | ✅ Complete | Automatic relationship synchronization with dual storage |
-| `canvas-generator.ts` | ✅ Complete | Writes family trees to `.canvas` files with metadata |
+| `canvas-generator.ts` | ✅ Complete | Converts positioned nodes to Canvas JSON format with styling |
 | `family-graph.ts` | ✅ Complete | Builds relationship graphs from person notes with dual storage support |
+| `layout-engine.ts` | ✅ Complete | D3.js hierarchy layout calculations for family trees |
 | `logging.ts` | ✅ Complete | Structured logging with export capability and persistent log level settings |
 | `person-note-writer.ts` | ✅ Complete | Creates person notes with YAML frontmatter |
 | `uuid.ts` | ✅ Complete | UUID v4 generation for `cr_id` fields |
 | `vault-stats.ts` | ✅ Complete | Calculates vault-wide statistics |
 | **To Be Implemented** | | |
 | `collection-manager.ts` | 🔴 Needed | Auto-discovers collections, manages trees |
-| `layout-engine.ts` | 🔴 Needed | D3 layout calculations (currently in canvas-generator) |
 
 ### UI Components (src/ui/)
 
@@ -212,23 +213,19 @@ When contributing or implementing features, follow this order:
    - Collection code generation
    - Tree detection (disconnected graphs)
 
-3. **Layout Engine** (src/core/layout-engine.ts)
-   - Extract D3 logic from canvas-generator
-   - Implement tree layout algorithms
-   - Support multiple layout options
+3. **Re-Layout Command** (complete in main.ts)
+   - Read existing Canvas JSON
+   - Extract nodes and their linked files
+   - Use LayoutEngine to recalculate positions
+   - Update and write back Canvas JSON
 
-4. **Canvas Generation** (complete src/core/canvas-generator.ts)
-   - Write Canvas JSON with metadata
-   - Support collection/tree context
-   - Re-layout existing Canvas files
-
-5. **Control Center Tabs**
+4. **Control Center Tabs**
    - Collections tab (list collections, trees)
-   - Status tab (vault statistics)
-   - Quick Actions tab (generate, re-layout)
-   - Data Entry tab (create person notes)
+   - Status tab (vault statistics) ✅
+   - Quick Actions tab (generate, re-layout) ✅
+   - Data Entry tab (create person notes) ✅
 
-6. **Tree View** (src/ui/tree-view.ts)
+5. **Tree View** (src/ui/tree-view.ts)
    - D3 SVG rendering
    - Interactive preview
    - Export to Canvas
@@ -376,6 +373,29 @@ Example:
 **Fixed in:** gedcom-importer.ts lines 208-246 (2025-11-20)
 
 ## Design Decisions
+
+### Layout Engine Extraction (2025-11-20)
+
+**Decision:** Extracted D3.js layout calculation logic from canvas-generator.ts into a dedicated LayoutEngine class.
+
+**Rationale:**
+- Separation of concerns: layout calculation vs. canvas JSON generation are distinct responsibilities
+- Reusability: LayoutEngine can be used independently for the re-layout command
+- Testability: Layout logic can be tested without canvas generation dependencies
+- Clarity: Each module has a single, well-defined purpose
+
+**Implementation:**
+- Created [src/core/layout-engine.ts](../src/core/layout-engine.ts) with LayoutEngine class
+- Defined LayoutOptions interface for configuration (spacing, direction, tree type)
+- Created CanvasGenerationOptions extending LayoutOptions with canvas-specific options (colorByGender, showLabels)
+- Refactored CanvasGenerator to use LayoutEngine as a service
+- Removed 98 lines of embedded layout logic from canvas-generator.ts
+
+**Impact:**
+- Cleaner architecture with better module boundaries
+- Layout engine ready for re-layout command implementation
+- Easier to maintain and extend layout algorithms
+- Canvas generator now focuses purely on JSON format conversion
 
 ### Canvas-Only Mode Removal (2025-11-20)
 
