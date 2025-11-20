@@ -362,7 +362,102 @@ export class ControlCenterModal extends Modal {
 	 * Show Quick Actions tab
 	 */
 	private showQuickActionsTab(): void {
-		this.showPlaceholderTab('quick-actions');
+		const container = this.contentContainer;
+
+		// Tree Operations Card
+		const treeOpsCard = this.createCard({
+			title: 'Tree operations',
+			icon: 'git-branch'
+		});
+
+		const treeOpsContent = treeOpsCard.querySelector('.crc-card__content') as HTMLElement;
+
+		// Generate tree for current note button
+		const generateCurrentBtn = treeOpsContent.createEl('button', {
+			cls: 'crc-btn crc-btn--primary crc-btn--block',
+			text: 'Generate tree for current note'
+		});
+		const generateIcon = createLucideIcon('git-branch', 16);
+		generateCurrentBtn.prepend(generateIcon);
+		generateCurrentBtn.addEventListener('click', () => {
+			this.switchTab('tree-generation');
+		});
+		treeOpsContent.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'Create a family tree centered on the currently active person note'
+		});
+
+		// Re-layout current canvas button
+		const relayoutBtn = treeOpsContent.createEl('button', {
+			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-2',
+			text: 'Re-layout current canvas'
+		});
+		const relayoutIcon = createLucideIcon('refresh-cw', 16);
+		relayoutBtn.prepend(relayoutIcon);
+		relayoutBtn.addEventListener('click', () => {
+			new Notice('⚠️ Re-layout functionality coming in Phase 2');
+		});
+		treeOpsContent.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'Recalculate layout for the currently open canvas file'
+		});
+
+		container.appendChild(treeOpsCard);
+
+		// Person Management Card
+		const personMgmtCard = this.createCard({
+			title: 'Person management',
+			icon: 'users'
+		});
+
+		const personMgmtContent = personMgmtCard.querySelector('.crc-card__content') as HTMLElement;
+
+		// Create new person button
+		const createPersonBtn = personMgmtContent.createEl('button', {
+			cls: 'crc-btn crc-btn--primary crc-btn--block',
+			text: 'Create new person note'
+		});
+		const createPersonIcon = createLucideIcon('user-plus', 16);
+		createPersonBtn.prepend(createPersonIcon);
+		createPersonBtn.addEventListener('click', () => {
+			this.switchTab('data-entry');
+		});
+		personMgmtContent.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'Open the data entry form to create a new person'
+		});
+
+		// Open person detail panel button
+		const detailPanelBtn = personMgmtContent.createEl('button', {
+			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-2',
+			text: 'Open person detail panel'
+		});
+		const detailIcon = createLucideIcon('user', 16);
+		detailPanelBtn.prepend(detailIcon);
+		detailPanelBtn.addEventListener('click', () => {
+			new Notice('⚠️ Person detail panel coming in Phase 4');
+		});
+		personMgmtContent.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'View and edit person details in a side panel'
+		});
+
+		// Validate relationships button
+		const validateBtn = personMgmtContent.createEl('button', {
+			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-2',
+			text: 'Validate all relationships'
+		});
+		const validateIcon = createLucideIcon('check', 16);
+		validateBtn.prepend(validateIcon);
+		validateBtn.addEventListener('click', () => {
+			new Notice('⚠️ Relationship validation coming soon');
+		});
+		personMgmtContent.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'Check for broken links and missing cr_id values'
+		});
+
+		container.appendChild(personMgmtCard);
 	}
 
 	/**
