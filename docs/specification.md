@@ -3216,23 +3216,31 @@ When obfuscation is applied, optionally generate a JSON mapping file for reversi
 
 #### 6.1.1 Data Structure
 
-**Enhanced Format with Metadata:**
+**Enhanced Format with Metadata (Flat, Indexed Properties):**
+
+Uses numbered properties that are fully compatible with Obsidian's Properties panel and Obsidian Bases:
 
 ```yaml
-spouses:
-  - person: "[[Jane Doe]]"
-    person_id: "jane-cr-id-123"        # Dual storage for stability
-    marriage_date: "1985-06-15"
-    divorce_date: "1992-03-20"
-    marriage_status: divorced           # divorced, widowed, current, separated, annulled
-    marriage_location: "Boston, MA"
-    marriage_order: 1                   # Explicit ordering for layout
-  - person: "[[Mary Johnson]]"
-    person_id: "mary-cr-id-456"
-    marriage_date: "1995-08-10"
-    marriage_status: current
-    marriage_location: "Seattle, WA"
-    marriage_order: 2
+# First spouse
+spouse1: "[[Jane Doe]]"
+spouse1_id: "jane-cr-id-123"
+spouse1_marriage_date: "1985-06-15"
+spouse1_divorce_date: "1992-03-20"
+spouse1_marriage_status: divorced
+spouse1_marriage_location: "Boston, MA"
+
+# Second spouse
+spouse2: "[[Mary Johnson]]"
+spouse2_id: "mary-cr-id-456"
+spouse2_marriage_date: "1995-08-10"
+spouse2_marriage_status: current
+spouse2_marriage_location: "Seattle, WA"
+
+# Third spouse (if applicable)
+spouse3: "[[Sarah Williams]]"
+spouse3_id: "sarah-cr-id-789"
+spouse3_marriage_date: "2005-03-22"
+spouse3_marriage_status: widowed
 ```
 
 **Legacy Format (Backward Compatible):**
@@ -3247,25 +3255,31 @@ spouse: ["[[Jane Doe]]", "[[Mary Johnson]]"]
 spouse_id: ["jane-cr-id-123", "mary-cr-id-456"]
 ```
 
+**Why Flat Indexed Format:**
+
+- ✅ **Obsidian Properties Panel:** Users can edit all fields directly in Obsidian's UI
+- ✅ **Obsidian Bases Compatible:** Works seamlessly with table-based editing
+- ✅ **Future-proof:** Uses only officially supported YAML structures
+- ✅ **Human-readable:** Clear numbering shows marriage order at a glance
+
 **Field Descriptions:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `person` | Wikilink | Yes | Link to spouse's person note |
-| `person_id` | String (UUID) | Yes | Spouse's `cr_id` for stable identification |
-| `marriage_date` | Date | No | Date of marriage (flexible format per §6.4) |
-| `divorce_date` | Date | No | Date of divorce/separation if applicable |
-| `marriage_status` | Enum | No | Current status: `divorced`, `widowed`, `current`, `separated`, `annulled` |
-| `marriage_location` | String | No | Place of marriage (can be wikilink to location note) |
-| `marriage_order` | Integer | No | Explicit ordering (1, 2, 3...). If omitted, determined by marriage_date |
+| Field Pattern | Type | Required | Description |
+|---------------|------|----------|-------------|
+| `spouseN` | Wikilink | Yes | Link to Nth spouse's person note (N = 1, 2, 3...) |
+| `spouseN_id` | String (UUID) | Yes | Spouse's `cr_id` for stable identification |
+| `spouseN_marriage_date` | Date | No | Date of marriage (flexible format per §6.4) |
+| `spouseN_divorce_date` | Date | No | Date of divorce/separation if applicable |
+| `spouseN_marriage_status` | Enum | No | Current status: `divorced`, `widowed`, `current`, `separated`, `annulled` |
+| `spouseN_marriage_location` | String | No | Place of marriage (can be wikilink to location note) |
 
 #### 6.1.2 Backward Compatibility
 
 **Detection Logic:**
 
-The system detects which format is used:
+The system detects which format is used by scanning frontmatter properties:
 
-1. **If `spouses` field exists:** Use enhanced format with metadata
+1. **If `spouse1` field exists:** Use enhanced flat indexed format with metadata
 2. **If `spouse` or `spouse_id` exists:** Use legacy format (simple array)
 3. **Parsing priority:** Enhanced format takes precedence if both exist
 
@@ -3274,18 +3288,19 @@ The system detects which format is used:
 Users can migrate from legacy to enhanced format at their own pace:
 
 ```yaml
-# Before migration
+# Before migration (legacy array format)
 spouse: ["[[Jane Doe]]", "[[Mary Johnson]]"]
 spouse_id: ["jane-cr-id-123", "mary-cr-id-456"]
 
-# After migration (add metadata gradually)
-spouses:
-  - person: "[[Jane Doe]]"
-    person_id: "jane-cr-id-123"
-    marriage_status: divorced
-  - person: "[[Mary Johnson]]"
-    person_id: "mary-cr-id-456"
-    marriage_status: current
+# After migration (enhanced flat format - add metadata gradually)
+spouse1: "[[Jane Doe]]"
+spouse1_id: "jane-cr-id-123"
+spouse1_marriage_status: divorced
+
+spouse2: "[[Mary Johnson]]"
+spouse2_id: "mary-cr-id-456"
+spouse2_marriage_status: current
+spouse2_marriage_date: "1995-08-10"
 ```
 
 **No Breaking Changes:** All existing trees continue to work without modification.
@@ -3349,21 +3364,49 @@ This helps clarify which children belong to which marriage.
 **Phase 2: Reading/Parsing**
 
 1. Update `extractPersonNode()` in `src/core/family-graph.ts`:
-   - Detect presence of `spouses` field (enhanced format)
-   - Parse spouse metadata if present
+   - Detect presence of `spouse1` field (enhanced flat indexed format)
+   - Scan for all indexed spouse properties (`spouse1`, `spouse2`, `spouse3`, etc.)
+   - Parse spouse metadata for each index
    - Fall back to `spouse`/`spouse_id` for legacy format
    - Populate both `spouseIds` (for compatibility) and `spouses` (for new features)
 
 2. Handle both formats seamlessly:
    ```typescript
-   // If enhanced format exists
-   if (fm.spouses && Array.isArray(fm.spouses)) {
-     node.spouses = parseSpouseRelationships(fm.spouses);
+   // If enhanced flat indexed format exists
+   if (fm.spouse1 || fm.spouse1_id) {
+     node.spouses = parseIndexedSpouseRelationships(fm);
      node.spouseIds = node.spouses.map(s => s.personId);
    }
    // Otherwise fall back to legacy
    else if (fm.spouse_id || fm.spouse) {
      node.spouseIds = parseLegacySpouses(fm);
+   }
+   ```
+
+3. Indexed property scanning logic:
+   ```typescript
+   function parseIndexedSpouseRelationships(fm: any): SpouseRelationship[] {
+     const spouses: SpouseRelationship[] = [];
+     let index = 1;
+
+     // Scan for spouse1, spouse2, spouse3, etc.
+     while (fm[`spouse${index}`] || fm[`spouse${index}_id`]) {
+       const personId = fm[`spouse${index}_id`] || extractCrIdFromWikilink(fm[`spouse${index}`]);
+       if (personId) {
+         spouses.push({
+           personId,
+           personLink: fm[`spouse${index}`],
+           marriageDate: fm[`spouse${index}_marriage_date`],
+           divorceDate: fm[`spouse${index}_divorce_date`],
+           marriageStatus: fm[`spouse${index}_marriage_status`],
+           marriageLocation: fm[`spouse${index}_marriage_location`],
+           marriageOrder: index  // Use index as implicit order
+         });
+       }
+       index++;
+     }
+
+     return spouses;
    }
    ```
 

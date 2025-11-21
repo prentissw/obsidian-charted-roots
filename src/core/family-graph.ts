@@ -467,13 +467,13 @@ export class FamilyGraphService {
 		const motherCrId = fm.mother_id || this.extractCrIdFromWikilink(fm.mother);
 
 		// Parse spouse relationships
-		// Priority: 1) Enhanced 'spouses' field with metadata, 2) Legacy 'spouse_id' or 'spouse' fields
+		// Priority: 1) Enhanced flat indexed format (spouse1, spouse2...), 2) Legacy 'spouse_id' or 'spouse' fields
 		let spouseCrIds: string[] = [];
 		let spouses: SpouseRelationship[] | undefined;
 
-		if (fm.spouses && Array.isArray(fm.spouses)) {
-			// Enhanced format with metadata
-			spouses = this.parseSpouseRelationships(fm.spouses);
+		if (fm.spouse1 || fm.spouse1_id) {
+			// Enhanced flat indexed format with metadata
+			spouses = this.parseIndexedSpouseRelationships(fm);
 			spouseCrIds = spouses.map(s => s.personId).filter(id => id);
 		} else {
 			// Legacy format: simple array of cr_ids or wikilinks
@@ -557,62 +557,40 @@ export class FamilyGraphService {
 	}
 
 	/**
-	 * Parses enhanced spouse relationships from frontmatter
-	 * Handles the new 'spouses' field format with metadata
+	 * Parses enhanced spouse relationships from flat indexed frontmatter properties
+	 * Scans for spouse1, spouse2, spouse3, etc. with their associated metadata fields
 	 */
-	private parseSpouseRelationships(spousesField: any[]): SpouseRelationship[] {
+	private parseIndexedSpouseRelationships(fm: any): SpouseRelationship[] {
 		const relationships: SpouseRelationship[] = [];
+		let index = 1;
 
-		for (const spouseData of spousesField) {
-			// Skip invalid entries
-			if (!spouseData || typeof spouseData !== 'object') {
-				continue;
-			}
-
+		// Scan for spouse1, spouse2, spouse3, etc.
+		while (fm[`spouse${index}`] || fm[`spouse${index}_id`]) {
 			// Extract person_id (required)
-			const personId = spouseData.person_id;
+			const personId = fm[`spouse${index}_id`] || this.extractCrIdFromWikilink(fm[`spouse${index}`]);
+
 			if (!personId) {
-				logger.warn('parseSpouseRelationships', 'Spouse entry missing person_id field, skipping');
+				logger.warn('parseIndexedSpouseRelationships', `Spouse ${index} missing person_id, skipping`);
+				index++;
 				continue;
 			}
 
-			// Extract person wikilink (optional, for display)
-			const personLink = spouseData.person || undefined;
-
-			// Build relationship object
+			// Build relationship object from indexed properties
 			const relationship: SpouseRelationship = {
 				personId,
-				personLink,
-				marriageDate: spouseData.marriage_date || undefined,
-				divorceDate: spouseData.divorce_date || undefined,
-				marriageStatus: spouseData.marriage_status || undefined,
-				marriageLocation: spouseData.marriage_location || undefined,
-				marriageOrder: spouseData.marriage_order || undefined,
+				personLink: fm[`spouse${index}`] || undefined,
+				marriageDate: fm[`spouse${index}_marriage_date`] || undefined,
+				divorceDate: fm[`spouse${index}_divorce_date`] || undefined,
+				marriageStatus: fm[`spouse${index}_marriage_status`] || undefined,
+				marriageLocation: fm[`spouse${index}_marriage_location`] || undefined,
+				marriageOrder: index, // Index naturally provides ordering
 			};
 
 			relationships.push(relationship);
+			index++;
 		}
 
-		// Sort by marriage order if available, otherwise by marriage date
-		relationships.sort((a, b) => {
-			// Primary sort: marriage_order (explicit ordering)
-			if (a.marriageOrder !== undefined && b.marriageOrder !== undefined) {
-				return a.marriageOrder - b.marriageOrder;
-			}
-			if (a.marriageOrder !== undefined) return -1;
-			if (b.marriageOrder !== undefined) return 1;
-
-			// Secondary sort: marriage_date (chronological)
-			if (a.marriageDate && b.marriageDate) {
-				return a.marriageDate.localeCompare(b.marriageDate);
-			}
-			if (a.marriageDate) return -1;
-			if (b.marriageDate) return 1;
-
-			// No ordering information, maintain original order
-			return 0;
-		});
-
+		// Already sorted by index (which represents marriage order)
 		return relationships;
 	}
 
