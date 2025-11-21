@@ -3212,27 +3212,232 @@ When obfuscation is applied, optionally generate a JSON mapping file for reversi
 
 **Requirement:** Support complex marital histories with temporal tracking
 
-**Data Structure:**
+**Status:** 🟡 In Progress (Implementation planned)
+
+#### 6.1.1 Data Structure
+
+**Enhanced Format with Metadata:**
 
 ```yaml
 spouses:
   - person: "[[Jane Doe]]"
+    person_id: "jane-cr-id-123"        # Dual storage for stability
     marriage_date: "1985-06-15"
     divorce_date: "1992-03-20"
-    marriage_status: divorced
-    marriage_location: "[[Boston, MA]]"
+    marriage_status: divorced           # divorced, widowed, current, separated, annulled
+    marriage_location: "Boston, MA"
+    marriage_order: 1                   # Explicit ordering for layout
   - person: "[[Mary Johnson]]"
+    person_id: "mary-cr-id-456"
     marriage_date: "1995-08-10"
     marriage_status: current
-    marriage_location: "[[Seattle, WA]]"
+    marriage_location: "Seattle, WA"
+    marriage_order: 2
 ```
 
-**Legacy Support:** Continue accepting `spouse: [[Link]]` format
+**Legacy Format (Backward Compatible):**
 
-**Canvas Visualization:**
-- Position multiple spouse nodes appropriately
-- Visual indicators for marriage order/status
-- Connect children to specific spousal relationships when applicable
+```yaml
+# Simple wikilink format (still supported)
+spouse: "[[Jane Doe]]"
+spouse_id: "jane-cr-id-123"
+
+# Or array format
+spouse: ["[[Jane Doe]]", "[[Mary Johnson]]"]
+spouse_id: ["jane-cr-id-123", "mary-cr-id-456"]
+```
+
+**Field Descriptions:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `person` | Wikilink | Yes | Link to spouse's person note |
+| `person_id` | String (UUID) | Yes | Spouse's `cr_id` for stable identification |
+| `marriage_date` | Date | No | Date of marriage (flexible format per §6.4) |
+| `divorce_date` | Date | No | Date of divorce/separation if applicable |
+| `marriage_status` | Enum | No | Current status: `divorced`, `widowed`, `current`, `separated`, `annulled` |
+| `marriage_location` | String | No | Place of marriage (can be wikilink to location note) |
+| `marriage_order` | Integer | No | Explicit ordering (1, 2, 3...). If omitted, determined by marriage_date |
+
+#### 6.1.2 Backward Compatibility
+
+**Detection Logic:**
+
+The system detects which format is used:
+
+1. **If `spouses` field exists:** Use enhanced format with metadata
+2. **If `spouse` or `spouse_id` exists:** Use legacy format (simple array)
+3. **Parsing priority:** Enhanced format takes precedence if both exist
+
+**Migration Path:**
+
+Users can migrate from legacy to enhanced format at their own pace:
+
+```yaml
+# Before migration
+spouse: ["[[Jane Doe]]", "[[Mary Johnson]]"]
+spouse_id: ["jane-cr-id-123", "mary-cr-id-456"]
+
+# After migration (add metadata gradually)
+spouses:
+  - person: "[[Jane Doe]]"
+    person_id: "jane-cr-id-123"
+    marriage_status: divorced
+  - person: "[[Mary Johnson]]"
+    person_id: "mary-cr-id-456"
+    marriage_status: current
+```
+
+**No Breaking Changes:** All existing trees continue to work without modification.
+
+#### 6.1.3 Canvas Visualization
+
+**Multiple Spouse Positioning:**
+
+- Spouses positioned in chronological order (marriage_order or marriage_date)
+- Visual spacing between spouse groups for clarity
+- All children connected to appropriate parental units
+
+**Visual Indicators (Future Enhancement):**
+
+- Edge styling based on marriage_status:
+  - Solid line: current marriage
+  - Dashed line: divorced
+  - Dotted line: widowed
+- Optional labels on edges showing marriage dates
+- Color coding or icons for marriage status
+
+**Child Association:**
+
+When applicable, connect children to specific spousal relationships:
+
+```yaml
+# In child's note
+father: "[[John Smith]]"
+mother: "[[Jane Doe]]"
+father_marriage_order: 1  # Child from first marriage
+```
+
+This helps clarify which children belong to which marriage.
+
+#### 6.1.4 Implementation Plan
+
+**Phase 1: Data Model Updates**
+
+1. Add `SpouseRelationship` interface to `src/models/person.ts`:
+   ```typescript
+   export interface SpouseRelationship {
+     personId: string;              // cr_id of spouse
+     personLink?: string;           // Wikilink for display
+     marriageDate?: string;         // ISO date or flexible format
+     divorceDate?: string;
+     marriageStatus?: 'current' | 'divorced' | 'widowed' | 'separated' | 'annulled';
+     marriageLocation?: string;
+     marriageOrder?: number;
+   }
+   ```
+
+2. Update `PersonNode` interface:
+   ```typescript
+   export interface PersonNode {
+     // ... existing fields
+     spouseIds: string[];                    // Legacy: simple array of cr_ids
+     spouses?: SpouseRelationship[];         // Enhanced: array with metadata
+   }
+   ```
+
+**Phase 2: Reading/Parsing**
+
+1. Update `extractPersonNode()` in `src/core/family-graph.ts`:
+   - Detect presence of `spouses` field (enhanced format)
+   - Parse spouse metadata if present
+   - Fall back to `spouse`/`spouse_id` for legacy format
+   - Populate both `spouseIds` (for compatibility) and `spouses` (for new features)
+
+2. Handle both formats seamlessly:
+   ```typescript
+   // If enhanced format exists
+   if (fm.spouses && Array.isArray(fm.spouses)) {
+     node.spouses = parseSpouseRelationships(fm.spouses);
+     node.spouseIds = node.spouses.map(s => s.personId);
+   }
+   // Otherwise fall back to legacy
+   else if (fm.spouse_id || fm.spouse) {
+     node.spouseIds = parseLegacySpouses(fm);
+   }
+   ```
+
+**Phase 3: Graph Building**
+
+1. Update family graph traversal to use spouse metadata
+2. Preserve marriage order when building tree structure
+3. Pass spouse relationships to layout engine
+
+**Phase 4: Layout Engine**
+
+1. Update `src/core/family-chart-layout.ts`:
+   - Pass spouse metadata to family-chart library
+   - Use `marriageOrder` to determine positioning sequence
+   - Handle multiple spouse nodes per person
+
+2. Layout considerations:
+   - Position spouses in order (earliest marriage first)
+   - Maintain visual clarity with appropriate spacing
+   - Connect children to correct parental pairs
+
+**Phase 5: Canvas Generation**
+
+1. Update `src/core/canvas-generator.ts`:
+   - Generate nodes for all spouses
+   - Create spouse edges with metadata
+   - Position according to layout results
+
+2. Store metadata in canvas for future re-layout:
+   ```json
+   {
+     "id": "edge-123",
+     "fromNode": "person-1",
+     "toNode": "person-2",
+     "label": "married 1985",
+     "metadata": {
+       "relationshipType": "spouse",
+       "marriageOrder": 1,
+       "marriageStatus": "divorced"
+     }
+   }
+   ```
+
+**Phase 6: GEDCOM Integration (Future)**
+
+1. Update GEDCOM importer to extract marriage metadata:
+   - FAM records contain marriage dates/locations
+   - MARR tag for marriage events
+   - DIV tag for divorce dates
+   - PLAC tag for locations
+
+2. Export spouse metadata to GEDCOM:
+   - Generate proper FAM records
+   - Include MARR/DIV events
+   - Maintain GEDCOM compatibility
+
+#### 6.1.5 Testing Strategy
+
+**Test Cases:**
+
+1. **Legacy format only:** Ensure backward compatibility
+2. **Enhanced format only:** Verify metadata parsing
+3. **Mixed formats in vault:** Both formats coexist
+4. **Multiple spouses:** Person with 3+ marriages
+5. **Divorced + remarried:** Complex marital history
+6. **Missing metadata:** Graceful degradation (marriage_date optional)
+7. **Layout correctness:** Spouse positioning follows chronological order
+
+**Test Data Files:**
+
+Create test person notes in `test-vault/`:
+- `john-smith-simple.md` - Legacy format with 2 spouses
+- `john-smith-enhanced.md` - Enhanced format with full metadata
+- `jane-doe-complex.md` - 3 marriages with mixed statuses
 
 ### 6.2 Multiple and Alternative Parent Relationships
 
