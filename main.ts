@@ -25,7 +25,7 @@ export default class CanvasRootsPlugin extends Plugin {
 		// Add command: Open Control Center
 		this.addCommand({
 			id: 'open-control-center',
-			name: 'Open Control Center',
+			name: 'Open control center',
 			callback: () => {
 				new ControlCenterModal(this.app, this).open();
 			}
@@ -34,7 +34,7 @@ export default class CanvasRootsPlugin extends Plugin {
 		// Add command: Generate Tree for Current Note
 		this.addCommand({
 			id: 'generate-tree-for-current-note',
-			name: 'Generate Tree for Current Note',
+			name: 'Generate tree for current note',
 			callback: () => {
 				this.generateTreeForCurrentNote();
 			}
@@ -43,7 +43,7 @@ export default class CanvasRootsPlugin extends Plugin {
 		// Add command: Re-Layout Current Canvas
 		this.addCommand({
 			id: 'relayout-current-canvas',
-			name: 'Re-Layout Current Canvas',
+			name: 'Re-layout current canvas',
 			callback: () => {
 				this.relayoutCurrentCanvas();
 			}
@@ -52,7 +52,7 @@ export default class CanvasRootsPlugin extends Plugin {
 		// Add command: Create Person Note
 		this.addCommand({
 			id: 'create-person-note',
-			name: 'Create Person Note',
+			name: 'Create person note',
 			callback: () => {
 				this.createPersonNote();
 			}
@@ -76,7 +76,7 @@ export default class CanvasRootsPlugin extends Plugin {
 					if (cache?.frontmatter?.cr_id) {
 						menu.addItem((item) => {
 							item
-								.setTitle('Generate Family Tree')
+								.setTitle('Generate family tree')
 								.setIcon('git-fork')
 								.onClick(async () => {
 									// Open Control Center with this person pre-selected

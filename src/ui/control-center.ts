@@ -1019,7 +1019,7 @@ export class ControlCenterModal extends Modal {
 		const container = this.contentContainer;
 
 		// Title
-		const title = container.createEl('h2', { text: 'Generate Family Tree' });
+		const title = container.createEl('h2', { text: 'Generate family tree' });
 		title.style.marginTop = '0';
 
 		// Intro text
@@ -1227,7 +1227,7 @@ export class ControlCenterModal extends Modal {
 		// Generate Button
 		const generateBtn = outputContent.createEl('button', {
 			cls: 'crc-btn crc-btn--primary crc-mt-4',
-			text: 'Generate Family Tree'
+			text: 'Generate family tree'
 		});
 		const generateIcon = createLucideIcon('play', 16);
 		generateBtn.prepend(generateIcon);
