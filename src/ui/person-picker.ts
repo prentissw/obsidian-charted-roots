@@ -320,76 +320,97 @@ export class PersonPickerModal extends Modal {
 			this.filterPeople();
 		});
 
-		// Family group tabs (only show if multiple components exist)
+		// Create main container with sidebar layout if multiple components exist
 		if (this.familyComponents.length > 1) {
-			this.createFamilyTabs(contentEl);
+			const mainContainer = contentEl.createDiv({ cls: 'crc-picker-main' });
+
+			// Family group sidebar
+			this.createFamilySidebar(mainContainer);
+
+			// Results section
+			this.resultsContainer = mainContainer.createDiv({ cls: 'crc-picker-results' });
+		} else {
+			// Results section (no sidebar for single component)
+			this.resultsContainer = contentEl.createDiv({ cls: 'crc-picker-results' });
 		}
 
-		// Results section
-		this.resultsContainer = contentEl.createDiv({ cls: 'crc-picker-results' });
 		this.renderResults();
 	}
 
 	/**
-	 * Create family group tabs
+	 * Create family group sidebar with vertical tabs
 	 */
-	private createFamilyTabs(container: HTMLElement): void {
-		this.tabsContainer = container.createDiv({ cls: 'crc-picker-tabs' });
+	private createFamilySidebar(container: HTMLElement): void {
+		this.tabsContainer = container.createDiv({ cls: 'crc-picker-sidebar' });
+
+		// Sidebar header
+		const sidebarHeader = this.tabsContainer.createDiv({ cls: 'crc-picker-sidebar__header' });
+		sidebarHeader.setText('Family groups');
+
+		// Sidebar tabs container
+		const tabsWrapper = this.tabsContainer.createDiv({ cls: 'crc-picker-sidebar__tabs' });
 
 		// "All" tab
-		const allTab = this.tabsContainer.createDiv({ cls: 'crc-picker-tab' });
+		const allTab = tabsWrapper.createDiv({ cls: 'crc-picker-sidebar-tab' });
 		if (this.activeComponentIndex === null) {
-			allTab.addClass('crc-picker-tab--active');
+			allTab.addClass('crc-picker-sidebar-tab--active');
 		}
-		allTab.setText('All');
+
+		const allTabLabel = allTab.createSpan({ cls: 'crc-picker-sidebar-tab__label' });
+		allTabLabel.setText('All families');
+
+		const allTabBadge = allTab.createSpan({ cls: 'crc-picker-sidebar-tab__badge' });
+		const totalPeople = this.familyComponents.reduce((sum, c) => sum + c.size, 0);
+		allTabBadge.setText(totalPeople.toString());
+
 		allTab.addEventListener('click', () => {
 			this.activeComponentIndex = null;
-			this.updateActiveTab();
+			this.updateActiveSidebarTab();
 			this.filterPeople();
 		});
 
 		// Individual family group tabs
 		this.familyComponents.forEach((component, index) => {
-			const tab = this.tabsContainer!.createDiv({ cls: 'crc-picker-tab' });
+			const tab = tabsWrapper.createDiv({ cls: 'crc-picker-sidebar-tab' });
 			if (this.activeComponentIndex === index) {
-				tab.addClass('crc-picker-tab--active');
+				tab.addClass('crc-picker-sidebar-tab--active');
 			}
 
-			const tabLabel = tab.createSpan({ cls: 'crc-picker-tab__label' });
+			const tabLabel = tab.createSpan({ cls: 'crc-picker-sidebar-tab__label' });
 			tabLabel.setText(`Family ${index + 1}`);
 
-			const tabBadge = tab.createSpan({ cls: 'crc-picker-tab__badge' });
+			const tabBadge = tab.createSpan({ cls: 'crc-picker-sidebar-tab__badge' });
 			tabBadge.setText(component.size.toString());
 
 			tab.addEventListener('click', () => {
 				this.activeComponentIndex = index;
-				this.updateActiveTab();
+				this.updateActiveSidebarTab();
 				this.filterPeople();
 			});
 		});
 	}
 
 	/**
-	 * Update active tab styling
+	 * Update active sidebar tab styling
 	 */
-	private updateActiveTab(): void {
+	private updateActiveSidebarTab(): void {
 		if (!this.tabsContainer) return;
 
-		const tabs = this.tabsContainer.querySelectorAll('.crc-picker-tab');
+		const tabs = this.tabsContainer.querySelectorAll('.crc-picker-sidebar-tab');
 		tabs.forEach((tab, index) => {
 			if (index === 0) {
-				// "All" tab
+				// "All families" tab
 				if (this.activeComponentIndex === null) {
-					tab.addClass('crc-picker-tab--active');
+					tab.addClass('crc-picker-sidebar-tab--active');
 				} else {
-					tab.removeClass('crc-picker-tab--active');
+					tab.removeClass('crc-picker-sidebar-tab--active');
 				}
 			} else {
 				// Family group tab (index - 1 because "All" is index 0)
 				if (this.activeComponentIndex === index - 1) {
-					tab.addClass('crc-picker-tab--active');
+					tab.addClass('crc-picker-sidebar-tab--active');
 				} else {
-					tab.removeClass('crc-picker-tab--active');
+					tab.removeClass('crc-picker-sidebar-tab--active');
 				}
 			}
 		});

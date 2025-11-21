@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-11-21 16:48:56 UTC
+ * - Generated: 2025-11-21 16:54:11 UTC
  * - Components: 11 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -171,7 +171,7 @@
    COMPONENT: MODALS.CSS
    ========================================================================== */
 
-/* Component Size: 826 lines, 15.92 KB */
+/* Component Size: 853 lines, 16.36 KB */
 
 /* ==========================================================================
    Canvas Roots Control Center - Styling
@@ -722,56 +722,83 @@
   min-width: 120px;
 }
 
-.crc-picker-tabs {
+.crc-picker-main {
   display: flex;
-  gap: 4px;
-  padding: 12px 12px 0 12px;
-  border-bottom: 1px solid var(--background-modifier-border);
-  overflow-x: auto;
-  scrollbar-width: thin;
+  flex: 1;
+  min-height: 0;
+  gap: 0;
 }
 
-.crc-picker-tab {
+.crc-picker-sidebar {
+  width: 180px;
+  flex-shrink: 0;
+  background: var(--background-secondary);
+  border-right: 1px solid var(--background-modifier-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.crc-picker-sidebar__header {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.crc-picker-sidebar__tabs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.crc-picker-sidebar-tab {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 6px 6px 0 0;
-  background: var(--background-secondary);
+  justify-content: space-between;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  background: transparent;
   color: var(--text-muted);
   font-size: 13px;
-  font-weight: 500;
   cursor: pointer;
   transition: all 150ms ease;
-  white-space: nowrap;
   border: 1px solid transparent;
-  border-bottom: none;
-  margin-bottom: -1px;
 }
 
-.crc-picker-tab:hover {
+.crc-picker-sidebar-tab:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.crc-picker-tab--active {
-  background: var(--background-primary);
-  color: var(--text-normal);
-  border-color: var(--background-modifier-border);
-  border-bottom-color: var(--background-primary);
+.crc-picker-sidebar-tab--active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-weight: 500;
 }
 
-.crc-picker-tab__badge {
+.crc-picker-sidebar-tab__label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crc-picker-sidebar-tab__badge {
   padding: 2px 6px;
   background: var(--background-modifier-border);
   border-radius: 10px;
   font-size: 11px;
   font-weight: 600;
   color: var(--text-muted);
+  margin-left: 8px;
 }
 
-.crc-picker-tab--active .crc-picker-tab__badge {
-  background: var(--interactive-accent);
+.crc-picker-sidebar-tab--active .crc-picker-sidebar-tab__badge {
+  background: rgba(255, 255, 255, 0.2);
   color: var(--text-on-accent);
 }
 
@@ -1070,10 +1097,10 @@
    ========================================================================== */
 
 /*
- * Build completed: 2025-11-21 16:48:56 UTC
+ * Build completed: 2025-11-21 16:54:11 UTC
  * Components processed: 11
- * Total lines: 948
- * Total size: 18.03 KB
+ * Total lines: 975
+ * Total size: 18.47 KB
  * Build duration: 0.01 seconds
  *
  * Component breakdown:
@@ -1084,7 +1111,7 @@
  * - nodes.css: 12 lines, 0.3 KB
  * - edges.css: 4 lines, 0.07 KB
  * - settings.css: 4 lines, 0.07 KB
- * - modals.css: 826 lines, 15.92 KB
+ * - modals.css: 853 lines, 16.36 KB
  * - animations.css: 16 lines, 0.18 KB
  * - responsive.css: 9 lines, 0.13 KB
  * - theme.css: 11 lines, 0.19 KB
