@@ -1340,7 +1340,7 @@ export class ControlCenterModal extends Modal {
 						`${disconnectedCount} people are not connected to ${familyTree.root.name} ` +
 						`through family relationships.\n\n` +
 						`This usually means your vault has multiple separate family trees. ` +
-						`Generate another tree from a different person to see the other family groups.`;
+						`Use the "Generate All Trees" command to create canvases for all family groups at once.`;
 
 					new Notice(msg, 0); // 0 = persist until user dismisses
 				}
@@ -1474,6 +1474,102 @@ export class ControlCenterModal extends Modal {
 	}
 
 	/**
+	 * Show GEDCOM analysis before import
+	 */
+	private async showGedcomAnalysis(
+		file: File,
+		analysisContainer: HTMLElement,
+		fileBtn: HTMLButtonElement
+	): Promise<void> {
+		try {
+			// Show loading state
+			analysisContainer.empty();
+			analysisContainer.style.display = 'block';
+			fileBtn.style.display = 'none';
+
+			analysisContainer.createEl('p', {
+				text: `File: ${file.name}`,
+				cls: 'crc-text-muted'
+			});
+
+			const loadingMsg = analysisContainer.createEl('p', {
+				text: 'Analyzing file...',
+				cls: 'crc-text-muted'
+			});
+
+			// Read and analyze file
+			const content = await file.text();
+			const importer = new GedcomImporter(this.app);
+			const analysis = importer.analyzeFile(content);
+
+			// Update UI with analysis results
+			loadingMsg.remove();
+
+			const results = analysisContainer.createDiv({ cls: 'crc-analysis-results' });
+
+			// Basic stats
+			results.createEl('p', {
+				text: `✓ ${analysis.individualCount} people found`
+			});
+			results.createEl('p', {
+				text: `✓ ${analysis.familyCount} families found`
+			});
+
+			// Component analysis
+			if (analysis.componentCount > 1) {
+				results.createEl('p', {
+					text: `⚠ ${analysis.componentCount} disconnected family groups`,
+					cls: 'crc-warning-text'
+				});
+
+				const helpText = results.createEl('p', {
+					cls: 'crc-text-muted crc-mt-2'
+				});
+				helpText.innerHTML = `This file contains multiple separate family trees. After import, use the <strong>"Generate All Trees"</strong> command to create canvases for all family groups.`;
+			}
+
+			// Action buttons
+			const actions = analysisContainer.createDiv({ cls: 'crc-gedcom-actions crc-mt-4' });
+
+			const importBtn = actions.createEl('button', {
+				cls: 'crc-btn crc-btn--primary',
+				text: 'Import to Vault'
+			});
+			importBtn.addEventListener('click', async () => {
+				analysisContainer.style.display = 'none';
+				fileBtn.style.display = 'block';
+				await this.handleGedcomImport(file);
+			});
+
+			const cancelBtn = actions.createEl('button', {
+				cls: 'crc-btn crc-btn--secondary crc-ml-2',
+				text: 'Cancel'
+			});
+			cancelBtn.addEventListener('click', () => {
+				analysisContainer.style.display = 'none';
+				fileBtn.style.display = 'block';
+			});
+
+		} catch (error) {
+			logger.error('gedcom', `GEDCOM analysis failed: ${error.message}`);
+			analysisContainer.empty();
+			analysisContainer.createEl('p', {
+				text: `Failed to analyze file: ${error.message}`,
+				cls: 'crc-error-text'
+			});
+
+			const retryBtn = analysisContainer.createEl('button', {
+				cls: 'crc-btn crc-btn--secondary crc-mt-2',
+				text: 'Try Different File'
+			});
+			retryBtn.addEventListener('click', () => {
+				analysisContainer.style.display = 'none';
+				fileBtn.style.display = 'block';
+			});
+		}
+	}
+
+	/**
 	 * Handle GEDCOM file import
 	 */
 	private async handleGedcomImport(file: File): Promise<void> {
@@ -1568,6 +1664,10 @@ export class ControlCenterModal extends Modal {
 			}
 		});
 
+		// Analysis results container (hidden initially)
+		const analysisContainer = importContent.createDiv({ cls: 'crc-gedcom-analysis' });
+		analysisContainer.style.display = 'none';
+
 		fileBtn.addEventListener('click', () => {
 			fileInput.click();
 		});
@@ -1576,7 +1676,7 @@ export class ControlCenterModal extends Modal {
 			const target = event.target as HTMLInputElement;
 			const file = target.files?.[0];
 			if (file) {
-				await this.handleGedcomImport(file);
+				await this.showGedcomAnalysis(file, analysisContainer, fileBtn);
 			}
 		});
 

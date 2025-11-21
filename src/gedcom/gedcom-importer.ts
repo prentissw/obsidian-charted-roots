@@ -43,6 +43,80 @@ export class GedcomImporter {
 	}
 
 	/**
+	 * Analyze GEDCOM file before import
+	 * Returns basic statistics and component analysis
+	 */
+	analyzeFile(content: string): {
+		individualCount: number;
+		familyCount: number;
+		componentCount: number;
+	} {
+		const gedcomData = GedcomParser.parse(content);
+
+		// Count individuals and families
+		const individualCount = gedcomData.individuals.size;
+		const familyCount = gedcomData.families.size;
+
+		// Analyze connected components using BFS
+		const visited = new Set<string>();
+		let componentCount = 0;
+
+		for (const [gedcomId] of gedcomData.individuals) {
+			if (visited.has(gedcomId)) continue;
+
+			// Start BFS from this individual
+			componentCount++;
+			const queue: string[] = [gedcomId];
+
+			while (queue.length > 0) {
+				const currentId = queue.shift()!;
+				if (visited.has(currentId)) continue;
+
+				visited.add(currentId);
+				const individual = gedcomData.individuals.get(currentId);
+				if (!individual) continue;
+
+				// Add connected people (parents, spouses, children)
+				const related: string[] = [];
+
+				// Add parents
+				if (individual.fatherRef) related.push(individual.fatherRef);
+				if (individual.motherRef) related.push(individual.motherRef);
+
+				// Add spouses (from families where this person is a spouse)
+				for (const [, family] of gedcomData.families) {
+					if (family.husbandRef === currentId && family.wifeRef) {
+						related.push(family.wifeRef);
+					}
+					if (family.wifeRef === currentId && family.husbandRef) {
+						related.push(family.husbandRef);
+					}
+				}
+
+				// Add children (from families where this person is a parent)
+				for (const [, family] of gedcomData.families) {
+					if (family.husbandRef === currentId || family.wifeRef === currentId) {
+						related.push(...family.childRefs);
+					}
+				}
+
+				// Queue unvisited relatives
+				for (const relatedId of related) {
+					if (!visited.has(relatedId) && gedcomData.individuals.has(relatedId)) {
+						queue.push(relatedId);
+					}
+				}
+			}
+		}
+
+		return {
+			individualCount,
+			familyCount,
+			componentCount
+		};
+	}
+
+	/**
 	 * Import GEDCOM file
 	 */
 	async importFile(
