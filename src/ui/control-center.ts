@@ -1220,6 +1220,30 @@ export class ControlCenterModal extends Modal {
 				}))
 			});
 
+			// Check for disconnected people (only for full trees)
+			if (treeOptions.treeType === 'full') {
+				const totalPeople = await graphService.getTotalPeopleCount();
+				const connectedPeople = familyTree.nodes.size;
+				const disconnectedCount = totalPeople - connectedPeople;
+
+				if (disconnectedCount > 0) {
+					logger.info('tree-generation', 'Disconnected people detected', {
+						totalPeople,
+						connectedPeople,
+						disconnectedCount
+					});
+
+					// Show helpful notice to user (persists until dismissed)
+					const msg = `Full Family Tree shows ${connectedPeople} of ${totalPeople} people.\n\n` +
+						`${disconnectedCount} people are not connected to ${familyTree.root.name} ` +
+						`through family relationships.\n\n` +
+						`This usually means your vault has multiple separate family trees. ` +
+						`Generate another tree from a different person to see the other family groups.`;
+
+					new Notice(msg, 0); // 0 = persist until user dismisses
+				}
+			}
+
 			// Generate canvas
 			const canvasGenerator = new CanvasGenerator();
 			const canvasData = canvasGenerator.generateCanvas(familyTree, canvasOptions);

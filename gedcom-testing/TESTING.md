@@ -55,15 +55,24 @@ This directory contains progressively larger GEDCOM test files for stress-testin
 - Multiple marriages handling (3 people have second marriages)
 - Larger families (several with 3+ children)
 - International names and locations display correctly
+- **Disconnected family detection** (this dataset has 2 separate family trees)
 
 **Expected challenges:**
 - Canvas width may become significant
 - More complex spouse positioning
 - Potential for performance issues during layout calculation
 
+**Expected behavior:**
+- Full Family Tree from William Anderson family: **45 people** (not 60)
+- Plugin should display notice: "Full Family Tree shows 45 of 60 people. 15 people are not connected..."
+- The 15 missing people are in a completely separate Martinez/Johnson/Turner family tree
+- This is **correct behavior** - Full Family Tree only shows connected relatives
+
 **Success criteria:**
-- All 60 people visible
-- Zero overlaps
+- Tree from William Anderson shows 45 people
+- Tree from Martinez/Johnson shows 15 people
+- User receives clear notice about disconnected families
+- Zero overlaps in generated trees
 - Layout completes in reasonable time (< 5 seconds)
 - Multiple marriages don't cause visual confusion
 - Canvas remains navigable
@@ -73,6 +82,7 @@ This directory contains progressively larger GEDCOM test files for stress-testin
 - Excessive canvas width (> 10,000px)
 - Layout calculation time > 10 seconds
 - Browser performance issues
+- No notice shown when disconnected families exist
 
 ---
 
@@ -82,6 +92,7 @@ This directory contains progressively larger GEDCOM test files for stress-testin
 - Multiple marriages (6+ people with 2-3 spouses)
 - Large families
 - Performance at realistic genealogy scale
+- **Multi-cultural dataset** (6 separate ethnic/cultural family trees)
 
 **Expected challenges:**
 - Very large canvas dimensions
@@ -90,21 +101,36 @@ This directory contains progressively larger GEDCOM test files for stress-testin
 - Rendering performance
 - Potential algorithmic limits of family-chart library
 
+**Expected behavior:**
+- This dataset contains **6 completely disconnected family trees** representing different cultures
+- Each tree ranges from 18-48 people
+- Full Family Tree will only show ONE family group (the one containing your selected root person)
+- Plugin should display notice about disconnected families
+- Examples:
+  - Tree from German family (Mueller/Schulz): **48 people**
+  - Tree from Italian family (Rossi/Marino): **32 people**
+  - Tree from Hispanic family (Morales/Rodriguez): **28 people**
+  - Tree from Scandinavian family (Andersson/Wilson): **19 people**
+  - Tree from Japanese family (Tanaka/Suzuki): **18 people**
+  - Tree from Irish family (Kelly/O'Brien): **18 people**
+
 **Success criteria:**
-- All 163 people visible
-- Zero overlaps
+- Each individual family tree displays correctly (18-48 people depending on group)
+- User receives clear notice about disconnected families
+- Zero overlaps within each tree
 - Layout completes in reasonable time (< 30 seconds)
-- Canvas remains usable (may require significant zooming)
+- Canvas remains usable (may require significant zooming for 48-person tree)
 - No browser crashes or memory issues
 
 **Red flags to watch for:**
 - Overlapping nodes at complex relationship intersections
-- Excessive canvas dimensions (> 20,000px)
+- Excessive canvas dimensions (> 20,000px for any single tree)
 - Layout calculation timeout
 - Browser performance degradation
-- Missing people due to algorithmic edge cases
+- Missing people within a connected tree (not just missing disconnected trees)
+- No notice shown when disconnected families exist
 
-**This is the critical test** - if the layout engine handles 163 people well, it can likely handle most real-world genealogies.
+**This is the critical test** - it validates both large-tree performance AND multi-family handling.
 
 ---
 
@@ -154,6 +180,7 @@ This directory contains progressively larger GEDCOM test files for stress-testin
 - **Relationships:** Basic parent-child, one spouse per person
 - **Date range:** 1920-2008
 - **Complexity:** Low
+- **Connected trees:** 1 (all 11 people connected)
 
 ### Small (27 people)
 - **Structure:** 4 generations with multiple siblings
@@ -161,6 +188,7 @@ This directory contains progressively larger GEDCOM test files for stress-testin
 - **Date range:** 1930-2016
 - **Complexity:** Low-Medium
 - **Special features:** Diverse surnames (Anderson, Martinez, Chen, Thompson, Lee)
+- **Connected trees:** 1 (all 27 people connected)
 
 ### Medium (60 people)
 - **Structure:** 5 generations
@@ -168,6 +196,10 @@ This directory contains progressively larger GEDCOM test files for stress-testin
 - **Date range:** 1905-2011
 - **Complexity:** Medium
 - **Special features:** International locations (Germany, Italy, Japan, Ireland, Mexico, etc.)
+- **Connected trees:** 2 separate family groups
+  - Tree 1: William Anderson family (45 people)
+  - Tree 2: Martinez/Johnson/Turner family (15 people)
+- **Purpose:** Tests handling of multiple disconnected families in one GEDCOM file
 
 ### Large (163 people)
 - **Structure:** 6 generations
@@ -179,6 +211,14 @@ This directory contains progressively larger GEDCOM test files for stress-testin
   - Large families (one family has 7 children)
   - Complex relationship patterns
   - Realistic genealogy scale
+- **Connected trees:** 6 separate family groups
+  - Tree 1: German families - Mueller, Schulz, Klein, Neumann (48 people)
+  - Tree 2: Italian families - Rossi, Marino, Romano, Ferrari (32 people)
+  - Tree 3: Hispanic/Asian families - Morales, Rodriguez, Chen (28 people)
+  - Tree 4: Scandinavian/Anglo families - Andersson, Wilson, Nielsen (19 people)
+  - Tree 5: Japanese families - Tanaka, Suzuki, Nakamura, Watanabe (18 people)
+  - Tree 6: Irish families - Kelly, O'Brien (18 people)
+- **Purpose:** Tests handling of multiple cultural/ethnic family groups in one dataset
 
 ### Extra-Large (599 people)
 - **Structure:** 7 generations

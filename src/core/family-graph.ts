@@ -138,6 +138,18 @@ export class FamilyGraphService {
 	}
 
 	/**
+	 * Gets the total count of people in the vault (must call after generateTree)
+	 * This uses the cached person data from the most recent tree generation.
+	 */
+	async getTotalPeopleCount(): Promise<number> {
+		// If cache is empty, load it
+		if (this.personCache.size === 0) {
+			await this.loadPersonCache();
+		}
+		return this.personCache.size;
+	}
+
+	/**
 	 * Builds ancestor tree (parents, grandparents, etc.)
 	 */
 	private buildAncestorTree(

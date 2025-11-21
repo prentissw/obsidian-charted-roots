@@ -124,6 +124,48 @@ export class FamilyChartLayoutEngine {
 					}
 				}
 
+				// Strategy 3: If they have positioned parents, place next to siblings
+				const fatherPos = person.fatherCrId ? positions.find(p => p.crId === person.fatherCrId) : null;
+				const motherPos = person.motherCrId ? positions.find(p => p.crId === person.motherCrId) : null;
+				const parentPos = fatherPos || motherPos;
+
+				if (parentPos) {
+					// Find positioned siblings (same parents)
+					const siblings = positions.filter(p => {
+						const sibling = p.person;
+						return (
+							sibling.crId !== person.crId &&
+							((person.fatherCrId && sibling.fatherCrId === person.fatherCrId) ||
+							 (person.motherCrId && sibling.motherCrId === person.motherCrId))
+						);
+					});
+
+					if (siblings.length > 0) {
+						// Place to the right of rightmost sibling
+						const rightmostSibling = siblings.reduce((prev, curr) =>
+							curr.x > prev.x ? curr : prev
+						);
+						positions.push({
+							crId: person.crId,
+							person,
+							x: rightmostSibling.x + (opts.nodeSpacingX * 1.5),
+							y: rightmostSibling.y
+						});
+						console.log(`[FamilyChartLayout] Added ${person.name} next to sibling ${rightmostSibling.person.name}`);
+						continue;
+					} else {
+						// No siblings positioned yet - place below parent
+						positions.push({
+							crId: person.crId,
+							person,
+							x: parentPos.x,
+							y: parentPos.y + opts.nodeSpacingY
+						});
+						console.log(`[FamilyChartLayout] Added ${person.name} below parent ${parentPos.person.name}`);
+						continue;
+					}
+				}
+
 				console.warn(`[FamilyChartLayout] Could not position ${person.name} - no positioned relatives found`);
 			}
 		}
@@ -176,9 +218,15 @@ export class FamilyChartLayoutEngine {
 			let score = 0;
 
 			// Count total descendants (children, grandchildren, etc.)
+			// Also track if the root person is in this descendant tree
+			let rootIsDescendant = false;
 			const countDescendants = (crId: string, visited = new Set<string>()): number => {
 				if (visited.has(crId)) return 0;
 				visited.add(crId);
+
+				if (crId === familyTree.root.crId) {
+					rootIsDescendant = true;
+				}
 
 				const person = familyTree.nodes.get(crId);
 				if (!person || !person.childrenCrIds) return 0;
@@ -192,16 +240,24 @@ export class FamilyChartLayoutEngine {
 
 			score += countDescendants(ancestor.crId);
 
+			// Huge bonus if the root person is a descendant of this ancestor
+			// This ensures we always show the user's selected root person and their lineage
+			if (rootIsDescendant) {
+				score += 10000;
+			}
+
 			// Bonus points if this ancestor is NOT the root person
 			// (prefer in-laws over the root person for better layout)
-			if (ancestor.crId !== familyTree.root.crId) {
+			// But only if root is NOT a descendant (don't penalize root's ancestry)
+			if (ancestor.crId !== familyTree.root.crId && !rootIsDescendant) {
 				score += 100;
 			}
 
 			// Extra bonus if this ancestor is NOT married to the root
 			// (prefer separate family lines over spouse of root)
+			// But only if root is NOT a descendant (don't penalize root's ancestry)
 			const rootSpouses = familyTree.root.spouseCrIds || [];
-			if (!rootSpouses.includes(ancestor.crId)) {
+			if (!rootSpouses.includes(ancestor.crId) && !rootIsDescendant) {
 				score += 1000; // Big bonus for being in a different family line
 			}
 
