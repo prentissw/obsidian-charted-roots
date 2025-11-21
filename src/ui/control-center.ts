@@ -52,6 +52,8 @@ export class ControlCenterModal extends Modal {
 	private treeRootPersonField?: RelationshipField;
 	private treeRootPersonInput?: HTMLInputElement;
 	private treeRootPersonBtn?: HTMLButtonElement;
+	private treeCanvasNameInput?: HTMLInputElement;
+	private treeGenerateBtn?: HTMLButtonElement;
 	private pendingRootPerson?: PersonInfo;
 
 	constructor(app: App, plugin: CanvasRootsPlugin) {
@@ -1015,7 +1017,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Show Tree Generation tab
 	 */
-	private showTreeGenerationTab(): void {
+	private async showTreeGenerationTab(): Promise<void> {
 		const container = this.contentContainer;
 
 		// Title
@@ -1028,19 +1030,7 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-text-muted'
 		});
 
-		// Configuration Card
-		const configCard = container.createDiv({ cls: 'crc-card' });
-		const configHeader = configCard.createDiv({ cls: 'crc-card__header' });
-		const configTitle = configHeader.createEl('h3', {
-			cls: 'crc-card__title',
-			text: 'Tree configuration'
-		});
-		const configIcon = createLucideIcon('settings', 20);
-		configTitle.prepend(configIcon);
-
-		const configContent = configCard.createDiv({ cls: 'crc-card__content' });
-
-		// Root person selection
+		// Root Person Card
 		const rootPersonField: RelationshipField = { name: '' };
 
 		// Store reference for openWithPerson() to use
@@ -1054,24 +1044,19 @@ export class ControlCenterModal extends Modal {
 			this.pendingRootPerson = undefined;
 		}
 
-		const rootGroup = configContent.createDiv({ cls: 'crc-form-group' });
-		const rootLabel = rootGroup.createEl('label', {
-			cls: 'crc-form-label',
-			text: 'Root person'
+		await this.createRootPersonCard(container, rootPersonField);
+
+		// Configuration Card
+		const configCard = container.createDiv({ cls: 'crc-card' });
+		const configHeader = configCard.createDiv({ cls: 'crc-card__header' });
+		const configTitle = configHeader.createEl('h3', {
+			cls: 'crc-card__title',
+			text: 'Tree configuration'
 		});
-		const rootLabelBadge = rootLabel.createSpan({ cls: 'crc-help-badge', text: 'Required' });
-		rootLabelBadge.style.marginLeft = '8px';
+		const configIcon = createLucideIcon('settings', 20);
+		configTitle.prepend(configIcon);
 
-		const rootFieldResult = this.createRelationshipField(
-			rootGroup,
-			'',
-			'Select the person to center the tree on',
-			rootPersonField
-		);
-
-		// Store input and button references
-		this.treeRootPersonInput = rootFieldResult.input;
-		this.treeRootPersonBtn = rootFieldResult.linkBtn;
+		const configContent = configCard.createDiv({ cls: 'crc-card__content' });
 
 		// Tree type selection
 		const typeGroup = configContent.createDiv({ cls: 'crc-form-group' });
@@ -1194,45 +1179,8 @@ export class ControlCenterModal extends Modal {
 			}
 		});
 
-		// Output Card
-		const outputCard = container.createDiv({ cls: 'crc-card' });
-		const outputHeader = outputCard.createDiv({ cls: 'crc-card__header' });
-		const outputTitle = outputHeader.createEl('h3', {
-			cls: 'crc-card__title',
-			text: 'Output options'
-		});
-		const outputIcon = createLucideIcon('file', 20);
-		outputTitle.prepend(outputIcon);
-
-		const outputContent = outputCard.createDiv({ cls: 'crc-card__content' });
-
-		// Canvas file name
-		const nameGroup = outputContent.createDiv({ cls: 'crc-form-group' });
-		nameGroup.createEl('label', {
-			cls: 'crc-form-label',
-			text: 'Canvas file name'
-		});
-		const nameInput = nameGroup.createEl('input', {
-			cls: 'crc-form-input',
-			attr: {
-				type: 'text',
-				placeholder: 'Leave blank for auto-naming'
-			}
-		});
-		nameGroup.createDiv({
-			cls: 'crc-form-help',
-			text: 'Auto-naming format: "Family Tree - [Root Person Name]"'
-		});
-
-		// Generate Button
-		const generateBtn = outputContent.createEl('button', {
-			cls: 'crc-btn crc-btn--primary crc-mt-4',
-			text: 'Generate family tree'
-		});
-		const generateIcon = createLucideIcon('play', 16);
-		generateBtn.prepend(generateIcon);
-
-		generateBtn.addEventListener('click', async () => {
+		// Wire up the Generate button (in Root person card)
+		this.treeGenerateBtn?.addEventListener('click', async () => {
 			await this.handleTreeGeneration(
 				rootPersonField,
 				typeSelect.value as 'ancestors' | 'descendants' | 'full',
@@ -1241,54 +1189,8 @@ export class ControlCenterModal extends Modal {
 				dirSelect.value as 'vertical' | 'horizontal',
 				parseInt(spacingXInput.value),
 				parseInt(spacingYInput.value),
-				nameInput.value
+				this.treeCanvasNameInput?.value || ''
 			);
-		});
-
-		// Separator and "Generate All Trees" option
-		const separator = outputContent.createDiv({ cls: 'crc-separator crc-mt-4' });
-		separator.createEl('span', { text: 'OR', cls: 'crc-separator-text' });
-
-		// Generate All Trees section
-		const allTreesSection = outputContent.createDiv({ cls: 'crc-mt-4' });
-		allTreesSection.createEl('p', {
-			text: 'Generate separate canvases for all disconnected family groups in your vault',
-			cls: 'crc-text-muted crc-text-sm'
-		});
-
-		const allTreesBtn = allTreesSection.createEl('button', {
-			cls: 'crc-btn crc-btn--secondary crc-mt-2',
-			text: 'Generate all trees'
-		});
-		const allTreesIcon = createLucideIcon('git-branch', 16);
-		allTreesBtn.prepend(allTreesIcon);
-
-		// Add component count badge (updated dynamically)
-		const countBadge = allTreesBtn.createSpan({
-			cls: 'crc-badge crc-ml-2',
-			text: '...'
-		});
-
-		// Check for multiple components and update badge
-		(async () => {
-			try {
-				const graphService = new FamilyGraphService(this.app);
-				const components = await graphService.findAllFamilyComponents();
-
-				if (components.length > 1) {
-					countBadge.setText(`${components.length} groups`);
-				} else {
-					countBadge.setText('1 group');
-					allTreesBtn.disabled = true;
-					allTreesBtn.addClass('crc-btn--disabled');
-				}
-			} catch (error) {
-				countBadge.setText('');
-			}
-		})();
-
-		allTreesBtn.addEventListener('click', async () => {
-			await this.openAndGenerateAllTrees();
 		});
 	}
 
@@ -2155,6 +2057,488 @@ export class ControlCenterModal extends Modal {
 				this.updateHelpText(helpEl, fieldData);
 			}
 		});
+	}
+
+	/**
+	 * Create root person card for tree generation with inline person browser
+	 */
+	private async createRootPersonCard(container: HTMLElement, rootPersonField: RelationshipField): Promise<void> {
+		const card = container.createDiv({ cls: 'crc-card' });
+		const header = card.createDiv({ cls: 'crc-card__header' });
+		const title = header.createEl('h3', {
+			cls: 'crc-card__title',
+			text: 'Root person'
+		});
+		const icon = createLucideIcon('user', 20);
+		title.prepend(icon);
+
+		const content = card.createDiv({ cls: 'crc-card__content' });
+
+		// Selected person display (always shown)
+		const personDisplay = content.createDiv({ cls: 'crc-root-person-display' });
+		this.updateRootPersonDisplay(personDisplay, rootPersonField);
+
+		// Person browser section (inline)
+		const browserSection = content.createDiv({ cls: 'crc-person-browser' });
+		const browserHeader = browserSection.createDiv({ cls: 'crc-person-browser__header' });
+		browserHeader.createDiv({
+			cls: 'crc-person-browser__title',
+			text: 'Select a person'
+		});
+
+		const browserContent = browserSection.createDiv({ cls: 'crc-person-browser__content' });
+
+		// Load all people from vault
+		const { FamilyGraphService } = await import('../core/family-graph');
+		const allPeople: PersonInfo[] = [];
+		const files = this.app.vault.getMarkdownFiles();
+
+		for (const file of files) {
+			const personInfo = await this.extractPersonInfoFromFile(file);
+			if (personInfo) {
+				allPeople.push(personInfo);
+			}
+		}
+
+		// Load family components
+		const graphService = new FamilyGraphService(this.app);
+		const familyComponents = await graphService.findAllFamilyComponents();
+
+		// Build component map
+		const componentMap = new Map<string, number>();
+		familyComponents.forEach((component, index) => {
+			component.people.forEach(person => {
+				componentMap.set(person.crId, index);
+			});
+		});
+
+		// Search bar
+		const searchBar = browserContent.createDiv({ cls: 'crc-person-browser__search' });
+		const searchInput = searchBar.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'text',
+				placeholder: 'Search by name or ID...'
+			}
+		});
+
+		// Sort and filters row
+		const controlsBar = browserContent.createDiv({ cls: 'crc-person-browser__controls' });
+
+		// Sort dropdown
+		const sortContainer = controlsBar.createDiv({ cls: 'crc-picker-sort' });
+		sortContainer.createSpan({ cls: 'crc-picker-sort__label', text: 'Sort by:' });
+		const sortSelect = sortContainer.createEl('select', { cls: 'crc-form-select' });
+
+		type SortOption = 'name-asc' | 'name-desc' | 'birth-asc' | 'birth-desc' | 'recent';
+		let sortOption: SortOption = 'name-asc';
+
+		const sortOptions: Array<{ value: SortOption; label: string }> = [
+			{ value: 'name-asc', label: 'Name (A-Z)' },
+			{ value: 'name-desc', label: 'Name (Z-A)' },
+			{ value: 'birth-asc', label: 'Birth year (oldest first)' },
+			{ value: 'birth-desc', label: 'Birth year (youngest first)' },
+			{ value: 'recent', label: 'Recently modified' }
+		];
+
+		sortOptions.forEach(opt => {
+			const option = sortSelect.createEl('option', { value: opt.value, text: opt.label });
+			if (opt.value === sortOption) {
+				option.selected = true;
+			}
+		});
+
+		// Filters
+		interface FilterOptions {
+			livingStatus: 'all' | 'living' | 'deceased';
+			hasBirthDate: 'all' | 'yes' | 'no';
+			sex: 'all' | 'M' | 'F';
+		}
+
+		const filters: FilterOptions = {
+			livingStatus: 'all',
+			hasBirthDate: 'all',
+			sex: 'all'
+		};
+
+		const filtersContainer = controlsBar.createDiv({ cls: 'crc-picker-filters' });
+
+		// Living status filter
+		const livingFilter = filtersContainer.createDiv({ cls: 'crc-picker-filter' });
+		livingFilter.createSpan({ cls: 'crc-picker-filter__label', text: 'Living:' });
+		const livingSelect = livingFilter.createEl('select', { cls: 'crc-form-select crc-form-select--small' });
+		[
+			{ value: 'all', label: 'All' },
+			{ value: 'living', label: 'Living only' },
+			{ value: 'deceased', label: 'Deceased only' }
+		].forEach(opt => {
+			livingSelect.createEl('option', { value: opt.value, text: opt.label });
+		});
+
+		// Birth date filter
+		const birthFilter = filtersContainer.createDiv({ cls: 'crc-picker-filter' });
+		birthFilter.createSpan({ cls: 'crc-picker-filter__label', text: 'Birth date:' });
+		const birthSelect = birthFilter.createEl('select', { cls: 'crc-form-select crc-form-select--small' });
+		[
+			{ value: 'all', label: 'All' },
+			{ value: 'yes', label: 'Has date' },
+			{ value: 'no', label: 'No date' }
+		].forEach(opt => {
+			birthSelect.createEl('option', { value: opt.value, text: opt.label });
+		});
+
+		// Sex filter
+		const sexFilter = filtersContainer.createDiv({ cls: 'crc-picker-filter' });
+		sexFilter.createSpan({ cls: 'crc-picker-filter__label', text: 'Sex:' });
+		const sexSelect = sexFilter.createEl('select', { cls: 'crc-form-select crc-form-select--small' });
+		[
+			{ value: 'all', label: 'All' },
+			{ value: 'M', label: 'Male' },
+			{ value: 'F', label: 'Female' }
+		].forEach(opt => {
+			sexSelect.createEl('option', { value: opt.value, text: opt.label });
+		});
+
+		// Main layout with sidebar (if multiple families)
+		let resultsContainer: HTMLElement;
+		let activeComponentIndex: number | null = null;
+
+		if (familyComponents.length > 1) {
+			const mainContainer = browserContent.createDiv({ cls: 'crc-picker-main' });
+
+			// Sidebar
+			const sidebar = mainContainer.createDiv({ cls: 'crc-picker-sidebar' });
+			const sidebarHeader = sidebar.createDiv({ cls: 'crc-picker-sidebar__header' });
+			sidebarHeader.setText('Family groups');
+
+			const tabsWrapper = sidebar.createDiv({ cls: 'crc-picker-sidebar__tabs' });
+
+			// "All" tab
+			const allTab = tabsWrapper.createDiv({ cls: 'crc-picker-sidebar-tab crc-picker-sidebar-tab--active' });
+			const allTabLabel = allTab.createSpan({ cls: 'crc-picker-sidebar-tab__label' });
+			allTabLabel.setText('All families');
+			const allTabBadge = allTab.createSpan({ cls: 'crc-picker-sidebar-tab__badge' });
+			const totalPeople = familyComponents.reduce((sum, c) => sum + c.size, 0);
+			allTabBadge.setText(totalPeople.toString());
+
+			// Individual family tabs
+			familyComponents.forEach((component, index) => {
+				const tab = tabsWrapper.createDiv({ cls: 'crc-picker-sidebar-tab' });
+				const tabLabel = tab.createSpan({ cls: 'crc-picker-sidebar-tab__label' });
+				tabLabel.setText(`Family ${index + 1}`);
+				const tabBadge = tab.createSpan({ cls: 'crc-picker-sidebar-tab__badge' });
+				tabBadge.setText(component.size.toString());
+
+				tab.addEventListener('click', () => {
+					activeComponentIndex = index;
+					updateActiveSidebarTab();
+					renderResults();
+				});
+			});
+
+			allTab.addEventListener('click', () => {
+				activeComponentIndex = null;
+				updateActiveSidebarTab();
+				renderResults();
+			});
+
+			const updateActiveSidebarTab = () => {
+				const tabs = tabsWrapper.querySelectorAll('.crc-picker-sidebar-tab');
+				tabs.forEach((tab, i) => {
+					if (i === 0) {
+						tab.toggleClass('crc-picker-sidebar-tab--active', activeComponentIndex === null);
+					} else {
+						tab.toggleClass('crc-picker-sidebar-tab--active', activeComponentIndex === i - 1);
+					}
+				});
+			};
+
+			resultsContainer = mainContainer.createDiv({ cls: 'crc-picker-results' });
+		} else {
+			resultsContainer = browserContent.createDiv({ cls: 'crc-picker-results' });
+		}
+
+		// Helper: Extract year from date string
+		const extractYear = (dateStr: string): number | null => {
+			const yearMatch = dateStr.match(/\b(\d{4})\b/);
+			return yearMatch ? parseInt(yearMatch[1], 10) : null;
+		};
+
+		// Helper: Sort people
+		const sortPeople = (people: PersonInfo[]): PersonInfo[] => {
+			const sorted = [...people];
+			switch (sortOption) {
+				case 'name-asc':
+					sorted.sort((a, b) => a.name.localeCompare(b.name));
+					break;
+				case 'name-desc':
+					sorted.sort((a, b) => b.name.localeCompare(a.name));
+					break;
+				case 'birth-asc':
+				case 'birth-desc': {
+					const ascending = sortOption === 'birth-asc';
+					sorted.sort((a, b) => {
+						const yearA = a.birthDate ? extractYear(a.birthDate) : null;
+						const yearB = b.birthDate ? extractYear(b.birthDate) : null;
+						if (yearA === null && yearB === null) return 0;
+						if (yearA === null) return 1;
+						if (yearB === null) return -1;
+						return ascending ? yearA - yearB : yearB - yearA;
+					});
+					break;
+				}
+				case 'recent':
+					sorted.sort((a, b) => b.file.stat.mtime - a.file.stat.mtime);
+					break;
+			}
+			return sorted;
+		};
+
+		// Render results function
+		const renderResults = () => {
+			resultsContainer.empty();
+
+			const searchQuery = searchInput.value.toLowerCase();
+			const filteredPeople = allPeople.filter(person => {
+				// Family component filter
+				if (activeComponentIndex !== null) {
+					const personComponentIndex = componentMap.get(person.crId);
+					if (personComponentIndex !== activeComponentIndex) return false;
+				}
+
+				// Search filter
+				if (searchQuery) {
+					const matchesSearch = person.name.toLowerCase().includes(searchQuery) ||
+						person.crId.toLowerCase().includes(searchQuery);
+					if (!matchesSearch) return false;
+				}
+
+				// Living status filter
+				if (filters.livingStatus !== 'all') {
+					const isLiving = !person.deathDate;
+					if (filters.livingStatus === 'living' && !isLiving) return false;
+					if (filters.livingStatus === 'deceased' && isLiving) return false;
+				}
+
+				// Birth date filter
+				if (filters.hasBirthDate !== 'all') {
+					const hasBirth = !!person.birthDate;
+					if (filters.hasBirthDate === 'yes' && !hasBirth) return false;
+					if (filters.hasBirthDate === 'no' && hasBirth) return false;
+				}
+
+				// Sex filter
+				if (filters.sex !== 'all') {
+					if (person.sex !== filters.sex) return false;
+				}
+
+				return true;
+			});
+
+			// Sort
+			const sortedPeople = sortPeople(filteredPeople);
+
+			if (sortedPeople.length === 0) {
+				resultsContainer.createDiv({
+					cls: 'crc-picker-empty',
+					text: allPeople.length === 0 ? 'No people found in vault' : 'No results found'
+				});
+				return;
+			}
+
+			sortedPeople.forEach(person => {
+				const item = resultsContainer.createDiv({ cls: 'crc-picker-item' });
+
+				const mainInfo = item.createDiv({ cls: 'crc-picker-item__main' });
+				mainInfo.createDiv({ cls: 'crc-picker-item__name', text: person.name });
+
+				const metaInfo = item.createDiv({ cls: 'crc-picker-item__meta' });
+
+				if (person.birthDate) {
+					const birthBadge = metaInfo.createDiv({ cls: 'crc-picker-badge' });
+					const birthIcon = createLucideIcon('calendar', 12);
+					birthBadge.appendChild(birthIcon);
+					birthBadge.appendText(person.birthDate);
+				}
+
+				const idBadge = metaInfo.createDiv({ cls: 'crc-picker-badge crc-picker-badge--id' });
+				const idIcon = createLucideIcon('hash', 12);
+				idBadge.appendChild(idIcon);
+				idBadge.appendText(person.crId);
+
+				item.addEventListener('click', () => {
+					rootPersonField.name = person.name;
+					rootPersonField.crId = person.crId;
+					this.updateRootPersonDisplay(personDisplay, rootPersonField);
+				});
+			});
+		};
+
+		// Event handlers
+		searchInput.addEventListener('input', () => {
+			renderResults();
+		});
+
+		sortSelect.addEventListener('change', () => {
+			sortOption = sortSelect.value as SortOption;
+			renderResults();
+		});
+
+		livingSelect.addEventListener('change', () => {
+			filters.livingStatus = livingSelect.value as FilterOptions['livingStatus'];
+			renderResults();
+		});
+
+		birthSelect.addEventListener('change', () => {
+			filters.hasBirthDate = birthSelect.value as FilterOptions['hasBirthDate'];
+			renderResults();
+		});
+
+		sexSelect.addEventListener('change', () => {
+			filters.sex = sexSelect.value as FilterOptions['sex'];
+			renderResults();
+		});
+
+		// Initial render
+		renderResults();
+
+		// Canvas name and Generate button (at bottom of card)
+		const actionsSection = content.createDiv({ cls: 'crc-root-person-generate' });
+
+		// Canvas name input
+		const nameGroup = actionsSection.createDiv({ cls: 'crc-form-group' });
+		nameGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Canvas name (optional)'
+		});
+		const nameInput = nameGroup.createEl('input', {
+			cls: 'crc-form-input',
+			attr: {
+				type: 'text',
+				placeholder: 'Auto-generated from root person name'
+			}
+		});
+		nameGroup.createDiv({
+			cls: 'crc-form-help',
+			text: 'Leave blank for auto-naming: "Family Tree - [Root Person Name]"'
+		});
+
+		// Generate button
+		const generateBtn = actionsSection.createEl('button', {
+			cls: 'crc-btn crc-btn--primary crc-btn--large crc-mt-3',
+			text: 'Generate family tree'
+		});
+		const generateIcon = createLucideIcon('play', 16);
+		generateBtn.prepend(generateIcon);
+
+		// Separator and "Generate All Trees" section (in same card)
+		const separator = actionsSection.createDiv({ cls: 'crc-separator crc-mt-4' });
+		separator.createEl('span', { text: 'OR', cls: 'crc-separator-text' });
+
+		// Generate All Trees section
+		const allTreesSection = actionsSection.createDiv({ cls: 'crc-mt-4' });
+
+		const allTreesDesc = allTreesSection.createEl('p', {
+			cls: 'crc-text-muted crc-text-sm crc-mb-3'
+		});
+		allTreesDesc.innerHTML = 'Automatically generate separate canvases for <strong>all disconnected family groups</strong> in your vault. ' +
+			'A root person will be automatically selected for each family group.';
+
+		const allTreesBtn = allTreesSection.createEl('button', {
+			cls: 'crc-btn crc-btn--secondary crc-btn--large',
+			text: 'Generate all trees'
+		});
+		const allTreesIcon = createLucideIcon('git-branch', 16);
+		allTreesBtn.prepend(allTreesIcon);
+
+		// Add component count badge (updated dynamically)
+		const countBadge = allTreesBtn.createSpan({
+			cls: 'crc-badge crc-ml-2',
+			text: '...'
+		});
+
+		// Check for multiple components and update badge
+		(async () => {
+			try {
+				const graphService = new FamilyGraphService(this.app);
+				const components = await graphService.findAllFamilyComponents();
+
+				if (components.length > 1) {
+					countBadge.setText(`${components.length} groups`);
+					allTreesDesc.innerHTML = `Automatically generate separate canvases for <strong>all ${components.length} disconnected family groups</strong> in your vault. ` +
+						`A root person will be automatically selected for each family group.`;
+				} else {
+					countBadge.setText('1 group');
+					allTreesBtn.disabled = true;
+					allTreesBtn.addClass('crc-btn--disabled');
+					allTreesDesc.setText('Only one family tree detected. Use the "Generate family tree" button above instead.');
+				}
+			} catch (error) {
+				countBadge.setText('');
+			}
+		})();
+
+		allTreesBtn.addEventListener('click', async () => {
+			await this.openAndGenerateAllTrees();
+		});
+
+		// Get references to configuration elements (defined later in showTreeGenerationTab)
+		// We'll store these references so the button can access them
+		this.treeCanvasNameInput = nameInput;
+		this.treeGenerateBtn = generateBtn;
+	}
+
+	/**
+	 * Update root person display
+	 */
+	private updateRootPersonDisplay(personDisplay: HTMLElement, rootPersonField: RelationshipField): void {
+		personDisplay.empty();
+
+		if (!rootPersonField.crId) {
+			// Empty state
+			const emptyState = personDisplay.createDiv({ cls: 'crc-root-person-empty' });
+			const emptyIcon = createLucideIcon('user-plus', 24);
+			emptyState.appendChild(emptyIcon);
+			emptyState.createDiv({
+				cls: 'crc-root-person-empty__text',
+				text: 'No person selected'
+			});
+			emptyState.createDiv({
+				cls: 'crc-root-person-empty__help',
+				text: 'Search and select a person below to center the tree on'
+			});
+		} else {
+			// Selected person
+			const selectedPerson = personDisplay.createDiv({ cls: 'crc-root-person-selected' });
+			selectedPerson.createDiv({
+				cls: 'crc-root-person-selected__name',
+				text: rootPersonField.name
+			});
+			selectedPerson.createDiv({
+				cls: 'crc-root-person-selected__id',
+				text: rootPersonField.crId
+			});
+		}
+	}
+
+	/**
+	 * Extract person info from file (for inline person browser)
+	 */
+	private async extractPersonInfoFromFile(file: TFile): Promise<PersonInfo | null> {
+		const cache = this.app.metadataCache.getFileCache(file);
+		if (!cache?.frontmatter) return null;
+
+		const crId = cache.frontmatter.cr_id;
+		if (!crId) return null;
+
+		return {
+			name: file.basename,
+			crId: crId,
+			birthDate: cache.frontmatter.birth_date,
+			deathDate: cache.frontmatter.death_date,
+			sex: cache.frontmatter.sex,
+			file: file
+		};
 	}
 
 	/**

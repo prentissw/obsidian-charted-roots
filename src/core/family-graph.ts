@@ -7,6 +7,7 @@
 
 import { App, TFile } from 'obsidian';
 import { getLogger } from './logging';
+import { SpouseRelationship } from '../models/person';
 
 const logger = getLogger('FamilyGraph');
 
@@ -26,6 +27,9 @@ export interface PersonNode {
 	motherCrId?: string;
 	spouseCrIds: string[];
 	childrenCrIds: string[];
+
+	// Enhanced spouse relationships with metadata (optional)
+	spouses?: SpouseRelationship[];
 }
 
 /**
@@ -462,20 +466,30 @@ export class FamilyGraphService {
 		// Parse mother relationship (prefer _id field, fallback to mother field for legacy)
 		const motherCrId = fm.mother_id || this.extractCrIdFromWikilink(fm.mother);
 
-		// Parse spouse array (prefer _id field, fallback to spouse field for legacy)
+		// Parse spouse relationships
+		// Priority: 1) Enhanced 'spouses' field with metadata, 2) Legacy 'spouse_id' or 'spouse' fields
 		let spouseCrIds: string[] = [];
-		const spouseIdField = fm.spouse_id;
-		const spouseField = fm.spouse;
+		let spouses: SpouseRelationship[] | undefined;
 
-		if (spouseIdField) {
-			// Use _id field (dual storage)
-			spouseCrIds = Array.isArray(spouseIdField) ? spouseIdField : [spouseIdField];
-		} else if (spouseField) {
-			// Fallback to legacy field (could be wikilinks or cr_ids)
-			const spouseValues = Array.isArray(spouseField) ? spouseField : [spouseField];
-			spouseCrIds = spouseValues
-				.map(v => this.extractCrIdFromWikilink(v) || v)
-				.filter(v => v);
+		if (fm.spouses && Array.isArray(fm.spouses)) {
+			// Enhanced format with metadata
+			spouses = this.parseSpouseRelationships(fm.spouses);
+			spouseCrIds = spouses.map(s => s.personId).filter(id => id);
+		} else {
+			// Legacy format: simple array of cr_ids or wikilinks
+			const spouseIdField = fm.spouse_id;
+			const spouseField = fm.spouse;
+
+			if (spouseIdField) {
+				// Use _id field (dual storage)
+				spouseCrIds = Array.isArray(spouseIdField) ? spouseIdField : [spouseIdField];
+			} else if (spouseField) {
+				// Fallback to legacy field (could be wikilinks or cr_ids)
+				const spouseValues = Array.isArray(spouseField) ? spouseField : [spouseField];
+				spouseCrIds = spouseValues
+					.map(v => this.extractCrIdFromWikilink(v) || v)
+					.filter(v => v);
+			}
 		}
 
 		// Parse children arrays (prefer _id field, fallback to son/daughter/children fields for legacy)
@@ -516,6 +530,7 @@ export class FamilyGraphService {
 			fatherCrId,
 			motherCrId,
 			spouseCrIds,
+			spouses, // Enhanced spouse relationships with metadata (if present)
 			childrenCrIds // Now populated from frontmatter
 		};
 	}
@@ -539,6 +554,66 @@ export class FamilyGraphService {
 		// It's a wikilink - we can't extract cr_id from it, return null
 		// The _id field should be used instead for reliable resolution
 		return null;
+	}
+
+	/**
+	 * Parses enhanced spouse relationships from frontmatter
+	 * Handles the new 'spouses' field format with metadata
+	 */
+	private parseSpouseRelationships(spousesField: any[]): SpouseRelationship[] {
+		const relationships: SpouseRelationship[] = [];
+
+		for (const spouseData of spousesField) {
+			// Skip invalid entries
+			if (!spouseData || typeof spouseData !== 'object') {
+				continue;
+			}
+
+			// Extract person_id (required)
+			const personId = spouseData.person_id;
+			if (!personId) {
+				logger.warn('parseSpouseRelationships', 'Spouse entry missing person_id field, skipping');
+				continue;
+			}
+
+			// Extract person wikilink (optional, for display)
+			const personLink = spouseData.person || undefined;
+
+			// Build relationship object
+			const relationship: SpouseRelationship = {
+				personId,
+				personLink,
+				marriageDate: spouseData.marriage_date || undefined,
+				divorceDate: spouseData.divorce_date || undefined,
+				marriageStatus: spouseData.marriage_status || undefined,
+				marriageLocation: spouseData.marriage_location || undefined,
+				marriageOrder: spouseData.marriage_order || undefined,
+			};
+
+			relationships.push(relationship);
+		}
+
+		// Sort by marriage order if available, otherwise by marriage date
+		relationships.sort((a, b) => {
+			// Primary sort: marriage_order (explicit ordering)
+			if (a.marriageOrder !== undefined && b.marriageOrder !== undefined) {
+				return a.marriageOrder - b.marriageOrder;
+			}
+			if (a.marriageOrder !== undefined) return -1;
+			if (b.marriageOrder !== undefined) return 1;
+
+			// Secondary sort: marriage_date (chronological)
+			if (a.marriageDate && b.marriageDate) {
+				return a.marriageDate.localeCompare(b.marriageDate);
+			}
+			if (a.marriageDate) return -1;
+			if (b.marriageDate) return 1;
+
+			// No ordering information, maintain original order
+			return 0;
+		});
+
+		return relationships;
 	}
 
 	/**

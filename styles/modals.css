@@ -287,6 +287,156 @@
   border-top: 1px solid var(--background-modifier-border);
 }
 
+/* Root Person Display */
+.crc-root-person-display {
+  margin-bottom: 16px;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crc-root-person-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+}
+
+.crc-root-person-empty svg {
+  opacity: 0.5;
+  margin-bottom: 12px;
+}
+
+.crc-root-person-empty__text {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--text-normal);
+}
+
+.crc-root-person-empty__help {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.crc-root-person-selected {
+  padding: 16px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  width: 100%;
+}
+
+.crc-root-person-selected__name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 4px;
+}
+
+.crc-root-person-selected__id {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+}
+
+.crc-root-person-actions {
+  display: flex;
+  justify-content: center;
+}
+
+/* Person Browser (Inline) */
+.crc-person-browser {
+  margin-top: 24px;
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 16px;
+}
+
+.crc-person-browser__header {
+  margin-bottom: 12px;
+}
+
+.crc-person-browser__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.crc-person-browser__content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.crc-person-browser__search {
+  display: flex;
+}
+
+.crc-person-browser__controls {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* Override picker results to have constrained height */
+.crc-person-browser .crc-picker-results {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.crc-person-browser .crc-picker-main {
+  max-height: 400px;
+}
+
+/* Root Person Generate Section */
+.crc-root-person-generate {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/* Section Title */
+.crc-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-normal);
+}
+
+/* Separator */
+.crc-separator {
+  position: relative;
+  text-align: center;
+  margin: 32px 0;
+}
+
+.crc-separator::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--background-modifier-border);
+}
+
+.crc-separator-text {
+  position: relative;
+  display: inline-block;
+  padding: 0 16px;
+  background: var(--background-primary);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* ==========================================================================
    BUTTONS
    ========================================================================== */
@@ -335,6 +485,13 @@
 .crc-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.crc-btn--large {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 /* ==========================================================================
