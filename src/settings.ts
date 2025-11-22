@@ -26,6 +26,26 @@ export interface RecentImportInfo {
  */
 export type ArrowStyle = 'directed' | 'bidirectional' | 'undirected';
 
+/**
+ * Node color scheme options
+ * - 'gender': Color by gender (green for male, purple for female)
+ * - 'generation': Color by generation level (creates visual layers)
+ * - 'monochrome': No coloring (neutral for all nodes)
+ */
+export type ColorScheme = 'gender' | 'generation' | 'monochrome';
+
+/**
+ * Canvas color values (Obsidian's 6 preset colors)
+ * - '1': Red
+ * - '2': Orange
+ * - '3': Yellow
+ * - '4': Green
+ * - '5': Cyan
+ * - '6': Purple
+ * - 'none': No color (theme default)
+ */
+export type CanvasColor = '1' | '2' | '3' | '4' | '5' | '6' | 'none';
+
 export interface CanvasRootsSettings {
 	defaultNodeWidth: number;
 	defaultNodeHeight: number;
@@ -40,6 +60,11 @@ export interface CanvasRootsSettings {
 	// Arrow styling
 	parentChildArrowStyle: ArrowStyle;
 	spouseArrowStyle: ArrowStyle;
+	// Node coloring
+	nodeColorScheme: ColorScheme;
+	// Edge coloring
+	parentChildEdgeColor: CanvasColor;
+	spouseEdgeColor: CanvasColor;
 }
 
 export const DEFAULT_SETTINGS: CanvasRootsSettings = {
@@ -57,7 +82,12 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	recentImports: [],
 	// Arrow styling defaults
 	parentChildArrowStyle: 'directed',  // Parent → Child with single arrow
-	spouseArrowStyle: 'undirected'      // Spouse — Spouse with no arrows (cleaner look)
+	spouseArrowStyle: 'undirected',     // Spouse — Spouse with no arrows (cleaner look)
+	// Node coloring default
+	nodeColorScheme: 'gender',          // Gender-based coloring for backward compatibility
+	// Edge coloring defaults (neutral/subtle)
+	parentChildEdgeColor: 'none',       // No color - use theme default (clean, subtle)
+	spouseEdgeColor: 'none'             // No color - use theme default (clean, subtle)
 };
 
 export class CanvasRootsSettingTab extends PluginSettingTab {
@@ -78,14 +108,14 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 			.setName('Layout')
 			.setHeading();
 
-		// Re-layout feature info
-		const relayoutInfo = containerEl.createDiv({ cls: 'setting-item-description' });
-		relayoutInfo.style.marginBottom = '1em';
-		relayoutInfo.style.padding = '0.75em';
-		relayoutInfo.style.background = 'var(--background-secondary)';
-		relayoutInfo.style.borderRadius = '4px';
-		relayoutInfo.innerHTML = '<strong>💡 Tip:</strong> After changing layout settings, right-click any existing canvas file and select ' +
-			'<strong>"Re-layout family tree"</strong> to apply the new settings.';
+		// Regenerate canvas feature info
+		const regenerateInfo = containerEl.createDiv({ cls: 'setting-item-description' });
+		regenerateInfo.style.marginBottom = '1em';
+		regenerateInfo.style.padding = '0.75em';
+		regenerateInfo.style.background = 'var(--background-secondary)';
+		regenerateInfo.style.borderRadius = '4px';
+		regenerateInfo.innerHTML = '<strong>💡 Tip:</strong> After changing layout settings, right-click any existing canvas file and select ' +
+			'<strong>"Regenerate canvas"</strong> to apply the new settings.';
 
 		new Setting(containerEl)
 			.setName('Default node width')
@@ -166,6 +196,93 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.autoGenerateCrId)
 				.onChange(async (value) => {
 					this.plugin.settings.autoGenerateCrId = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Canvas styling
+		new Setting(containerEl)
+			.setName('Canvas styling')
+			.setHeading();
+
+		// Styling tip
+		const stylingInfo = containerEl.createDiv({ cls: 'setting-item-description' });
+		stylingInfo.style.marginBottom = '1em';
+		stylingInfo.style.padding = '0.75em';
+		stylingInfo.style.background = 'var(--background-secondary)';
+		stylingInfo.style.borderRadius = '4px';
+		stylingInfo.innerHTML = '<strong>💡 Tip:</strong> After changing styling settings, right-click any existing canvas file and select ' +
+			'<strong>"Regenerate canvas"</strong> to apply the new settings.';
+
+		new Setting(containerEl)
+			.setName('Node color scheme')
+			.setDesc('How to color person nodes in the family tree')
+			.addDropdown(dropdown => dropdown
+				.addOption('gender', 'Gender (green for male, purple for female)')
+				.addOption('generation', 'Generation (color by generation level)')
+				.addOption('monochrome', 'Monochrome (no coloring)')
+				.setValue(this.plugin.settings.nodeColorScheme)
+				.onChange(async (value: ColorScheme) => {
+					this.plugin.settings.nodeColorScheme = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Parent-child arrow style')
+			.setDesc('Arrow style for parent-to-child relationship edges')
+			.addDropdown(dropdown => dropdown
+				.addOption('directed', 'Directed (→ arrow pointing to child)')
+				.addOption('bidirectional', 'Bidirectional (↔ arrows on both ends)')
+				.addOption('undirected', 'Undirected (— no arrows)')
+				.setValue(this.plugin.settings.parentChildArrowStyle)
+				.onChange(async (value: ArrowStyle) => {
+					this.plugin.settings.parentChildArrowStyle = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Spouse arrow style')
+			.setDesc('Arrow style for spouse relationship edges')
+			.addDropdown(dropdown => dropdown
+				.addOption('directed', 'Directed (→ arrow pointing forward)')
+				.addOption('bidirectional', 'Bidirectional (↔ arrows on both ends)')
+				.addOption('undirected', 'Undirected (— no arrows)')
+				.setValue(this.plugin.settings.spouseArrowStyle)
+				.onChange(async (value: ArrowStyle) => {
+					this.plugin.settings.spouseArrowStyle = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Parent-child edge color')
+			.setDesc('Color for parent-to-child relationship edges')
+			.addDropdown(dropdown => dropdown
+				.addOption('none', 'None (theme default)')
+				.addOption('1', 'Red')
+				.addOption('2', 'Orange')
+				.addOption('3', 'Yellow')
+				.addOption('4', 'Green')
+				.addOption('5', 'Cyan')
+				.addOption('6', 'Purple')
+				.setValue(this.plugin.settings.parentChildEdgeColor)
+				.onChange(async (value: CanvasColor) => {
+					this.plugin.settings.parentChildEdgeColor = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Spouse edge color')
+			.setDesc('Color for spouse relationship edges')
+			.addDropdown(dropdown => dropdown
+				.addOption('none', 'None (theme default)')
+				.addOption('1', 'Red')
+				.addOption('2', 'Orange')
+				.addOption('3', 'Yellow')
+				.addOption('4', 'Green')
+				.addOption('5', 'Cyan')
+				.addOption('6', 'Purple')
+				.setValue(this.plugin.settings.spouseEdgeColor)
+				.onChange(async (value: CanvasColor) => {
+					this.plugin.settings.spouseEdgeColor = value;
 					await this.plugin.saveSettings();
 				}));
 

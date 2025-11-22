@@ -1,5 +1,7 @@
 # Canvas Roots: Genealogical Family Tree Plugin for Obsidian
 
+> **⚠️ Alpha Status (v0.1.0):** Canvas Roots is in early alpha release. Core features are stable and well-tested (GEDCOM import, tree generation, canvas styling), but some advanced features are not yet implemented. See [Known Limitations](docs/known-limitations.md) for details.
+
 **Canvas Roots** is an Obsidian plugin that automatically generates complex family trees directly onto the Canvas using specialized genealogical layout algorithms for non-overlapping, relationship-aware positioning.
 
 This Obsidian plugin is designed for genealogists, historians, and world-builders. It transforms structured data in your Markdown notes (relationships, dates, locations) into perfectly laid-out family trees directly on the Obsidian Canvas.
@@ -17,9 +19,9 @@ The core approach is hybrid: the plugin uses specialized family tree layout algo
 
 - **Bi-Directional Linking (Optional):** Configure automatic two-way relationship synchronization (e.g., setting a father automatically sets the child) with flexible settings for manual or automatic sync.
 
-- **Relayout Command:** Recalculate and restore the optimized genealogical layout with a single command if Canvas nodes are manually rearranged.
+- **Regenerate Canvas:** Update existing canvases with current relationship data and settings. Recalculate layout, apply new styling options, and preserve tree metadata—all with a single command or right-click menu.
 
-- **Arrow Styling:** Customize relationship visualization with three arrow styles: directed (→) for generational flow, bidirectional (↔) for reciprocal relationships, or undirected (—) for cleaner layouts. Configure separately for parent-child and spouse relationships.
+- **Canvas Styling:** Comprehensive styling options within the JSON Canvas spec: node coloring (gender-based, generation-based, or monochrome), arrow styles (directed, bidirectional, undirected), and edge colors. Configure parent-child and spouse relationships independently for clean, professional genealogical visualizations.
 
 - **Privacy & Obfuscation:** Optional data obfuscation for exports and canvas display. Protect PII when sharing family trees publicly, for demonstrations, or for research collaboration while preserving relationship structure. Selectively obfuscate all individuals, living persons only, minors only, or combine filters for maximum privacy protection.
 
@@ -34,6 +36,45 @@ The core approach is hybrid: the plugin uses specialized family tree layout algo
 |:-------------------------:|:---------------------:|
 | ![Tree generation interface showing inline person browser with birth years, family group detection, and configuration options](docs/images/tree-generation-ui.png) | ![Multi-generational family tree canvas with automated genealogical layout](docs/images/family-tree-canvas.png) |
 | **Streamlined tree generation** with inline person browser, birth/death year display, and family group detection | **Automated genealogical layout** showing 4 generations with spouse relationships and parent-child connections |
+
+
+## 📥 Installation
+
+### Using BRAT (Recommended for Alpha Testing)
+
+The easiest way to install Canvas Roots for alpha testing is using the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin:
+
+1. Install BRAT from Obsidian's Community Plugins (if not already installed)
+2. Open Command Palette (Ctrl/Cmd + P)
+3. Run command: `BRAT: Add a beta plugin for testing`
+4. Enter this repository URL: `https://github.com/banisterious/obsidian-canvas-roots`
+5. Enable Canvas Roots in Settings → Community Plugins
+
+BRAT will automatically check for updates and notify you when new versions are available.
+
+### Manual Installation from Release
+
+1. Download the latest release from the [Releases page](https://github.com/banisterious/obsidian-canvas-roots/releases)
+2. Extract the ZIP file
+3. Copy the `canvas-roots` folder to your vault's plugins folder: `<vault>/.obsidian/plugins/`
+4. Reload Obsidian (Ctrl/Cmd + R)
+5. Go to Settings → Community Plugins and enable "Canvas Roots"
+
+### From Source (For Developers)
+
+1. Clone this repository or download the source code
+2. Run `npm install` to install dependencies
+3. Run `npm run build` to compile the plugin
+4. Copy `main.js`, `styles.css`, and `manifest.json` to your vault's plugins folder: `<vault>/.obsidian/plugins/canvas-roots/`
+5. Reload Obsidian
+6. Enable the plugin in Settings → Community Plugins
+
+### From Obsidian Community Plugins (Coming Soon)
+
+Once approved for the Obsidian Community Plugins directory, you'll be able to install directly from Obsidian:
+1. Open Settings → Community Plugins
+2. Click "Browse" and search for "Canvas Roots"
+3. Click "Install" then "Enable"
 
 
 ## 🛠️ Workflow
@@ -94,34 +135,34 @@ The plugin populates the Canvas with the calculated family tree layout using spe
 
 ### 3. Maintain the Layout
 
-After editing relationships in person notes or changing layout settings, refresh your canvas:
+After editing relationships in person notes or changing layout/styling settings, refresh your canvas:
 
 **Method 1: Right-Click Menu (Recommended)**
 - Right-click on the canvas tab, file, or three-dot menu (⋮)
-- Select **"Re-layout family tree"**
+- Select **"Regenerate canvas"**
 
 **Method 2: Command Palette**
-- Open the canvas you want to re-layout
-- Run: `Canvas Roots: Re-Layout Current Canvas`
+- Open the canvas you want to regenerate
+- Run: `Canvas Roots: Regenerate canvas`
 
 **Method 3: Keyboard Shortcut**
-- Assign a custom hotkey in Settings → Hotkeys → "Re-layout current canvas"
+- Assign a custom hotkey in Settings → Hotkeys → "Regenerate canvas"
 
-The re-layout command:
+The regenerate canvas command:
 - ✅ Reads current relationship data from your person notes
 - ✅ Preserves original tree settings (tree type, generations, spouses) using embedded canvas metadata
 - ✅ Allows changing layout direction (vertical ↔ horizontal) while preserving other settings
-- ✅ Applies your current spacing/sizing settings
+- ✅ Applies your current spacing, sizing, and styling settings
 - ✅ Updates the canvas in-place (non-destructive)
 - ✅ Uses the latest family-chart layout algorithm
 
-**Common Re-Layout Scenarios:**
+**Common Regeneration Scenarios:**
 - Added new spouses, children, or parents to person notes
 - Corrected relationship errors (wrong parents, etc.)
-- Changed spacing settings and want to apply to existing trees
+- Changed spacing or styling settings and want to apply to existing trees
 - Updated from an older layout algorithm version
 - Imported/edited data via GEDCOM or Bases
-- Testing different layout configurations
+- Testing different layout or color scheme configurations
 
 
 ## 💾 GEDCOM Integration
@@ -143,6 +184,58 @@ This creates a rich, queryable genealogical database in your vault that works se
 
 Future versions will support exporting your research back to GEDCOM format, ensuring portability and compatibility with dedicated genealogy software.
 
+
+## 🎨 Advanced Styling with Advanced Canvas
+
+Canvas Roots is designed to be fully compliant with the [JSON Canvas 1.0 specification](https://jsoncanvas.org/), ensuring maximum portability and compatibility across Canvas viewers and editors. All styling features provided by Canvas Roots work within the standard specification.
+
+For users who want additional styling capabilities beyond the spec (such as border styles, advanced path rendering, or custom shapes), Canvas Roots works seamlessly alongside the [Advanced Canvas](https://github.com/Developer-Mike/obsidian-advanced-canvas) plugin.
+
+### Canvas Roots Built-in Styling
+
+Canvas Roots provides comprehensive styling options that work within the JSON Canvas standard:
+
+**Node Coloring:**
+- **Gender-based**: Green for male, purple for female (genealogy convention)
+- **Generation-based**: Different colors for each generation level (creates visual layers)
+- **Monochrome**: No coloring (neutral theme)
+
+**Edge Styling:**
+- **Arrow styles**: Directed (→), bidirectional (↔), or undirected (—)
+- **Separate controls**: Configure parent-child and spouse relationships independently
+- **Edge colors**: Choose from Obsidian's 6 preset colors or theme default
+
+All these settings are accessible in Settings → Canvas Roots → Canvas styling, and can be applied to existing trees using the "Regenerate canvas" feature (right-click any canvas file).
+
+### Using Advanced Canvas Plugin
+
+The [Advanced Canvas](https://github.com/Developer-Mike/obsidian-advanced-canvas) plugin adds styling features beyond the JSON Canvas spec, such as:
+
+- **Border styles**: Solid, dashed, dotted borders for cards
+- **Advanced path rendering**: Additional edge styling options
+- **Custom shapes**: Circle nodes, hexagons, and more
+- **Enhanced visual effects**: Shadows, gradients, and other CSS-based styling
+
+**Installation:**
+
+1. Install Advanced Canvas from Obsidian Community Plugins
+2. Both plugins work independently and complement each other
+3. Canvas Roots handles layout and genealogical relationships
+4. Advanced Canvas provides additional visual styling options
+
+**Important Notes:**
+
+- Advanced Canvas features may not be portable to other Canvas viewers
+- Canvas files styled with Advanced Canvas will still open in any Canvas viewer, but advanced styling may not appear
+- Canvas Roots features (node colors, arrow styles, edge colors) remain fully portable as they use the standard spec
+
+**Recommended Workflow:**
+
+1. Generate family trees using Canvas Roots (handles layout, relationships, standard styling)
+2. Apply Advanced Canvas styling if desired (borders, custom shapes, enhanced visuals)
+3. Use "Regenerate canvas" to update tree structure and relationships while preserving manually applied Advanced Canvas styling
+
+This approach gives you the best of both worlds: standards-compliant genealogical layouts from Canvas Roots, plus optional enhanced styling from Advanced Canvas.
 
 ## 📚 Documentation
 
@@ -179,13 +272,14 @@ Canvas Roots is in active development with core functionality in place:
 - Structured logging system with export capability
 
 **Recently Completed:**
-- Re-layout canvas command for updating existing trees with current data and settings
+- Canvas regeneration command for updating existing trees with current data, layout, and styling settings
 - Context menu integration for canvas files (right-click on file, tab, or three-dot menu)
 - Genealogical layout engine using family-chart library for automated tree positioning
 - Canvas generation from person notes with proper handling of complex relationships
 - Streamlined Tree Generation tab with inline person browser (search, sort, filters, family groups)
 - Integrated generation workflow with single-card interface
 - Full tree generation with spacing optimization and multi-family support
+- Comprehensive canvas styling options: node coloring (gender/generation/monochrome), arrow styles, edge colors
 
 **In Progress:**
 - Collection management and tree detection

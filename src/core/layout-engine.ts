@@ -60,6 +60,8 @@ export interface NodePosition {
 	person: PersonNode;
 	x: number;
 	y: number;
+	/** Generation number relative to root (0 = root, positive = descendants, negative = ancestors) */
+	generation?: number;
 }
 
 /**
@@ -101,7 +103,7 @@ export class LayoutEngine {
 		const root = hierarchy(treeData);
 		const layoutRoot = layout(root);
 
-		// Extract positioned nodes
+		// Extract positioned nodes with generation tracking
 		const positions: NodePosition[] = [];
 
 		layoutRoot.each((node) => {
@@ -109,11 +111,19 @@ export class LayoutEngine {
 			const x = opts.direction === 'vertical' ? node.x : node.y;
 			const y = opts.direction === 'vertical' ? node.y : node.x;
 
+			// Calculate generation number relative to root
+			// For descendant trees: root = 0, children = 1, grandchildren = 2, etc.
+			// For ancestor trees: root = 0, parents = -1, grandparents = -2, etc.
+			const generation = opts.treeType === 'ancestor'
+				? -node.depth  // Negative for ancestors
+				: node.depth;  // Positive for descendants
+
 			positions.push({
 				crId: person.crId,
 				person,
 				x,
-				y
+				y,
+				generation
 			});
 		});
 

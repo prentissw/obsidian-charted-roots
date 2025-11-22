@@ -9,7 +9,7 @@ import { CanvasGenerator, CanvasData, CanvasGenerationOptions } from '../core/ca
 import { getLogger, LoggerFactory, type LogLevel } from '../core/logging';
 import { GedcomImporter } from '../gedcom/gedcom-importer';
 import { BidirectionalLinker } from '../core/bidirectional-linker';
-import type { RecentTreeInfo, RecentImportInfo, ArrowStyle } from '../settings';
+import type { RecentTreeInfo, RecentImportInfo, ArrowStyle, ColorScheme } from '../settings';
 
 const logger = getLogger('ControlCenter');
 
@@ -196,11 +196,14 @@ export class ControlCenterModal extends Modal {
 			case 'status':
 				this.showStatusTab();
 				break;
+			case 'guide':
+				this.showGuideTab();
+				break;
 			case 'quick-actions':
 				this.showQuickActionsTab();
 				break;
 			case 'quick-settings':
-				this.showQuickSettingsTab();
+				this.showCanvasSettingsTab();
 				break;
 			case 'data-entry':
 				this.showDataEntryTab();
@@ -348,7 +351,12 @@ export class ControlCenterModal extends Modal {
 						nodeSpacingX: this.plugin.settings.horizontalSpacing,
 						nodeSpacingY: this.plugin.settings.verticalSpacing,
 						direction: 'vertical' as const,
+						nodeColorScheme: this.plugin.settings.nodeColorScheme,
 						showLabels: false,
+						parentChildArrowStyle: this.plugin.settings.parentChildArrowStyle,
+						spouseArrowStyle: this.plugin.settings.spouseArrowStyle,
+						parentChildEdgeColor: this.plugin.settings.parentChildEdgeColor,
+						spouseEdgeColor: this.plugin.settings.spouseEdgeColor,
 						canvasRootsMetadata: {
 							plugin: 'canvas-roots' as const,
 							generation: {
@@ -922,6 +930,204 @@ export class ControlCenterModal extends Modal {
 	}
 
 	/**
+	 * Show Guide tab - Quick start and getting started information
+	 */
+	private showGuideTab(): void {
+		const container = this.contentContainer;
+
+		// Welcome Section
+		const welcomeCard = this.createCard({
+			title: 'Welcome to Canvas Roots',
+			icon: 'book-open'
+		});
+		const welcomeContent = welcomeCard.querySelector('.crc-card__content') as HTMLElement;
+
+		welcomeContent.createEl('p', {
+			text: 'Canvas Roots automatically generates family trees on the Obsidian Canvas using specialized genealogical layout algorithms.',
+			cls: 'crc-mb-3'
+		});
+
+		welcomeContent.createEl('p', {
+			text: 'This guide will help you get started quickly.',
+			cls: 'crc-text-muted'
+		});
+
+		container.appendChild(welcomeCard);
+
+		// Quick Start Card
+		const quickStartCard = this.createCard({
+			title: 'Quick start',
+			icon: 'zap'
+		});
+		const quickStartContent = quickStartCard.querySelector('.crc-card__content') as HTMLElement;
+
+		const steps = [
+			{
+				number: '1',
+				title: 'Enter your data',
+				description: 'Create person notes with YAML frontmatter, import a GEDCOM file, or use Obsidian Bases for bulk entry.',
+				action: 'Go to GEDCOM tab to import →'
+			},
+			{
+				number: '2',
+				title: 'Generate the tree',
+				description: 'Select a root person and configure tree options (ancestors, descendants, or full family tree).',
+				action: 'Go to Tree Generation tab →'
+			},
+			{
+				number: '3',
+				title: 'Maintain the layout',
+				description: 'After editing relationships or changing settings, right-click any canvas file and select "Regenerate canvas".',
+				action: null
+			}
+		];
+
+		steps.forEach((step, index) => {
+			const stepEl = quickStartContent.createDiv({ cls: 'crc-guide-step' });
+
+			// Step number badge
+			const badge = stepEl.createDiv({ cls: 'crc-guide-step__badge' });
+			badge.textContent = step.number;
+
+			// Step content
+			const content = stepEl.createDiv({ cls: 'crc-guide-step__content' });
+			content.createEl('h4', { text: step.title, cls: 'crc-mb-1' });
+			content.createEl('p', { text: step.description, cls: 'crc-text-muted crc-mb-2' });
+
+			if (step.action) {
+				const actionLink = content.createEl('a', {
+					text: step.action,
+					cls: 'crc-link'
+				});
+				actionLink.addEventListener('click', (e) => {
+					e.preventDefault();
+					if (index === 0) this.switchTab('gedcom');
+					if (index === 1) this.switchTab('tree-generation');
+				});
+			}
+		});
+
+		container.appendChild(quickStartCard);
+
+		// Essential Frontmatter Card
+		const frontmatterCard = this.createCard({
+			title: 'Essential person note fields',
+			icon: 'file-text'
+		});
+		const frontmatterContent = frontmatterCard.querySelector('.crc-card__content') as HTMLElement;
+
+		frontmatterContent.createEl('p', {
+			text: 'Add these fields to your person notes (YAML frontmatter):',
+			cls: 'crc-mb-3'
+		});
+
+		const fieldsList = frontmatterContent.createEl('ul', { cls: 'crc-field-list' });
+
+		const fields = [
+			{ name: 'cr_id', description: 'Unique identifier (auto-generated or from GEDCOM UUID)', required: true },
+			{ name: 'name', description: 'Full name of the person', required: true },
+			{ name: 'sex', description: 'M (male), F (female), or U (unknown)', required: false },
+			{ name: 'father', description: 'Wikilink to father\'s note: [[John Smith]]', required: false },
+			{ name: 'mother', description: 'Wikilink to mother\'s note: [[Jane Doe]]', required: false },
+			{ name: 'spouse', description: 'Array of spouse wikilinks: [[[Mary Jones]]]', required: false },
+			{ name: 'born', description: 'Birth date (YYYY-MM-DD format preferred)', required: false },
+			{ name: 'died', description: 'Death date (YYYY-MM-DD format preferred)', required: false }
+		];
+
+		fields.forEach(field => {
+			const li = fieldsList.createEl('li');
+			const fieldName = li.createEl('code', { text: field.name });
+			if (field.required) {
+				fieldName.addClass('crc-field--required');
+			}
+			li.appendText(` - ${field.description}`);
+		});
+
+		container.appendChild(frontmatterCard);
+
+		// Common Tasks Card
+		const tasksCard = this.createCard({
+			title: 'Common tasks',
+			icon: 'check'
+		});
+		const tasksContent = tasksCard.querySelector('.crc-card__content') as HTMLElement;
+
+		const tasks = [
+			{
+				icon: 'upload',
+				title: 'Import GEDCOM file',
+				description: 'Import genealogical data from Family Tree Maker, Gramps, or other tools',
+				tab: 'gedcom'
+			},
+			{
+				icon: 'git-branch',
+				title: 'Generate family tree',
+				description: 'Create a visual canvas from your person notes',
+				tab: 'tree-generation'
+			},
+			{
+				icon: 'user-plus',
+				title: 'Create person note',
+				description: 'Add a new individual to your family tree',
+				tab: 'data-entry'
+			},
+			{
+				icon: 'settings',
+				title: 'Customize styling',
+				description: 'Configure node colors, arrow styles, and edge colors',
+				tab: 'quick-settings'
+			}
+		];
+
+		tasks.forEach(task => {
+			const taskEl = tasksContent.createDiv({ cls: 'crc-task-item' });
+
+			// Icon
+			const iconEl = taskEl.createDiv({ cls: 'crc-task-item__icon' });
+			setLucideIcon(iconEl, task.icon as LucideIconName, 20);
+
+			// Content
+			const taskContent = taskEl.createDiv({ cls: 'crc-task-item__content' });
+			taskContent.createEl('h4', { text: task.title, cls: 'crc-mb-1' });
+			taskContent.createEl('p', { text: task.description, cls: 'crc-text-muted' });
+
+			// Arrow
+			const arrow = taskEl.createDiv({ cls: 'crc-task-item__arrow' });
+			setLucideIcon(arrow, 'chevron-right', 16);
+
+			// Click handler
+			taskEl.addClass('crc-task-item--clickable');
+			taskEl.addEventListener('click', () => {
+				this.switchTab(task.tab);
+			});
+		});
+
+		container.appendChild(tasksCard);
+
+		// Tips Card
+		const tipsCard = this.createCard({
+			title: 'Pro tips',
+			icon: 'info'
+		});
+		const tipsContent = tipsCard.querySelector('.crc-card__content') as HTMLElement;
+
+		const tips = [
+			'Use Obsidian Bases for efficient bulk data entry and table-view editing',
+			'After changing layout or styling settings, use "Regenerate canvas" to apply changes to existing trees',
+			'The cr_id field ensures stable identity mapping between notes and canvas nodes',
+			'Generation-based coloring creates visual layers that make tree structure clearer',
+			'Canvas Roots stays JSON Canvas 1.0 compliant for maximum portability'
+		];
+
+		const tipsList = tipsContent.createEl('ul', { cls: 'crc-tips-list' });
+		tips.forEach(tip => {
+			tipsList.createEl('li', { text: tip });
+		});
+
+		container.appendChild(tipsCard);
+	}
+
+	/**
 	 * Show Quick Actions tab
 	 */
 	private showQuickActionsTab(): void {
@@ -1079,9 +1285,9 @@ export class ControlCenterModal extends Modal {
 	}
 
 	/**
-	 * Show Quick Settings tab
+	 * Show Canvas Settings tab
 	 */
-	private showQuickSettingsTab(): void {
+	private showCanvasSettingsTab(): void {
 		const container = this.contentContainer;
 
 		// Title
@@ -1334,6 +1540,52 @@ export class ControlCenterModal extends Modal {
 		});
 
 		container.appendChild(arrowCard);
+
+		// Node Color Scheme Card
+		const colorCard = this.createCard({
+			title: 'Node coloring',
+			icon: 'layout'
+		});
+
+		const colorContent = colorCard.querySelector('.crc-card__content') as HTMLElement;
+
+		// Color Scheme Dropdown
+		const colorSchemeGroup = colorContent.createDiv({ cls: 'crc-form-group' });
+		const colorSchemeLabel = colorSchemeGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Color scheme'
+		});
+		colorSchemeLabel.htmlFor = 'quick-color-scheme';
+
+		const colorSchemeSelect = colorSchemeGroup.createEl('select', {
+			cls: 'crc-form-input',
+			attr: { id: 'quick-color-scheme' }
+		}) as HTMLSelectElement;
+
+		[
+			{ value: 'gender', label: 'Gender - Green for males, purple for females' },
+			{ value: 'generation', label: 'Generation - Color by generation level' },
+			{ value: 'monochrome', label: 'Monochrome - No coloring' }
+		].forEach(opt => {
+			colorSchemeSelect.createEl('option', {
+				value: opt.value,
+				text: opt.label
+			});
+		});
+		colorSchemeSelect.value = this.plugin.settings.nodeColorScheme;
+
+		colorSchemeGroup.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'How to color person nodes in family trees. Default: Gender'
+		});
+
+		colorSchemeSelect.addEventListener('change', async () => {
+			this.plugin.settings.nodeColorScheme = colorSchemeSelect.value as ColorScheme;
+			await this.plugin.saveSettings();
+			new Notice('Node color scheme updated');
+		});
+
+		container.appendChild(colorCard);
 
 		// Link to full settings
 		const fullSettingsBtn = container.createEl('button', {
@@ -1841,11 +2093,13 @@ export class ControlCenterModal extends Modal {
 				direction,
 				nodeSpacingX: spacingX,
 				nodeSpacingY: spacingY,
-				colorByGender: true,
+				nodeColorScheme: this.plugin.settings.nodeColorScheme,
 				showLabels: true,
 				useFamilyChartLayout: true,  // Use family-chart for proper spouse handling
 				parentChildArrowStyle: this.plugin.settings.parentChildArrowStyle,
 				spouseArrowStyle: this.plugin.settings.spouseArrowStyle,
+				parentChildEdgeColor: this.plugin.settings.parentChildEdgeColor,
+				spouseEdgeColor: this.plugin.settings.spouseEdgeColor,
 				canvasRootsMetadata: {
 					plugin: 'canvas-roots',
 					generation: {
@@ -2945,9 +3199,13 @@ export class ControlCenterModal extends Modal {
 			return sorted;
 		};
 
+		// Track currently selected item element for visual feedback
+		let selectedItemElement: HTMLElement | null = null;
+
 		// Render results function
 		const renderResults = () => {
 			resultsContainer.empty();
+			selectedItemElement = null; // Reset on re-render
 
 			const searchQuery = searchInput.value.toLowerCase();
 			const filteredPeople = allPeople.filter(person => {
@@ -3027,7 +3285,23 @@ export class ControlCenterModal extends Modal {
 					}
 				}
 
+				// Check if this person is currently selected
+				if (rootPersonField.crId === person.crId) {
+					item.addClass('crc-picker-item--selected');
+					selectedItemElement = item;
+				}
+
 				item.addEventListener('click', () => {
+					// Remove selection from previously selected item
+					if (selectedItemElement) {
+						selectedItemElement.removeClass('crc-picker-item--selected');
+					}
+
+					// Add selection to clicked item
+					item.addClass('crc-picker-item--selected');
+					selectedItemElement = item;
+
+					// Update the root person field
 					rootPersonField.name = person.name;
 					rootPersonField.crId = person.crId;
 					this.updateRootPersonDisplay(personDisplay, rootPersonField);

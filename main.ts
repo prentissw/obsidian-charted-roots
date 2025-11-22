@@ -43,10 +43,10 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 		});
 
-		// Add command: Re-Layout Current Canvas
+		// Add command: Regenerate Canvas
 		this.addCommand({
-			id: 'relayout-current-canvas',
-			name: 'Re-layout current canvas',
+			id: 'regenerate-canvas',
+			name: 'Regenerate canvas',
 			callback: () => {
 				const activeFile = this.app.workspace.getActiveFile();
 
@@ -81,7 +81,7 @@ export default class CanvasRootsPlugin extends Plugin {
 		// Add context menu item for person notes and canvas files
 		this.registerEvent(
 			this.app.workspace.on('file-menu', (menu, file) => {
-				// Add re-layout option for canvas files FIRST (appears higher in menu)
+				// Add regenerate canvas option for canvas files FIRST (appears higher in menu)
 				// This appears when right-clicking:
 				// - On a .canvas file in the file explorer
 				// - On a canvas tab in the tab bar
@@ -92,7 +92,7 @@ export default class CanvasRootsPlugin extends Plugin {
 
 					menu.addItem((item) => {
 						item
-							.setTitle('Re-layout family tree')
+							.setTitle('Regenerate canvas')
 							.setIcon('refresh-cw')
 							.onClick(async () => {
 								// Open the canvas file first
@@ -162,16 +162,16 @@ export default class CanvasRootsPlugin extends Plugin {
 		await modal.openWithPerson(activeFile);
 	}
 
-	private async relayoutCanvas(canvasFile: TFile, direction?: 'vertical' | 'horizontal') {
+	async regenerateCanvas(canvasFile: TFile, direction?: 'vertical' | 'horizontal') {
 		try {
-			new Notice('Re-layouting canvas...');
+			new Notice('Regenerating canvas...');
 
 			// 1. Read current Canvas JSON
 			const canvasContent = await this.app.vault.read(canvasFile);
 			const canvasData = JSON.parse(canvasContent);
 
 			if (!canvasData.nodes || canvasData.nodes.length === 0) {
-				new Notice('Canvas is empty - nothing to re-layout');
+				new Notice('Canvas is empty - nothing to regenerate');
 				return;
 			}
 
@@ -272,9 +272,13 @@ export default class CanvasRootsPlugin extends Plugin {
 				nodeHeight,
 				direction: direction ?? originalDirection,
 				treeType: layoutTreeType,
-				colorByGender: true,
+				nodeColorScheme: this.settings.nodeColorScheme,
 				showLabels: true,
 				useFamilyChartLayout: true,
+				parentChildArrowStyle: this.settings.parentChildArrowStyle,
+				spouseArrowStyle: this.settings.spouseArrowStyle,
+				parentChildEdgeColor: this.settings.parentChildEdgeColor,
+				spouseEdgeColor: this.settings.spouseEdgeColor,
 				canvasRootsMetadata: {
 					plugin: 'canvas-roots',
 					generation: {
@@ -307,10 +311,10 @@ export default class CanvasRootsPlugin extends Plugin {
 			const formattedJson = this.formatCanvasJson(updatedCanvasData);
 			await this.app.vault.modify(canvasFile, formattedJson);
 
-			new Notice(`Canvas re-layouted successfully! (${newCanvasData.nodes.length} people)`);
+			new Notice(`Canvas regenerated successfully! (${newCanvasData.nodes.length} people)`);
 		} catch (error) {
-			console.error('Error re-layouting canvas:', error);
-			new Notice('Failed to re-layout canvas. Check console for details.');
+			console.error('Error regenerating canvas:', error);
+			new Notice('Failed to regenerate canvas. Check console for details.');
 		}
 	}
 

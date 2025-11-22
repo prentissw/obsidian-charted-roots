@@ -69,3 +69,9 @@ dev-deploy.sh
 
 # Generated log files
 canvas-roots-logs-*.json
+
+# GEDCOM testing - keep small fixtures, ignore results and large generated files
+gedcom-testing/testing-results.md
+gedcom-testing/gedcom-sample-xlarge.ged
+gedcom-testing/gedcom-sample-large.ged
+gedcom-testing/gedcom-sample-medium.ged

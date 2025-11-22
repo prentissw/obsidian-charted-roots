@@ -2,7 +2,7 @@ import { App, Modal, TFile } from 'obsidian';
 import CanvasRootsPlugin from '../../main';
 
 /**
- * Modal for selecting re-layout options
+ * Modal for selecting canvas regeneration options
  */
 export class RelayoutOptionsModal extends Modal {
 	plugin: CanvasRootsPlugin;
@@ -24,7 +24,7 @@ export class RelayoutOptionsModal extends Modal {
 
 		// Title
 		contentEl.createEl('h2', {
-			text: 'Re-layout options',
+			text: 'Regenerate canvas',
 			cls: 'crc-modal-title'
 		});
 
@@ -98,13 +98,13 @@ export class RelayoutOptionsModal extends Modal {
 
 		const applyBtn = buttonContainer.createEl('button', {
 			cls: 'crc-btn crc-btn--primary',
-			text: 'Re-layout'
+			text: 'Regenerate'
 		});
 		applyBtn.addEventListener('click', async () => {
 			const direction = this.directionSelect!.value as 'vertical' | 'horizontal';
 			this.close();
-			// Call the plugin's relayout method with the selected direction
-			await (this.plugin as any).relayoutCanvas(this.canvasFile, direction);
+			// Call the plugin's regenerate method with the selected direction
+			await this.plugin.regenerateCanvas(this.canvasFile, direction);
 		});
 	}
 

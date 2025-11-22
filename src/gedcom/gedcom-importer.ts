@@ -30,6 +30,7 @@ export interface GedcomImportResult {
 	errors: string[];
 	gedcomData?: GedcomData;
 	fileName?: string;
+	malformedDataCount?: number; // Count of people with missing/invalid data
 }
 
 /**
@@ -130,7 +131,8 @@ export class GedcomImporter {
 			notesUpdated: 0,
 			notesSkipped: 0,
 			errors: [],
-			fileName: options.fileName
+			fileName: options.fileName,
+			malformedDataCount: 0
 		};
 
 		try {
@@ -163,6 +165,14 @@ export class GedcomImporter {
 					gedcomToCrId.set(gedcomId, crId);
 					result.notesCreated++;
 					result.individualsProcessed++;
+
+					// Track malformed data (missing name or dates)
+					if (!individual.name || individual.name.trim() === '' ||
+						!individual.birthDate || !individual.deathDate) {
+						if (result.malformedDataCount !== undefined) {
+							result.malformedDataCount++;
+						}
+					}
 				} catch (error) {
 					result.errors.push(
 						`Failed to import ${individual.name}: ${error.message}`
@@ -186,9 +196,18 @@ export class GedcomImporter {
 				}
 			}
 
-			new Notice(
-				`Import complete: ${result.notesCreated} notes created, ${result.errors.length} errors`
-			);
+			// Enhanced import complete notice
+			let importMessage = `Import complete: ${result.notesCreated} people imported`;
+
+			if (result.malformedDataCount && result.malformedDataCount > 0) {
+				importMessage += `. ${result.malformedDataCount} had missing/invalid data (defaults applied)`;
+			}
+
+			if (result.errors.length > 0) {
+				importMessage += `. ${result.errors.length} errors occurred`;
+			}
+
+			new Notice(importMessage, 8000); // Show for 8 seconds
 			result.success = result.errors.length === 0;
 
 		} catch (error) {

@@ -99,8 +99,11 @@ export interface CanvasData {
  * Canvas generation options (extends layout options with styling)
  */
 export interface CanvasGenerationOptions extends LayoutOptions {
-	/** Color coding by gender */
+	/** Color coding by gender (deprecated - use nodeColorScheme instead) */
 	colorByGender?: boolean;
+
+	/** Node color scheme: 'gender', 'generation', or 'monochrome' */
+	nodeColorScheme?: import('../settings').ColorScheme;
 
 	/** Show relationship labels on edges */
 	showLabels?: boolean;
@@ -116,6 +119,12 @@ export interface CanvasGenerationOptions extends LayoutOptions {
 
 	/** Arrow style for spouse relationships */
 	spouseArrowStyle?: ArrowStyle;
+
+	/** Edge color for parent-child relationships */
+	parentChildEdgeColor?: import('../settings').CanvasColor;
+
+	/** Edge color for spouse relationships */
+	spouseEdgeColor?: import('../settings').CanvasColor;
 }
 
 /**
@@ -138,6 +147,10 @@ export class CanvasGenerator {
 		options: CanvasGenerationOptions = {}
 	): CanvasData {
 		// Merge options with defaults, ensuring all required fields are present
+		// Support legacy colorByGender option for backward compatibility
+		const nodeColorScheme = options.nodeColorScheme ??
+			(options.colorByGender === false ? 'monochrome' : 'gender');
+
 		const opts = {
 			nodeSpacingX: options.nodeSpacingX ?? 300,
 			nodeSpacingY: options.nodeSpacingY ?? 200,
@@ -145,11 +158,13 @@ export class CanvasGenerator {
 			nodeHeight: options.nodeHeight ?? 120,
 			direction: options.direction ?? 'vertical' as const,
 			treeType: options.treeType ?? 'descendant' as const,
-			colorByGender: options.colorByGender ?? true,
+			nodeColorScheme,
 			showLabels: options.showLabels ?? true,
 			useFamilyChartLayout: options.useFamilyChartLayout ?? true,
 			parentChildArrowStyle: options.parentChildArrowStyle ?? 'directed' as const,
-			spouseArrowStyle: options.spouseArrowStyle ?? 'undirected' as const
+			spouseArrowStyle: options.spouseArrowStyle ?? 'undirected' as const,
+			parentChildEdgeColor: options.parentChildEdgeColor ?? 'none' as const,
+			spouseEdgeColor: options.spouseEdgeColor ?? 'none' as const
 		};
 		const metadata = options.canvasRootsMetadata;
 
@@ -171,7 +186,7 @@ export class CanvasGenerator {
 
 		// Process hierarchically positioned nodes
 		for (const position of layoutResult.positions) {
-			const { crId, person, x, y } = position;
+			const { crId, person, x, y, generation } = position;
 
 			// Generate a canvas-compatible ID (no dashes, alphanumeric only)
 			const canvasId = this.generateId();
@@ -189,12 +204,18 @@ export class CanvasGenerator {
 				y,
 				width: opts.nodeWidth,
 				height: opts.nodeHeight,
-				color: opts.colorByGender ? this.getPersonColor(person) : undefined
+				color: this.getNodeColor(person, generation, opts.nodeColorScheme)
 			});
 		}
 
 		// Add nodes that appear in edges but weren't positioned by the layout engine
 		const spouseSpacing = opts.nodeWidth + (opts.nodeSpacingX * 0.3); // 30% of horizontal spacing
+
+		// Create a map of crId to generation for quick lookup
+		const generationMap = new Map<string, number | undefined>();
+		for (const position of layoutResult.positions) {
+			generationMap.set(position.crId, position.generation);
+		}
 
 		// First pass: add spouse nodes next to their positioned partners
 		for (const edge of familyTree.edges) {
@@ -211,6 +232,9 @@ export class CanvasGenerator {
 						const spousePos = { x: fromPos.x + spouseSpacing, y: fromPos.y };
 						nodeMap.set(edge.to, spousePos);
 
+						// Spouses have the same generation
+						const generation = generationMap.get(edge.from);
+
 						canvasNodes.push({
 							id: canvasId,
 							type: 'file',
@@ -219,7 +243,7 @@ export class CanvasGenerator {
 							y: spousePos.y,
 							width: opts.nodeWidth,
 							height: opts.nodeHeight,
-							color: opts.colorByGender ? this.getPersonColor(spouse) : undefined
+							color: this.getNodeColor(spouse, generation, opts.nodeColorScheme)
 						});
 					}
 				} else if (toPos && !fromPos) {
@@ -230,6 +254,9 @@ export class CanvasGenerator {
 						const spousePos = { x: toPos.x - spouseSpacing, y: toPos.y };
 						nodeMap.set(edge.from, spousePos);
 
+						// Spouses have the same generation
+						const generation = generationMap.get(edge.to);
+
 						canvasNodes.push({
 							id: canvasId,
 							type: 'file',
@@ -238,7 +265,7 @@ export class CanvasGenerator {
 							y: spousePos.y,
 							width: opts.nodeWidth,
 							height: opts.nodeHeight,
-							color: opts.colorByGender ? this.getPersonColor(spouse) : undefined
+							color: this.getNodeColor(spouse, generation, opts.nodeColorScheme)
 						});
 					}
 				} else if (!fromPos && !toPos) {
@@ -247,18 +274,26 @@ export class CanvasGenerator {
 					const spouse2 = familyTree.nodes.get(edge.to);
 					if (spouse1 && spouse2) {
 						let childPos: { x: number; y: number } | undefined;
+						let childCrId: string | undefined;
 						for (const childEdge of familyTree.edges) {
 							if (childEdge.type === 'parent' &&
 								(childEdge.from === edge.from || childEdge.from === edge.to)) {
 								childPos = nodeMap.get(childEdge.to);
-								if (childPos) break;
+								if (childPos) {
+									childCrId = childEdge.to;
+									break;
+								}
 							}
 						}
 
-						if (childPos) {
+						if (childPos && childCrId) {
 							// Position parents above child
 							const parent1Pos = { x: childPos.x - spouseSpacing / 2, y: childPos.y - opts.nodeSpacingY };
 							const parent2Pos = { x: childPos.x + spouseSpacing / 2, y: childPos.y - opts.nodeSpacingY };
+
+							// Parents are one generation before their child
+							const childGeneration = generationMap.get(childCrId);
+							const parentGeneration = childGeneration !== undefined ? childGeneration - 1 : undefined;
 
 							const canvasId1 = this.generateId();
 							crIdToCanvasId.set(edge.from, canvasId1);
@@ -271,7 +306,7 @@ export class CanvasGenerator {
 								y: parent1Pos.y,
 								width: opts.nodeWidth,
 								height: opts.nodeHeight,
-								color: opts.colorByGender ? this.getPersonColor(spouse1) : undefined
+								color: this.getNodeColor(spouse1, parentGeneration, opts.nodeColorScheme)
 							});
 
 							const canvasId2 = this.generateId();
@@ -285,7 +320,7 @@ export class CanvasGenerator {
 								y: parent2Pos.y,
 								width: opts.nodeWidth,
 								height: opts.nodeHeight,
-								color: opts.colorByGender ? this.getPersonColor(spouse2) : undefined
+								color: this.getNodeColor(spouse2, parentGeneration, opts.nodeColorScheme)
 							});
 						}
 					}
@@ -325,11 +360,13 @@ export class CanvasGenerator {
 			nodeHeight: number;
 			direction: 'vertical' | 'horizontal';
 			treeType: 'ancestor' | 'descendant' | 'full';
-			colorByGender: boolean;
+			nodeColorScheme: import('../settings').ColorScheme;
 			showLabels: boolean;
 			useFamilyChartLayout: boolean;
 			parentChildArrowStyle: ArrowStyle;
 			spouseArrowStyle: ArrowStyle;
+			parentChildEdgeColor: import('../settings').CanvasColor;
+			spouseEdgeColor: import('../settings').CanvasColor;
 		}
 	): CanvasEdge[] {
 		const edges: CanvasEdge[] = [];
@@ -406,6 +443,11 @@ export class CanvasGenerator {
 				: options.spouseArrowStyle;
 			const [fromEnd, toEnd] = this.getArrowEndpoints(arrowStyle);
 
+			// Determine edge color based on relationship type and settings
+			const edgeColor = edge.type === 'parent'
+				? options.parentChildEdgeColor
+				: options.spouseEdgeColor;
+
 			edges.push({
 				id: this.generateId(),
 				fromNode: fromCanvasId,
@@ -414,7 +456,7 @@ export class CanvasGenerator {
 				toNode: toCanvasId,
 				toSide,
 				toEnd,
-				color: this.getEdgeColor(edge.type),
+				color: edgeColor === 'none' ? undefined : edgeColor,
 				label: options.showLabels ? this.getEdgeLabel(edge.type) : undefined
 			});
 		}
@@ -471,19 +513,58 @@ export class CanvasGenerator {
 	}
 
 	/**
-	 * Gets color for edge based on relationship type
-	 * Uses Obsidian's 6 canvas colors:
-	 * 1 = Red, 2 = Orange, 3 = Yellow, 4 = Green, 5 = Blue, 6 = Purple
+	 * Gets color for person node based on generation number
+	 * Uses Obsidian's 6 canvas colors to create visual layers:
+	 * 1 = Red, 2 = Orange, 3 = Yellow, 4 = Green, 5 = Blue (Cyan), 6 = Purple
+	 *
+	 * Color cycling pattern:
+	 * - Generation 0 (root): Purple (6)
+	 * - Generation 1: Cyan (5)
+	 * - Generation 2: Green (4)
+	 * - Generation 3: Yellow (3)
+	 * - Generation 4: Orange (2)
+	 * - Generation 5: Red (1)
+	 * - Then repeats...
+	 *
+	 * @param generation - Generation number (0 = root, positive = descendants, negative = ancestors)
+	 * @returns Color code string ('1' through '6')
 	 */
-	private getEdgeColor(type: 'parent' | 'spouse' | 'child'): string {
-		switch (type) {
-			case 'parent':
-			case 'child':
-				return '1'; // Red for parent-child relationships
-			case 'spouse':
-				return '5'; // Blue for spouse relationships
+	private getGenerationColor(generation: number | undefined): string {
+		if (generation === undefined) {
+			return '2'; // Orange (neutral) for undefined generations
+		}
+
+		// Use absolute value for ancestors (negative generations)
+		const absGeneration = Math.abs(generation);
+
+		// Cycle through colors 1-6, starting with purple (6) for generation 0
+		// Map: 0→6, 1→5, 2→4, 3→3, 4→2, 5→1, 6→6, 7→5, etc.
+		const colorIndex = 6 - (absGeneration % 6);
+		return String(colorIndex === 0 ? 6 : colorIndex);
+	}
+
+	/**
+	 * Gets node color based on the selected color scheme
+	 *
+	 * @param person - Person node
+	 * @param generation - Generation number (optional, required for 'generation' scheme)
+	 * @param colorScheme - Color scheme to use
+	 * @returns Color code string ('1' through '6') or undefined for monochrome
+	 */
+	private getNodeColor(
+		person: PersonNode,
+		generation: number | undefined,
+		colorScheme: import('../settings').ColorScheme
+	): string | undefined {
+		switch (colorScheme) {
+			case 'gender':
+				return this.getPersonColor(person);
+			case 'generation':
+				return this.getGenerationColor(generation);
+			case 'monochrome':
+				return undefined;  // No color
 			default:
-				return '3'; // Yellow default
+				return this.getPersonColor(person);  // Fallback to gender
 		}
 	}
 

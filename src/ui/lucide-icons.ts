@@ -16,6 +16,7 @@ export type LucideIconName =
 	| 'file-text'     // GEDCOM tab
 	| 'user'          // Person Details tab
 	| 'settings'      // Advanced tab
+	| 'book-open'     // Guide tab
 	| 'users'         // Multiple people icon
 	| 'calendar'      // Date picker
 	| 'search'        // Search icon
@@ -66,6 +67,12 @@ export const TAB_CONFIGS: TabConfig[] = [
 		name: 'Status',
 		icon: 'activity',
 		description: 'Vault statistics and health checks'
+	},
+	{
+		id: 'guide',
+		name: 'Guide',
+		icon: 'book-open',
+		description: 'Quick start guide and getting started'
 	},
 	{
 		id: 'quick-actions',

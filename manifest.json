@@ -3,7 +3,7 @@
 	"name": "Canvas Roots",
 	"version": "0.1.0",
 	"minAppVersion": "1.4.0",
-	"description": "Automate the creation and layout of complex family trees within Obsidian Canvas using D3.js-based layout algorithms.",
+	"description": "Generate genealogical family trees on Obsidian Canvas with automated layout, GEDCOM import, and comprehensive styling options.",
 	"author": "banisterious",
 	"authorUrl": "https://github.com/banisterious/obsidian-canvas-roots",
 	"isDesktopOnly": false

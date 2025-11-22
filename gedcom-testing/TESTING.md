@@ -14,6 +14,7 @@ This directory contains progressively larger GEDCOM test files for stress-testin
 | `gedcom-sample-medium.ged` | 60 | ~30 | 5 | 12 KB | Medium complexity |
 | `gedcom-sample-large.ged` | 163 | ~80 | 6 | 31 KB | Large family tree |
 | `gedcom-sample-xlarge.ged` | 599 | 179 | 7 | 113 KB | Extreme stress test |
+| `gedcom-sample-small-malformed.ged` | 13 | 5 | 3 | 2.1 KB | Error handling test |
 
 ## Recommended Testing Sequence
 
@@ -271,6 +272,19 @@ Create a file `TESTING-RESULTS.md` in this directory with:
 ## Large (163 people)
 - [same structure]
 
+## Extra-Large (599 people)
+- [same structure]
+
+## Malformed Data Test
+- Records attempted: 13
+- Records successfully imported: X
+- Records skipped/failed: X
+- Error messages displayed: [describe clarity and helpfulness]
+- Tree generation: ✅ Success / ⚠️ Partial / ❌ Failed
+- Edge cases handled well: [list which ones]
+- Edge cases that caused issues: [list which ones]
+- Status: ✅ PASS / ⚠️ NEEDS IMPROVEMENT / ❌ FAIL
+
 ## Conclusions
 - Maximum recommended tree size: XXX people
 - Performance bottlenecks: [describe]
@@ -312,6 +326,76 @@ Create a file `TESTING-RESULTS.md` in this directory with:
 **This is an EXTREME test** - if your layout engine handles 599 people, it can handle virtually anything. However, this may exceed practical limits, and that's valuable information too.
 
 **Important:** If this test fails, that doesn't necessarily mean the plugin is broken - it may simply mean there are practical limits that should be documented (e.g., "recommended maximum: 200 people").
+
+---
+
+### 6. Malformed Data - ERROR HANDLING TEST
+**File:** `gedcom-sample-small-malformed.ged`
+
+**What to test:**
+- Graceful handling of invalid or missing data
+- Error messages are clear and helpful
+- Plugin doesn't crash or produce corrupted output
+- Invalid data is skipped or handled sensibly
+
+**Edge Cases Included:**
+
+**Data Quality Issues:**
+- `@I005@`: Empty name (`//`)
+- `@I006@`: Missing name entirely
+- `@I007@`: Missing birth/death dates (empty DATE tags)
+- `@I008@`: Invalid date formats (`not-a-date`, `99/99/9999`)
+
+**Relationship Issues:**
+- `@I009@`: References non-existent family (`@F999@`)
+- `@F002@`: References non-existent spouse (`@I999@`)
+- `@F003@`: Family with only wife (no husband)
+- `@F004@`: Family with two husbands (invalid structure)
+- `@F005@`: Family with child but no parents
+
+**Data Integrity:**
+- `@I010@`, `@I011@`: Duplicate UUID values
+- `@I012@`: Special characters in names (`<>`, `'`, `-`)
+- `@I013@`: Extremely long name
+
+**Expected Behavior:**
+- Import completes without crashing
+- Invalid data is either:
+  - Skipped with a warning logged
+  - Imported with default/placeholder values
+  - Handled gracefully with clear error messages
+- Valid data in the file is still imported correctly
+- User receives clear feedback about which records had issues
+
+**Success Criteria:**
+- ✅ Plugin doesn't crash during import
+- ✅ No JavaScript errors in console (or only handled exceptions)
+- ✅ Valid records are imported successfully
+- ✅ Clear error/warning messages for problematic records
+- ✅ Tree generation works with the imported data (even if some records are skipped)
+- ✅ Invalid relationships are handled without breaking the tree structure
+
+**Red Flags to Watch For:**
+- ❌ Plugin crashes or freezes during import
+- ❌ Silent failures (no feedback to user about problems)
+- ❌ Valid data is corrupted or lost
+- ❌ Trees fail to generate due to malformed data
+- ❌ Unclear or missing error messages
+- ❌ Obsidian becomes unstable
+
+**Testing Steps:**
+1. Import `gedcom-sample-small-malformed.ged`
+2. Review console for errors/warnings
+3. Check which people were successfully imported
+4. Verify any error messages are clear and actionable
+5. Attempt to generate a tree from a valid person
+6. Verify tree generation handles missing/invalid relationships gracefully
+
+**Documentation:**
+Record which specific edge cases caused issues and how they were handled. This will inform:
+- Error handling improvements
+- User documentation (what data formats are supported)
+- Validation rules for GEDCOM import
 
 ---
 

@@ -65,6 +65,9 @@ export class FamilyChartLayoutEngine {
 			progeny_depth: undefined    // Show all descendants
 		});
 
+		// Calculate generation numbers for all nodes
+		const generationMap = this.calculateGenerations(familyTree, topAncestor.crId);
+
 		// Extract positions from family-chart's tree
 		const positions: NodePosition[] = [];
 
@@ -75,7 +78,8 @@ export class FamilyChartLayoutEngine {
 					crId: person.crId,
 					person,
 					x: node.x || 0,
-					y: node.y || 0
+					y: node.y || 0,
+					generation: generationMap.get(person.crId)
 				});
 			}
 		}
@@ -96,12 +100,13 @@ export class FamilyChartLayoutEngine {
 				if (person.spouseCrIds && person.spouseCrIds.length > 0) {
 					const spousePos = positions.find(p => person.spouseCrIds!.includes(p.crId));
 					if (spousePos) {
-						// Place to the right of spouse at same Y level
+						// Place to the right of spouse at same Y level (same generation)
 						positions.push({
 							crId: person.crId,
 							person,
 							x: spousePos.x + (opts.nodeSpacingX * 1.5),  // Match the 1.5x multiplier
-							y: spousePos.y
+							y: spousePos.y,
+							generation: spousePos.generation  // Same generation as spouse
 						});
 						console.log(`[FamilyChartLayout] Added ${person.name} next to spouse ${spousePos.person.name}`);
 						continue;
@@ -112,12 +117,13 @@ export class FamilyChartLayoutEngine {
 				if (person.childrenCrIds && person.childrenCrIds.length > 0) {
 					const childPos = positions.find(p => person.childrenCrIds!.includes(p.crId));
 					if (childPos) {
-						// Place above child
+						// Place above child (one generation earlier)
 						positions.push({
 							crId: person.crId,
 							person,
 							x: childPos.x,
-							y: childPos.y - opts.nodeSpacingY
+							y: childPos.y - opts.nodeSpacingY,
+							generation: childPos.generation !== undefined ? childPos.generation - 1 : undefined
 						});
 						console.log(`[FamilyChartLayout] Added ${person.name} above child ${childPos.person.name}`);
 						continue;
@@ -141,7 +147,7 @@ export class FamilyChartLayoutEngine {
 					});
 
 					if (siblings.length > 0) {
-						// Place to the right of rightmost sibling
+						// Place to the right of rightmost sibling (same generation)
 						const rightmostSibling = siblings.reduce((prev, curr) =>
 							curr.x > prev.x ? curr : prev
 						);
@@ -149,17 +155,19 @@ export class FamilyChartLayoutEngine {
 							crId: person.crId,
 							person,
 							x: rightmostSibling.x + (opts.nodeSpacingX * 1.5),
-							y: rightmostSibling.y
+							y: rightmostSibling.y,
+							generation: rightmostSibling.generation  // Same generation as sibling
 						});
 						console.log(`[FamilyChartLayout] Added ${person.name} next to sibling ${rightmostSibling.person.name}`);
 						continue;
 					} else {
-						// No siblings positioned yet - place below parent
+						// No siblings positioned yet - place below parent (one generation later)
 						positions.push({
 							crId: person.crId,
 							person,
 							x: parentPos.x,
-							y: parentPos.y + opts.nodeSpacingY
+							y: parentPos.y + opts.nodeSpacingY,
+							generation: parentPos.generation !== undefined ? parentPos.generation + 1 : undefined
 						});
 						console.log(`[FamilyChartLayout] Added ${person.name} below parent ${parentPos.person.name}`);
 						continue;
@@ -340,6 +348,64 @@ export class FamilyChartLayoutEngine {
 		}
 
 		return adjusted;
+	}
+
+	/**
+	 * Calculates generation numbers for all nodes in the tree
+	 * Uses breadth-first search from the root node
+	 *
+	 * @param familyTree The family tree
+	 * @param rootCrId The ID of the root person (generation 0)
+	 * @returns Map of crId to generation number
+	 */
+	private calculateGenerations(familyTree: FamilyTree, rootCrId: string): Map<string, number> {
+		const generationMap = new Map<string, number>();
+		const visited = new Set<string>();
+		const queue: Array<{ crId: string; generation: number }> = [];
+
+		// Start with root at generation 0
+		queue.push({ crId: rootCrId, generation: 0 });
+		visited.add(rootCrId);
+
+		while (queue.length > 0) {
+			const { crId, generation } = queue.shift()!;
+			generationMap.set(crId, generation);
+
+			const person = familyTree.nodes.get(crId);
+			if (!person) continue;
+
+			// Add parents (previous generation: -1)
+			if (person.fatherCrId && !visited.has(person.fatherCrId)) {
+				queue.push({ crId: person.fatherCrId, generation: generation - 1 });
+				visited.add(person.fatherCrId);
+			}
+			if (person.motherCrId && !visited.has(person.motherCrId)) {
+				queue.push({ crId: person.motherCrId, generation: generation - 1 });
+				visited.add(person.motherCrId);
+			}
+
+			// Add children (next generation: +1)
+			if (person.childrenCrIds) {
+				for (const childId of person.childrenCrIds) {
+					if (!visited.has(childId)) {
+						queue.push({ crId: childId, generation: generation + 1 });
+						visited.add(childId);
+					}
+				}
+			}
+
+			// Add spouses (same generation)
+			if (person.spouseCrIds) {
+				for (const spouseId of person.spouseCrIds) {
+					if (!visited.has(spouseId)) {
+						queue.push({ crId: spouseId, generation });
+						visited.add(spouseId);
+					}
+				}
+			}
+		}
+
+		return generationMap;
 	}
 
 	/**
