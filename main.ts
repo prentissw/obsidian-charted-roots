@@ -1,7 +1,10 @@
 import { Plugin, Notice, TFile } from 'obsidian';
 import { CanvasRootsSettings, DEFAULT_SETTINGS, CanvasRootsSettingTab } from './src/settings';
 import { ControlCenterModal } from './src/ui/control-center';
+import { RelayoutOptionsModal } from './src/ui/relayout-options-modal';
 import { LoggerFactory } from './src/core/logging';
+import { FamilyGraphService } from './src/core/family-graph';
+import { CanvasGenerator } from './src/core/canvas-generator';
 
 export default class CanvasRootsPlugin extends Plugin {
 	settings: CanvasRootsSettings;
@@ -45,7 +48,15 @@ export default class CanvasRootsPlugin extends Plugin {
 			id: 'relayout-current-canvas',
 			name: 'Re-layout current canvas',
 			callback: () => {
-				this.relayoutCurrentCanvas();
+				const activeFile = this.app.workspace.getActiveFile();
+
+				if (!activeFile || activeFile.extension !== 'canvas') {
+					new Notice('No active canvas. Please open a canvas file first.');
+					return;
+				}
+
+				// Show options modal
+				new RelayoutOptionsModal(this.app, this, activeFile).open();
 			}
 		});
 
@@ -67,13 +78,42 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 		});
 
-		// Add context menu item for person notes
+		// Add context menu item for person notes and canvas files
 		this.registerEvent(
 			this.app.workspace.on('file-menu', (menu, file) => {
-				// Only show for markdown files with cr_id in frontmatter
+				// Add re-layout option for canvas files FIRST (appears higher in menu)
+				// This appears when right-clicking:
+				// - On a .canvas file in the file explorer
+				// - On a canvas tab in the tab bar
+				// - In the three-dot menu of an open canvas pane
+				if (file instanceof TFile && file.extension === 'canvas') {
+					// Add separator before our item for visual grouping
+					menu.addSeparator();
+
+					menu.addItem((item) => {
+						item
+							.setTitle('Re-layout family tree')
+							.setIcon('refresh-cw')
+							.onClick(async () => {
+								// Open the canvas file first
+								const leaf = this.app.workspace.getLeaf(false);
+								await leaf.openFile(file);
+
+								// Give canvas a moment to load
+								await new Promise(resolve => setTimeout(resolve, 100));
+
+								// Show options modal
+								new RelayoutOptionsModal(this.app, this, file).open();
+							});
+					});
+				}
+
+				// Add menu item for person notes (markdown files with cr_id)
 				if (file instanceof TFile && file.extension === 'md') {
 					const cache = this.app.metadataCache.getFileCache(file);
 					if (cache?.frontmatter?.cr_id) {
+						menu.addSeparator();
+
 						menu.addItem((item) => {
 							item
 								.setTitle('Generate family tree')
@@ -122,22 +162,200 @@ export default class CanvasRootsPlugin extends Plugin {
 		await modal.openWithPerson(activeFile);
 	}
 
-	private async relayoutCurrentCanvas() {
-		const activeFile = this.app.workspace.getActiveFile();
+	private async relayoutCanvas(canvasFile: TFile, direction?: 'vertical' | 'horizontal') {
+		try {
+			new Notice('Re-layouting canvas...');
 
-		if (!activeFile || activeFile.extension !== 'canvas') {
-			new Notice('No active canvas. Please open a canvas file first.');
-			return;
+			// 1. Read current Canvas JSON
+			const canvasContent = await this.app.vault.read(canvasFile);
+			const canvasData = JSON.parse(canvasContent);
+
+			if (!canvasData.nodes || canvasData.nodes.length === 0) {
+				new Notice('Canvas is empty - nothing to re-layout');
+				return;
+			}
+
+			// 2. Try to read original generation metadata from canvas
+			const storedMetadata = canvasData.metadata?.frontmatter;
+			const isCanvasRootsTree = storedMetadata?.plugin === 'canvas-roots';
+
+			// 3. Extract person note nodes (file nodes only)
+			const personNodes = canvasData.nodes.filter(
+				(node: { type: string; file?: string }) =>
+					node.type === 'file' && node.file?.endsWith('.md')
+			);
+
+			if (personNodes.length === 0) {
+				new Notice('No person notes found in canvas');
+				return;
+			}
+
+			// 4. Determine root person and tree parameters
+			let rootCrId: string | undefined;
+			let rootPersonName: string | undefined;
+			let treeType: 'full' | 'ancestors' | 'descendants' = 'full';
+			let maxGenerations: number | undefined;
+			let includeSpouses: boolean = true;
+
+			if (isCanvasRootsTree && storedMetadata.generation) {
+				// Use stored metadata if available
+				rootCrId = storedMetadata.generation.rootCrId;
+				rootPersonName = storedMetadata.generation.rootPersonName;
+				treeType = storedMetadata.generation.treeType;
+				maxGenerations = storedMetadata.generation.maxGenerations || undefined;
+				includeSpouses = storedMetadata.generation.includeSpouses;
+			} else {
+				// Fallback: find first node with cr_id
+				for (const node of personNodes) {
+					const file = this.app.vault.getAbstractFileByPath(node.file);
+					if (file instanceof TFile) {
+						const cache = this.app.metadataCache.getFileCache(file);
+						if (cache?.frontmatter?.cr_id) {
+							rootCrId = cache.frontmatter.cr_id;
+							rootPersonName = file.basename;
+							break;
+						}
+					}
+				}
+
+				if (!rootCrId || !rootPersonName) {
+					new Notice('No person notes with cr_id found in canvas');
+					return;
+				}
+
+				// Default to full tree for canvases without metadata
+				treeType = 'full';
+				maxGenerations = undefined;
+				includeSpouses = true;
+			}
+
+			// Validate we have root person info before proceeding
+			if (!rootCrId || !rootPersonName) {
+				new Notice('No person notes with cr_id found in canvas');
+				return;
+			}
+
+			// 5. Build family tree using original parameters
+			const graphService = new FamilyGraphService(this.app);
+			const familyTree = await graphService.generateTree({
+				rootCrId,
+				treeType,
+				maxGenerations,
+				includeSpouses
+			});
+
+			if (!familyTree) {
+				new Notice('Failed to build family tree from canvas nodes');
+				return;
+			}
+
+			// 6. Determine layout settings (prefer stored, fall back to current settings)
+			const nodeWidth = storedMetadata?.layout?.nodeWidth ?? this.settings.defaultNodeWidth;
+			const nodeHeight = storedMetadata?.layout?.nodeHeight ?? this.settings.defaultNodeHeight;
+			const nodeSpacingX = storedMetadata?.layout?.nodeSpacingX ?? this.settings.horizontalSpacing;
+			const nodeSpacingY = storedMetadata?.layout?.nodeSpacingY ?? this.settings.verticalSpacing;
+			const originalDirection = storedMetadata?.generation?.direction ?? 'vertical';
+
+			// 7. Recalculate layout preserving original parameters (except direction if user changed it)
+			const canvasGenerator = new CanvasGenerator();
+
+			// Convert plural tree type (from TreeOptions) to singular (for LayoutOptions)
+			const layoutTreeType: 'ancestor' | 'descendant' | 'full' =
+				treeType === 'ancestors' ? 'ancestor' :
+				treeType === 'descendants' ? 'descendant' :
+				'full';
+
+			const newCanvasData = canvasGenerator.generateCanvas(familyTree, {
+				nodeSpacingX,
+				nodeSpacingY,
+				nodeWidth,
+				nodeHeight,
+				direction: direction ?? originalDirection,
+				treeType: layoutTreeType,
+				colorByGender: true,
+				showLabels: true,
+				useFamilyChartLayout: true,
+				canvasRootsMetadata: {
+					plugin: 'canvas-roots',
+					generation: {
+						rootCrId: rootCrId,
+						rootPersonName: rootPersonName,
+						treeType: treeType,
+						maxGenerations: maxGenerations || 0,
+						includeSpouses,
+						direction: direction ?? originalDirection,
+						timestamp: Date.now()
+					},
+					layout: {
+						nodeWidth,
+						nodeHeight,
+						nodeSpacingX,
+						nodeSpacingY
+					}
+				}
+			});
+
+			// 6. Update Canvas JSON with new data (preserves any non-person nodes)
+			const updatedCanvasData = {
+				...canvasData,
+				nodes: newCanvasData.nodes,
+				edges: newCanvasData.edges,
+				metadata: newCanvasData.metadata
+			};
+
+			// 7. Format and write back to Canvas file (using same formatting as Control Center)
+			const formattedJson = this.formatCanvasJson(updatedCanvasData);
+			await this.app.vault.modify(canvasFile, formattedJson);
+
+			new Notice(`Canvas re-layouted successfully! (${newCanvasData.nodes.length} people)`);
+		} catch (error) {
+			console.error('Error re-layouting canvas:', error);
+			new Notice('Failed to re-layout canvas. Check console for details.');
 		}
+	}
 
-		new Notice('Re-layouting canvas...');
+	/**
+	 * Format canvas JSON to match Obsidian's exact format
+	 * Uses tabs for structure and compact objects on single lines
+	 */
+	private formatCanvasJson(data: unknown): string {
+		const canvasData = data as {
+			nodes: Array<Record<string, unknown>>;
+			edges: Array<Record<string, unknown>>;
+			metadata?: Record<string, unknown>;
+		};
 
-		// TODO: Implement relayout logic
-		// 1. Read current Canvas JSON
-		// 2. Extract existing nodes and their linked files
-		// 3. Recalculate D3 layout
-		// 4. Update node positions in Canvas JSON
-		// 5. Write back to Canvas file
+		const lines: string[] = [];
+		lines.push('{');
+
+		// Nodes array
+		lines.push('\t"nodes":[');
+		canvasData.nodes.forEach((node, i) => {
+			const isLast = i === canvasData.nodes.length - 1;
+			const nodeStr = JSON.stringify(node);
+			lines.push(`\t\t${nodeStr}${isLast ? '' : ','}`);
+		});
+		lines.push('\t],');
+
+		// Edges array
+		lines.push('\t"edges":[');
+		canvasData.edges.forEach((edge, i) => {
+			const isLast = i === canvasData.edges.length - 1;
+			const edgeStr = JSON.stringify(edge);
+			lines.push(`\t\t${edgeStr}${isLast ? '' : ','}`);
+		});
+		lines.push('\t],');
+
+		// Metadata
+		lines.push('\t"metadata":{');
+		lines.push('\t\t"version":"1.0-1.0",');
+		const frontmatter = canvasData.metadata?.frontmatter || {};
+		lines.push(`\t\t"frontmatter":${JSON.stringify(frontmatter)}`);
+		lines.push('\t}');
+
+		lines.push('}');
+
+		return lines.join('\n');
 	}
 
 	private createPersonNote() {

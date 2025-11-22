@@ -64,6 +64,15 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 			.setName('Layout')
 			.setHeading();
 
+		// Re-layout feature info
+		const relayoutInfo = containerEl.createDiv({ cls: 'setting-item-description' });
+		relayoutInfo.style.marginBottom = '1em';
+		relayoutInfo.style.padding = '0.75em';
+		relayoutInfo.style.background = 'var(--background-secondary)';
+		relayoutInfo.style.borderRadius = '4px';
+		relayoutInfo.innerHTML = '<strong>💡 Tip:</strong> After changing layout settings, right-click any existing canvas file and select ' +
+			'<strong>"Re-layout family tree"</strong> to apply the new settings.';
+
 		new Setting(containerEl)
 			.setName('Default node width')
 			.setDesc('Width of person nodes in pixels')

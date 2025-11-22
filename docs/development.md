@@ -135,7 +135,8 @@ canvas-roots/
 | Open Control Center | ✅ Complete | Opens main Control Center modal |
 | Generate Tree for Current Note | ✅ Complete | Opens Control Center with current person pre-selected in Tree Generation tab |
 | Create Person Note | ✅ Complete | Opens Control Center to Data Entry tab for creating new person notes |
-| Re-Layout Canvas | 🟡 Partial | Placeholder for recalculating layout (stub implementation) |
+| Re-Layout Current Canvas | ✅ Complete | Recalculates layout for active canvas using current settings and relationship data |
+| Generate All Trees | ✅ Complete | Generates separate canvases for each disconnected family component in vault |
 | **To Be Implemented** | | |
 | Open Tree View | 🔴 Needed | Opens D3 preview for collection/tree |
 
@@ -143,7 +144,8 @@ canvas-roots/
 
 | Menu Item | Status | Trigger | Purpose |
 |-----------|--------|---------|---------|
-| "Generate Family Tree" | ✅ Complete | Right-click on person note | Opens Control Center with person pre-selected as tree root |
+| "Generate Family Tree" | ✅ Complete | Right-click on person note (file explorer or tab) | Opens Control Center with person pre-selected as tree root |
+| "Re-layout Family Tree" | ✅ Complete | Right-click on canvas file (file explorer, tab, or three-dot menu) | Recalculates canvas layout using current settings |
 
 ### Control Center Tabs
 
@@ -433,6 +435,96 @@ Example:
 - Removed confusing setting from UI
 
 ## Recent Features
+
+### Re-Layout Canvas Command (2025-11-21)
+
+**Added:** Complete re-layout functionality for existing family tree canvases.
+
+**Implemented Features:**
+
+1. **Command Integration:**
+   - Command Palette: "Re-layout current canvas"
+   - Right-click menu on canvas files (file explorer, tab bar, three-dot menu)
+   - Uses current plugin settings for spacing and node dimensions
+
+2. **Smart Re-Layout Logic:**
+   - Reads existing canvas JSON structure
+   - Extracts person notes and relationships
+   - Rebuilds family tree from current vault data
+   - Recalculates positions using family-chart layout engine
+   - Preserves Obsidian's exact JSON formatting
+
+3. **Non-Destructive Updates:**
+   - Updates canvas in-place (same file, same location)
+   - Uses current relationship data from person notes
+   - Applies current spacing/sizing settings
+   - Shows success notification with person count
+
+**Use Cases:**
+- Update tree after editing relationships in person notes
+- Apply new spacing settings to existing canvases
+- Fix layout after data corrections
+- Standardize multiple trees with consistent settings
+- Refresh trees created with older layout algorithms
+- Test different layout configurations
+
+**Files Modified:**
+- `main.ts` - Added `relayoutCanvas()` method (lines 165-310)
+- `main.ts` - Added `formatCanvasJson()` helper (lines 321-358)
+- `main.ts` - Added file-menu context integration
+- `main.ts` - Added command registration
+- `src/ui/relayout-options-modal.ts` - Modal for re-layout direction selection
+
+**Technical Details:**
+- Uses full tree generation (`treeType: 'full'`) to include all people in canvas
+- Detects root person automatically (first person note with cr_id)
+- Applies 100ms delay when opening canvas before re-layout
+- Formats JSON with tabs and compact objects to match Obsidian format
+- Comprehensive error handling with user-friendly notices
+
+### Canvas Metadata & Smart Re-layout (2025-11-22)
+
+**Added:** Embedded generation metadata in canvas files to enable intelligent re-layout with preserved settings.
+
+**Implemented Features:**
+
+1. **Canvas Generation Metadata:**
+   - Stores complete generation parameters in canvas frontmatter
+   - Metadata includes: root person (cr_id and name), tree type, max generations, spouse inclusion, layout direction, timestamp
+   - Layout settings preserved: node dimensions, horizontal/vertical spacing
+   - Metadata format compatible with Obsidian Canvas JSON specification
+
+2. **Smart Re-Layout with Settings Preservation:**
+   - Re-layout modal reads original generation settings from canvas metadata
+   - Displays original settings to user: "Originally generated as 'full' tree from Thomas Wilson with direction: vertical"
+   - Preserves all original settings (tree type, generations, spouses) when re-layouting
+   - Only allows changing layout direction (vertical ↔ horizontal)
+   - Maintains generation timestamp for tracking
+
+3. **Metadata Infrastructure:**
+   - `CanvasRootsMetadata` interface in canvas-generator.ts defines metadata schema
+   - Metadata embedded in canvas JSON at generation time (both Control Center and Generate All Trees)
+   - `formatCanvasJson()` methods properly serialize metadata to frontmatter
+   - Re-layout reads metadata and passes to canvas generator to preserve settings
+
+**Files Modified:**
+- `src/core/canvas-generator.ts` - Added `CanvasRootsMetadata` interface, metadata logging, metadata embedding in canvas output
+- `src/ui/control-center.ts` - Added metadata to `handleTreeGeneration()` and `openAndGenerateAllTrees()`, fixed `formatCanvasJson()` to serialize frontmatter
+- `main.ts` - Updated `relayoutCanvas()` to read and use stored metadata, fixed `formatCanvasJson()` to serialize frontmatter
+- `src/ui/relayout-options-modal.ts` - Enhanced modal to read and display original generation settings from metadata
+
+**Technical Details:**
+- Metadata stored in standard Obsidian Canvas `metadata.frontmatter` field as `Record<string, unknown>`
+- TypeScript literal types (`as const`) ensure type safety for fixed values like 'canvas-roots', 'full', 'vertical'
+- Uses plugin's structured logging system (`getLogger('CanvasGenerator')`) instead of console.log
+- Metadata passed through generation pipeline via `canvasRootsMetadata` option parameter
+- JSON serialization via `JSON.stringify()` for nested metadata object
+
+**Use Cases:**
+- Preserve complex tree configurations when switching between vertical/horizontal layouts
+- Track when and how each canvas was generated for audit trail
+- Enable future "regenerate with same settings" functionality
+- Support canvas versioning and migration in future updates
 
 ### Tree Generation Tab Streamlining (2025-11-21)
 

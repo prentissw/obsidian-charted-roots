@@ -6,8 +6,11 @@
  */
 
 import { FamilyTree, PersonNode } from './family-graph';
-import { LayoutEngine, LayoutOptions, NodePosition } from './layout-engine';
+import { LayoutEngine, LayoutOptions } from './layout-engine';
 import { FamilyChartLayoutEngine } from './family-chart-layout';
+import { getLogger } from './logging';
+
+const logger = getLogger('CanvasGenerator');
 
 /**
  * Obsidian Canvas node
@@ -41,6 +44,46 @@ interface CanvasEdge {
 }
 
 /**
+ * Canvas Roots generation metadata stored in canvas frontmatter
+ */
+export interface CanvasRootsMetadata {
+	/** Plugin identifier */
+	plugin: 'canvas-roots';
+
+	/** Tree generation parameters */
+	generation: {
+		/** Root person cr_id */
+		rootCrId: string;
+
+		/** Root person name for display */
+		rootPersonName: string;
+
+		/** Tree type */
+		treeType: 'full' | 'ancestors' | 'descendants';
+
+		/** Maximum generations (0 = unlimited) */
+		maxGenerations: number;
+
+		/** Whether spouses are included */
+		includeSpouses: boolean;
+
+		/** Layout direction */
+		direction: 'vertical' | 'horizontal';
+
+		/** Timestamp when generated */
+		timestamp: number;
+	};
+
+	/** Layout parameters used */
+	layout: {
+		nodeWidth: number;
+		nodeHeight: number;
+		nodeSpacingX: number;
+		nodeSpacingY: number;
+	};
+}
+
+/**
  * Complete Obsidian Canvas structure
  */
 export interface CanvasData {
@@ -64,21 +107,9 @@ export interface CanvasGenerationOptions extends LayoutOptions {
 
 	/** Use family-chart layout engine (better for complex trees with spouses) */
 	useFamilyChartLayout?: boolean;
-}
 
-/**
- * Default canvas generation options
- */
-const DEFAULT_OPTIONS: Required<CanvasGenerationOptions> = {
-	nodeSpacingX: 300,
-	nodeSpacingY: 200,
-	nodeWidth: 250,
-	nodeHeight: 120,
-	direction: 'vertical',
-	treeType: 'descendant',
-	colorByGender: true,
-	showLabels: true,
-	useFamilyChartLayout: true  // Use family-chart by default for better layouts
+	/** Optional metadata to embed in canvas (for smart re-layout) */
+	canvasRootsMetadata?: CanvasRootsMetadata;
 }
 
 /**
@@ -100,9 +131,25 @@ export class CanvasGenerator {
 		familyTree: FamilyTree,
 		options: CanvasGenerationOptions = {}
 	): CanvasData {
-		const opts = { ...DEFAULT_OPTIONS, ...options };
+		// Merge options with defaults, ensuring all required fields are present
+		const opts = {
+			nodeSpacingX: options.nodeSpacingX ?? 300,
+			nodeSpacingY: options.nodeSpacingY ?? 200,
+			nodeWidth: options.nodeWidth ?? 250,
+			nodeHeight: options.nodeHeight ?? 120,
+			direction: options.direction ?? 'vertical' as const,
+			treeType: options.treeType ?? 'descendant' as const,
+			colorByGender: options.colorByGender ?? true,
+			showLabels: options.showLabels ?? true,
+			useFamilyChartLayout: options.useFamilyChartLayout ?? true
+		};
+		const metadata = options.canvasRootsMetadata;
 
-		console.log('[CanvasGenerator] useFamilyChartLayout:', opts.useFamilyChartLayout);
+		logger.debug('canvas-generation', 'Canvas generation options', {
+			useFamilyChartLayout: opts.useFamilyChartLayout,
+			hasMetadata: !!metadata,
+			metadataKeys: metadata ? Object.keys(metadata) : null
+		});
 
 		// Choose layout engine based on option
 		const layoutResult = opts.useFamilyChartLayout
@@ -251,7 +298,7 @@ export class CanvasGenerator {
 			edges: canvasEdges,
 			metadata: {
 				version: '1.0-1.0',
-				frontmatter: {}
+				frontmatter: metadata ? (metadata as unknown as Record<string, unknown>) : {}
 			}
 		};
 	}
@@ -263,7 +310,17 @@ export class CanvasGenerator {
 		familyTree: FamilyTree,
 		nodeMap: Map<string, { x: number; y: number }>,
 		crIdToCanvasId: Map<string, string>,
-		options: Required<CanvasGenerationOptions>
+		options: {
+			nodeSpacingX: number;
+			nodeSpacingY: number;
+			nodeWidth: number;
+			nodeHeight: number;
+			direction: 'vertical' | 'horizontal';
+			treeType: 'ancestor' | 'descendant' | 'full';
+			colorByGender: boolean;
+			showLabels: boolean;
+			useFamilyChartLayout: boolean;
+		}
 	): CanvasEdge[] {
 		const edges: CanvasEdge[] = [];
 

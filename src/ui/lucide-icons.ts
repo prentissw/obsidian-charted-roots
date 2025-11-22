@@ -44,7 +44,8 @@ export type LucideIconName =
 	| 'heart'         // Health/status
 	| 'layout'        // Layout options
 	| 'file'          // File/canvas
-	| 'play';         // Generate/run action
+	| 'play'          // Generate/run action
+	| 'clock';        // Time/recent items
 
 /**
  * Tab configuration for Control Center navigation
@@ -71,6 +72,12 @@ export const TAB_CONFIGS: TabConfig[] = [
 		name: 'Quick Actions',
 		icon: 'zap',
 		description: 'Frequently used commands'
+	},
+	{
+		id: 'quick-settings',
+		name: 'Quick Settings',
+		icon: 'settings',
+		description: 'Commonly adjusted layout settings'
 	},
 	{
 		id: 'data-entry',

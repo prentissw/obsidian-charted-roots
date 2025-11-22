@@ -49,9 +49,6 @@ export class ControlCenterModal extends Modal {
 	private spouseHelp?: HTMLElement;
 
 	// Tree Generation tab state
-	private treeRootPersonField?: RelationshipField;
-	private treeRootPersonInput?: HTMLInputElement;
-	private treeRootPersonBtn?: HTMLButtonElement;
 	private treeCanvasNameInput?: HTMLInputElement;
 	private treeGenerateBtn?: HTMLButtonElement;
 	private pendingRootPerson?: PersonInfo;
@@ -202,6 +199,9 @@ export class ControlCenterModal extends Modal {
 			case 'quick-actions':
 				this.showQuickActionsTab();
 				break;
+			case 'quick-settings':
+				this.showQuickSettingsTab();
+				break;
 			case 'data-entry':
 				this.showDataEntryTab();
 				break;
@@ -268,12 +268,25 @@ export class ControlCenterModal extends Modal {
 	 * Creates separate canvases for each family group found in the vault
 	 */
 	public async openAndGenerateAllTrees(): Promise<void> {
+		// Track results for summary
+		interface TreeResult {
+			success: boolean;
+			familyName: string;
+			peopleCount: number;
+			fileName?: string;
+			file?: TFile;
+			error?: string;
+		}
+
+		const results: TreeResult[] = [];
+
 		try {
 			// Initialize services
 			const graphService = new FamilyGraphService(this.app);
 
 			// Find all family components
 			logger.info('generate-all-trees', 'Finding all family components in vault');
+			new Notice('Scanning vault for family groups...');
 			const components = await graphService.findAllFamilyComponents();
 
 			if (components.length === 0) {
@@ -293,10 +306,12 @@ export class ControlCenterModal extends Modal {
 			new Notice(`Found ${components.length} family groups. Generating trees...`);
 
 			// Generate a tree for each component
-			let successCount = 0;
 			for (let i = 0; i < components.length; i++) {
 				const component = components[i];
 				const rep = component.representative;
+
+				// Update progress
+				new Notice(`Generating tree ${i + 1}/${components.length}: ${rep.name}...`, 2000);
 
 				logger.info('generate-all-trees', `Generating tree ${i + 1}/${components.length}`, {
 					representative: rep.name,
@@ -316,6 +331,12 @@ export class ControlCenterModal extends Modal {
 
 					if (!familyTree) {
 						logger.error('generate-all-trees', `Failed to generate tree for ${rep.name}: root not found`);
+						results.push({
+							success: false,
+							familyName: rep.name,
+							peopleCount: component.size,
+							error: 'Root person not found'
+						});
 						continue;
 					}
 
@@ -324,7 +345,28 @@ export class ControlCenterModal extends Modal {
 					const canvasOptions = {
 						nodeWidth: this.plugin.settings.defaultNodeWidth,
 						nodeHeight: this.plugin.settings.defaultNodeHeight,
-						showLabels: false
+						nodeSpacingX: this.plugin.settings.horizontalSpacing,
+						nodeSpacingY: this.plugin.settings.verticalSpacing,
+						direction: 'vertical' as const,
+						showLabels: false,
+						canvasRootsMetadata: {
+							plugin: 'canvas-roots' as const,
+							generation: {
+								rootCrId: rep.crId,
+								rootPersonName: rep.name,
+								treeType: 'full' as const,
+								maxGenerations: 0,
+								includeSpouses: true,
+								direction: 'vertical' as const,
+								timestamp: Date.now()
+							},
+							layout: {
+								nodeWidth: this.plugin.settings.defaultNodeWidth,
+								nodeHeight: this.plugin.settings.defaultNodeHeight,
+								nodeSpacingX: this.plugin.settings.horizontalSpacing,
+								nodeSpacingY: this.plugin.settings.verticalSpacing
+							}
+						}
 					};
 
 					const canvasData = canvasGenerator.generateCanvas(familyTree, canvasOptions);
@@ -342,7 +384,31 @@ export class ControlCenterModal extends Modal {
 						file = await this.app.vault.create(fileName, canvasContent);
 					}
 
-					successCount++;
+					results.push({
+						success: true,
+						familyName: rep.name,
+						peopleCount: canvasData.nodes.length,
+						fileName,
+						file
+					});
+
+					// Save to recent trees history
+					const treeInfo: RecentTreeInfo = {
+						canvasPath: file.path,
+						canvasName: fileName,
+						peopleCount: canvasData.nodes.length,
+						edgeCount: canvasData.edges.length,
+						rootPerson: rep.name,
+						timestamp: Date.now()
+					};
+
+					// Ensure recentTrees array exists (defensive)
+					if (!this.plugin.settings.recentTrees) {
+						this.plugin.settings.recentTrees = [];
+					}
+
+					// Add to beginning of array and keep only last 10
+					this.plugin.settings.recentTrees = [treeInfo, ...this.plugin.settings.recentTrees].slice(0, 10);
 
 					logger.info('generate-all-trees', `Successfully generated tree ${i + 1}`, {
 						fileName,
@@ -350,18 +416,201 @@ export class ControlCenterModal extends Modal {
 					});
 				} catch (error) {
 					logger.error('generate-all-trees', `Failed to generate tree for ${rep.name}`, error);
-					// Continue with next component even if one fails
+					results.push({
+						success: false,
+						familyName: rep.name,
+						peopleCount: component.size,
+						error: error instanceof Error ? error.message : 'Unknown error'
+					});
 				}
 			}
 
-			if (successCount === components.length) {
-				new Notice(`Successfully generated ${successCount} family trees!`, 5000);
-			} else {
-				new Notice(`Generated ${successCount} of ${components.length} trees. Check console for errors.`, 5000);
-			}
+			// Save settings with all the recent trees we just added
+			await this.plugin.saveSettings();
+
+			// Show results summary modal
+			this.showGenerateAllTreesResults(results);
 		} catch (error) {
 			logger.error('generate-all-trees', 'Failed to generate all trees', error);
 			throw error;
+		}
+	}
+
+	/**
+	 * Show results summary for Generate All Trees operation
+	 */
+	private showGenerateAllTreesResults(results: Array<{
+		success: boolean;
+		familyName: string;
+		peopleCount: number;
+		fileName?: string;
+		file?: TFile;
+		error?: string;
+	}>): void {
+		const successCount = results.filter(r => r.success).length;
+		const failureCount = results.length - successCount;
+
+		// Clear current content and show results
+		this.contentContainer.empty();
+
+		// Title
+		const title = this.contentContainer.createEl('h2', {
+			text: 'Generate all trees - Results'
+		});
+		title.style.marginTop = '0';
+
+		// Summary stats
+		const summaryCard = this.createCard({
+			title: 'Summary',
+			icon: 'check'
+		});
+
+		const summaryContent = summaryCard.querySelector('.crc-card__content') as HTMLElement;
+
+		const statsGrid = summaryContent.createDiv({ cls: 'crc-stats-grid' });
+
+		// Success count
+		const successStat = statsGrid.createDiv({ cls: 'crc-stat' });
+		successStat.createDiv({ cls: 'crc-stat__label', text: 'Successfully generated' });
+		successStat.createDiv({
+			cls: 'crc-stat__value',
+			text: String(successCount)
+		});
+
+		// Failure count (if any)
+		if (failureCount > 0) {
+			const failureStat = statsGrid.createDiv({ cls: 'crc-stat' });
+			failureStat.createDiv({ cls: 'crc-stat__label', text: 'Failed' });
+			failureStat.createDiv({
+				cls: 'crc-stat__value',
+				text: String(failureCount)
+			});
+		}
+
+		// Total trees
+		const totalStat = statsGrid.createDiv({ cls: 'crc-stat' });
+		totalStat.createDiv({ cls: 'crc-stat__label', text: 'Total family groups' });
+		totalStat.createDiv({
+			cls: 'crc-stat__value',
+			text: String(results.length)
+		});
+
+		this.contentContainer.appendChild(summaryCard);
+
+		// Success message or warning
+		if (failureCount === 0) {
+			const successMsg = this.contentContainer.createEl('p', {
+				cls: 'crc-text-success crc-mt-3'
+			});
+			successMsg.innerHTML = `<strong>✓ All trees generated successfully!</strong>`;
+		} else {
+			const warningMsg = this.contentContainer.createEl('p', {
+				cls: 'crc-text-warning crc-mt-3'
+			});
+			warningMsg.innerHTML = `<strong>⚠ ${failureCount} tree${failureCount === 1 ? '' : 's'} failed to generate.</strong> See details below.`;
+		}
+
+		// Details card
+		const detailsCard = this.createCard({
+			title: 'Generated trees',
+			icon: 'file'
+		});
+
+		const detailsContent = detailsCard.querySelector('.crc-card__content') as HTMLElement;
+
+		// List of results
+		const resultsList = detailsContent.createDiv({ cls: 'crc-results-list' });
+
+		results.forEach((result) => {
+			const resultItem = resultsList.createDiv({
+				cls: `crc-result-item ${result.success ? 'crc-result-item--success' : 'crc-result-item--error'}`
+			});
+
+			// Icon and family name
+			const resultHeader = resultItem.createDiv({ cls: 'crc-result-item__header' });
+
+			const icon = createLucideIcon(result.success ? 'check' : 'alert-circle', 16);
+			resultHeader.appendChild(icon);
+
+			resultHeader.createSpan({
+				cls: 'crc-result-item__name',
+				text: result.familyName
+			});
+
+			resultHeader.createSpan({
+				cls: 'crc-result-item__count',
+				text: `${result.peopleCount} people`
+			});
+
+			// Success: show file name and action buttons
+			if (result.success && result.file) {
+				const resultBody = resultItem.createDiv({ cls: 'crc-result-item__body' });
+
+				resultBody.createEl('p', {
+					cls: 'crc-text-muted',
+					text: result.fileName || ''
+				});
+
+				// Action buttons
+				const actions = resultBody.createDiv({ cls: 'crc-result-item__actions' });
+
+				const openBtn = actions.createEl('button', {
+					cls: 'crc-btn crc-btn--small',
+					text: 'Open canvas'
+				});
+				const openIcon = createLucideIcon('external-link', 14);
+				openBtn.prepend(openIcon);
+				openBtn.addEventListener('click', async () => {
+					if (result.file) {
+						const leaf = this.app.workspace.getLeaf(false);
+						await leaf.openFile(result.file);
+						this.close();
+					}
+				});
+
+				const relayoutBtn = actions.createEl('button', {
+					cls: 'crc-btn crc-btn--small crc-btn--secondary',
+					text: 'Re-layout'
+				});
+				const relayoutIcon = createLucideIcon('refresh-cw', 14);
+				relayoutBtn.prepend(relayoutIcon);
+				relayoutBtn.addEventListener('click', async () => {
+					if (result.file) {
+						// Call the plugin's relayout method
+						await (this.plugin as any).relayoutCanvas(result.file);
+					}
+				});
+			}
+
+			// Failure: show error message
+			if (!result.success && result.error) {
+				const resultBody = resultItem.createDiv({ cls: 'crc-result-item__body' });
+
+				resultBody.createEl('p', {
+					cls: 'crc-text-error',
+					text: `Error: ${result.error}`
+				});
+			}
+		});
+
+		this.contentContainer.appendChild(detailsCard);
+
+		// Back button
+		const backBtn = this.contentContainer.createEl('button', {
+			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-3',
+			text: 'Back to Tree Generation'
+		});
+		const backIcon = createLucideIcon('chevron-right', 16);
+		backBtn.prepend(backIcon);
+		backBtn.addEventListener('click', () => {
+			this.showTab('tree-generation');
+		});
+
+		// Final success notice
+		if (failureCount === 0) {
+			new Notice(`Successfully generated ${successCount} family trees!`, 5000);
+		} else {
+			new Notice(`Generated ${successCount} of ${results.length} trees. ${failureCount} failed.`, 5000);
 		}
 	}
 
@@ -432,7 +681,7 @@ export class ControlCenterModal extends Modal {
 		const healthContent = healthCard.querySelector('.crc-card__content') as HTMLElement;
 
 		const completeness = this.calculateCompleteness(stats);
-		const healthBar = this.createHealthBar(healthContent, completeness);
+		this.createHealthBar(healthContent, completeness);
 
 		const healthInfo = healthContent.createDiv({ cls: 'crc-mt-4' });
 		healthInfo.createEl('p', {
@@ -466,6 +715,19 @@ export class ControlCenterModal extends Modal {
 				icon: 'git-branch'
 			});
 			const recentTreesContent = recentTreesCard.querySelector('.crc-card__content') as HTMLElement;
+
+			// Add clear history button to card header
+			const cardHeader = recentTreesCard.querySelector('.crc-card__header') as HTMLElement;
+			const clearButton = cardHeader.createEl('button', {
+				cls: 'crc-button crc-button--small',
+				text: 'Clear history'
+			});
+			clearButton.addEventListener('click', async () => {
+				this.plugin.settings.recentTrees = [];
+				await this.plugin.saveSettings();
+				new Notice('Tree history cleared');
+				this.showTab('status'); // Refresh the tab
+			});
 
 			existingTrees.forEach((tree) => {
 				const treeRow = recentTreesContent.createDiv({ cls: 'crc-recent-tree' });
@@ -759,6 +1021,258 @@ export class ControlCenterModal extends Modal {
 		});
 
 		container.appendChild(personMgmtCard);
+
+		// Recent Trees Card
+		const recentTrees = this.plugin.settings.recentTrees?.slice(0, 5) || [];
+		if (recentTrees.length > 0) {
+			const recentTreesCard = this.createCard({
+				title: 'Recent trees',
+				icon: 'clock'
+			});
+
+			const recentTreesContent = recentTreesCard.querySelector('.crc-card__content') as HTMLElement;
+
+			recentTreesContent.createEl('p', {
+				cls: 'crc-form-help crc-mb-3',
+				text: 'Quickly re-open your recently generated family trees'
+			});
+
+			recentTrees.forEach((tree, index) => {
+				const treeBtn = recentTreesContent.createEl('button', {
+					cls: `crc-btn crc-btn--secondary crc-btn--block ${index > 0 ? 'crc-mt-2' : ''}`,
+					text: tree.canvasName.replace('.canvas', '')
+				});
+				const treeIcon = createLucideIcon('file', 16);
+				treeBtn.prepend(treeIcon);
+
+				// Add metadata badge
+				treeBtn.createSpan({
+					cls: 'crc-badge crc-ml-2',
+					text: `${tree.peopleCount} people`
+				});
+
+				treeBtn.addEventListener('click', async () => {
+					const file = this.app.vault.getAbstractFileByPath(tree.canvasPath);
+					if (file instanceof TFile) {
+						const leaf = this.app.workspace.getLeaf(false);
+						await leaf.openFile(file);
+						this.close();
+					} else {
+						new Notice(`Canvas file not found: ${tree.canvasPath}`);
+					}
+				});
+			});
+
+			// "View all" link
+			const viewAllLink = recentTreesContent.createDiv({ cls: 'crc-mt-3 crc-text--center' });
+			const link = viewAllLink.createEl('a', {
+				cls: 'crc-link',
+				text: 'View all recent trees →'
+			});
+			link.addEventListener('click', (e) => {
+				e.preventDefault();
+				this.switchTab('status');
+			});
+
+			container.appendChild(recentTreesCard);
+		}
+	}
+
+	/**
+	 * Show Quick Settings tab
+	 */
+	private showQuickSettingsTab(): void {
+		const container = this.contentContainer;
+
+		// Title
+		const title = container.createEl('h2', { text: 'Quick settings' });
+		title.style.marginTop = '0';
+
+		// Intro text with re-layout feature note
+		const intro = container.createEl('p', {
+			cls: 'crc-text-muted crc-mb-3'
+		});
+		intro.innerHTML = 'Adjust commonly changed layout settings. Changes apply immediately to new tree generations. ' +
+			'<strong>To apply to existing canvases:</strong> right-click the canvas file and select "Re-layout family tree".';
+
+		// Layout Settings Card
+		const layoutCard = this.createCard({
+			title: 'Layout settings',
+			icon: 'layout'
+		});
+
+		const layoutContent = layoutCard.querySelector('.crc-card__content') as HTMLElement;
+
+		// Horizontal Spacing
+		const horizSpacingGroup = layoutContent.createDiv({ cls: 'crc-form-group' });
+		const horizLabel = horizSpacingGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Horizontal spacing'
+		});
+		horizLabel.htmlFor = 'quick-horiz-spacing';
+
+		const horizInput = horizSpacingGroup.createEl('input', {
+			cls: 'crc-form-input',
+			type: 'number',
+			attr: {
+				id: 'quick-horiz-spacing',
+				min: '100',
+				max: '1000',
+				step: '50'
+			}
+		}) as HTMLInputElement;
+		horizInput.value = String(this.plugin.settings.horizontalSpacing);
+
+		horizSpacingGroup.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'Space between nodes horizontally (pixels). Default: 400'
+		});
+
+		horizInput.addEventListener('change', async () => {
+			const value = parseInt(horizInput.value);
+			if (!isNaN(value) && value >= 100 && value <= 1000) {
+				this.plugin.settings.horizontalSpacing = value;
+				await this.plugin.saveSettings();
+				new Notice('Horizontal spacing updated');
+			} else {
+				horizInput.value = String(this.plugin.settings.horizontalSpacing);
+				new Notice('Invalid value. Must be between 100 and 1000.');
+			}
+		});
+
+		// Vertical Spacing
+		const vertSpacingGroup = layoutContent.createDiv({ cls: 'crc-form-group' });
+		const vertLabel = vertSpacingGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Vertical spacing'
+		});
+		vertLabel.htmlFor = 'quick-vert-spacing';
+
+		const vertInput = vertSpacingGroup.createEl('input', {
+			cls: 'crc-form-input',
+			type: 'number',
+			attr: {
+				id: 'quick-vert-spacing',
+				min: '100',
+				max: '1000',
+				step: '50'
+			}
+		}) as HTMLInputElement;
+		vertInput.value = String(this.plugin.settings.verticalSpacing);
+
+		vertSpacingGroup.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'Space between generations vertically (pixels). Default: 250'
+		});
+
+		vertInput.addEventListener('change', async () => {
+			const value = parseInt(vertInput.value);
+			if (!isNaN(value) && value >= 100 && value <= 1000) {
+				this.plugin.settings.verticalSpacing = value;
+				await this.plugin.saveSettings();
+				new Notice('Vertical spacing updated');
+			} else {
+				vertInput.value = String(this.plugin.settings.verticalSpacing);
+				new Notice('Invalid value. Must be between 100 and 1000.');
+			}
+		});
+
+		// Node Width
+		const nodeWidthGroup = layoutContent.createDiv({ cls: 'crc-form-group' });
+		const widthLabel = nodeWidthGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Node width'
+		});
+		widthLabel.htmlFor = 'quick-node-width';
+
+		const widthInput = nodeWidthGroup.createEl('input', {
+			cls: 'crc-form-input',
+			type: 'number',
+			attr: {
+				id: 'quick-node-width',
+				min: '100',
+				max: '500',
+				step: '10'
+			}
+		}) as HTMLInputElement;
+		widthInput.value = String(this.plugin.settings.defaultNodeWidth);
+
+		nodeWidthGroup.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'Width of person nodes (pixels). Default: 200'
+		});
+
+		widthInput.addEventListener('change', async () => {
+			const value = parseInt(widthInput.value);
+			if (!isNaN(value) && value >= 100 && value <= 500) {
+				this.plugin.settings.defaultNodeWidth = value;
+				await this.plugin.saveSettings();
+				new Notice('Node width updated');
+			} else {
+				widthInput.value = String(this.plugin.settings.defaultNodeWidth);
+				new Notice('Invalid value. Must be between 100 and 500.');
+			}
+		});
+
+		// Node Height
+		const nodeHeightGroup = layoutContent.createDiv({ cls: 'crc-form-group' });
+		const heightLabel = nodeHeightGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Node height'
+		});
+		heightLabel.htmlFor = 'quick-node-height';
+
+		const heightInput = nodeHeightGroup.createEl('input', {
+			cls: 'crc-form-input',
+			type: 'number',
+			attr: {
+				id: 'quick-node-height',
+				min: '50',
+				max: '300',
+				step: '10'
+			}
+		}) as HTMLInputElement;
+		heightInput.value = String(this.plugin.settings.defaultNodeHeight);
+
+		nodeHeightGroup.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'Height of person nodes (pixels). Default: 100'
+		});
+
+		heightInput.addEventListener('change', async () => {
+			const value = parseInt(heightInput.value);
+			if (!isNaN(value) && value >= 50 && value <= 300) {
+				this.plugin.settings.defaultNodeHeight = value;
+				await this.plugin.saveSettings();
+				new Notice('Node height updated');
+			} else {
+				heightInput.value = String(this.plugin.settings.defaultNodeHeight);
+				new Notice('Invalid value. Must be between 50 and 300.');
+			}
+		});
+
+		container.appendChild(layoutCard);
+
+		// Link to full settings
+		const fullSettingsBtn = container.createEl('button', {
+			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-3',
+			text: 'Open full settings'
+		});
+		const settingsIcon = createLucideIcon('settings', 16);
+		fullSettingsBtn.prepend(settingsIcon);
+		fullSettingsBtn.addEventListener('click', () => {
+			// Close modal and open settings
+			this.close();
+			// @ts-ignore - Obsidian internal API
+			this.app.setting.open();
+			// @ts-ignore - Obsidian internal API
+			this.app.setting.openTabById('canvas-roots');
+		});
+
+		container.createEl('p', {
+			cls: 'crc-form-help crc-text-center',
+			text: 'Access all plugin settings including data management and logging'
+		});
 	}
 
 	/**
@@ -1025,16 +1539,13 @@ export class ControlCenterModal extends Modal {
 		title.style.marginTop = '0';
 
 		// Intro text
-		const intro = container.createEl('p', {
+		container.createEl('p', {
 			text: 'Generate a visual family tree on an Obsidian Canvas. Select a root person and configure the tree options below.',
 			cls: 'crc-text-muted'
 		});
 
 		// Root Person Card
 		const rootPersonField: RelationshipField = { name: '' };
-
-		// Store reference for openWithPerson() to use
-		this.treeRootPersonField = rootPersonField;
 
 		// Check if we have a pending root person to pre-populate
 		if (this.pendingRootPerson) {
@@ -1067,35 +1578,54 @@ export class ControlCenterModal extends Modal {
 
 		const typeSelect = typeGroup.createEl('select', { cls: 'crc-form-input' });
 		[
-			{ value: 'ancestors', label: 'Ancestors (Parents, Grandparents, etc.)' },
-			{ value: 'descendants', label: 'Descendants (Children, Grandchildren, etc.)' },
-			{ value: 'full', label: 'Full Family Tree (Ancestors + Descendants)' }
+			{ value: 'full', label: 'Full family tree (ancestors + descendants)' },
+			{ value: 'ancestors', label: 'Ancestors only (parents, grandparents, etc.)' },
+			{ value: 'descendants', label: 'Descendants only (children, grandchildren, etc.)' }
 		].forEach(option => {
-			const opt = typeSelect.createEl('option', {
+			typeSelect.createEl('option', {
 				value: option.value,
 				text: option.label
 			});
 		});
+		// Set default to 'full'
+		typeSelect.value = 'full';
+
+		typeGroup.createDiv({
+			cls: 'crc-form-help',
+			text: 'Choose which relatives to include in the tree'
+		});
 
 		// Max generations
 		const genGroup = configContent.createDiv({ cls: 'crc-form-group' });
-		genGroup.createEl('label', {
-			cls: 'crc-form-label',
-			text: 'Maximum generations'
+		const genLabel = genGroup.createEl('label', {
+			cls: 'crc-form-label'
 		});
-		const genInput = genGroup.createEl('input', {
-			cls: 'crc-form-input',
+		genLabel.createSpan({ text: 'Maximum generations' });
+		const genValueDisplay = genLabel.createSpan({
+			cls: 'crc-form-label__value',
+			text: ' (5)'
+		});
+
+		const genSlider = genGroup.createEl('input', {
+			cls: 'crc-form-range',
 			attr: {
-				type: 'number',
+				type: 'range',
 				min: '0',
-				max: '20',
+				max: '10',
 				value: '5',
-				placeholder: '0 = unlimited'
+				step: '1'
 			}
+		}) as HTMLInputElement;
+
+		// Update display when slider changes
+		genSlider.addEventListener('input', () => {
+			const value = parseInt(genSlider.value);
+			genValueDisplay.setText(value === 0 ? ' (Unlimited)' : ` (${value})`);
 		});
+
 		genGroup.createDiv({
 			cls: 'crc-form-help',
-			text: 'Set to 0 for unlimited generations (use with caution on large trees)'
+			text: 'Limit the depth of the tree. Set to 0 for unlimited (use with caution on large trees)'
 		});
 
 		// Include spouses checkbox
@@ -1137,8 +1667,8 @@ export class ControlCenterModal extends Modal {
 
 		const dirSelect = dirGroup.createEl('select', { cls: 'crc-form-input' });
 		[
-			{ value: 'vertical', label: 'Vertical (Top to Bottom)' },
-			{ value: 'horizontal', label: 'Horizontal (Left to Right)' }
+			{ value: 'vertical', label: 'Vertical (top to bottom)' },
+			{ value: 'horizontal', label: 'Horizontal (left to right)' }
 		].forEach(option => {
 			dirSelect.createEl('option', {
 				value: option.value,
@@ -1184,7 +1714,7 @@ export class ControlCenterModal extends Modal {
 			await this.handleTreeGeneration(
 				rootPersonField,
 				typeSelect.value as 'ancestors' | 'descendants' | 'full',
-				parseInt(genInput.value) || 0,
+				parseInt(genSlider.value) || 0,
 				spouseCheckbox.checked,
 				dirSelect.value as 'vertical' | 'horizontal',
 				parseInt(spacingXInput.value),
@@ -1224,14 +1754,32 @@ export class ControlCenterModal extends Modal {
 				includeSpouses
 			};
 
-			// Create canvas generation options
+			// Create canvas generation options with embedded metadata
 			const canvasOptions: CanvasGenerationOptions = {
 				direction,
 				nodeSpacingX: spacingX,
 				nodeSpacingY: spacingY,
 				colorByGender: true,
 				showLabels: true,
-				useFamilyChartLayout: true  // Use family-chart for proper spouse handling
+				useFamilyChartLayout: true,  // Use family-chart for proper spouse handling
+				canvasRootsMetadata: {
+					plugin: 'canvas-roots',
+					generation: {
+						rootCrId: rootPersonField.crId,
+						rootPersonName: rootPersonField.name,
+						treeType,
+						maxGenerations: maxGenerations || 0,
+						includeSpouses,
+						direction,
+						timestamp: Date.now()
+					},
+					layout: {
+						nodeWidth: this.plugin.settings.defaultNodeWidth,
+						nodeHeight: this.plugin.settings.defaultNodeHeight,
+						nodeSpacingX: spacingX,
+						nodeSpacingY: spacingY
+					}
+				}
 			};
 
 			// Generate tree
@@ -1359,9 +1907,27 @@ export class ControlCenterModal extends Modal {
 				timestamp: Date.now()
 			};
 
+			logger.info('tree-generation', 'Saving to recent trees history', {
+				treeInfo,
+				currentRecentTreesCount: this.plugin.settings.recentTrees?.length || 0
+			});
+
+			// Ensure recentTrees array exists (defensive)
+			if (!this.plugin.settings.recentTrees) {
+				this.plugin.settings.recentTrees = [];
+			}
+
 			// Add to beginning of array and keep only last 10
 			this.plugin.settings.recentTrees = [treeInfo, ...this.plugin.settings.recentTrees].slice(0, 10);
+
+			logger.info('tree-generation', 'After adding to recent trees', {
+				newRecentTreesCount: this.plugin.settings.recentTrees.length,
+				recentTrees: this.plugin.settings.recentTrees
+			});
+
 			await this.plugin.saveSettings();
+
+			logger.info('tree-generation', 'Settings saved successfully');
 
 			// Open the canvas file
 			const leaf = this.app.workspace.getLeaf(false);
@@ -1413,7 +1979,8 @@ export class ControlCenterModal extends Modal {
 		if (data.metadata?.version) {
 			lines.push(`\t\t"version":"${data.metadata.version}",`);
 		}
-		lines.push('\t\t"frontmatter":{}');
+		const frontmatter = data.metadata?.frontmatter || {};
+		lines.push(`\t\t"frontmatter":${JSON.stringify(frontmatter)}`);
 		lines.push('\t}');
 
 		lines.push('}');
@@ -2025,7 +2592,7 @@ export class ControlCenterModal extends Modal {
 		helpEl.empty();
 		if (fieldData.crId) {
 			helpEl.appendText('Linked to: ');
-			const badge = helpEl.createEl('code', {
+			helpEl.createEl('code', {
 				text: fieldData.name,
 				cls: 'crc-help-badge'
 			});

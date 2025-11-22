@@ -82,9 +82,34 @@ The plugin populates the Canvas with the calculated family tree layout using spe
 
 ### 3. Maintain the Layout
 
-If you manually rearrange nodes or add new family members, restore the optimized layout:
+After editing relationships in person notes or changing layout settings, refresh your canvas:
 
+**Method 1: Right-Click Menu (Recommended)**
+- Right-click on the canvas tab, file, or three-dot menu (⋮)
+- Select **"Re-layout family tree"**
+
+**Method 2: Command Palette**
+- Open the canvas you want to re-layout
 - Run: `Canvas Roots: Re-Layout Current Canvas`
+
+**Method 3: Keyboard Shortcut**
+- Assign a custom hotkey in Settings → Hotkeys → "Re-layout current canvas"
+
+The re-layout command:
+- ✅ Reads current relationship data from your person notes
+- ✅ Preserves original tree settings (tree type, generations, spouses) using embedded canvas metadata
+- ✅ Allows changing layout direction (vertical ↔ horizontal) while preserving other settings
+- ✅ Applies your current spacing/sizing settings
+- ✅ Updates the canvas in-place (non-destructive)
+- ✅ Uses the latest family-chart layout algorithm
+
+**Common Re-Layout Scenarios:**
+- Added new spouses, children, or parents to person notes
+- Corrected relationship errors (wrong parents, etc.)
+- Changed spacing settings and want to apply to existing trees
+- Updated from an older layout algorithm version
+- Imported/edited data via GEDCOM or Bases
+- Testing different layout configurations
 
 
 ## 💾 GEDCOM Integration
@@ -132,6 +157,7 @@ Canvas Roots is in active development with core functionality in place:
 
 **Working Features:**
 - TypeScript-based plugin foundation with Obsidian API integration
+- Re-layout command with context menu integration
 - Build system with esbuild and automated CSS compilation
 - Settings interface for layout customization and logging control
 - Control Center modal UI for plugin management
@@ -141,6 +167,8 @@ Canvas Roots is in active development with core functionality in place:
 - Structured logging system with export capability
 
 **Recently Completed:**
+- Re-layout canvas command for updating existing trees with current data and settings
+- Context menu integration for canvas files (right-click on file, tab, or three-dot menu)
 - Genealogical layout engine using family-chart library for automated tree positioning
 - Canvas generation from person notes with proper handling of complex relationships
 - Streamlined Tree Generation tab with inline person browser (search, sort, filters, family groups)
@@ -148,6 +176,6 @@ Canvas Roots is in active development with core functionality in place:
 - Full tree generation with spacing optimization and multi-family support
 
 **In Progress:**
-- Re-layout command for existing canvases
+- Collection management and tree detection
 
 The plugin reads the vault's file structure and applies specialized family tree layout algorithms to safely write positional data into Canvas JSON files. The `cr_id` field ensures stable identity mapping between notes and canvas nodes.
