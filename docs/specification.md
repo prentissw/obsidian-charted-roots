@@ -719,351 +719,479 @@ If note is edited externally while panel is open:
 
 ### 3.4 Collections and Dataset Management
 
-**Requirement:** Enable users to organize, browse, and work with multiple family trees and research projects within a single vault.
+**Requirement:** Enable users to organize, browse, and work with multiple family trees and research projects within a single vault, supporting both automatic detection and optional manual organization.
+
+> **Note:** For complete architectural details, see [docs/architecture/collections.md](../architecture/collections.md)
 
 #### 3.4.1 Overview
 
 **Purpose:**
-- Organize person notes into logical collections (families, research projects)
-- Manage multiple disconnected family trees
+- Automatically detect and work with multiple disconnected family trees (zero configuration)
+- Optionally organize person notes into user-defined collections
 - Switch between different datasets seamlessly
-- Track collection-level statistics and metadata
-- Support collaborative research with external collections
+- Track family component statistics
+- Support both genealogy and world-building use cases
 
-**Primary Use Case:** Genealogy research where users maintain multiple family lines, import data from collaborators, or organize research by historical period or geographic region.
+**Design Philosophy:**
 
-#### 3.4.2 Collection Data Model
+Canvas Roots uses a **Smart Hybrid Approach** with two parallel collection systems:
 
-**Collection Definition:**
+1. **Detected Components** (automatic, zero-config)
+   - Computed from relationship graph using BFS traversal
+   - Works for all users regardless of vault organization
+   - No folders, tags, or configuration required
+   - Self-healing (always reflects current relationship data)
+
+2. **User Collections** (optional, manual)
+   - User-assigned collection property in person note frontmatter
+   - For power users who want custom organization
+   - Works alongside detected components
+   - Stored as simple YAML property
+
+**Key Constraint:** Many Obsidian users do not use folders or tags, and do not wish to. Canvas Roots must work perfectly for flat vaults with zero configuration.
+
+#### 3.4.2 Detected Family Components
+
+**What Are Detected Components?**
+
+Family components are disconnected graphs discovered by analyzing relationships between person notes. If two people have no path of relationships connecting them, they belong to different components.
+
+**Data Model:**
 
 ```typescript
-export interface Collection {
-  // Machine identity (UUID v4)
-  id: string;  // "abc-123-def-456"
+/**
+ * A detected family component (computed, not stored)
+ */
+export interface FamilyComponent {
+  // Component index (0-based, sorted by size descending)
+  index: number;  // 0, 1, 2...
 
-  // Human-readable code (optional, 3-6 characters)
-  code?: string;  // "SMI", "SMITH", "JON"
+  // Display name from user-provided collection_name or auto-generated
+  displayName: string;  // "Smith Family Tree" or "Family 1"
 
-  // Display name
-  name: string;  // "Smith Family Research"
+  // Number of people in this component
+  size: number;
 
-  // Storage location
-  path: string;  // "People/Smith-Family" or query-based
+  // All people in this component
+  people: PersonNode[];
 
-  // Discovery method
-  discoveryMethod: 'auto' | 'manual' | 'query';
-
-  // Trees within this collection
-  trees: Tree[];
-
-  // Metadata
-  metadata: {
-    totalPeople: number;
-    totalFamilies: number;
-    dateRange: [Date | null, Date | null];
-    tags?: string[];
-    created: Date;
-    modified: Date;
-  };
-}
-
-export interface Tree {
-  // Machine identity (UUID v4)
-  id: string;  // "tree-uuid-123"
-
-  // Human-readable code (optional, relative to collection)
-  code?: string;  // "1", "MAIN", "EXT"
-
-  // Display name
-  label: string;  // "Main Line", "Extended Family"
-
-  // Graph data
-  rootPersonId: string;  // cr_id of root person
-  personIds: string[];   // All cr_ids in this tree
-
-  // Associated canvas files
-  canvasFiles: string[];  // Multiple canvas views of same tree
-
-  // Metadata
-  metadata: {
-    generationDepth: number;
-    earliestDate?: Date;
-    latestDate?: Date;
-  };
+  // Representative person (oldest by birth, or first alphabetically)
+  representative: PersonNode;
 }
 ```
 
-#### 3.6.3 Collection Discovery
-
-**Auto-Discovery (Default):**
-
-The plugin automatically scans the vault to discover collections based on folder structure:
+**Detection Algorithm:**
 
 ```typescript
-// Discovery algorithm
-1. Scan vault for folders containing person notes (files with cr_id field)
-2. Group by parent folder (configurable depth)
-3. Apply minimum threshold (default: 5+ person notes = collection)
-4. Auto-generate collection code from folder name
-5. Detect disconnected trees within each collection using graph analysis
+class FamilyGraphService {
+  /**
+   * Detect all family components using BFS graph traversal
+   * @returns Components sorted by size (largest first)
+   */
+  async getFamilyComponents(): Promise<FamilyComponent[]> {
+    // Use existing findAllFamilyComponents() implementation
+    const components = await this.findAllFamilyComponents();
+
+    return components.map((comp, index) => {
+      // Look for user-provided custom name
+      const customName = this.findCollectionName(comp.people);
+
+      return {
+        index,
+        displayName: customName || `Family ${index + 1}`,
+        size: comp.size,
+        people: comp.people,
+        representative: comp.representative
+      };
+    });
+  }
+
+  private findCollectionName(people: PersonNode[]): string | null {
+    // Scan frontmatter for collection_name property
+    const names = people
+      .map(p => this.getPropertyFromFrontmatter(p.file, 'collection_name'))
+      .filter(n => n);
+
+    if (names.length === 0) return null;
+    if (names.length === 1) return names[0];
+
+    // Multiple names - pick most common or first alphabetically
+    const counts = names.reduce((acc, name) => {
+      acc[name] = (acc[name] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.keys(counts)
+      .sort((a, b) => counts[b] - counts[a] || a.localeCompare(b))[0];
+  }
+}
 ```
 
-**Example vault structure:**
+**YAML Properties for Naming:**
 
-```
-Vault/
-├── People/
-│   ├── Smith-Family/        → Collection: "Smith Family" (code: "SMI")
-│   │   └── (120 person notes, 2 disconnected trees)
-│   ├── Jones-Family/        → Collection: "Jones Family" (code: "JON")
-│   │   └── (45 person notes, 1 tree)
-│   └── Colonial-Mass/       → Collection: "Colonial Mass" (code: "COL")
-│       └── (89 person notes, 3 trees)
-```
-
-**Manual Collections:**
-
-Users can define custom collections using queries or folder combinations:
+Users can optionally name their family components by adding `collection_name` to person notes:
 
 ```yaml
-# .canvas-roots/collections.json
-{
-  "auto_discover": true,
-  "custom_collections": [
-    {
-      "name": "Colonial Massachusetts",
-      "code": "COL",
-      "query": "path:People/ AND tag:#colonial",
-      "description": "17th-18th century New England ancestors"
-    },
-    {
-      "name": "Combined Research",
-      "code": "COMB",
-      "folders": ["People/Smith-Family", "People/Jones-Family"],
-      "description": "Merged view of both families"
+---
+cr_id: "abc-123"
+name: "John Smith"
+collection_name: "Smith Family Tree"  # Optional component name
+---
+```
+
+**Naming Rules:**
+- If no one in component has `collection_name`: Auto-generate "Family 1", "Family 2", etc.
+- If 1+ people have same `collection_name`: Use that name
+- If people have different names: Use most common, break ties alphabetically
+
+**Key Property: Component Membership is COMPUTED**
+
+Component membership is **never stored** in person notes. It is always derived from current relationships by running BFS traversal.
+
+**Why?**
+- Prevents stale data (always reflects current relationships)
+- Zero maintenance (no manual updating needed)
+- Self-healing (adding/removing relationships automatically updates components)
+- Obsidian Bases compatible (users can edit relationships, components recompute)
+
+**How Users Control Component Membership:**
+
+Users control which component a person belongs to by **editing their relationships**, not by editing a stored component ID:
+
+```yaml
+# To move "Sarah Jones" from Family 1 to Family 2:
+# 1. Remove relationships connecting her to Family 1 members
+# 2. Add relationships connecting her to Family 2 members
+# 3. Components recompute automatically on next access
+```
+
+#### 3.4.3 User Collections (Optional)
+
+**What Are User Collections?**
+
+User collections are optional, user-defined groupings stored in person note frontmatter. They provide an additional organizational layer for power users.
+
+**Data Model:**
+
+```typescript
+/**
+ * A user-defined collection (stored in frontmatter)
+ */
+export interface UserCollection {
+  // Collection name from 'collection' property
+  name: string;  // "Paternal Line", "House Stark", etc.
+
+  // All people with this collection value
+  people: PersonNode[];
+}
+
+/**
+ * Person node with optional collection assignment
+ */
+export interface PersonNode {
+  crId: string;
+  name: string;
+  // ... existing fields ...
+
+  // Optional user-assigned collection
+  userCollection?: string;  // From 'collection' property
+}
+```
+
+**YAML Property:**
+
+```yaml
+---
+cr_id: "abc-123"
+name: "John Smith"
+collection: "Paternal Line"  # Optional user collection
+---
+```
+
+**Use Cases:**
+
+1. **Genealogy:** Organize by research focus
+   - `collection: "Paternal Line"`
+   - `collection: "Maternal Line"`
+   - `collection: "Colonial Massachusetts"`
+
+2. **World-Building:** Organize by faction/house
+   - `collection: "House Stark"`
+   - `collection: "Night's Watch"`
+   - `collection: "Wildlings"`
+
+**Relationship to Detected Components:**
+
+User collections and detected components are **independent**:
+
+```
+Example vault:
+- Detected Components: [Family 1 (8 people), Family 2 (5 people)]
+- User Collections: [Paternal Line (6 people), Maternal Line (7 people)]
+
+Family 1 members might be split across both user collections
+User collection members might be split across multiple family components
+```
+
+**Obsidian Bases Integration:**
+
+The `collection` property appears as an editable text field in Bases table view:
+
+| name | cr_id | collection | birth_date |
+|------|-------|------------|------------|
+| John Smith | abc-123 | Paternal Line | 1950-05-10 |
+| Mary Jones | def-456 | Maternal Line | 1952-08-15 |
+
+Users can bulk-edit collections using Bases drag-down fill or find-replace.
+
+#### 3.4.4 Cross-Collection Connections
+
+**Detected Components:**
+
+By definition, detected components are disconnected (no relationship path between them). If relationships exist between two components, they merge into one component.
+
+**User Collections:**
+
+User collections can have connections via "bridge people" with cross-collection relationships:
+
+```typescript
+/**
+ * Connection between two user collections
+ */
+export interface CollectionConnection {
+  fromCollection: string;  // "House Stark"
+  toCollection: string;    // "House Targaryen"
+  bridgePeople: PersonNode[];  // People with relationships to both
+  relationshipCount: number;   // Total cross-collection relationships
+}
+```
+
+**Detection Algorithm:**
+
+```typescript
+async findCollectionConnections(): Promise<CollectionConnection[]> {
+  const connections: Map<string, CollectionConnection> = new Map();
+
+  for (const person of this.getAllPeople()) {
+    const personCollection = person.userCollection;
+    if (!personCollection) continue;
+
+    // Check all relationships for cross-collection links
+    for (const relationship of this.getAllRelationships(person)) {
+      const relatedCollection = relationship.target.userCollection;
+
+      if (relatedCollection && relatedCollection !== personCollection) {
+        const key = [personCollection, relatedCollection].sort().join('|');
+
+        if (!connections.has(key)) {
+          connections.set(key, {
+            fromCollection: personCollection,
+            toCollection: relatedCollection,
+            bridgePeople: [],
+            relationshipCount: 0
+          });
+        }
+
+        const conn = connections.get(key)!;
+        if (!conn.bridgePeople.find(p => p.crId === person.crId)) {
+          conn.bridgePeople.push(person);
+        }
+        conn.relationshipCount++;
+      }
     }
-  ],
-  "excluded_paths": ["People/Templates", "People/Archive"]
+  }
+
+  return Array.from(connections.values());
 }
 ```
 
-#### 3.6.4 Collection and Tree ID/Code System
-
-**Purpose:** Provide human-readable, short identifiers for collections and trees that can be used in reference numbering, file naming, GEDCOM export, and UI display.
-
-**ID Types:**
-
-| ID Type | Format | Required | Purpose | Example |
-|---------|--------|----------|---------|---------|
-| Collection UUID | UUID v4 | Yes | Machine identity for persistence | `abc-123-def-456` |
-| Collection Code | 3-6 chars | No | Human-readable identifier | `SMI`, `SMITH` |
-| Collection Name | String | Yes | Display name | `Smith Family Research` |
-| Tree UUID | UUID v4 | Yes | Machine identity for persistence | `tree-uuid-123` |
-| Tree Code | 1-4 chars | No | Human-readable identifier | `1`, `MAIN` |
-| Tree Label | String | Yes | Display name | `Main Line` |
-
-**Code Auto-Generation:**
-
-```typescript
-// Collection code generation strategies
-export type CollectionCodeStrategy =
-  | 'folder_abbreviation'  // "Smith Family" → "SMI"
-  | 'folder_acronym'       // "Smith Family Research" → "SFR"
-  | 'manual';              // User-assigned
-
-// Tree code generation strategies
-export type TreeCodeStrategy =
-  | 'sequential'    // "1", "2", "3"
-  | 'descriptive'   // "MAIN", "EXT", "COUS"
-  | 'manual';       // User-assigned
-```
-
-**Settings Configuration:**
+**Use Case: Political Alliances (World-Building)**
 
 ```yaml
-collections:
-  auto_discover: true
+# Sansa Stark marries Tyrion Lannister
+---
+name: "Sansa Stark"
+collection: "House Stark"
+spouses:
+  - "[[Tyrion Lannister]]"
+---
 
-  id_generation:
-    collection_code_format: "auto"  # "auto", "manual", "none"
-    tree_code_format: "numeric"     # "numeric", "alpha", "manual", "none"
-
-    auto_collection_code:
-      strategy: "folder_abbreviation"
-      max_length: 6
-      uppercase: true
-
-    auto_tree_code:
-      strategy: "sequential"
+# Tyrion Lannister
+---
+name: "Tyrion Lannister"
+collection: "House Lannister"
+spouses:
+  - "[[Sansa Stark]]"
+---
 ```
 
-**Integration with Reference Numbering:**
+This creates a cross-collection connection:
+- From: House Stark
+- To: House Lannister
+- Bridge people: [Sansa Stark, Tyrion Lannister]
+- Relationship count: 1 (marriage)
 
-Collection and tree codes can be incorporated into reference numbers (§2.1.3):
+#### 3.4.5 Implementation Phases
 
-```yaml
-# Without collection codes
-cr_ref_num: "12.3"
+**Phase 1: Component Naming (v0.2.0-beta)**
 
-# With collection and tree codes
-cr_ref_num: "SMI/1/12.3"  # Smith collection, tree 1, position 12.3
-cr_ref_num: "JON/2/8.0"   # Jones collection, tree 2, position 8.0
-```
+**Status:** Planned for next release
 
-**Settings for reference numbering integration:**
+**Scope:**
+- Add `collection_name` property support
+- Update UI to show custom names instead of "Family 1", "Family 2"
+- Naming conflict resolution (most common name wins)
+- Documentation for users
 
-```yaml
-reference_numbering:
-  use_collection_codes: true
-  use_tree_codes: true
-  separator: "/"
-  format: "{collection_code}/{tree_code}/{ref_num}"
-```
+**No Breaking Changes:**
+- Detected components continue to work as-is
+- Custom names are optional enhancement
+- Zero configuration still works perfectly
 
-#### 3.6.5 Collection Statistics and Analysis
+---
 
-**Vault-Wide Statistics:**
+**Phase 2: User Collections (v0.3.0-beta)**
 
-```typescript
-export interface VaultStats {
-  totalCollections: number;
-  totalTrees: number;
-  totalPeople: number;
-  totalFamilies: number;
-  dateRange: [Date | null, Date | null];
-  averageGenerations: number;
-}
-```
+**Status:** Planned
 
-**Per-Collection Statistics:**
+**Scope:**
+- Add `collection` property support
+- UI to filter/browse by user collection
+- Collection statistics in Status tab
+- Obsidian Bases integration testing
+- Cross-collection connection detection
 
-```typescript
-export interface CollectionStats {
-  collectionId: string;
-  collectionName: string;
-  collectionCode?: string;
-  totalPeople: number;
-  totalFamilies: number;
-  treeCount: number;
-  disconnectedTrees: Tree[];
-  dateRange: [Date | null, Date | null];
-  dataQuality: {
-    completeness: number;        // 0-100%
-    missingCrIds: number;
-    brokenLinks: number;
-    circularRelations: number;
-  };
-}
-```
+**Features:**
+- Filter person picker by collection
+- "Collection:" dropdown in tree generation
+- Statistics: "Paternal Line: 45 people across 2 family components"
+- Bases template includes `collection` column
 
-#### 3.6.6 Collection UI Integration
+---
 
-**Collections Tab in Control Center:**
+**Phase 3: Advanced Collection Features (v1.x.x)**
+
+**Status:** Future
+
+**Scope:**
+- Cross-collection tree generation (show relationships between collections)
+- Collection-level GEDCOM export (export only one collection)
+- Collection merge/split tools
+- Collection-specific styling (color-code nodes by collection)
+- Reference numbering with collection codes (§2.1.4)
+
+#### 3.4.6 UI Integration
+
+**Current UI (v0.1.1):**
+
+Tree Generation tab already shows detected components in sidebar:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│ Canvas Roots Control Center                             │
-│ [Status] [Collections] [Quick Actions] [Data Entry]     │
-├─────────────────────────────────────────────────────────┤
-│ Your Collections                                        │
-│                                                         │
-│ ┌───────────────────────────────────────────────────┐  │
-│ │ 📁 Smith Family Research (SMI)                    │  │
-│ │ 247 people · 89 families · 3 disconnected trees   │  │
-│ │ Last updated: 2 hours ago                         │  │
-│ │                                                   │  │
-│ │ Trees:                                            │  │
-│ │ • Main Line (1) - 180 people [View] [Generate]   │  │
-│ │ • Jones Branch (2) - 45 people [View] [Generate] │  │
-│ │ • Cousins (3) - 22 people [View] [Generate]      │  │
-│ │                                                   │  │
-│ │ [Edit Collection] [Export All] [Settings]        │  │
-│ └───────────────────────────────────────────────────┘  │
-│                                                         │
-│ ┌───────────────────────────────────────────────────┐  │
-│ │ 📁 Victorian England Nobility (VEN)               │  │
-│ │ 89 people · 12 families · 1 tree                  │  │
-│ │ [View] [Generate] [Archive]                       │  │
-│ └───────────────────────────────────────────────────┘  │
-│                                                         │
-│ [+ New Collection] [Import GEDCOM] [Merge Collections] │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ Tree Generation                          │
+├──────────────────────────────────────────┤
+│ ┌─────────┬──────────────────────────┐  │
+│ │ All     │ Root person:             │  │
+│ │ families│ [Select person...     ▼] │  │
+│ ├─────────┤                          │  │
+│ │ Family 1│ • John Smith (1950)      │  │
+│ │    8    │ • Mary Jones (1952)      │  │
+│ ├─────────┤ • Robert Smith (1975)    │  │
+│ │ Family 2│                          │  │
+│ │    5    │                          │  │
+│ └─────────┴──────────────────────────┘  │
+└──────────────────────────────────────────┘
 ```
 
-**Collection Settings Panel:**
+**Phase 1 Enhancement:**
+
+Show custom names when `collection_name` is present:
 
 ```
-Collection Settings: Smith Family Research
-┌─────────────────────────────────────────┐
-│ Identification                          │
-├─────────────────────────────────────────┤
-│ Name: [Smith Family Research         ]  │
-│ Code: [SMI    ] (3-6 chars)            │
-│       Auto-generated from folder name   │
-│       Used in: reference numbers,       │
-│       file naming, GEDCOM export        │
-│                                         │
-│ Path: People/Smith-Family               │
-│ UUID: abc-123-def-456                   │
-│                                         │
-├─────────────────────────────────────────┤
-│ Trees in This Collection                │
-├─────────────────────────────────────────┤
-│ Code  Label         Root         People │
-│ 1     Main Line     John Smith   180    │
-│ 2     Extended      Mary Jones   45     │
-│ 3     Cousins       Bob Smith    22     │
-│                                         │
-│ [Edit Tree Codes] [Detect Trees]       │
-│                                         │
-├─────────────────────────────────────────┤
-│ Settings                                │
-├─────────────────────────────────────────┤
-│ ☑ Include in auto-discovery             │
-│ ☑ Use collection code in ref numbers    │
-│ ☐ Archive (hide from main list)         │
-│                                         │
-│ [Save] [Cancel] [Delete Collection]     │
-└─────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ Tree Generation                          │
+├──────────────────────────────────────────┤
+│ ┌──────────────┬───────────────────────┐ │
+│ │ All families │ Root person:          │ │
+│ ├──────────────┤ [Select person...  ▼] │ │
+│ │ Smith Family │ • John Smith (1950)   │ │
+│ │     8        │ • Mary Jones (1952)   │ │
+│ ├──────────────┤ • Robert Smith (1975) │ │
+│ │ Jones Family │                       │ │
+│ │     5        │                       │ │
+│ └──────────────┴───────────────────────┘ │
+└──────────────────────────────────────────┘
 ```
 
-#### 3.6.7 Use Cases
+**Phase 2 Enhancement:**
 
-**Use Case 1: Multiple Family Lines**
+Add collection filter dropdown:
 
-A genealogist researching both paternal and maternal lines:
-- Collection 1: "Smith Paternal Line" (code: SMI)
-- Collection 2: "Jones Maternal Line" (code: JON)
-- Collections tab shows both with separate statistics
-- Reference numbers: SMI/1/12.3 vs JON/1/8.0
-- Can generate separate canvas views for each
+```
+┌──────────────────────────────────────────┐
+│ Tree Generation                          │
+├──────────────────────────────────────────┤
+│ Filter by:                               │
+│ ○ Family component  [Smith Family     ▼] │
+│ ○ User collection   [Paternal Line    ▼] │
+│ ○ All people                             │
+│                                          │
+│ Root person:                             │
+│ [Select person...                     ▼] │
+│                                          │
+│ • John Smith (1950)                      │
+│ • Mary Jones (1952)                      │
+│ • Robert Smith (1975)                    │
+└──────────────────────────────────────────┘
+```
 
-**Use Case 2: Historical Research Project**
+#### 3.4.7 Use Cases
 
-A researcher organizing by time period:
-- Collection 1: "Colonial Massachusetts" (code: COL)
-- Collection 2: "Revolutionary Era" (code: REV)
-- Collection 3: "Victorian Era" (code: VIC)
-- Uses query-based collections with tag filters
-- Cross-collection views possible for families spanning periods
+**Use Case 1: Zero Configuration (Current)**
 
-**Use Case 3: Collaborative Research**
+A user with a flat vault and no folder/tag organization:
+1. Import GEDCOM (creates person notes in default folder)
+2. Plugin automatically detects 3 disconnected family components
+3. UI shows "Family 1 (12 people)", "Family 2 (8 people)", "Family 3 (5 people)"
+4. User can immediately generate trees for each component
+5. No configuration, naming, or organization required
 
-Multiple researchers working on shared ancestry:
-- Import GEDCOM from collaborator
-- Plugin detects collection code in GEDCOM IDs (@SMI001@)
-- Offers to merge with existing "Smith Family" collection
-- UUID-based matching prevents duplicates
-- Collection statistics update after merge
+**Use Case 2: Custom Component Names (Phase 1)**
 
-**Use Case 4: World-Building (Secondary Use Case)**
+A genealogist researching two main family lines:
+1. Add `collection_name: "Smith Paternal Line"` to Smith family members
+2. Add `collection_name: "Jones Maternal Line"` to Jones family members
+3. UI updates to show custom names instead of "Family 1", "Family 2"
+4. Person notes remain in flat structure (no folders required)
 
-A fiction writer organizing noble houses:
-- Collection 1: "House Stark" (code: STK)
-- Collection 2: "House Lannister" (code: LAN)
-- Collection 3: "House Targaryen" (code: TAR)
-- Each collection tracks family succession
-- Can generate political alliance trees across collections
+**Use Case 3: User Collections for Research Focus (Phase 2)**
+
+A researcher organizing by research focus:
+1. Assign `collection: "Primary Research"` to actively researched people
+2. Assign `collection: "Verified"` to fully documented people
+3. Assign `collection: "Needs Sources"` to people requiring citation work
+4. Filter person picker by collection to focus work
+5. Generate trees showing only "Needs Sources" people
+
+**Use Case 4: World-Building with Noble Houses (Phase 2)**
+
+A fiction writer organizing a fantasy world:
+1. Create people for House Stark, House Lannister, House Targaryen
+2. Assign `collection: "House Stark"`, etc. to each person
+3. All houses might be one detected component (if marriages connect them)
+4. But user collections provide faction-based organization
+5. Generate "House Stark" tree, "House Lannister" tree, or combined tree
+6. Plugin detects cross-collection marriages as political alliances
+
+**Use Case 5: Obsidian Bases Bulk Editing (Phase 2)**
+
+A user managing large datasets:
+1. Open person notes in Bases table view
+2. See `collection` column (text field)
+3. Use Bases features: sort, filter, drag-down fill, find-replace
+4. Bulk-assign collections to 50+ people in seconds
+5. Canvas Roots respects all changes (collections are just YAML properties)
+6. Generate trees with updated collection assignments
 
 ### 3.5 Tree Visualization Modes
 

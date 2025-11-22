@@ -103,7 +103,7 @@ canvas-roots/
 | `uuid.ts` | ✅ Complete | UUID v4 generation for `cr_id` fields |
 | `vault-stats.ts` | ✅ Complete | Calculates vault-wide statistics |
 | **To Be Implemented** | | |
-| `collection-manager.ts` | 🔴 Needed | Auto-discovers collections, manages trees |
+| `collection-manager.ts` | 🔴 Needed | Component naming and user collection management (Phase 1/2) |
 
 ### UI Components (src/ui/)
 
@@ -124,7 +124,7 @@ canvas-roots/
 | `person.ts` | 🟡 Partial | Person note schema and interfaces |
 | `canvas.ts` | 🟡 Partial | Canvas JSON type definitions |
 | **To Be Implemented** | | |
-| `collection.ts` | 🔴 Needed | Collection and Tree interfaces |
+| `collection.ts` | 🔴 Needed | FamilyComponent, UserCollection, CollectionConnection interfaces (Phase 1/2) |
 | `layout.ts` | 🔴 Needed | Layout options and results |
 | `settings.ts` | 🔴 Needed | Plugin settings types (currently in src/settings.ts) |
 
@@ -156,58 +156,108 @@ canvas-roots/
 | Quick Actions | ✅ Complete | Shortcuts to common operations (generate tree, re-layout, create person) |
 | Data Entry | ✅ Complete | Person note creation with relationship fields |
 | **To Be Implemented** | | |
-| Collections | 🔴 Needed | Browse and manage family collections and trees |
+| Collections | 🔴 Needed | Collections tab for browsing family components and user collections (Phase 2) |
 
-### Planned Features (See specification.md)
+### Collections Feature Roadmap
 
-**MVP (Phase 1):**
-- Collection management foundation (auto-discovery, basic codes)
-- Layout engine with D3 calculations
-- Canvas generation with metadata
-- Control Center: Status, Collections, Quick Actions, Data Entry tabs
-- Bidirectional link automation
+> **Architecture:** See [docs/architecture/collections.md](../architecture/collections.md) for complete ADR
 
-**Phase 2:**
-- Tree View with D3 interactive preview
+**Current Status (v0.1.1):**
+- ✅ Detected family components (backend working via `FamilyGraphService.findAllFamilyComponents()`)
+- ✅ Multi-family UI in Tree Generation tab (sidebar shows "Family 1", "Family 2", etc.)
+- ❌ No component naming support (`collection_name` property not implemented)
+- ❌ No user collections support (`collection` property not implemented)
+- ❌ No Collections tab in Control Center
+
+**Phase 1: Component Naming (v0.2.0-beta) - Planned:**
+- Add `collection_name` property support to person notes
+- Update UI to show custom names instead of "Family 1", "Family 2"
+- Implement naming conflict resolution (most common name wins)
+- Update family group sidebar to display custom names
+- Documentation for users
+
+**Phase 2: User Collections (v0.3.0-beta) - Planned:**
+- Add `collection` property support to person notes
+- Create Collections tab in Control Center
+- UI to filter/browse by user collection
+- Collection statistics in Status tab
+- Obsidian Bases integration testing
+- Cross-collection connection detection
+- Update Bases template to include `collection` column
+
+**Phase 3: Advanced Features (v1.x.x) - Future:**
+- Cross-collection tree generation
+- Collection-level GEDCOM export
+- Collection merge/split tools
+- Collection-specific node styling
 - Reference numbering with collection codes
-- Enhanced collection management
 
-**Phase 3:**
-- Enhanced Canvas view with dataset browser
-- Query-based collections
-- GEDCOM import/export with collection codes
+**Technical Implementation:**
+- Detected components = computed from relationship graph (BFS traversal)
+- User collections = stored in YAML frontmatter (`collection` property)
+- Both systems coexist independently
+- Zero configuration required (flat vaults fully supported)
 
-See [specification.md](specification.md) for complete feature roadmap.
+See [specification.md](specification.md) §3.4 for complete collections specification.
 
 ## Implementation Priority
 
-When contributing or implementing features, follow this order:
+When contributing or implementing features for collections support, follow this order:
 
-1. **Define TypeScript interfaces** (src/models/)
-   - Complete collection.ts, layout.ts interfaces
-   - Finalize person.ts and canvas.ts types
+### Phase 1: Component Naming (v0.2.0-beta)
 
-2. **Collection Management** (src/core/collection-manager.ts)
-   - Auto-discovery from folder structure
-   - Collection code generation
-   - Tree detection (disconnected graphs)
+1. **Update PersonNode interface** (src/models/person.ts or inline)
+   - Add optional `collectionName?: string` field
+   - Update `extractPersonNode()` to read `collection_name` from frontmatter
 
-3. **Re-Layout Command** (complete in main.ts)
-   - Read existing Canvas JSON
-   - Extract nodes and their linked files
-   - Use LayoutEngine to recalculate positions
-   - Update and write back Canvas JSON
+2. **Update FamilyGraphService** (src/core/family-graph.ts)
+   - Add `findCollectionName()` helper method (see specification.md §3.4.2)
+   - Update `getFamilyComponents()` to populate `displayName` from `collection_name`
+   - Implement naming conflict resolution (most common name wins)
 
-4. **Control Center Tabs**
-   - Collections tab (list collections, trees)
-   - Status tab (vault statistics) ✅
-   - Quick Actions tab (generate, re-layout) ✅
-   - Data Entry tab (create person notes) ✅
+3. **Update Tree Generation UI** (src/ui/control-center.ts)
+   - Replace hardcoded "Family 1", "Family 2" with `component.displayName`
+   - Update sidebar labels to show custom names
+   - No other UI changes needed
 
-5. **Tree View** (src/ui/tree-view.ts)
-   - D3 SVG rendering
-   - Interactive preview
-   - Export to Canvas
+4. **Documentation**
+   - Update user guide with `collection_name` property usage
+   - Add examples of naming family components
+
+### Phase 2: User Collections (v0.3.0-beta)
+
+1. **Define TypeScript interfaces** (src/models/collection.ts)
+   - `FamilyComponent` interface (formalize existing structure)
+   - `UserCollection` interface
+   - `CollectionConnection` interface
+
+2. **Update PersonNode interface**
+   - Add optional `userCollection?: string` field
+   - Update `extractPersonNode()` to read `collection` from frontmatter
+
+3. **Implement Collection Service** (src/core/collection-manager.ts)
+   - `getUserCollections()`: Find all unique collection values
+   - `findCollectionConnections()`: Detect cross-collection relationships
+   - `getCollectionStatistics()`: Count people per collection
+
+4. **Create Collections Tab** (src/ui/control-center.ts)
+   - List user collections with statistics
+   - Show detected family components
+   - Display cross-collection connections
+
+5. **Update Tree Generation Tab**
+   - Add collection filter dropdown
+   - Support filtering by family component OR user collection
+
+6. **Update Bases Template**
+   - Add `collection` column to person template
+
+### Phase 3+: Future Features
+
+- Cross-collection tree visualization
+- Collection-specific styling
+- Reference numbering with collection codes
+- Tree View with D3 interactive preview
 
 ## Testing in Obsidian
 
@@ -355,6 +405,96 @@ Example:
 **Fixed in:** gedcom-importer.ts lines 208-246 (2025-11-20)
 
 ## Design Decisions
+
+### Smart Hybrid Collections Architecture (2025-11-22)
+
+**Decision:** Implemented dual collection system with detected components (computed) and user collections (stored), rejecting folder-based and tag-based alternatives.
+
+**Rationale:**
+- **User diversity:** Many Obsidian users do not use folders or tags and do not wish to
+- **Zero configuration:** Plugin must work perfectly for flat vaults with no organization
+- **Self-healing data:** Computed component membership prevents stale data
+- **Power user flexibility:** Optional user collections provide custom organization
+- **World-building support:** Same architecture serves both genealogy and fiction writing use cases
+
+**Architecture:** See [docs/architecture/collections.md](../architecture/collections.md) for complete ADR
+
+**Options Evaluated:**
+
+1. **Option A: Folder-Based Collections** ❌
+   - Auto-discover collections from folder structure
+   - **Rejected:** Excludes users with flat vaults
+   - **Rejected:** Requires reorganizing files to change collections
+
+2. **Option B: Tag-Based Collections** ❌
+   - Use tags to assign collection membership
+   - **Rejected:** Excludes users who don't use tags
+   - **Rejected:** Tags already serve other purposes in genealogy vaults
+
+3. **Option C: Smart Hybrid** ✅ **SELECTED**
+   - Detected components computed from relationship graph (BFS traversal)
+   - Optional user collections stored in `collection` YAML property
+   - Both systems coexist independently
+
+**Implementation:**
+
+**Detected Family Components:**
+```typescript
+// Computed on every access, never stored
+interface FamilyComponent {
+  index: number;              // 0, 1, 2... (sorted by size)
+  displayName: string;        // From collection_name or "Family 1"
+  size: number;
+  people: PersonNode[];
+  representative: PersonNode;
+}
+```
+
+**User Collections:**
+```yaml
+# Optional property in person note frontmatter
+collection: "Paternal Line"  # or "House Stark", etc.
+```
+
+**Key Technical Decisions:**
+
+1. **Component membership = COMPUTED (not stored)**
+   - Prevents stale data when relationships change
+   - Self-healing (always reflects current relationship graph)
+   - Users control membership by editing relationships, not stored IDs
+
+2. **Component naming = STORED (optional)**
+   - `collection_name` property in person notes
+   - Naming conflict resolution: most common name wins
+   - Falls back to "Family 1", "Family 2" if no custom names
+
+3. **User collections = STORED (optional)**
+   - `collection` property in person notes
+   - Independent from detected components
+   - Obsidian Bases compatible (editable text field)
+
+4. **Cross-collection connections = COMPUTED**
+   - Detected by scanning relationships
+   - Self-healing (updates when relationships change)
+   - Enables world-building use cases (political alliances between houses)
+
+**Implementation Phases:**
+
+- **Phase 1 (v0.2.0-beta):** Component naming with `collection_name` property
+- **Phase 2 (v0.3.0-beta):** User collections with `collection` property and Collections tab
+- **Phase 3 (v1.x.x):** Advanced features (cross-collection trees, collection-specific styling)
+
+**Impact:**
+- Works for 100% of users (no folder/tag requirements)
+- Zero configuration needed (detected components work immediately)
+- Power users get optional custom organization
+- Supports both genealogy and world-building use cases
+- Obsidian Bases compatible for bulk collection assignment
+- Self-healing architecture prevents data staleness
+
+**Specification:** See [specification.md](specification.md) §3.4 Collections and Dataset Management
+
+---
 
 ### Switch to family-chart Library (2025-11-20)
 
