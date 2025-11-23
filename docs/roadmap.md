@@ -108,16 +108,6 @@ See [architecture/collections.md](architecture/collections.md) for complete impl
 
 ## 📋 Planned Features
 
-### Collections
-
-- User collections with `collection` YAML property
-- Collections tab in Control Center
-- Collection filtering and statistics
-- Cross-collection connection detection
-- Obsidian Bases integration for bulk collection editing
-- Collection overview canvas with links to all family trees
-- Automatic index canvas creation when generating multiple trees
-
 ### Export & Interoperability
 
 **GEDCOM Export:**
