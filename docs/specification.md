@@ -3400,7 +3400,7 @@ When obfuscation is applied, optionally generate a JSON mapping file for reversi
 
 **Requirement:** Support complex marital histories with temporal tracking
 
-**Status:** 🟡 In Progress (Implementation planned)
+**Status:** ✅ Implemented (v0.1.1+)
 
 #### 6.1.1 Data Structure
 
@@ -3497,9 +3497,22 @@ spouse2_marriage_date: "1995-08-10"
 
 **Multiple Spouse Positioning:**
 
-- Spouses positioned in chronological order (marriage_order or marriage_date)
-- Visual spacing between spouse groups for clarity
-- All children connected to appropriate parental units
+- ✅ Spouses positioned in chronological order (marriage_order or marriage_date)
+- ✅ Visual spacing between spouse groups for clarity
+- ✅ All children connected to appropriate parental units
+- ✅ Layout engine uses family-chart library for proper spouse handling
+
+**Spouse Edge Display (Optional):**
+
+By default, spouse relationships are indicated by visual positioning only (clean, minimal look). Users can optionally enable spouse edges with marriage metadata in Canvas Settings:
+
+- ✅ **Toggle:** Show/hide spouse edges (default: hidden)
+- ✅ **Label formats:**
+  - None: No labels
+  - Date only: "m. 1985"
+  - Date and location: "m. 1985 | Boston, MA"
+  - Full details: "m. 1985 | Boston, MA | div. 1992"
+- ✅ **Settings location:** Control Center → Canvas Settings → Spouse edge display
 
 **Visual Indicators (Future Enhancement):**
 
@@ -3507,7 +3520,6 @@ spouse2_marriage_date: "1995-08-10"
   - Solid line: current marriage
   - Dashed line: divorced
   - Dotted line: widowed
-- Optional labels on edges showing marriage dates
 - Color coding or icons for marriage status
 
 **Child Association:**
@@ -3523,11 +3535,11 @@ father_marriage_order: 1  # Child from first marriage
 
 This helps clarify which children belong to which marriage.
 
-#### 6.1.4 Implementation Plan
+#### 6.1.4 Implementation Status
 
-**Phase 1: Data Model Updates**
+**Phase 1: Data Model Updates** ✅ Complete
 
-1. Add `SpouseRelationship` interface to `src/models/person.ts`:
+1. ✅ Added `SpouseRelationship` interface to `src/models/person.ts`:
    ```typescript
    export interface SpouseRelationship {
      personId: string;              // cr_id of spouse
@@ -3540,7 +3552,7 @@ This helps clarify which children belong to which marriage.
    }
    ```
 
-2. Update `PersonNode` interface:
+2. ✅ Updated `PersonNode` interface:
    ```typescript
    export interface PersonNode {
      // ... existing fields
@@ -3549,9 +3561,9 @@ This helps clarify which children belong to which marriage.
    }
    ```
 
-**Phase 2: Reading/Parsing**
+**Phase 2: Reading/Parsing** ✅ Complete
 
-1. Update `extractPersonNode()` in `src/core/family-graph.ts`:
+1. ✅ Updated `extractPersonNode()` in `src/core/family-graph.ts`:
    - Detect presence of `spouse1` field (enhanced flat indexed format)
    - Scan for all indexed spouse properties (`spouse1`, `spouse2`, `spouse3`, etc.)
    - Parse spouse metadata for each index
@@ -3598,53 +3610,45 @@ This helps clarify which children belong to which marriage.
    }
    ```
 
-**Phase 3: Graph Building**
+**Phase 3: Graph Building** ✅ Complete
 
-1. Update family graph traversal to use spouse metadata
-2. Preserve marriage order when building tree structure
-3. Pass spouse relationships to layout engine
+1. ✅ Family graph traversal uses spouse metadata
+2. ✅ Marriage order preserved when building tree structure
+3. ✅ Spouse relationships passed to layout engine
 
-**Phase 4: Layout Engine**
+**Phase 4: Layout Engine** ✅ Complete
 
-1. Update `src/core/family-chart-layout.ts`:
-   - Pass spouse metadata to family-chart library
-   - Use `marriageOrder` to determine positioning sequence
-   - Handle multiple spouse nodes per person
+1. ✅ Updated `src/core/family-chart-layout.ts`:
+   - ✅ Passes spouse metadata to family-chart library
+   - ✅ Uses `marriageOrder` to determine positioning sequence
+   - ✅ Handles multiple spouse nodes per person
 
-2. Layout considerations:
-   - Position spouses in order (earliest marriage first)
-   - Maintain visual clarity with appropriate spacing
-   - Connect children to correct parental pairs
+2. ✅ Layout considerations:
+   - ✅ Positions spouses in order (earliest marriage first)
+   - ✅ Maintains visual clarity with appropriate spacing
+   - ✅ Connects children to correct parental pairs
 
-**Phase 5: Canvas Generation**
+**Phase 5: Canvas Generation** ✅ Complete
 
-1. Update `src/core/canvas-generator.ts`:
-   - Generate nodes for all spouses
-   - Create spouse edges with metadata
-   - Position according to layout results
+1. ✅ Updated `src/core/canvas-generator.ts`:
+   - ✅ Generates nodes for all spouses
+   - ✅ Creates spouse edges with optional labels
+   - ✅ Positions according to layout results
+   - ✅ Formats marriage metadata for edge labels
 
-2. Store metadata in canvas for future re-layout:
-   ```json
-   {
-     "id": "edge-123",
-     "fromNode": "person-1",
-     "toNode": "person-2",
-     "label": "married 1985",
-     "metadata": {
-       "relationshipType": "spouse",
-       "marriageOrder": 1,
-       "marriageStatus": "divorced"
-     }
-   }
-   ```
+2. ✅ Canvas Settings UI (Control Center):
+   - ✅ Toggle for showing/hiding spouse edges
+   - ✅ Dropdown for label format selection
+   - ✅ Settings persist across sessions
 
-**Phase 6: GEDCOM Integration (Future)**
+**Phase 6: GEDCOM Integration** ✅ Complete (Import), 🔴 Planned (Export)
 
-1. Update GEDCOM importer to extract marriage metadata:
-   - FAM records contain marriage dates/locations
-   - MARR tag for marriage events
-   - DIV tag for divorce dates
-   - PLAC tag for locations
+1. ✅ GEDCOM importer extracts marriage metadata:
+   - ✅ FAM records processed for marriage information
+   - ✅ MARR tag extraction for marriage events
+   - ✅ DIV tag extraction for divorce dates
+   - ✅ PLAC tag extraction for locations
+   - ✅ Creates flat indexed spouse properties (`spouse1_marriage_date`, etc.)
 
 2. Export spouse metadata to GEDCOM:
    - Generate proper FAM records
