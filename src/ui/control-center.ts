@@ -1,4 +1,4 @@
-import { App, Modal, Notice, TFile, setIcon } from 'obsidian';
+import { App, Modal, Notice, TFile, setIcon, ToggleComponent } from 'obsidian';
 import CanvasRootsPlugin from '../../main';
 import { TAB_CONFIGS, createLucideIcon, setLucideIcon, LucideIconName } from './lucide-icons';
 import { createPersonNote, PersonData } from '../core/person-note-writer';
@@ -1148,8 +1148,6 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--primary crc-btn--block',
 			text: 'Generate tree for current note'
 		});
-		const generateIcon = createLucideIcon('git-branch', 16);
-		generateCurrentBtn.prepend(generateIcon);
 		generateCurrentBtn.addEventListener('click', () => {
 			this.switchTab('tree-generation');
 		});
@@ -1163,8 +1161,6 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-2',
 			text: 'Re-layout current canvas'
 		});
-		const relayoutIcon = createLucideIcon('refresh-cw', 16);
-		relayoutBtn.prepend(relayoutIcon);
 		relayoutBtn.addEventListener('click', () => {
 			new Notice('⚠️ Re-layout functionality coming in Phase 2');
 		});
@@ -1188,8 +1184,6 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--primary crc-btn--block',
 			text: 'Create new person note'
 		});
-		const createPersonIcon = createLucideIcon('user-plus', 16);
-		createPersonBtn.prepend(createPersonIcon);
 		createPersonBtn.addEventListener('click', () => {
 			this.switchTab('data-entry');
 		});
@@ -1203,8 +1197,6 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-2',
 			text: 'Open person detail panel'
 		});
-		const detailIcon = createLucideIcon('user', 16);
-		detailPanelBtn.prepend(detailIcon);
 		detailPanelBtn.addEventListener('click', () => {
 			new Notice('⚠️ Person detail panel coming in Phase 4');
 		});
@@ -1218,8 +1210,6 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-2',
 			text: 'Validate all relationships'
 		});
-		const validateIcon = createLucideIcon('check', 16);
-		validateBtn.prepend(validateIcon);
 		validateBtn.addEventListener('click', () => {
 			new Notice('⚠️ Relationship validation coming soon');
 		});
@@ -1243,8 +1233,6 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--primary crc-btn--block',
 			text: 'Create Base template'
 		});
-		const baseIcon = createLucideIcon('file-plus', 16);
-		createBaseBtn.prepend(baseIcon);
 		createBaseBtn.addEventListener('click', async () => {
 			this.close();
 			await (this.app as any).commands.executeCommandById('canvas-roots:create-base-template');
@@ -1625,28 +1613,23 @@ export class ControlCenterModal extends Modal {
 
 		// Show Spouse Edges Toggle
 		const showSpouseEdgesGroup = spouseEdgeContent.createDiv({ cls: 'crc-form-group' });
-		const showSpouseEdgesLabel = showSpouseEdgesGroup.createEl('label', {
+		showSpouseEdgesGroup.createEl('label', {
 			cls: 'crc-form-label',
 			text: 'Show spouse edges'
 		});
-		showSpouseEdgesLabel.htmlFor = 'quick-show-spouse-edges';
 
-		const showSpouseEdgesCheckbox = showSpouseEdgesGroup.createEl('input', {
-			cls: 'crc-checkbox',
-			type: 'checkbox',
-			attr: { id: 'quick-show-spouse-edges' }
-		}) as HTMLInputElement;
-		showSpouseEdgesCheckbox.checked = this.plugin.settings.showSpouseEdges;
+		const toggleContainer = showSpouseEdgesGroup.createDiv({ cls: 'crc-toggle-container' });
+		const showSpouseEdgesToggle = new ToggleComponent(toggleContainer);
+		showSpouseEdgesToggle.setValue(this.plugin.settings.showSpouseEdges);
+		showSpouseEdgesToggle.onChange(async (value) => {
+			this.plugin.settings.showSpouseEdges = value;
+			await this.plugin.saveSettings();
+			new Notice('Spouse edge display updated');
+		});
 
 		showSpouseEdgesGroup.createEl('p', {
 			cls: 'crc-form-help',
 			text: 'Display edges between spouses with marriage metadata. When disabled (default), spouses are visually grouped by positioning only.'
-		});
-
-		showSpouseEdgesCheckbox.addEventListener('change', async () => {
-			this.plugin.settings.showSpouseEdges = showSpouseEdgesCheckbox.checked;
-			await this.plugin.saveSettings();
-			new Notice('Spouse edge display updated');
 		});
 
 		// Spouse Edge Label Format
@@ -1693,8 +1676,6 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-3',
 			text: 'Open full settings'
 		});
-		const settingsIcon = createLucideIcon('settings', 16);
-		fullSettingsBtn.prepend(settingsIcon);
 		fullSettingsBtn.addEventListener('click', () => {
 			// Close modal and open settings
 			this.close();
@@ -1735,23 +1716,16 @@ export class ControlCenterModal extends Modal {
 			}
 		});
 
-		// Auto-generate cr_id checkbox
+		// Auto-generate cr_id toggle
 		const uuidGroup = content.createDiv({ cls: 'crc-form-group' });
-		const checkboxContainer = uuidGroup.createDiv({ cls: 'crc-checkbox-container' });
-		const autoGenCheckbox = checkboxContainer.createEl('input', {
-			cls: 'crc-checkbox',
-			attr: {
-				type: 'checkbox',
-				id: 'auto-gen-uuid'
-			}
+		uuidGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Auto-generate cr_id'
 		});
-		// Set initial state from plugin settings
-		autoGenCheckbox.checked = this.plugin.settings.autoGenerateCrId;
-		checkboxContainer.createEl('label', {
-			cls: 'crc-checkbox-label',
-			text: 'Auto-generate cr_id',
-			attr: { for: 'auto-gen-uuid' }
-		});
+
+		const autoGenToggleContainer = uuidGroup.createDiv({ cls: 'crc-toggle-container' });
+		const autoGenToggle = new ToggleComponent(autoGenToggleContainer);
+		autoGenToggle.setValue(this.plugin.settings.autoGenerateCrId);
 
 		// cr_id field (read-only when auto-generate is checked)
 		const uuidFieldGroup = content.createDiv({ cls: 'crc-form-group' });
@@ -1772,14 +1746,14 @@ export class ControlCenterModal extends Modal {
 			text: 'Unique identifier for this person'
 		});
 
-		// Toggle UUID field based on checkbox
-		autoGenCheckbox.addEventListener('change', async () => {
+		// Toggle UUID field based on toggle
+		autoGenToggle.onChange(async (value) => {
 			// Update plugin settings
-			this.plugin.settings.autoGenerateCrId = autoGenCheckbox.checked;
+			this.plugin.settings.autoGenerateCrId = value;
 			await this.plugin.saveSettings();
 
 			// Update UI state
-			if (autoGenCheckbox.checked) {
+			if (value) {
 				uuidInput.setAttribute('readonly', 'true');
 				uuidInput.value = '';
 			} else {
@@ -1841,14 +1815,12 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--primary',
 			text: 'Create & Open Note'
 		});
-		const createOpenIcon = createLucideIcon('file-plus', 16);
-		createOpenBtn.prepend(createOpenIcon);
 		createOpenBtn.addEventListener('click', () => {
 			this.createPersonNote(
 				nameInput.value,
 				birthInput.value,
 				deathInput.value,
-				autoGenCheckbox.checked,
+				autoGenToggle.getValue(),
 				uuidInput.value,
 				this.fatherField.crId,
 				this.motherField.crId,
@@ -1862,14 +1834,12 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--secondary',
 			text: 'Create & Add Another'
 		});
-		const createAnotherIcon = createLucideIcon('plus', 16);
-		createAnotherBtn.prepend(createAnotherIcon);
 		createAnotherBtn.addEventListener('click', () => {
 			this.createPersonNote(
 				nameInput.value,
 				birthInput.value,
 				deathInput.value,
-				autoGenCheckbox.checked,
+				autoGenToggle.getValue(),
 				uuidInput.value,
 				this.fatherField.crId,
 				this.motherField.crId,
@@ -1882,7 +1852,7 @@ export class ControlCenterModal extends Modal {
 			deathInput.value = '';
 			uuidInput.value = '';
 			this.clearRelationshipFields();
-			autoGenCheckbox.checked = true;
+			autoGenToggle.setValue(true);
 			uuidInput.setAttribute('readonly', 'true');
 			nameInput.focus();
 		});
@@ -2063,23 +2033,16 @@ export class ControlCenterModal extends Modal {
 			text: 'Limit the depth of the tree. Set to 0 for unlimited (use with caution on large trees)'
 		});
 
-		// Include spouses checkbox
+		// Include spouses toggle
 		const spouseGroup = configContent.createDiv({ cls: 'crc-form-group' });
-		const spouseContainer = spouseGroup.createDiv({ cls: 'crc-checkbox-container' });
-		const spouseCheckbox = spouseContainer.createEl('input', {
-			cls: 'crc-checkbox',
-			attr: {
-				type: 'checkbox',
-				id: 'include-spouses'
-			}
+		spouseGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Include spouses in tree'
 		});
-		// Set initial state to checked
-		spouseCheckbox.checked = true;
-		spouseContainer.createEl('label', {
-			cls: 'crc-checkbox-label',
-			text: 'Include spouses in tree',
-			attr: { for: 'include-spouses' }
-		});
+
+		const spouseToggleContainer = spouseGroup.createDiv({ cls: 'crc-toggle-container' });
+		const spouseToggle = new ToggleComponent(spouseToggleContainer);
+		spouseToggle.setValue(true);
 
 		// Layout Options Card
 		const layoutCard = container.createDiv({ cls: 'crc-card' });
@@ -2113,11 +2076,17 @@ export class ControlCenterModal extends Modal {
 
 		// Node spacing
 		const spacingXGroup = layoutContent.createDiv({ cls: 'crc-form-group' });
-		spacingXGroup.createEl('label', {
+		const spacingXLabelContainer = spacingXGroup.createDiv();
+		spacingXLabelContainer.createEl('div', {
 			cls: 'crc-form-label',
 			text: 'Horizontal spacing'
 		});
-		const spacingXInput = spacingXGroup.createEl('input', {
+		spacingXLabelContainer.createEl('div', {
+			cls: 'crc-form-help',
+			text: 'Space between nodes horizontally (pixels). Default: 400'
+		});
+		const spacingXControl = spacingXGroup.createDiv({ cls: 'crc-form-control' });
+		const spacingXInput = spacingXControl.createEl('input', {
 			cls: 'crc-form-input',
 			attr: {
 				type: 'number',
@@ -2129,11 +2098,17 @@ export class ControlCenterModal extends Modal {
 		});
 
 		const spacingYGroup = layoutContent.createDiv({ cls: 'crc-form-group' });
-		spacingYGroup.createEl('label', {
+		const spacingYLabelContainer = spacingYGroup.createDiv();
+		spacingYLabelContainer.createEl('div', {
 			cls: 'crc-form-label',
 			text: 'Vertical spacing'
 		});
-		const spacingYInput = spacingYGroup.createEl('input', {
+		spacingYLabelContainer.createEl('div', {
+			cls: 'crc-form-help',
+			text: 'Space between nodes vertically (pixels). Default: 200'
+		});
+		const spacingYControl = spacingYGroup.createDiv({ cls: 'crc-form-control' });
+		const spacingYInput = spacingYControl.createEl('input', {
 			cls: 'crc-form-input',
 			attr: {
 				type: 'number',
@@ -2150,7 +2125,7 @@ export class ControlCenterModal extends Modal {
 				rootPersonField,
 				typeSelect.value as 'ancestors' | 'descendants' | 'full',
 				parseInt(genSlider.value) || 0,
-				spouseCheckbox.checked,
+				spouseToggle.getValue(),
 				dirSelect.value as 'vertical' | 'horizontal',
 				parseInt(spacingXInput.value),
 				parseInt(spacingYInput.value),
@@ -2608,8 +2583,6 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--primary crc-mt-4',
 			text: 'Select GEDCOM file'
 		});
-		const fileIcon = createLucideIcon('file-text', 16);
-		fileBtn.prepend(fileIcon);
 
 		// Create hidden file input
 		const fileInput = importContent.createEl('input', {
@@ -2655,8 +2628,6 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--secondary crc-mt-4',
 			text: 'Export to GEDCOM'
 		});
-		const exportIcon = createLucideIcon('download', 16);
-		exportBtn.prepend(exportIcon);
 
 		exportBtn.addEventListener('click', () => {
 			new Notice('⚠️ GEDCOM export coming in Phase 3');
@@ -2802,8 +2773,6 @@ export class ControlCenterModal extends Modal {
 			text: 'Export logs',
 			cls: 'crc-btn crc-btn--primary'
 		});
-		const exportIcon = createLucideIcon('download', 16);
-		exportButton.prepend(exportIcon);
 
 		exportButton.addEventListener('click', () => {
 			this.handleExportLogs();
@@ -2813,8 +2782,6 @@ export class ControlCenterModal extends Modal {
 			text: 'Clear logs',
 			cls: 'crc-btn crc-btn--secondary'
 		});
-		const clearIcon = createLucideIcon('trash', 16);
-		clearButton.prepend(clearIcon);
 
 		clearButton.addEventListener('click', () => {
 			logger.info('maintenance', 'Logs cleared from Control Center');
@@ -3466,8 +3433,6 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--primary crc-btn--large crc-mt-3',
 			text: 'Generate family tree'
 		});
-		const generateIcon = createLucideIcon('play', 16);
-		generateBtn.prepend(generateIcon);
 
 		// Separator and "Generate All Trees" section (in same card)
 		const separator = actionsSection.createDiv({ cls: 'crc-separator crc-mt-4' });
@@ -3486,8 +3451,6 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-btn crc-btn--secondary crc-btn--large',
 			text: 'Generate all trees'
 		});
-		const allTreesIcon = createLucideIcon('git-branch', 16);
-		allTreesBtn.prepend(allTreesIcon);
 
 		// Add component count badge (updated dynamically)
 		const countBadge = allTreesBtn.createSpan({
