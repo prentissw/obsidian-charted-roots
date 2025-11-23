@@ -21,6 +21,16 @@ Canvas Roots is in active alpha development with core functionality in place and
 - Collection filtering in tree generation (all tree types)
 - Comprehensive Guide tab documentation
 
+**UI Polish:**
+- Refactored Control Center to use Obsidian's native `Setting` component throughout
+- Standardized form layouts with horizontal label/control pattern across all tabs
+- Canvas Settings: Native dropdowns for arrow styles and color schemes, proper input controls
+- Data Entry: Clean horizontal layout for person creation form
+- Tree Generation: Streamlined configuration with native slider, dropdowns
+- Collections: Replaced radio buttons with dropdown for browse mode
+- Advanced: Native controls for logging and export configuration
+- Reduced code by 319 lines while improving consistency and accessibility
+
 **Documentation:**
 - Updated README with Collections & Groups feature
 - New Collections & Groups section in user guide
@@ -84,19 +94,6 @@ Canvas Roots is in active alpha development with core functionality in place and
 ---
 
 ## 🚧 In Active Development
-
-### UI Polish & Consistency
-
-**Control Center:**
-- Standardize all form layouts to match Obsidian's horizontal settings pattern
-- Consistent label/control/help text structure across all tabs
-- Update all input fields, dropdowns, and sliders to use polished layout
-- Improve spacing, typography, and visual hierarchy
-
-**Component Consistency:**
-- Ensure all modals follow Obsidian's UI patterns
-- Standardize button styles, form controls, and interactive elements
-- Polish empty states, loading states, and error messages
 
 ### Collections Phase 3 (Advanced Features)
 
