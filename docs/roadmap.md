@@ -1,7 +1,7 @@
 # Canvas Roots: Development Roadmap
 
 > **Last Updated:** 2025-11-23
-> **Current Version:** v0.1.3-alpha
+> **Current Version:** v0.1.4-alpha
 
 Canvas Roots is in active alpha development with core functionality in place and advanced features planned.
 
@@ -9,7 +9,23 @@ Canvas Roots is in active alpha development with core functionality in place and
 
 ## 🎯 Released Versions
 
-### v0.1.3-alpha (Current)
+### v0.1.4-alpha (Current)
+
+**GEDCOM Export:**
+- GEDCOM 5.5.1 format generation with complete header and trailer
+- Individual record export with name, sex, birth/death dates and places
+- Family record extraction from parent-child and spouse relationships
+- UUID preservation using custom _UID tags for round-trip compatibility
+- Collection code preservation (_COLL and _COLLN tags)
+- Marriage metadata export (dates, locations from SpouseRelationship)
+- Sex inference from father/mother relationships
+- Collection filtering for selective export
+- Control Center UI with export configuration
+- Context menu integration on folders ("Export GEDCOM from this folder")
+- Browser download with .ged file extension
+- Comprehensive Guide tab documentation
+
+### v0.1.3-alpha
 
 **Collections & Groups (Complete):**
 - Dual organization system: auto-detected family groups + user-defined collections
@@ -98,18 +114,7 @@ Canvas Roots is in active alpha development with core functionality in place and
 
 ## 🚧 In Active Development
 
-**GEDCOM Export:**
-- ✅ Core export logic with GEDCOM 5.5.1 format generation
-- ✅ Individual record export with full metadata
-- ✅ Family record extraction from relationships
-- ✅ UUID preservation using _UID custom tag
-- ✅ Collection code preservation (_COLL and _COLLN tags)
-- ✅ Collection filtering for selective export
-- ✅ Control Center UI integration
-- ✅ Context menu integration for folder export
-- ✅ Marriage metadata export
-- ✅ Sex inference from relationships
-- 🔄 Ready for testing and user feedback
+No features currently in active development. See Planned Features below for roadmap.
 
 ---
 
