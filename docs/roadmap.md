@@ -68,6 +68,19 @@ Canvas Roots is in active alpha development with core functionality in place and
 
 ## 🚧 In Active Development
 
+### UI Polish & Consistency
+
+**Control Center:**
+- Standardize all form layouts to match Obsidian's horizontal settings pattern
+- Consistent label/control/help text structure across all tabs
+- Update all input fields, dropdowns, and sliders to use polished layout
+- Improve spacing, typography, and visual hierarchy
+
+**Component Consistency:**
+- Ensure all modals follow Obsidian's UI patterns
+- Standardize button styles, form controls, and interactive elements
+- Polish empty states, loading states, and error messages
+
 ### Collections Management
 
 **Component Naming:**

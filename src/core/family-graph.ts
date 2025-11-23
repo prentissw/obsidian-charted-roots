@@ -30,6 +30,9 @@ export interface PersonNode {
 
 	// Enhanced spouse relationships with metadata (optional)
 	spouses?: SpouseRelationship[];
+
+	// Collection naming (optional)
+	collectionName?: string;
 }
 
 /**
@@ -154,17 +157,52 @@ export class FamilyGraphService {
 	}
 
 	/**
-	 * Finds all disconnected family components in the vault
-	 * Returns an array of components, each with representative person and size
+	 * Determines the collection name for a group of people
+	 * Uses conflict resolution: most common collection_name wins, ties broken alphabetically
+	 * Returns undefined if no one in the group has a collection_name
 	 */
-	async findAllFamilyComponents(): Promise<Array<{ representative: PersonNode; size: number; people: PersonNode[] }>> {
+	private getCollectionName(people: PersonNode[]): string | undefined {
+		// Count frequency of each collection name
+		const nameFrequency = new Map<string, number>();
+
+		for (const person of people) {
+			if (person.collectionName) {
+				const count = nameFrequency.get(person.collectionName) || 0;
+				nameFrequency.set(person.collectionName, count + 1);
+			}
+		}
+
+		// If no collection names, return undefined
+		if (nameFrequency.size === 0) {
+			return undefined;
+		}
+
+		// Find the most common name (ties broken alphabetically)
+		let mostCommonName: string | undefined;
+		let maxCount = 0;
+
+		for (const [name, count] of nameFrequency.entries()) {
+			if (count > maxCount || (count === maxCount && (!mostCommonName || name < mostCommonName))) {
+				mostCommonName = name;
+				maxCount = count;
+			}
+		}
+
+		return mostCommonName;
+	}
+
+	/**
+	 * Finds all disconnected family components in the vault
+	 * Returns an array of components, each with representative person, size, and collection name
+	 */
+	async findAllFamilyComponents(): Promise<Array<{ representative: PersonNode; size: number; people: PersonNode[]; collectionName?: string }>> {
 		// Ensure cache is loaded
 		if (this.personCache.size === 0) {
 			await this.loadPersonCache();
 		}
 
 		const visited = new Set<string>();
-		const components: Array<{ representative: PersonNode; size: number; people: PersonNode[] }> = [];
+		const components: Array<{ representative: PersonNode; size: number; people: PersonNode[]; collectionName?: string }> = [];
 
 		// BFS to find each connected component
 		for (const [crId, person] of this.personCache) {
@@ -207,10 +245,14 @@ export class FamilyGraphService {
 				return oldest;
 			});
 
+			// Determine collection name using conflict resolution
+			const collectionName = this.getCollectionName(component);
+
 			components.push({
 				representative,
 				size: component.length,
-				people: component
+				people: component,
+				collectionName
 			});
 		}
 
@@ -531,7 +573,8 @@ export class FamilyGraphService {
 			motherCrId,
 			spouseCrIds,
 			spouses, // Enhanced spouse relationships with metadata (if present)
-			childrenCrIds // Now populated from frontmatter
+			childrenCrIds, // Now populated from frontmatter
+			collectionName: fm.collection_name // Optional collection name
 		};
 	}
 

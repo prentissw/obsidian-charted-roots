@@ -336,7 +336,7 @@ export class ControlCenterModal extends Modal {
 						logger.error('generate-all-trees', `Failed to generate tree for ${rep.name}: root not found`);
 						results.push({
 							success: false,
-							familyName: rep.name,
+							familyName: component.collectionName || rep.name,
 							peopleCount: component.size,
 							error: 'Root person not found'
 						});
@@ -381,8 +381,10 @@ export class ControlCenterModal extends Modal {
 
 					const canvasData = canvasGenerator.generateCanvas(familyTree, canvasOptions);
 
-					// Create canvas file
-					const fileName = `Family Tree ${i + 1} - ${rep.name}.canvas`;
+					// Create canvas file with collection name if available
+					const fileName = component.collectionName
+						? `${component.collectionName} - ${rep.name}.canvas`
+						: `Family Tree ${i + 1} - ${rep.name}.canvas`;
 					const canvasContent = this.formatCanvasJson(canvasData);
 
 					let file: TFile;
@@ -396,7 +398,7 @@ export class ControlCenterModal extends Modal {
 
 					results.push({
 						success: true,
-						familyName: rep.name,
+						familyName: component.collectionName || rep.name,
 						peopleCount: canvasData.nodes.length,
 						fileName,
 						file
@@ -428,7 +430,7 @@ export class ControlCenterModal extends Modal {
 					logger.error('generate-all-trees', `Failed to generate tree for ${rep.name}`, error);
 					results.push({
 						success: false,
-						familyName: rep.name,
+						familyName: component.collectionName || rep.name,
 						peopleCount: component.size,
 						error: error instanceof Error ? error.message : 'Unknown error'
 					});
