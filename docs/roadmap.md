@@ -1,7 +1,7 @@
 # Canvas Roots: Development Roadmap
 
-> **Last Updated:** 2025-11-22
-> **Current Version:** v0.1.2-alpha
+> **Last Updated:** 2025-11-23
+> **Current Version:** v0.1.3-alpha
 
 Canvas Roots is in active alpha development with core functionality in place and advanced features planned.
 
@@ -9,7 +9,24 @@ Canvas Roots is in active alpha development with core functionality in place and
 
 ## 🎯 Released Versions
 
-### v0.1.2-alpha (Current)
+### v0.1.3-alpha (Current)
+
+**Collections & Groups:**
+- Dual organization system: auto-detected family groups + user-defined collections
+- Auto-detected groups with customizable group names (`collection_name` property)
+- User collections for manual organization (`collection` property)
+- Context menu actions: "Set group name" and "Add to collection"
+- Collections tab with three browse modes: All people, Detected families, My collections
+- Cross-collection connection detection showing bridge people
+- Collection filtering in tree generation (all tree types)
+- Comprehensive Guide tab documentation
+
+**Documentation:**
+- Updated README with Collections & Groups feature
+- New Collections & Groups section in user guide
+- Complete Collections architecture documentation (Phases 1-2 implemented, Phase 3 partial)
+
+### v0.1.2-alpha
 
 **Context Menu Actions:**
 - Person notes: Add relationships, validate data integrity, find on canvases
@@ -81,19 +98,14 @@ Canvas Roots is in active alpha development with core functionality in place and
 - Standardize button styles, form controls, and interactive elements
 - Polish empty states, loading states, and error messages
 
-### Collections Management
+### Collections Phase 3 (Advanced Features)
 
-**Component Naming:**
-- Add `collection_name` property support to person notes
-- Update UI to show custom names instead of "Family 1", "Family 2"
-- Implement naming conflict resolution (most common name wins)
+**Remaining Features:**
+- Color-coded multi-collection canvases
+- Collection overview/index canvas generation
+- Collection analytics dashboard
 
-**Architecture:**
-- Dual system: detected components (computed) + user collections (stored)
-- Zero configuration required (flat vaults fully supported)
-- Self-healing data (component membership computed from relationships)
-
-See [architecture/collections.md](architecture/collections.md) for complete ADR.
+See [architecture/collections.md](architecture/collections.md) for complete implementation status.
 
 ---
 
