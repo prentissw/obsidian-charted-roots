@@ -269,10 +269,10 @@ export default class CanvasRootsPlugin extends Plugin {
 										});
 								});
 
-								// Set collection name
+								// Set group name
 								submenu.addItem((subItem) => {
 									subItem
-										.setTitle('Set collection name')
+										.setTitle('Set group name')
 										.setIcon('tag')
 										.onClick(async () => {
 											await this.promptSetCollectionName(file);
@@ -374,7 +374,7 @@ export default class CanvasRootsPlugin extends Plugin {
 
 							menu.addItem((item) => {
 								item
-									.setTitle('Canvas Roots: Set collection name')
+									.setTitle('Canvas Roots: Set group name')
 									.setIcon('tag')
 									.onClick(async () => {
 										await this.promptSetCollectionName(file);
@@ -549,23 +549,23 @@ export default class CanvasRootsPlugin extends Plugin {
 
 		return new Promise((resolve) => {
 			const modal = new Modal(this.app);
-			modal.titleEl.setText('Set collection name');
+			modal.titleEl.setText('Set group name');
 
 			modal.contentEl.createEl('p', {
-				text: 'Enter a collection name to group this person with related family members:'
+				text: 'Enter a name for this connected group (family, faction, organization, etc.):'
 			});
 
 			const inputContainer = modal.contentEl.createDiv({ cls: 'setting-item-control' });
 			const input = inputContainer.createEl('input', {
 				type: 'text',
-				placeholder: 'e.g., "Smith Family", "Johnson Line"',
+				placeholder: 'e.g., "Smith Family", "House Stark", "The Council"',
 				value: currentCollectionName
 			});
 			input.style.width = '100%';
 			input.style.marginTop = '8px';
 
 			const helpText = modal.contentEl.createEl('p', {
-				text: 'Leave empty to remove the collection name.',
+				text: 'Leave empty to remove the group name.',
 				cls: 'setting-item-description'
 			});
 			helpText.style.marginTop = '8px';
@@ -595,8 +595,8 @@ export default class CanvasRootsPlugin extends Plugin {
 				});
 
 				new Notice(collectionName
-					? `Collection name set to "${collectionName}"`
-					: 'Collection name removed'
+					? `Group name set to "${collectionName}"`
+					: 'Group name removed'
 				);
 
 				modal.close();
