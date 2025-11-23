@@ -9,7 +9,7 @@ import { CanvasGenerator, CanvasData, CanvasGenerationOptions } from '../core/ca
 import { getLogger, LoggerFactory, type LogLevel } from '../core/logging';
 import { GedcomImporter } from '../gedcom/gedcom-importer';
 import { BidirectionalLinker } from '../core/bidirectional-linker';
-import type { RecentTreeInfo, RecentImportInfo, ArrowStyle, ColorScheme } from '../settings';
+import type { RecentTreeInfo, RecentImportInfo, ArrowStyle, ColorScheme, SpouseEdgeLabelFormat } from '../settings';
 
 const logger = getLogger('ControlCenter');
 
@@ -1612,6 +1612,79 @@ export class ControlCenterModal extends Modal {
 		});
 
 		container.appendChild(colorCard);
+
+		// Spouse Edge Display Card
+		const spouseEdgeCard = this.createCard({
+			title: 'Spouse edge display',
+			icon: 'link'
+		});
+
+		const spouseEdgeContent = spouseEdgeCard.querySelector('.crc-card__content') as HTMLElement;
+
+		// Show Spouse Edges Toggle
+		const showSpouseEdgesGroup = spouseEdgeContent.createDiv({ cls: 'crc-form-group' });
+		const showSpouseEdgesLabel = showSpouseEdgesGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Show spouse edges'
+		});
+		showSpouseEdgesLabel.htmlFor = 'quick-show-spouse-edges';
+
+		const showSpouseEdgesCheckbox = showSpouseEdgesGroup.createEl('input', {
+			cls: 'crc-checkbox',
+			type: 'checkbox',
+			attr: { id: 'quick-show-spouse-edges' }
+		}) as HTMLInputElement;
+		showSpouseEdgesCheckbox.checked = this.plugin.settings.showSpouseEdges;
+
+		showSpouseEdgesGroup.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'Display edges between spouses with marriage metadata. When disabled (default), spouses are visually grouped by positioning only.'
+		});
+
+		showSpouseEdgesCheckbox.addEventListener('change', async () => {
+			this.plugin.settings.showSpouseEdges = showSpouseEdgesCheckbox.checked;
+			await this.plugin.saveSettings();
+			new Notice('Spouse edge display updated');
+		});
+
+		// Spouse Edge Label Format
+		const spouseEdgeLabelGroup = spouseEdgeContent.createDiv({ cls: 'crc-form-group' });
+		const spouseEdgeLabelLabel = spouseEdgeLabelGroup.createEl('label', {
+			cls: 'crc-form-label',
+			text: 'Spouse edge label format'
+		});
+		spouseEdgeLabelLabel.htmlFor = 'quick-spouse-edge-label';
+
+		const spouseEdgeLabelSelect = spouseEdgeLabelGroup.createEl('select', {
+			cls: 'crc-form-input',
+			attr: { id: 'quick-spouse-edge-label' }
+		}) as HTMLSelectElement;
+
+		[
+			{ value: 'none', label: 'None - No labels' },
+			{ value: 'date-only', label: 'Date only - e.g., "m. 1985"' },
+			{ value: 'date-location', label: 'Date and location - e.g., "m. 1985 | Boston, MA"' },
+			{ value: 'full', label: 'Full details - e.g., "m. 1985 | Boston, MA | div. 1992"' }
+		].forEach(opt => {
+			spouseEdgeLabelSelect.createEl('option', {
+				value: opt.value,
+				text: opt.label
+			});
+		});
+		spouseEdgeLabelSelect.value = this.plugin.settings.spouseEdgeLabelFormat;
+
+		spouseEdgeLabelGroup.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'How to display marriage information on spouse edges (only applies when "Show spouse edges" is enabled)'
+		});
+
+		spouseEdgeLabelSelect.addEventListener('change', async () => {
+			this.plugin.settings.spouseEdgeLabelFormat = spouseEdgeLabelSelect.value as SpouseEdgeLabelFormat;
+			await this.plugin.saveSettings();
+			new Notice('Spouse edge label format updated');
+		});
+
+		container.appendChild(spouseEdgeCard);
 
 		// Link to full settings
 		const fullSettingsBtn = container.createEl('button', {

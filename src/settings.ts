@@ -46,6 +46,15 @@ export type ColorScheme = 'gender' | 'generation' | 'monochrome';
  */
 export type CanvasColor = '1' | '2' | '3' | '4' | '5' | '6' | 'none';
 
+/**
+ * Spouse edge label format options
+ * - 'none': No labels (default - clean look)
+ * - 'date-only': Just marriage date (e.g., "m. 1985")
+ * - 'date-location': Date and location (e.g., "m. 1985 | Boston, MA")
+ * - 'full': Date, location, and status (e.g., "m. 1985 | Boston, MA | div. 1992")
+ */
+export type SpouseEdgeLabelFormat = 'none' | 'date-only' | 'date-location' | 'full';
+
 export interface CanvasRootsSettings {
 	defaultNodeWidth: number;
 	defaultNodeHeight: number;
@@ -65,6 +74,9 @@ export interface CanvasRootsSettings {
 	// Edge coloring
 	parentChildEdgeColor: CanvasColor;
 	spouseEdgeColor: CanvasColor;
+	// Marriage metadata display
+	showSpouseEdges: boolean;
+	spouseEdgeLabelFormat: SpouseEdgeLabelFormat;
 }
 
 export const DEFAULT_SETTINGS: CanvasRootsSettings = {
@@ -87,7 +99,10 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	nodeColorScheme: 'gender',          // Gender-based coloring for backward compatibility
 	// Edge coloring defaults (neutral/subtle)
 	parentChildEdgeColor: 'none',       // No color - use theme default (clean, subtle)
-	spouseEdgeColor: 'none'             // No color - use theme default (clean, subtle)
+	spouseEdgeColor: 'none',            // No color - use theme default (clean, subtle)
+	// Marriage metadata display defaults
+	showSpouseEdges: false,             // Default: OFF (clean look, no spouse edges)
+	spouseEdgeLabelFormat: 'date-only'  // When enabled, show just marriage date
 };
 
 export class CanvasRootsSettingTab extends PluginSettingTab {

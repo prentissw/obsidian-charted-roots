@@ -9,7 +9,8 @@ import { FamilyTree, PersonNode } from './family-graph';
 import { LayoutEngine, LayoutOptions } from './layout-engine';
 import { FamilyChartLayoutEngine } from './family-chart-layout';
 import { getLogger } from './logging';
-import type { ArrowStyle } from '../settings';
+import type { ArrowStyle, SpouseEdgeLabelFormat } from '../settings';
+import type { SpouseRelationship } from '../models/person';
 
 const logger = getLogger('CanvasGenerator');
 
@@ -125,6 +126,12 @@ export interface CanvasGenerationOptions extends LayoutOptions {
 
 	/** Edge color for spouse relationships */
 	spouseEdgeColor?: import('../settings').CanvasColor;
+
+	/** Show spouse edges with marriage metadata */
+	showSpouseEdges?: boolean;
+
+	/** Format for spouse edge labels */
+	spouseEdgeLabelFormat?: SpouseEdgeLabelFormat;
 }
 
 /**
@@ -164,7 +171,9 @@ export class CanvasGenerator {
 			parentChildArrowStyle: options.parentChildArrowStyle ?? 'directed' as const,
 			spouseArrowStyle: options.spouseArrowStyle ?? 'undirected' as const,
 			parentChildEdgeColor: options.parentChildEdgeColor ?? 'none' as const,
-			spouseEdgeColor: options.spouseEdgeColor ?? 'none' as const
+			spouseEdgeColor: options.spouseEdgeColor ?? 'none' as const,
+			showSpouseEdges: options.showSpouseEdges ?? false,
+			spouseEdgeLabelFormat: options.spouseEdgeLabelFormat ?? 'date-only' as const
 		};
 		const metadata = options.canvasRootsMetadata;
 
@@ -367,6 +376,8 @@ export class CanvasGenerator {
 			spouseArrowStyle: ArrowStyle;
 			parentChildEdgeColor: import('../settings').CanvasColor;
 			spouseEdgeColor: import('../settings').CanvasColor;
+			showSpouseEdges: boolean;
+			spouseEdgeLabelFormat: SpouseEdgeLabelFormat;
 		}
 	): CanvasEdge[] {
 		const edges: CanvasEdge[] = [];
@@ -389,13 +400,13 @@ export class CanvasGenerator {
 
 			// Filter edges to reduce clutter:
 			// 1. Skip "child" edges (only show parent→child, not child→parent)
-			// 2. Skip ALL spouse edges (side-by-side positioning makes them obvious)
+			// 2. Conditionally skip spouse edges based on settings
 			if (edge.type === 'child') {
 				continue; // Skip child edges - we'll show parent edges instead
 			}
 
-			if (edge.type === 'spouse') {
-				continue; // Skip spouse edges - visual positioning makes the relationship clear
+			if (edge.type === 'spouse' && !options.showSpouseEdges) {
+				continue; // Skip spouse edges when setting is disabled (default)
 			}
 
 			// Determine edge sides based on direction and relationship
@@ -448,6 +459,20 @@ export class CanvasGenerator {
 				? options.parentChildEdgeColor
 				: options.spouseEdgeColor;
 
+			// Generate label for edge
+			let edgeLabel: string | undefined;
+			if (edge.type === 'spouse' && options.showSpouseEdges) {
+				// For spouse edges, look up marriage metadata from PersonNode
+				const fromPerson = familyTree.nodes.get(edge.from);
+				if (fromPerson?.spouses) {
+					// Find the spouse relationship for this specific edge
+					const spouseRelationship = fromPerson.spouses.find(s => s.personId === edge.to);
+					edgeLabel = this.formatMarriageLabel(spouseRelationship, options.spouseEdgeLabelFormat);
+				}
+			} else if (options.showLabels) {
+				edgeLabel = this.getEdgeLabel(edge.type);
+			}
+
 			edges.push({
 				id: this.generateId(),
 				fromNode: fromCanvasId,
@@ -457,7 +482,7 @@ export class CanvasGenerator {
 				toSide,
 				toEnd,
 				color: edgeColor === 'none' ? undefined : edgeColor,
-				label: options.showLabels ? this.getEdgeLabel(edge.type) : undefined
+				label: edgeLabel
 			});
 		}
 
@@ -587,5 +612,60 @@ export class CanvasGenerator {
 	private generateId(): string {
 		return Math.random().toString(36).substring(2, 15) +
 			Math.random().toString(36).substring(2, 15);
+	}
+
+	/**
+	 * Formats marriage metadata into an edge label
+	 * @param spouseRelationship The spouse relationship with metadata
+	 * @param format The label format to use
+	 * @returns Formatted label string, or undefined if no metadata or format is 'none'
+	 */
+	private formatMarriageLabel(
+		spouseRelationship: SpouseRelationship | undefined,
+		format: SpouseEdgeLabelFormat
+	): string | undefined {
+		if (!spouseRelationship || format === 'none') {
+			return undefined;
+		}
+
+		const parts: string[] = [];
+
+		// Marriage date
+		if (spouseRelationship.marriageDate) {
+			// Format date: if it's ISO format (YYYY-MM-DD), show just year for brevity
+			const date = spouseRelationship.marriageDate;
+			const yearMatch = date.match(/^(\d{4})/);
+			const formattedDate = yearMatch ? yearMatch[1] : date;
+			parts.push(`m. ${formattedDate}`);
+		}
+
+		// For 'date-only', stop here
+		if (format === 'date-only') {
+			return parts.length > 0 ? parts.join(' | ') : undefined;
+		}
+
+		// Location (for 'date-location' and 'full')
+		if (spouseRelationship.marriageLocation && (format === 'date-location' || format === 'full')) {
+			parts.push(spouseRelationship.marriageLocation);
+		}
+
+		// For 'date-location', stop here
+		if (format === 'date-location') {
+			return parts.length > 0 ? parts.join(' | ') : undefined;
+		}
+
+		// Divorce/status info (for 'full' only)
+		if (format === 'full') {
+			if (spouseRelationship.divorceDate) {
+				const date = spouseRelationship.divorceDate;
+				const yearMatch = date.match(/^(\d{4})/);
+				const formattedDate = yearMatch ? yearMatch[1] : date;
+				parts.push(`div. ${formattedDate}`);
+			} else if (spouseRelationship.marriageStatus && spouseRelationship.marriageStatus !== 'current') {
+				parts.push(spouseRelationship.marriageStatus);
+			}
+		}
+
+		return parts.length > 0 ? parts.join(' | ') : undefined;
 	}
 }

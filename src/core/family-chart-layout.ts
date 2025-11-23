@@ -455,7 +455,14 @@ export class FamilyChartLayoutEngine {
 			}
 
 			// Add spouse relationships (only if spouse exists in tree)
-			if (person.spouseCrIds && person.spouseCrIds.length > 0) {
+			// Prefer enhanced spouse metadata for proper ordering, fall back to simple array
+			if (person.spouses && person.spouses.length > 0) {
+				// Use enhanced metadata - this preserves marriage order (spouse1, spouse2, spouse3...)
+				datum.rels.spouses = person.spouses
+					.map(s => s.personId)
+					.filter(id => familyTree.nodes.has(id));
+			} else if (person.spouseCrIds && person.spouseCrIds.length > 0) {
+				// Fall back to simple array (no ordering information)
 				datum.rels.spouses = person.spouseCrIds.filter(id => familyTree.nodes.has(id));
 			}
 
