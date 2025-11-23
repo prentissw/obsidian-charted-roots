@@ -11,7 +11,7 @@ Canvas Roots is in active alpha development with core functionality in place and
 
 ### v0.1.3-alpha (Current)
 
-**Collections & Groups:**
+**Collections & Groups (Complete):**
 - Dual organization system: auto-detected family groups + user-defined collections
 - Auto-detected groups with customizable group names (`collection_name` property)
 - User collections for manual organization (`collection` property)
@@ -19,7 +19,10 @@ Canvas Roots is in active alpha development with core functionality in place and
 - Collections tab with three browse modes: All people, Detected families, My collections
 - Cross-collection connection detection showing bridge people
 - Collection filtering in tree generation (all tree types)
-- Comprehensive Guide tab documentation
+- Collection-based node coloring with hash-based color assignment
+- Collection overview canvas generation with grid layout and connection edges
+- Analytics dashboard with comprehensive statistics and data quality metrics
+- Comprehensive Guide tab documentation with advanced features
 
 **UI Polish:**
 - Refactored Control Center to use Obsidian's native `Setting` component throughout
@@ -34,7 +37,7 @@ Canvas Roots is in active alpha development with core functionality in place and
 **Documentation:**
 - Updated README with Collections & Groups feature
 - New Collections & Groups section in user guide
-- Complete Collections architecture documentation (Phases 1-2 implemented, Phase 3 partial)
+- Complete Collections architecture documentation (All Phases 1-3 implemented)
 
 ### v0.1.2-alpha
 
@@ -95,14 +98,7 @@ Canvas Roots is in active alpha development with core functionality in place and
 
 ## 🚧 In Active Development
 
-### Collections Phase 3 (Advanced Features)
-
-**Remaining Features:**
-- Color-coded multi-collection canvases
-- Collection overview/index canvas generation
-- Collection analytics dashboard
-
-See [architecture/collections.md](architecture/collections.md) for complete implementation status.
+None - all planned features for v0.1.3 are complete.
 
 ---
 
@@ -135,8 +131,9 @@ See [architecture/collections.md](architecture/collections.md) for complete impl
 - Person Detail Panel with relationship visualization
 - Rich inline person information display
 - Quick editing capabilities
-- Interactive tree preview with real-time layout configuration
+- Interactive tree preview with real-time layout configuration using family-chart
 - Multiple preview modes (family-chart, D3 layouts)
+- Zoomed-out tree previews in analytics dashboard
 - Preview before canvas generation
 - Canvas export as image/PDF
 
@@ -203,10 +200,10 @@ See [known-limitations.md](known-limitations.md) for a complete list of current 
 
 **Key Limitations:**
 - No GEDCOM export yet (import only)
-- Collections require manual organization
 - No reference numbering systems
 - Living person privacy not yet implemented
 - Single vault only (no multi-vault merging)
+- No interactive tree previews yet
 
 ---
 

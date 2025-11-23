@@ -1277,3 +1277,87 @@
   margin-bottom: 12px;
   line-height: 1.6;
 }
+
+/* Analytics Dashboard Styles */
+.crc-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.crc-stat-box {
+  padding: 16px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.crc-stat-box .crc-stat-value {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--interactive-accent);
+  margin-bottom: 4px;
+}
+
+.crc-stat-box .crc-stat-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-normal);
+  margin-bottom: 2px;
+}
+
+.crc-stat-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.crc-quality-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.crc-quality-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crc-quality-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.crc-quality-percent {
+  font-weight: 600;
+  color: var(--interactive-accent);
+}
+
+.crc-progress-bar-bg {
+  height: 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.crc-progress-bar-fill {
+  height: 100%;
+  background: var(--interactive-accent);
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.crc-highlights-list,
+.crc-connections-list {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.crc-highlights-list li,
+.crc-connections-list li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}

@@ -87,6 +87,44 @@ export interface CollectionConnection {
 }
 
 /**
+ * Analytics data for collections
+ */
+export interface CollectionAnalytics {
+	totalPeople: number;
+	totalFamilies: number;
+	totalUserCollections: number;
+	totalCollections: number;
+	averageCollectionSize: number;
+	largestCollection: { name: string; size: number } | null;
+	smallestCollection: { name: string; size: number } | null;
+	dataCompleteness: {
+		birthDatePercent: number;
+		deathDatePercent: number;
+		sexPercent: number;
+	};
+	relationshipMetrics: {
+		peopleWithParents: number;
+		peopleWithSpouses: number;
+		peopleWithChildren: number;
+		orphanedPeople: number;
+	};
+	crossCollectionMetrics: {
+		totalConnections: number;
+		totalBridgePeople: number;
+		topConnections: Array<{
+			from: string;
+			to: string;
+			bridgeCount: number;
+		}>;
+	};
+	dateRange: {
+		earliest?: number;
+		latest?: number;
+		span?: number;
+	};
+}
+
+/**
  * Service for building and traversing family graphs
  */
 export class FamilyGraphService {
@@ -793,5 +831,105 @@ export class FamilyGraphService {
 	 */
 	getAllPeople(): PersonNode[] {
 		return Array.from(this.personCache.values());
+	}
+
+	/**
+	 * Calculate analytics for all collections
+	 * Returns statistics about data quality, completeness, and structure
+	 */
+	async calculateCollectionAnalytics(): Promise<CollectionAnalytics> {
+		// Ensure cache is loaded
+		if (this.personCache.size === 0) {
+			await this.loadPersonCache();
+		}
+
+		const allPeople = Array.from(this.personCache.values());
+		const families = await this.findAllFamilyComponents();
+		const userCollections = await this.getUserCollections();
+		const connections = await this.detectCollectionConnections();
+
+		// Calculate data completeness
+		const peopleWithBirthDate = allPeople.filter(p => p.birthDate).length;
+		const peopleWithDeathDate = allPeople.filter(p => p.deathDate).length;
+		const peopleWithSex = allPeople.filter(p => p.sex).length;
+
+		// Calculate relationship metrics
+		const peopleWithParents = allPeople.filter(p => p.fatherCrId || p.motherCrId).length;
+		const peopleWithSpouses = allPeople.filter(p => p.spouseCrIds.length > 0).length;
+		const peopleWithChildren = allPeople.filter(p => p.childrenCrIds.length > 0).length;
+
+		// Find bridge people (people in multiple collections or connecting families)
+		const bridgePeople = new Set<string>();
+		for (const connection of connections) {
+			for (const person of connection.bridgePeople) {
+				bridgePeople.add(person.crId);
+			}
+		}
+
+		// Calculate date ranges
+		const datesWithYears = allPeople
+			.map(p => p.birthDate || p.deathDate)
+			.filter(d => d)
+			.map(d => {
+				const match = d!.match(/^(\d{4})/);
+				return match ? parseInt(match[1]) : null;
+			})
+			.filter(y => y !== null) as number[];
+
+		const earliestYear = datesWithYears.length > 0 ? Math.min(...datesWithYears) : undefined;
+		const latestYear = datesWithYears.length > 0 ? Math.max(...datesWithYears) : undefined;
+
+		// Collection size statistics
+		// Normalize collection structure for consistent handling
+		const normalizedCollections = [
+			...families.map(f => ({ name: f.collectionName || 'Unnamed Family', size: f.size })),
+			...userCollections
+		];
+
+		const collectionSizes = normalizedCollections.map(c => c.size);
+		const averageSize = collectionSizes.length > 0
+			? Math.round(collectionSizes.reduce((a, b) => a + b, 0) / collectionSizes.length)
+			: 0;
+		const largestCollection = normalizedCollections.length > 0
+			? normalizedCollections.reduce((max, c) => c.size > max.size ? c : max)
+			: null;
+		const smallestCollection = normalizedCollections.length > 0
+			? normalizedCollections.reduce((min, c) => c.size < min.size ? c : min)
+			: null;
+
+		return {
+			totalPeople: allPeople.length,
+			totalFamilies: families.length,
+			totalUserCollections: userCollections.length,
+			totalCollections: normalizedCollections.length,
+			averageCollectionSize: averageSize,
+			largestCollection,
+			smallestCollection,
+			dataCompleteness: {
+				birthDatePercent: allPeople.length > 0 ? Math.round((peopleWithBirthDate / allPeople.length) * 100) : 0,
+				deathDatePercent: allPeople.length > 0 ? Math.round((peopleWithDeathDate / allPeople.length) * 100) : 0,
+				sexPercent: allPeople.length > 0 ? Math.round((peopleWithSex / allPeople.length) * 100) : 0
+			},
+			relationshipMetrics: {
+				peopleWithParents,
+				peopleWithSpouses,
+				peopleWithChildren,
+				orphanedPeople: allPeople.length - peopleWithParents - peopleWithChildren - peopleWithSpouses
+			},
+			crossCollectionMetrics: {
+				totalConnections: connections.length,
+				totalBridgePeople: bridgePeople.size,
+				topConnections: connections.slice(0, 3).map(c => ({
+					from: c.fromCollection,
+					to: c.toCollection,
+					bridgeCount: c.bridgePeople.length
+				}))
+			},
+			dateRange: {
+				earliest: earliestYear,
+				latest: latestYear,
+				span: earliestYear && latestYear ? latestYear - earliestYear : undefined
+			}
+		};
 	}
 }

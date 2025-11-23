@@ -1129,6 +1129,62 @@ export class ControlCenterModal extends Modal {
 
 		container.appendChild(organizationCard);
 
+		// Advanced Collections Features Card
+		const advancedCollectionsCard = this.createCard({
+			title: 'Advanced collections features',
+			icon: 'git-branch'
+		});
+		const advancedCollectionsContent = advancedCollectionsCard.querySelector('.crc-card__content') as HTMLElement;
+
+		advancedCollectionsContent.createEl('p', {
+			text: 'Canvas Roots includes powerful features for working with multiple collections:',
+			cls: 'crc-mb-3'
+		});
+
+		// Collection Color Scheme
+		const colorSection = advancedCollectionsContent.createDiv({ cls: 'crc-mb-4' });
+		colorSection.createEl('h4', { text: 'Collection color scheme', cls: 'crc-mb-2' });
+		colorSection.createEl('p', {
+			text: 'Color nodes by collection instead of gender or generation. Each collection gets a consistent color based on its name.',
+			cls: 'crc-text-muted crc-mb-2'
+		});
+
+		const colorDetails = colorSection.createEl('ul', { cls: 'crc-mb-2' });
+		colorDetails.createEl('li', { text: 'Enable in Canvas Settings → Node coloring → Collection' });
+		colorDetails.createEl('li', { text: 'Same collection = same color across all canvases' });
+		colorDetails.createEl('li', { text: 'People without collections appear gray' });
+		colorDetails.createEl('li', { text: 'Perfect for multi-collection canvases' });
+
+		// Collection Overview Canvas
+		const overviewSection = advancedCollectionsContent.createDiv({ cls: 'crc-mb-4' });
+		overviewSection.createEl('h4', { text: 'Collection overview canvas', cls: 'crc-mb-2' });
+		overviewSection.createEl('p', {
+			text: 'Generate a master canvas showing all your collections and how they connect.',
+			cls: 'crc-text-muted crc-mb-2'
+		});
+
+		const overviewDetails = overviewSection.createEl('ul', { cls: 'crc-mb-2' });
+		overviewDetails.createEl('li', { text: 'Shows all detected families and user collections' });
+		overviewDetails.createEl('li', { text: 'Displays connection lines between related collections' });
+		overviewDetails.createEl('li', { text: 'Includes statistics (person count, representative)' });
+		overviewDetails.createEl('li', { text: 'Generate from Collections tab → "Generate overview"' });
+
+		// Collection Filtering
+		const filterSection = advancedCollectionsContent.createDiv({ cls: 'crc-mb-4' });
+		filterSection.createEl('h4', { text: 'Collection filtering', cls: 'crc-mb-2' });
+		filterSection.createEl('p', {
+			text: 'Generate trees showing only people from specific collections.',
+			cls: 'crc-text-muted crc-mb-2'
+		});
+
+		const filterDetails = filterSection.createEl('ul');
+		filterDetails.createEl('li', { text: 'Available in Tree Generation tab' });
+		filterDetails.createEl('li', { text: 'Works with all tree types (ancestors, descendants, full)' });
+		filterDetails.createEl('li', { text: 'Filter by detected family groups or user collections' });
+		filterDetails.createEl('li', { text: 'Perfect for focusing on specific lineages or story arcs' });
+
+		container.appendChild(advancedCollectionsCard);
+
 		// Common Tasks Card
 		const tasksCard = this.createCard({
 			title: 'Common tasks',
@@ -1517,6 +1573,7 @@ export class ControlCenterModal extends Modal {
 			.addDropdown(dropdown => dropdown
 				.addOption('gender', 'Gender - Green for males, purple for females')
 				.addOption('generation', 'Generation - Color by generation level')
+				.addOption('collection', 'Collection - Different color per collection')
 				.addOption('monochrome', 'Monochrome - No coloring')
 				.setValue(this.plugin.settings.nodeColorScheme)
 				.onChange(async (value) => {
@@ -2199,6 +2256,181 @@ export class ControlCenterModal extends Modal {
 	}
 
 	/**
+	 * Generates a collection overview canvas showing all collections and connections
+	 */
+	private async generateCollectionOverviewCanvas(): Promise<void> {
+		try {
+			new Notice('Generating collection overview...');
+
+			const graphService = new FamilyGraphService(this.app);
+
+			// Get both detected families and user collections
+			const families = await graphService.findAllFamilyComponents();
+			const userCollections = await graphService.getUserCollections();
+
+			// Combine them into a single collection list
+			const allCollections = [
+				...families.map(f => ({
+					name: f.collectionName || `Family ${families.indexOf(f) + 1}`,
+					size: f.size,
+					representative: f.representative
+				})),
+				...userCollections.map(c => ({
+					name: c.name,
+					size: c.size,
+					representative: undefined // User collections don't have a single representative
+				}))
+			];
+
+			if (allCollections.length === 0) {
+				new Notice('No collections found. Add some person notes to get started.');
+				return;
+			}
+
+			// Get connections between collections
+			const connections = await graphService.detectCollectionConnections();
+
+			// Generate the overview canvas
+			const canvasGenerator = new CanvasGenerator();
+			const canvasData = canvasGenerator.generateCollectionOverviewCanvas(
+				allCollections,
+				connections,
+				{
+					nodeWidth: this.plugin.settings.defaultNodeWidth,
+					nodeHeight: this.plugin.settings.defaultNodeHeight
+				}
+			);
+
+			// Create canvas file
+			const fileName = 'Collection Overview.canvas';
+			const canvasContent = this.formatCanvasJson(canvasData);
+			const filePath = fileName;
+
+			let file: TFile;
+			const existingFile = this.app.vault.getAbstractFileByPath(filePath);
+			if (existingFile instanceof TFile) {
+				// Update existing file
+				await this.app.vault.modify(existingFile, canvasContent);
+				file = existingFile;
+				new Notice(`Updated existing overview: ${fileName}`);
+			} else {
+				// Create new file
+				file = await this.app.vault.create(filePath, canvasContent);
+				new Notice(`Created overview: ${fileName}`);
+			}
+
+			// Wait for file system to settle
+			await new Promise(resolve => setTimeout(resolve, 100));
+
+			// Open the canvas file
+			const leaf = this.app.workspace.getLeaf(false);
+			await leaf.openFile(file);
+
+			new Notice(`Collection overview generated! (${allCollections.length} collections)`);
+			this.close();
+		} catch (error) {
+			console.error('Error generating collection overview:', error);
+			new Notice(`Error generating overview: ${error.message}`);
+		}
+	}
+
+	/**
+	 * Loads and displays analytics data
+	 */
+	private async loadAnalyticsData(container: HTMLElement): Promise<void> {
+		try {
+			const graphService = new FamilyGraphService(this.app);
+			const analytics = await graphService.calculateCollectionAnalytics();
+
+			// Clear loading message
+			container.empty();
+
+			// Quick Stats Section
+			const statsGrid = container.createDiv({ cls: 'crc-stats-grid' });
+
+			const createStatBox = (label: string, value: string | number, subtitle?: string) => {
+				const box = statsGrid.createDiv({ cls: 'crc-stat-box' });
+				box.createEl('div', { text: String(value), cls: 'crc-stat-value' });
+				box.createEl('div', { text: label, cls: 'crc-stat-label' });
+				if (subtitle) {
+					box.createEl('div', { text: subtitle, cls: 'crc-stat-subtitle' });
+				}
+				return box;
+			};
+
+			createStatBox('Total People', analytics.totalPeople);
+			createStatBox('Collections', analytics.totalCollections,
+				`${analytics.totalFamilies} families, ${analytics.totalUserCollections} custom`);
+			createStatBox('Average Size', analytics.averageCollectionSize, 'people per collection');
+			createStatBox('Bridge People', analytics.crossCollectionMetrics.totalBridgePeople,
+				'connecting collections');
+
+			// Data Quality Section
+			container.createEl('h4', { text: 'Data completeness', cls: 'crc-mt-4 crc-mb-2' });
+			const qualityGrid = container.createDiv({ cls: 'crc-quality-grid' });
+
+			const createProgressBar = (label: string, percent: number) => {
+				const item = qualityGrid.createDiv({ cls: 'crc-quality-item' });
+				const header = item.createDiv({ cls: 'crc-quality-header' });
+				header.createEl('span', { text: label });
+				header.createEl('span', { text: `${percent}%`, cls: 'crc-quality-percent' });
+
+				const barBg = item.createDiv({ cls: 'crc-progress-bar-bg' });
+				const barFill = barBg.createDiv({ cls: 'crc-progress-bar-fill' });
+				barFill.style.width = `${percent}%`;
+
+				return item;
+			};
+
+			createProgressBar('Birth dates', analytics.dataCompleteness.birthDatePercent);
+			createProgressBar('Death dates', analytics.dataCompleteness.deathDatePercent);
+			createProgressBar('Sex/Gender', analytics.dataCompleteness.sexPercent);
+
+			// Top Collections Section
+			if (analytics.largestCollection) {
+				container.createEl('h4', { text: 'Collection highlights', cls: 'crc-mt-4 crc-mb-2' });
+				const highlightsList = container.createEl('ul', { cls: 'crc-highlights-list' });
+
+				highlightsList.createEl('li', {
+					text: `Largest: ${analytics.largestCollection.name} (${analytics.largestCollection.size} people)`
+				});
+
+				if (analytics.smallestCollection) {
+					highlightsList.createEl('li', {
+						text: `Smallest: ${analytics.smallestCollection.name} (${analytics.smallestCollection.size} people)`
+					});
+				}
+
+				if (analytics.dateRange.earliest && analytics.dateRange.latest) {
+					highlightsList.createEl('li', {
+						text: `Date range: ${analytics.dateRange.earliest} - ${analytics.dateRange.latest} (${analytics.dateRange.span} years)`
+					});
+				}
+			}
+
+			// Cross-Collection Connections
+			if (analytics.crossCollectionMetrics.topConnections.length > 0) {
+				container.createEl('h4', { text: 'Top connections', cls: 'crc-mt-4 crc-mb-2' });
+				const connectionsList = container.createEl('ul', { cls: 'crc-connections-list' });
+
+				analytics.crossCollectionMetrics.topConnections.forEach(conn => {
+					connectionsList.createEl('li', {
+						text: `${conn.from} ↔ ${conn.to} (${conn.bridgeCount} ${conn.bridgeCount === 1 ? 'person' : 'people'})`
+					});
+				});
+			}
+
+		} catch (error) {
+			console.error('Error loading analytics:', error);
+			container.empty();
+			container.createEl('p', {
+				text: 'Failed to load analytics data.',
+				cls: 'crc-error-text'
+			});
+		}
+	}
+
+	/**
 	 * Formats canvas data to match Obsidian's exact JSON format.
 	 *
 	 * Obsidian canvases use a specific format:
@@ -2432,6 +2664,43 @@ export class ControlCenterModal extends Modal {
 				}));
 
 		container.appendChild(browseCard);
+
+		// Generate Overview Canvas button
+		const overviewCard = this.createCard({
+			title: 'Collection overview',
+			icon: 'git-branch'
+		});
+
+		const overviewContent = overviewCard.querySelector('.crc-card__content') as HTMLElement;
+
+		new Setting(overviewContent)
+			.setName('Generate overview canvas')
+			.setDesc('Create a master canvas showing all collections and their connections')
+			.addButton(button => button
+				.setButtonText('Generate overview')
+				.setCta()
+				.onClick(async () => {
+					await this.generateCollectionOverviewCanvas();
+				}));
+
+		container.appendChild(overviewCard);
+
+		// Analytics Card
+		const analyticsCard = this.createCard({
+			title: 'Analytics',
+			icon: 'activity'
+		});
+
+		const analyticsContent = analyticsCard.querySelector('.crc-card__content') as HTMLElement;
+		analyticsContent.createEl('p', {
+			text: 'Loading analytics...',
+			cls: 'crc-text--muted'
+		});
+
+		container.appendChild(analyticsCard);
+
+		// Load analytics data asynchronously
+		this.loadAnalyticsData(analyticsContent);
 
 		// Collections List Card
 		await this.updateCollectionsList(container, selectedMode);

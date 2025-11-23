@@ -30,9 +30,10 @@ export type ArrowStyle = 'directed' | 'bidirectional' | 'undirected';
  * Node color scheme options
  * - 'gender': Color by gender (green for male, purple for female)
  * - 'generation': Color by generation level (creates visual layers)
+ * - 'collection': Color by collection (different color per collection)
  * - 'monochrome': No coloring (neutral for all nodes)
  */
-export type ColorScheme = 'gender' | 'generation' | 'monochrome';
+export type ColorScheme = 'gender' | 'generation' | 'collection' | 'monochrome';
 
 /**
  * Canvas color values (Obsidian's 6 preset colors)

@@ -569,6 +569,35 @@ export class CanvasGenerator {
 	}
 
 	/**
+	 * Gets color for person node based on their collection
+	 * Uses Obsidian's 6 canvas colors to distinguish collections:
+	 * 1 = Red, 2 = Orange, 3 = Yellow, 4 = Green, 5 = Blue, 6 = Purple
+	 *
+	 * Collections are assigned colors in a rotating pattern based on alphabetical order.
+	 * People without a collection get a neutral color (gray).
+	 *
+	 * @param person - Person node
+	 * @returns Color code string ('1' through '6') or undefined for no collection
+	 */
+	private getCollectionColor(person: PersonNode): string | undefined {
+		// If person has no collection, return undefined (gray/monochrome)
+		if (!person.collection) {
+			return undefined;
+		}
+
+		// Create a simple hash from the collection name to get consistent colors
+		// Same collection = same color across all canvases
+		let hash = 0;
+		for (let i = 0; i < person.collection.length; i++) {
+			hash = person.collection.charCodeAt(i) + ((hash << 5) - hash);
+		}
+
+		// Map hash to colors 1-6
+		const colorIndex = (Math.abs(hash) % 6) + 1;
+		return String(colorIndex);
+	}
+
+	/**
 	 * Gets node color based on the selected color scheme
 	 *
 	 * @param person - Person node
@@ -586,6 +615,8 @@ export class CanvasGenerator {
 				return this.getPersonColor(person);
 			case 'generation':
 				return this.getGenerationColor(generation);
+			case 'collection':
+				return this.getCollectionColor(person);
 			case 'monochrome':
 				return undefined;  // No color
 			default:
@@ -667,5 +698,143 @@ export class CanvasGenerator {
 		}
 
 		return parts.length > 0 ? parts.join(' | ') : undefined;
+	}
+
+	/**
+	 * Generates a collection overview canvas
+	 * Shows all collections as nodes with connections between them
+	 *
+	 * @param collections - Array of family components or user collections
+	 * @param connections - Optional array of collection connections
+	 * @param options - Optional canvas generation options
+	 */
+	generateCollectionOverviewCanvas(
+		collections: Array<{ name: string; size: number; representative?: PersonNode }>,
+		connections?: Array<{ fromCollection: string; toCollection: string; bridgePeople: PersonNode[]; relationshipCount: number }>,
+		options: { nodeWidth?: number; nodeHeight?: number } = {}
+	): CanvasData {
+		const nodeWidth = options.nodeWidth ?? 300;
+		const nodeHeight = options.nodeHeight ?? 200;
+		const horizontalSpacing = 400;
+		const verticalSpacing = 300;
+
+		const canvasNodes: CanvasNode[] = [];
+		const canvasEdges: CanvasEdge[] = [];
+		const collectionToNodeId = new Map<string, string>();
+
+		// Calculate grid layout (3 columns)
+		const columns = 3;
+		let currentX = 100;
+		let currentY = 100;
+		let column = 0;
+
+		// Create legend node first
+		const legendId = this.generateId();
+		const legendText = `# Collection Overview
+
+This canvas shows all collections in your vault.
+
+**Collections:** Family groups or custom collections
+**Connections:** Lines show relationships between collections
+**Statistics:** Person count and representative shown for each
+
+Generated: ${new Date().toLocaleString()}`;
+
+		canvasNodes.push({
+			id: legendId,
+			type: 'text',
+			text: legendText,
+			x: currentX,
+			y: currentY,
+			width: nodeWidth,
+			height: nodeHeight,
+			color: '3' // Yellow for legend
+		});
+
+		// Move to next column for first collection
+		column++;
+		currentX += nodeWidth + horizontalSpacing;
+
+		// Create collection nodes
+		for (const collection of collections) {
+			const nodeId = this.generateId();
+			collectionToNodeId.set(collection.name, nodeId);
+
+			// Build collection text content
+			let nodeText = `# ${collection.name}\n\n`;
+			nodeText += `**People:** ${collection.size}\n\n`;
+
+			if (collection.representative) {
+				nodeText += `**Representative:**\n${collection.representative.name}`;
+				if (collection.representative.birthDate) {
+					nodeText += `\n📅 ${collection.representative.birthDate}`;
+				}
+			}
+
+			// Use collection color if available (hash-based coloring)
+			const color = this.getCollectionColorFromName(collection.name);
+
+			canvasNodes.push({
+				id: nodeId,
+				type: 'text',
+				text: nodeText,
+				x: currentX,
+				y: currentY,
+				width: nodeWidth,
+				height: nodeHeight,
+				color
+			});
+
+			// Update position for next node
+			column++;
+			if (column >= columns) {
+				column = 0;
+				currentX = 100;
+				currentY += nodeHeight + verticalSpacing;
+			} else {
+				currentX += nodeWidth + horizontalSpacing;
+			}
+		}
+
+		// Create connection edges if provided
+		if (connections) {
+			for (const connection of connections) {
+				const fromNodeId = collectionToNodeId.get(connection.fromCollection);
+				const toNodeId = collectionToNodeId.get(connection.toCollection);
+
+				if (fromNodeId && toNodeId) {
+					const edgeId = this.generateId();
+					const label = `${connection.bridgePeople.length} bridge ${connection.bridgePeople.length === 1 ? 'person' : 'people'}`;
+
+					canvasEdges.push({
+						id: edgeId,
+						fromNode: fromNodeId,
+						toNode: toNodeId,
+						fromEnd: 'none',
+						toEnd: 'none',
+						color: '5', // Cyan for connections
+						label
+					});
+				}
+			}
+		}
+
+		return {
+			nodes: canvasNodes,
+			edges: canvasEdges
+		};
+	}
+
+	/**
+	 * Helper method to get consistent color for a collection name
+	 * Matches the logic used in getCollectionColor()
+	 */
+	private getCollectionColorFromName(collectionName: string): string {
+		let hash = 0;
+		for (let i = 0; i < collectionName.length; i++) {
+			hash = collectionName.charCodeAt(i) + ((hash << 5) - hash);
+		}
+		const colorIndex = (Math.abs(hash) % 6) + 1;
+		return String(colorIndex);
 	}
 }
