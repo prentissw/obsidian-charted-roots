@@ -70,6 +70,7 @@ interface ExcalidrawElement {
 	roughness: number;
 	opacity: number;
 	groupIds: string[];
+	frameId: null;
 	roundness: null | { type: number };
 	seed: number;
 	version: number;
@@ -94,13 +95,16 @@ interface ExcalidrawRectangle extends ExcalidrawElement {
 interface ExcalidrawText extends ExcalidrawElement {
 	type: 'text';
 	text: string;
+	rawText: string;
 	fontSize: number;
-	fontFamily: 1 | 2 | 3; // 1=Virgil, 2=Helvetica, 3=Cascadia
+	fontFamily: 1 | 2 | 3 | 4 | 5; // 1=Virgil, 2=Helvetica, 3=Cascadia, 4=Virgil, 5=Excalifont
 	textAlign: 'left' | 'center' | 'right';
 	verticalAlign: 'top' | 'middle';
 	baseline: number;
 	containerId: string | null;
 	originalText: string;
+	autoResize: boolean;
+	lineHeight: number;
 }
 
 /**
@@ -122,6 +126,7 @@ interface ExcalidrawArrow extends ExcalidrawElement {
 	} | null;
 	startArrowhead: null | 'arrow' | 'bar' | 'dot';
 	endArrowhead: null | 'arrow' | 'bar' | 'dot';
+	elbowed: boolean;
 }
 
 /**
@@ -188,19 +193,27 @@ export class ExcalidrawExporter {
 			new Notice('Converting to Excalidraw format...');
 			const excalidrawData = this.convertCanvasToExcalidraw(canvasData, options);
 
+			logger.info('export', `Converted to ${excalidrawData.elements.length} Excalidraw elements`);
+
 			// Build Excalidraw markdown content (Obsidian Excalidraw plugin format)
+			logger.info('export', 'Building Excalidraw markdown...');
 			const excalidrawMarkdown = this.buildExcalidrawMarkdown(excalidrawData);
+
+			logger.info('export', `Generated markdown with ${excalidrawMarkdown.length} characters`);
 
 			result.excalidrawContent = excalidrawMarkdown;
 			result.elementsExported = excalidrawData.elements.length;
 			result.success = true;
 
+			logger.info('export', 'Export completed successfully');
 			new Notice(`Export complete: ${result.elementsExported} elements exported`);
 
 		} catch (error) {
-			result.errors.push(`Export failed: ${error.message}`);
-			logger.error('export', 'Export failed', error);
-			new Notice(`Export failed: ${error.message}`);
+			const errorMsg = error instanceof Error ? error.message : String(error);
+			const errorStack = error instanceof Error ? error.stack : '';
+			result.errors.push(`Export failed: ${errorMsg}`);
+			logger.error('export', 'Export failed', { error: errorMsg, stack: errorStack });
+			new Notice(`Export failed: ${errorMsg}`);
 		}
 
 		return result;
@@ -220,34 +233,49 @@ export class ExcalidrawExporter {
 		const strokeWidth = options.strokeWidth || 2;
 		const preserveColors = options.preserveColors ?? true;
 
+		// Calculate bounds to normalize coordinates
+		let minX = Infinity;
+		let minY = Infinity;
+		for (const node of canvasData.nodes) {
+			minX = Math.min(minX, node.x);
+			minY = Math.min(minY, node.y);
+		}
+
+		// Add padding so elements aren't right at edge
+		const padding = 50;
+		const offsetX = -minX + padding;
+		const offsetY = -minY + padding;
+
+		logger.info('export', `Coordinate offset: (${offsetX}, ${offsetY}) from bounds (${minX}, ${minY})`);
+
 		// Convert nodes
 		for (const node of canvasData.nodes) {
 			const excalidrawId = this.generateId();
 			nodeIdMap.set(node.id, excalidrawId);
 
-			// Create rectangle for node
+			// Create rectangle for node (with coordinate offset applied)
 			const rectColor = preserveColors && node.color
 				? CANVAS_TO_EXCALIDRAW_COLORS[node.color] || CANVAS_TO_EXCALIDRAW_COLORS['none']
 				: CANVAS_TO_EXCALIDRAW_COLORS['none'];
 
 			const rectangle = this.createRectangle(
 				excalidrawId,
-				node.x,
-				node.y,
+				node.x + offsetX,
+				node.y + offsetY,
 				node.width,
 				node.height,
 				rectColor
 			);
 			elements.push(rectangle);
 
-			// Create text label
+			// Create text label (with coordinate offset applied)
 			// Extract person name from file path or text content
 			const labelText = this.extractNodeLabel(node);
 			if (labelText) {
 				const textElement = this.createText(
 					this.generateId(),
-					node.x + node.width / 2,
-					node.y + node.height / 2,
+					node.x + offsetX + node.width / 2,
+					node.y + offsetY + node.height / 2,
 					labelText,
 					fontSize,
 					excalidrawId // container ID
@@ -284,6 +312,8 @@ export class ExcalidrawExporter {
 				toExcalidrawId,
 				edgeColor,
 				strokeWidth,
+				offsetX,
+				offsetY,
 				edge.label
 			);
 			elements.push(arrow);
@@ -329,6 +359,7 @@ export class ExcalidrawExporter {
 			roughness: 1,
 			opacity: 100,
 			groupIds: [],
+			frameId: null,
 			roundness: { type: 3 },
 			seed: this.generateSeed(),
 			version: 1,
@@ -372,6 +403,7 @@ export class ExcalidrawExporter {
 			roughness: 0,
 			opacity: 100,
 			groupIds: [],
+			frameId: null,
 			roundness: null,
 			seed: this.generateSeed(),
 			version: 1,
@@ -382,13 +414,16 @@ export class ExcalidrawExporter {
 			link: null,
 			locked: false,
 			text,
+			rawText: text,
 			fontSize,
 			fontFamily: 1, // Virgil (hand-drawn style)
 			textAlign: 'center',
 			verticalAlign: 'middle',
 			baseline: fontSize,
 			containerId,
-			originalText: text
+			originalText: text,
+			autoResize: true,
+			lineHeight: 1.25
 		};
 	}
 
@@ -403,13 +438,15 @@ export class ExcalidrawExporter {
 		toExcalidrawId: string,
 		color: string,
 		strokeWidth: number,
+		offsetX: number,
+		offsetY: number,
 		label?: string
 	): ExcalidrawArrow {
-		// Calculate arrow start and end points
-		const startX = fromNode.x + fromNode.width / 2;
-		const startY = fromNode.y + fromNode.height / 2;
-		const endX = toNode.x + toNode.width / 2;
-		const endY = toNode.y + toNode.height / 2;
+		// Calculate arrow start and end points (with coordinate offset applied)
+		const startX = fromNode.x + offsetX + fromNode.width / 2;
+		const startY = fromNode.y + offsetY + fromNode.height / 2;
+		const endX = toNode.x + offsetX + toNode.width / 2;
+		const endY = toNode.y + offsetY + toNode.height / 2;
 
 		// Arrow points are relative to start position
 		const points: [number, number][] = [
@@ -433,6 +470,7 @@ export class ExcalidrawExporter {
 			roughness: 1,
 			opacity: 100,
 			groupIds: [],
+			frameId: null,
 			roundness: { type: 2 },
 			seed: this.generateSeed(),
 			version: 1,
@@ -455,7 +493,8 @@ export class ExcalidrawExporter {
 				gap: 10
 			},
 			startArrowhead: null,
-			endArrowhead: 'arrow'
+			endArrowhead: 'arrow',
+			elbowed: false
 		};
 	}
 
@@ -501,22 +540,26 @@ export class ExcalidrawExporter {
 		lines.push('');
 
 		// Add text elements section (for search/indexing)
+		// Each text element needs a block reference ID that matches its element ID
 		for (const element of excalidrawData.elements) {
 			if (element.type === 'text') {
 				const textEl = element as ExcalidrawText;
-				lines.push(textEl.text);
+				// Format: "Text content ^elementID"
+				// The elementID is used by Excalidraw to link the text list to the drawing
+				lines.push(`${textEl.text} ^${textEl.id}`);
+				lines.push('');
 			}
 		}
 
-		lines.push('');
-		lines.push('## Drawing');
-		lines.push('```json');
-		lines.push(JSON.stringify(excalidrawData, null, 2));
-		lines.push('```');
 		lines.push('%%');
-		lines.push('## Drawing');
-		lines.push('```compressed-json');
-		lines.push(JSON.stringify(excalidrawData));
+		lines.push('# Drawing');
+		lines.push('```json');
+		try {
+			lines.push(JSON.stringify(excalidrawData, null, 2));
+		} catch (e) {
+			logger.error('export', 'Failed to stringify excalidrawData (formatted)', e);
+			throw new Error(`JSON stringify failed (formatted): ${e.message}`);
+		}
 		lines.push('```');
 		lines.push('%%');
 

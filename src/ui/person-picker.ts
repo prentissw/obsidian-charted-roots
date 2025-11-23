@@ -200,19 +200,6 @@ export class PersonPickerModal extends Modal {
 			const birthDate = fm.born instanceof Date ? fm.born.toISOString().split('T')[0] : fm.born;
 			const deathDate = fm.died instanceof Date ? fm.died.toISOString().split('T')[0] : fm.died;
 
-			// Debug logging to diagnose date reading issue
-			if (name === 'William Anderson') {
-				console.log('[Canvas Roots DEBUG - PersonPicker] William Anderson frontmatter:', {
-					'fm.born': fm.born,
-					'fm.born type': typeof fm.born,
-					'fm.born instanceof Date': fm.born instanceof Date,
-					'birthDate (converted)': birthDate,
-					'fm.died': fm.died,
-					'deathDate (converted)': deathDate,
-					allKeys: Object.keys(fm)
-				});
-			}
-
 			return {
 				name,
 				crId: fm.cr_id,
