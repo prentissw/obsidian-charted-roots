@@ -39,7 +39,7 @@ This plugin is designed for genealogists, historians, and world-builders. It tra
 
 See [Roadmap](docs/roadmap.md) for detailed feature descriptions and development priorities.
 
-- **Collections Management:** Folder-based auto-discovery and organization of multiple family trees
+- **Collections Management:** Automatic detection and organization of disconnected family groups
 - **GEDCOM Export:** Round-trip export back to .ged format
 - **Reference Numbering:** Ahnentafel and Dollarhide-Cole genealogical numbering systems
 - **Person Detail Panel:** Rich inline person information with relationship visualization
