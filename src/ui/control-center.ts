@@ -1249,6 +1249,49 @@ export class ControlCenterModal extends Modal {
 
 		container.appendChild(styleSettingsCard);
 
+		// GEDCOM Export Card
+		const gedcomExportCard = this.createCard({
+			title: 'GEDCOM export',
+			icon: 'download'
+		});
+		const gedcomExportContent = gedcomExportCard.querySelector('.crc-card__content') as HTMLElement;
+
+		gedcomExportContent.createEl('p', {
+			text: 'Export your family tree data to GEDCOM 5.5.1 format for sharing with other genealogy software or creating backups.',
+			cls: 'crc-mb-3'
+		});
+
+		// Export Methods
+		const exportMethodsSection = gedcomExportContent.createDiv({ cls: 'crc-mb-4' });
+		exportMethodsSection.createEl('h4', { text: 'How to export', cls: 'crc-mb-2' });
+
+		const exportMethods = exportMethodsSection.createEl('ul', { cls: 'crc-mb-2' });
+		exportMethods.createEl('li', { text: 'GEDCOM tab: Configure export options and export all people or a specific collection' });
+		exportMethods.createEl('li', { text: 'Folder context menu: Right-click any folder → "Export GEDCOM from this folder"' });
+
+		// Export Features
+		const featuresSection = gedcomExportContent.createDiv({ cls: 'crc-mb-4' });
+		featuresSection.createEl('h4', { text: 'Export features', cls: 'crc-mb-2' });
+
+		const features = featuresSection.createEl('ul', { cls: 'crc-mb-2' });
+		features.createEl('li', { text: 'GEDCOM 5.5.1 standard format for maximum compatibility' });
+		features.createEl('li', { text: 'UUID preservation using custom _UID tags' });
+		features.createEl('li', { text: 'Collection code preservation for round-trip imports' });
+		features.createEl('li', { text: 'Marriage metadata (dates, locations, status)' });
+		features.createEl('li', { text: 'Collection filtering to export specific family groups' });
+		features.createEl('li', { text: 'Automatic sex inference from relationships' });
+
+		// Use Cases
+		const exportUseCaseSection = gedcomExportContent.createDiv({ cls: 'crc-info-box' });
+		exportUseCaseSection.createEl('strong', { text: 'Common use cases:' });
+		const useCases = exportUseCaseSection.createEl('ul', { cls: 'crc-mt-2' });
+		useCases.createEl('li', { text: 'Share your research with family members using other genealogy software' });
+		useCases.createEl('li', { text: 'Create backups of your family tree data' });
+		useCases.createEl('li', { text: 'Export specific collections for collaborative research' });
+		useCases.createEl('li', { text: 'Migrate data to other genealogy platforms' });
+
+		container.appendChild(gedcomExportCard);
+
 		// Common Tasks Card
 		const tasksCard = this.createCard({
 			title: 'Common tasks',
@@ -1261,6 +1304,12 @@ export class ControlCenterModal extends Modal {
 				icon: 'upload',
 				title: 'Import GEDCOM file',
 				description: 'Import genealogical data from Family Tree Maker, Gramps, or other tools',
+				tab: 'gedcom'
+			},
+			{
+				icon: 'download',
+				title: 'Export GEDCOM file',
+				description: 'Export your family tree to share with other genealogy software',
 				tab: 'gedcom'
 			},
 			{
@@ -2901,6 +2950,63 @@ export class ControlCenterModal extends Modal {
 	}
 
 	/**
+	 * Handle GEDCOM file export
+	 */
+	private async handleGedcomExport(options: {
+		fileName: string;
+		collectionFilter?: string;
+		includeCollectionCodes: boolean;
+	}): Promise<void> {
+		try {
+			logger.info('gedcom-export', `Starting GEDCOM export: ${options.fileName}`);
+
+			// Create exporter
+			const { GedcomExporter } = await import('../gedcom/gedcom-exporter');
+			const exporter = new GedcomExporter(this.app);
+
+			// Export to GEDCOM
+			const result = await exporter.exportToGedcom({
+				peopleFolder: this.plugin.settings.peopleFolder,
+				collectionFilter: options.collectionFilter,
+				includeCollectionCodes: options.includeCollectionCodes,
+				fileName: options.fileName,
+				sourceApp: 'Canvas Roots',
+				sourceVersion: this.plugin.manifest.version
+			});
+
+			// Log results
+			logger.info('gedcom-export', `Export complete: ${result.individualsExported} individuals, ${result.familiesExported} families`);
+
+			if (result.errors.length > 0) {
+				logger.warn('gedcom-export', `Export had ${result.errors.length} errors`);
+				result.errors.forEach(error => logger.error('gedcom-export', error));
+			}
+
+			if (result.success && result.gedcomContent) {
+				// Create blob and trigger download
+				const blob = new Blob([result.gedcomContent], { type: 'text/plain' });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = `${result.fileName}.ged`;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+
+				new Notice(
+					`GEDCOM exported: ${result.individualsExported} people, ${result.familiesExported} families`
+				);
+			} else {
+				throw new Error('Export failed to generate content');
+			}
+		} catch (error) {
+			logger.error('gedcom-export', `GEDCOM export failed: ${error.message}`);
+			new Notice(`Failed to export GEDCOM: ${error.message}`);
+		}
+	}
+
+	/**
 	 * Show Collections tab
 	 */
 	private async showCollectionsTab(): Promise<void> {
@@ -3177,17 +3283,77 @@ export class ControlCenterModal extends Modal {
 		const exportContent = exportCard.querySelector('.crc-card__content') as HTMLElement;
 
 		exportContent.createEl('p', {
-			text: 'Export your family tree data to GEDCOM format',
-			cls: 'crc-text-muted'
+			text: 'Export your family tree data to GEDCOM 5.5.1 format for sharing with other genealogy software',
+			cls: 'crc-text-muted crc-mb-4'
 		});
 
+		// Export options
+		new Setting(exportContent)
+			.setName('People folder')
+			.setDesc('Folder containing person notes to export')
+			.addText(text => text
+				.setPlaceholder('People')
+				.setValue(this.plugin.settings.peopleFolder)
+				.setDisabled(true)
+			);
+
+		// Collection filter option
+		let collectionFilter: string | undefined;
+		new Setting(exportContent)
+			.setName('Collection filter (optional)')
+			.setDesc('Only export people in a specific collection')
+			.addDropdown(async dropdown => {
+				dropdown.addOption('', 'All people');
+
+				// Load collections
+				const graphService = new (await import('../core/family-graph')).FamilyGraphService(this.app);
+				const collections = await graphService.getUserCollections();
+				collections.forEach(collection => {
+					dropdown.addOption(collection.name, collection.name);
+				});
+
+				dropdown.onChange(value => {
+					collectionFilter = value || undefined;
+				});
+			});
+
+		// Include collection codes option
+		let includeCollectionCodes = true;
+		new Setting(exportContent)
+			.setName('Include collection codes')
+			.setDesc('Preserve Canvas Roots collection data in export')
+			.addToggle(toggle => toggle
+				.setValue(true)
+				.onChange(value => {
+					includeCollectionCodes = value;
+				})
+			);
+
+		// Export file name
+		let exportFileName = 'family-tree';
+		new Setting(exportContent)
+			.setName('Export file name')
+			.setDesc('Name for the exported .ged file (without extension)')
+			.addText(text => text
+				.setPlaceholder('family-tree')
+				.setValue(exportFileName)
+				.onChange(value => {
+					exportFileName = value || 'family-tree';
+				})
+			);
+
+		// Export button
 		const exportBtn = exportContent.createEl('button', {
-			cls: 'crc-btn crc-btn--secondary crc-mt-4',
+			cls: 'crc-btn crc-btn--primary crc-mt-4',
 			text: 'Export to GEDCOM'
 		});
 
-		exportBtn.addEventListener('click', () => {
-			new Notice('⚠️ GEDCOM export coming in Phase 3');
+		exportBtn.addEventListener('click', async () => {
+			await this.handleGedcomExport({
+				fileName: exportFileName,
+				collectionFilter,
+				includeCollectionCodes
+			});
 		});
 
 		container.appendChild(exportCard);

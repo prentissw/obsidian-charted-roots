@@ -98,28 +98,24 @@ Canvas Roots is in active alpha development with core functionality in place and
 
 ## 🚧 In Active Development
 
-**Per-Canvas Style Settings:**
-- ✅ Core infrastructure with StyleOverrides interface and merge utilities
-- ✅ Canvas metadata integration for storing style overrides
-- ✅ Canvas generation updated to apply style overrides
-- ✅ Canvas regeneration preserves custom styles
-- ✅ Tree Generation UI with optional style customization controls
-- ✅ Canvas Style Modal for editing existing canvas styles
-- ✅ Context menu integration ("Customize canvas styles")
-- ✅ Guide tab documentation with comprehensive usage instructions
-- 🔄 Ready for end-to-end testing and user feedback
+**GEDCOM Export:**
+- ✅ Core export logic with GEDCOM 5.5.1 format generation
+- ✅ Individual record export with full metadata
+- ✅ Family record extraction from relationships
+- ✅ UUID preservation using _UID custom tag
+- ✅ Collection code preservation (_COLL and _COLLN tags)
+- ✅ Collection filtering for selective export
+- ✅ Control Center UI integration
+- ✅ Context menu integration for folder export
+- ✅ Marriage metadata export
+- ✅ Sex inference from relationships
+- 🔄 Ready for testing and user feedback
 
 ---
 
 ## 📋 Planned Features
 
 ### Export & Interoperability
-
-**GEDCOM Export:**
-- Round-trip GEDCOM export back to `.ged` format
-- UUID preservation in GEDCOM export
-- Collection codes in GEDCOM output
-- Sharing with other genealogy software
 
 **Excalidraw Integration:**
 - Export family trees to Excalidraw format

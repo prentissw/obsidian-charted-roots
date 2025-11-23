@@ -452,6 +452,24 @@ export default class CanvasRootsPlugin extends Plugin {
 
 							submenu.addItem((subItem) => {
 								subItem
+									.setTitle('Export GEDCOM from this folder')
+									.setIcon('download')
+									.onClick(async () => {
+										// Set this folder as the people folder temporarily for export
+										const originalFolder = this.settings.peopleFolder;
+										this.settings.peopleFolder = file.path;
+
+										// Open Control Center to GEDCOM tab
+										const modal = new ControlCenterModal(this.app, this);
+										modal.openToTab('gedcom');
+
+										// Restore original folder (without saving)
+										this.settings.peopleFolder = originalFolder;
+									});
+							});
+
+							submenu.addItem((subItem) => {
+								subItem
 									.setTitle('Scan for relationship issues')
 									.setIcon('shield-alert')
 									.onClick(async () => {
@@ -484,6 +502,24 @@ export default class CanvasRootsPlugin extends Plugin {
 									// Open Control Center to GEDCOM tab
 									const modal = new ControlCenterModal(this.app, this);
 									modal.openToTab('gedcom');
+								});
+						});
+
+						menu.addItem((item) => {
+							item
+								.setTitle('Canvas Roots: Export GEDCOM from this folder')
+								.setIcon('download')
+								.onClick(async () => {
+									// Set this folder as the people folder temporarily for export
+									const originalFolder = this.settings.peopleFolder;
+									this.settings.peopleFolder = file.path;
+
+									// Open Control Center to GEDCOM tab
+									const modal = new ControlCenterModal(this.app, this);
+									modal.openToTab('gedcom');
+
+									// Restore original folder (without saving)
+									this.settings.peopleFolder = originalFolder;
 								});
 						});
 
