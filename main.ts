@@ -15,6 +15,7 @@ import { CanvasGenerator } from './src/core/canvas-generator';
 import { BASE_TEMPLATE } from './src/constants/base-template';
 import { ExcalidrawExporter } from './src/excalidraw/excalidraw-exporter';
 import { BidirectionalLinker } from './src/core/bidirectional-linker';
+import { generateCrId } from './src/core/uuid';
 
 const logger = getLogger('CanvasRootsPlugin');
 
@@ -271,6 +272,17 @@ export default class CanvasRootsPlugin extends Plugin {
 										.onClick(async () => {
 											const modal = new ControlCenterModal(this.app, this);
 											await modal.openWithPerson(file);
+										});
+								});
+
+								submenu.addSeparator();
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add essential properties')
+										.setIcon('file-plus')
+										.onClick(async () => {
+											await this.addEssentialProperties([file]);
 										});
 								});
 
@@ -1271,6 +1283,148 @@ export default class CanvasRootsPlugin extends Plugin {
 		} catch (error) {
 			console.error('Error exporting to Excalidraw:', error);
 			new Notice(`Failed to export to Excalidraw: ${error.message}`);
+		}
+	}
+
+	/**
+	 * Add essential properties to person note(s)
+	 * Supports batch operations on multiple files
+	 */
+	private async addEssentialProperties(files: TFile[]) {
+		try {
+			let processedCount = 0;
+			let skippedCount = 0;
+			let errorCount = 0;
+
+			for (const file of files) {
+				try {
+					// Read current file content
+					const content = await this.app.vault.read(file);
+					const cache = this.app.metadataCache.getFileCache(file);
+
+					// Check if file already has frontmatter
+					const hasFrontmatter = content.startsWith('---');
+					const existingFrontmatter = cache?.frontmatter || {};
+
+					// Define essential properties
+					const essentialProperties: Record<string, any> = {};
+
+					// cr_id: Generate if missing
+					if (!existingFrontmatter.cr_id) {
+						essentialProperties.cr_id = generateCrId();
+					}
+
+					// name: Use filename if missing
+					if (!existingFrontmatter.name) {
+						essentialProperties.name = file.basename;
+					}
+
+					// born: Add as empty if missing
+					if (!existingFrontmatter.born) {
+						essentialProperties.born = '';
+					}
+
+					// died: Add as empty if missing
+					if (!existingFrontmatter.died) {
+						essentialProperties.died = '';
+					}
+
+					// father: Add as empty if missing
+					if (!existingFrontmatter.father) {
+						essentialProperties.father = '';
+					}
+
+					// mother: Add as empty if missing
+					if (!existingFrontmatter.mother) {
+						essentialProperties.mother = '';
+					}
+
+					// spouses: Add as empty array if missing
+					if (!existingFrontmatter.spouses) {
+						essentialProperties.spouses = [];
+					}
+
+					// children: Add as empty array if missing
+					if (!existingFrontmatter.children) {
+						essentialProperties.children = [];
+					}
+
+					// group_name: Add as empty if missing
+					if (!existingFrontmatter.group_name) {
+						essentialProperties.group_name = '';
+					}
+
+					// Skip if no properties to add
+					if (Object.keys(essentialProperties).length === 0) {
+						skippedCount++;
+						continue;
+					}
+
+					// Build new frontmatter
+					const newFrontmatter = { ...existingFrontmatter, ...essentialProperties };
+
+					// Convert frontmatter to YAML string
+					const yamlLines = ['---'];
+					for (const [key, value] of Object.entries(newFrontmatter)) {
+						if (Array.isArray(value)) {
+							if (value.length === 0) {
+								yamlLines.push(`${key}: []`);
+							} else {
+								yamlLines.push(`${key}:`);
+								value.forEach(item => yamlLines.push(`  - ${item}`));
+							}
+						} else if (value === '') {
+							yamlLines.push(`${key}: ""`);
+						} else {
+							yamlLines.push(`${key}: ${value}`);
+						}
+					}
+					yamlLines.push('---');
+
+					// Get body content (everything after frontmatter)
+					let bodyContent = '';
+					if (hasFrontmatter) {
+						const endOfFrontmatter = content.indexOf('---', 3);
+						if (endOfFrontmatter !== -1) {
+							bodyContent = content.substring(endOfFrontmatter + 3).trim();
+						}
+					} else {
+						bodyContent = content.trim();
+					}
+
+					// Construct new file content
+					const newContent = yamlLines.join('\n') + '\n\n' + bodyContent;
+
+					// Write back to file
+					await this.app.vault.modify(file, newContent);
+					processedCount++;
+
+				} catch (error) {
+					console.error(`Error processing ${file.path}:`, error);
+					errorCount++;
+				}
+			}
+
+			// Show summary
+			if (files.length === 1) {
+				if (processedCount === 1) {
+					new Notice('Added essential properties');
+				} else if (skippedCount === 1) {
+					new Notice('File already has all essential properties');
+				} else {
+					new Notice('Failed to add essential properties');
+				}
+			} else {
+				const parts = [];
+				if (processedCount > 0) parts.push(`${processedCount} updated`);
+				if (skippedCount > 0) parts.push(`${skippedCount} already complete`);
+				if (errorCount > 0) parts.push(`${errorCount} errors`);
+				new Notice(`Essential properties: ${parts.join(', ')}`);
+			}
+
+		} catch (error) {
+			console.error('Error adding essential properties:', error);
+			new Notice('Failed to add essential properties');
 		}
 	}
 
