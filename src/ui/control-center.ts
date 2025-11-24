@@ -10,6 +10,7 @@ import { getLogger, LoggerFactory, type LogLevel } from '../core/logging';
 import { GedcomImporter } from '../gedcom/gedcom-importer';
 import { GedcomImportResultsModal } from './gedcom-import-results-modal';
 import { BidirectionalLinker } from '../core/bidirectional-linker';
+import { TreePreviewRenderer } from './tree-preview';
 import type { RecentTreeInfo, RecentImportInfo, ArrowStyle, ColorScheme, SpouseEdgeLabelFormat } from '../settings';
 
 const logger = getLogger('ControlCenter');
@@ -55,6 +56,8 @@ export class ControlCenterModal extends Modal {
 	private treeCanvasNameInput?: HTMLInputElement;
 	private treeGenerateBtn?: HTMLButtonElement;
 	private pendingRootPerson?: PersonInfo;
+	private treePreviewRenderer?: TreePreviewRenderer;
+	private treePreviewContainer?: HTMLElement;
 
 	constructor(app: App, plugin: CanvasRootsPlugin) {
 		super(app);
@@ -2337,6 +2340,95 @@ export class ControlCenterModal extends Modal {
 				text.inputEl.step = '50';
 				text.setValue('200');
 			});
+
+		// Tree Preview Card
+		const previewCard = container.createDiv({ cls: 'crc-card' });
+		const previewHeader = previewCard.createDiv({ cls: 'crc-card__header' });
+		const previewTitle = previewHeader.createEl('h3', {
+			cls: 'crc-card__title',
+			text: 'Tree preview'
+		});
+		const previewIcon = createLucideIcon('eye', 20);
+		previewTitle.prepend(previewIcon);
+
+		const previewContent = previewCard.createDiv({ cls: 'crc-card__content' });
+
+		// Description
+		previewContent.createEl('p', {
+			text: 'Preview your family tree layout before generating the canvas.',
+			cls: 'crc-text-muted crc-mb-3'
+		});
+
+		// Generate preview button
+		const previewButtonContainer = previewContent.createDiv({ cls: 'crc-mb-3' });
+		const generatePreviewBtn = previewButtonContainer.createEl('button', {
+			text: 'Generate preview',
+			cls: 'mod-cta'
+		});
+
+		// Preview container
+		this.treePreviewContainer = previewContent.createDiv({
+			cls: 'crc-tree-preview-container'
+		});
+
+		// Initialize preview renderer
+		this.treePreviewRenderer = new TreePreviewRenderer(this.treePreviewContainer);
+
+		// Wire up preview button
+		generatePreviewBtn.addEventListener('click', async () => {
+			if (!rootPersonField.crId) {
+				new Notice('Please select a root person first');
+				return;
+			}
+
+			try {
+				generatePreviewBtn.disabled = true;
+				generatePreviewBtn.setText('Generating preview...');
+
+				// Build family tree
+				const graphService = new FamilyGraphService(this.app);
+				const treeOptions: TreeOptions = {
+					rootCrId: rootPersonField.crId,
+					treeType: typeSelect.value as 'ancestors' | 'descendants' | 'full',
+					maxGenerations: parseInt(genSlider.value) || 0,
+					includeSpouses: spouseToggle.getValue(),
+					collectionFilter: collectionSelect.value || undefined
+				};
+
+				const familyTree = await graphService.generateTree(treeOptions);
+
+				if (!familyTree) {
+					new Notice('Failed to build family tree. Root person may not exist.');
+					return;
+				}
+
+				// Build layout options
+				// Map tree type values (ancestors/descendants -> ancestor/descendant for layout engine)
+				const treeTypeValue = typeSelect.value === 'ancestors' ? 'ancestor' :
+					typeSelect.value === 'descendants' ? 'descendant' : 'full';
+
+				const layoutOptions = {
+					nodeSpacingX: parseInt(spacingXInput.value) || 400,
+					nodeSpacingY: parseInt(spacingYInput.value) || 200,
+					direction: dirSelect.value as 'vertical' | 'horizontal',
+					treeType: treeTypeValue as 'ancestor' | 'descendant' | 'full',
+					layoutType: layoutTypeSelect.value as import('../settings').LayoutType,
+					nodeWidth: this.plugin.settings.defaultNodeWidth,
+					nodeHeight: this.plugin.settings.defaultNodeHeight
+				};
+
+				// Render preview
+				await this.treePreviewRenderer?.renderPreview(familyTree, layoutOptions);
+
+				new Notice('Preview generated successfully');
+			} catch (error) {
+				console.error('Preview generation failed:', error);
+				new Notice('Failed to generate preview. See console for details.');
+			} finally {
+				generatePreviewBtn.disabled = false;
+				generatePreviewBtn.setText('Generate preview');
+			}
+		});
 
 		// Style Customization Card
 		const styleCard = container.createDiv({ cls: 'crc-card' });
