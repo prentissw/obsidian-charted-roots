@@ -46,7 +46,8 @@ export type LucideIconName =
 	| 'layout'        // Layout options
 	| 'file'          // File/canvas
 	| 'play'          // Generate/run action
-	| 'clock';        // Time/recent items
+	| 'clock'         // Time/recent items
+	| 'crown';        // Root person marker
 
 /**
  * Tab configuration for Control Center navigation

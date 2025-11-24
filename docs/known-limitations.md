@@ -15,7 +15,7 @@ This document outlines features that are planned but not yet implemented in the 
 
 **Features Working:**
 - Dual organization system: auto-detected family groups + user-defined collections
-- Auto-detected groups with customizable group names (`collection_name` property)
+- Auto-detected groups with customizable group names (`group_name` property)
 - User collections for manual organization (`collection` property)
 - Context menu actions: "Set group name" and "Add to collection"
 - Collections tab with three browse modes: All people, Detected families, My collections

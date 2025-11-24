@@ -257,11 +257,11 @@ By default, groups are named "Family 1", "Family 2", etc. You can customize thes
 2. **Via YAML Frontmatter:**
    ```yaml
    ---
-   collection_name: "Smith Family Tree"
+   group_name: "Smith Family Tree"
    ---
    ```
 
-**Note:** The `collection_name` property sets the display name for the entire connected family group. If multiple people in the same group have different names, the most common one is used.
+**Note:** The `group_name` property sets the display name for the entire connected family group. If multiple people in the same group have different names, the most common one is used.
 
 ### Collections (User-Defined Organization)
 
@@ -336,7 +336,7 @@ Filter generated trees by collection membership:
 |---------|-------------|-------------|
 | **Purpose** | Identify connected families | Organize for your needs |
 | **Detection** | Automatic (from relationships) | Manual (you assign) |
-| **Property** | `collection_name` | `collection` |
+| **Property** | `group_name` | `collection` |
 | **Zero Config** | ✅ Yes | ❌ Optional |
 | **Use Cases** | Multi-family vaults, auto-naming | Lineages, generations, factions |
 | **Example** | "Smith Family Tree" | "Paternal Line" |

@@ -17,6 +17,13 @@ Canvas Roots is in beta with core functionality complete and stable. Advanced fe
 - All essential genealogical workflows fully functional
 - Foundation established for advanced feature development
 
+**Enhanced GEDCOM Export:**
+- Birth place and death place export as PLAC tags
+- Occupation field support (OCCU tag)
+- Gender/sex export from explicit `gender` property or inferred from relationships
+- Full round-trip support: import metadata from GEDCOM, export to GEDCOM
+- Metadata stored in frontmatter: `birth_place`, `death_place`, `occupation`, `gender`
+
 **Excalidraw Export:**
 - Export canvas family trees to Excalidraw format (.excalidraw.md)
 - Preserves node positions, dimensions, and colors
@@ -46,7 +53,7 @@ Canvas Roots is in beta with core functionality complete and stable. Advanced fe
 
 **Collections & Groups (Complete):**
 - Dual organization system: auto-detected family groups + user-defined collections
-- Auto-detected groups with customizable group names (`collection_name` property)
+- Auto-detected groups with customizable group names (`group_name` property)
 - User collections for manual organization (`collection` property)
 - Context menu actions: "Set group name" and "Add to collection"
 - Collections tab with three browse modes: All people, Detected families, My collections
@@ -137,6 +144,45 @@ No features currently in active development. See Planned Features below for road
 
 ## 📋 Planned Features
 
+### Bases Integration Improvements
+
+- ✅ Children property in visible properties (Completed in v0.2.0-beta)
+- ✅ Additional pre-configured Base views for common genealogy queries (Completed: Single Parents, Childless Couples, Multiple Marriages, Sibling Groups, Root Generation, Marked Root Persons)
+- Enhanced error handling and validation for Base operations
+- Collection management UI improvements in Bases views
+
+### Ancestor/Descendant Lineage Tracking (Advanced Feature)
+
+**Status**: Under consideration - requires design discussion
+
+Compute and track multi-generational lineages from marked root persons to enable filtering and analysis of ancestor/descendant lines in Bases.
+
+**Potential Approaches to Explore**:
+- Generation number computation (command that traverses graph and writes properties)
+- Lineage path tagging (mark people belonging to specific ancestral lines)
+- Dynamic computation vs. stored properties tradeoffs
+- Support for multiple root persons with overlapping lineages
+- Integration with Bases filtering and views
+
+**Questions to Address**:
+- Property storage: How to handle multiple root persons per person?
+- Update triggers: When to recompute (manual command, automatic sync, relationship changes)?
+- Performance: Large trees with thousands of people
+- User experience: Discoverability, configuration, maintenance
+- Alternative approaches: Could reference numbering systems solve this differently?
+
+**Related Features**:
+- Reference numbering systems (Ahnentafel, d'Aboville) may provide overlapping functionality
+- Canvas navigation features (ancestor/descendant canvas linking)
+
+### Relationship History & Undo
+
+- Command history modal tracking relationship changes made through Canvas Roots UI
+- Manual undo commands to reverse recent relationship edits
+- Relationship History panel showing recent changes with rollback options
+- Change tracking for all relationship modifications (parent, spouse, child edits)
+- Configurable history retention period
+
 ### Reference Numbering Systems
 
 - Ahnentafel numbering system support
@@ -210,6 +256,14 @@ No features currently in active development. See Planned Features below for road
 - Large tree optimization (1000+ people)
 - Incremental layout updates
 - Canvas rendering performance improvements
+- Memory usage optimization for large family databases
+- Lazy loading for large tree views
+
+**Export & Import:**
+- Additional export formats (PDF, SVG, family tree charts)
+- ✅ GEDCOM export with birth/death places, occupation, and gender (Completed in v0.2.0-beta)
+- Additional GEDCOM fields (sources, notes from file body, events beyond birth/death)
+- GEDCOM import validation and error reporting improvements
 
 ---
 
@@ -218,11 +272,12 @@ No features currently in active development. See Planned Features below for road
 See [known-limitations.md](known-limitations.md) for a complete list of current limitations and workarounds.
 
 **Key Limitations:**
-- No GEDCOM export yet (import only)
 - No reference numbering systems
 - Living person privacy not yet implemented
 - Single vault only (no multi-vault merging)
 - No interactive tree previews yet
+- No undo/redo for Bases edits (Bases platform limitation)
+- No bulk operations from Bases multi-select (Bases platform limitation)
 
 ---
 

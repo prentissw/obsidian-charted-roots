@@ -19,6 +19,9 @@ export interface PersonNode {
 	name: string;
 	birthDate?: string;
 	deathDate?: string;
+	birthPlace?: string;
+	deathPlace?: string;
+	occupation?: string;
 	sex?: string;
 	file: TFile;
 
@@ -212,8 +215,8 @@ export class FamilyGraphService {
 
 	/**
 	 * Determines the collection name for a group of people
-	 * Uses conflict resolution: most common collection_name wins, ties broken alphabetically
-	 * Returns undefined if no one in the group has a collection_name
+	 * Uses conflict resolution: most common group_name wins, ties broken alphabetically
+	 * Returns undefined if no one in the group has a group_name
 	 */
 	private getCollectionName(people: PersonNode[]): string | undefined {
 		// Count frequency of each collection name
@@ -759,6 +762,9 @@ export class FamilyGraphService {
 			name,
 			birthDate,
 			deathDate,
+			birthPlace: fm.birth_place,
+			deathPlace: fm.death_place,
+			occupation: fm.occupation,
 			sex: fm.sex || fm.gender,
 			file,
 			fatherCrId,
@@ -766,7 +772,7 @@ export class FamilyGraphService {
 			spouseCrIds,
 			spouses, // Enhanced spouse relationships with metadata (if present)
 			childrenCrIds, // Now populated from frontmatter
-			collectionName: fm.collection_name, // Optional collection name
+			collectionName: fm.group_name, // Optional group name
 			collection: fm.collection // Optional user-defined collection
 		};
 	}

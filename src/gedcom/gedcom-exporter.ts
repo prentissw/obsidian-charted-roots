@@ -248,21 +248,36 @@ export class GedcomExporter {
 		}
 
 		// Birth
-		if (person.birthDate) {
+		if (person.birthDate || person.birthPlace) {
 			lines.push('1 BIRT');
-			const birthDate = this.formatDateForGedcom(person.birthDate);
-			if (birthDate) {
-				lines.push(`2 DATE ${birthDate}`);
+			if (person.birthDate) {
+				const birthDate = this.formatDateForGedcom(person.birthDate);
+				if (birthDate) {
+					lines.push(`2 DATE ${birthDate}`);
+				}
+			}
+			if (person.birthPlace) {
+				lines.push(`2 PLAC ${person.birthPlace}`);
 			}
 		}
 
 		// Death
-		if (person.deathDate) {
+		if (person.deathDate || person.deathPlace) {
 			lines.push('1 DEAT');
-			const deathDate = this.formatDateForGedcom(person.deathDate);
-			if (deathDate) {
-				lines.push(`2 DATE ${deathDate}`);
+			if (person.deathDate) {
+				const deathDate = this.formatDateForGedcom(person.deathDate);
+				if (deathDate) {
+					lines.push(`2 DATE ${deathDate}`);
+				}
 			}
+			if (person.deathPlace) {
+				lines.push(`2 PLAC ${person.deathPlace}`);
+			}
+		}
+
+		// Occupation
+		if (person.occupation) {
+			lines.push(`1 OCCU ${person.occupation}`);
 		}
 
 		// UUID preservation using _UID custom tag

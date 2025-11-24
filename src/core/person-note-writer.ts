@@ -17,6 +17,10 @@ export interface PersonData {
 	crId?: string;
 	birthDate?: string;
 	deathDate?: string;
+	birthPlace?: string;
+	deathPlace?: string;
+	occupation?: string;
+	gender?: string;
 	father?: string;        // Legacy: name-based relationship (deprecated)
 	mother?: string;        // Legacy: name-based relationship (deprecated)
 	spouse?: string[];      // Legacy: name-based relationship (deprecated)
@@ -26,6 +30,8 @@ export interface PersonData {
 	motherName?: string;    // Mother's name for wikilink display
 	spouseCrId?: string[];  // Spouse(s) cr_id for reliable resolution
 	spouseName?: string[];  // Spouse(s) name for wikilink display
+	childCrId?: string[];   // Children's cr_ids for reliable resolution
+	childName?: string[];   // Children's names for wikilink display
 }
 
 /**
@@ -84,6 +90,22 @@ export async function createPersonNote(
 
 	if (person.deathDate) {
 		frontmatter.died = person.deathDate;
+	}
+
+	if (person.birthPlace) {
+		frontmatter.birth_place = person.birthPlace;
+	}
+
+	if (person.deathPlace) {
+		frontmatter.death_place = person.deathPlace;
+	}
+
+	if (person.occupation) {
+		frontmatter.occupation = person.occupation;
+	}
+
+	if (person.gender) {
+		frontmatter.gender = person.gender;
 	}
 
 	// Handle relationships using dual storage: wikilinks for Obsidian + _id fields for reliability
@@ -148,6 +170,29 @@ export async function createPersonNote(
 			frontmatter.spouse = person.spouse.map(s => `"[[${s}]]"`);
 		}
 		logger.debug('spouse', `Added (legacy): ${JSON.stringify(person.spouse)}`);
+	}
+
+	// Children relationship(s) (dual storage)
+	if (person.childCrId && person.childCrId.length > 0) {
+		if (person.childName && person.childName.length === person.childCrId.length) {
+			// Dual storage with both names and IDs
+			if (person.childName.length === 1) {
+				frontmatter.child = `"[[${person.childName[0]}]]"`;
+				frontmatter.children_id = person.childCrId[0];
+			} else {
+				frontmatter.child = person.childName.map(c => `"[[${c}]]"`);
+				frontmatter.children_id = person.childCrId;
+			}
+			logger.debug('children', `Added (dual): wikilinks=${JSON.stringify(person.childName)}, ids=${JSON.stringify(person.childCrId)}`);
+		} else {
+			// ID only (fallback for legacy data or missing names)
+			if (person.childCrId.length === 1) {
+				frontmatter.children_id = person.childCrId[0];
+			} else {
+				frontmatter.children_id = person.childCrId;
+			}
+			logger.debug('children', `Added (id only): ${JSON.stringify(person.childCrId)}`);
+		}
 	}
 
 	logger.debug('frontmatter', `Final: ${JSON.stringify(frontmatter)}`);

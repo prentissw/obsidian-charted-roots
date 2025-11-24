@@ -165,12 +165,12 @@ canvas-roots/
 **Current Status (v0.1.1):**
 - ✅ Detected family components (backend working via `FamilyGraphService.findAllFamilyComponents()`)
 - ✅ Multi-family UI in Tree Generation tab (sidebar shows "Family 1", "Family 2", etc.)
-- ❌ No component naming support (`collection_name` property not implemented)
+- ❌ No component naming support (`group_name` property not implemented)
 - ❌ No user collections support (`collection` property not implemented)
 - ❌ No Collections tab in Control Center
 
 **Phase 1: Component Naming (v0.2.0-beta) - Planned:**
-- Add `collection_name` property support to person notes
+- Add `group_name` property support to person notes
 - Update UI to show custom names instead of "Family 1", "Family 2"
 - Implement naming conflict resolution (most common name wins)
 - Update family group sidebar to display custom names
@@ -208,11 +208,11 @@ When contributing or implementing features for collections support, follow this 
 
 1. **Update PersonNode interface** (src/models/person.ts or inline)
    - Add optional `collectionName?: string` field
-   - Update `extractPersonNode()` to read `collection_name` from frontmatter
+   - Update `extractPersonNode()` to read `group_name` from frontmatter
 
 2. **Update FamilyGraphService** (src/core/family-graph.ts)
    - Add `findCollectionName()` helper method (see specification.md §3.4.2)
-   - Update `getFamilyComponents()` to populate `displayName` from `collection_name`
+   - Update `getFamilyComponents()` to populate `displayName` from `group_name`
    - Implement naming conflict resolution (most common name wins)
 
 3. **Update Tree Generation UI** (src/ui/control-center.ts)
@@ -221,7 +221,7 @@ When contributing or implementing features for collections support, follow this 
    - No other UI changes needed
 
 4. **Documentation**
-   - Update user guide with `collection_name` property usage
+   - Update user guide with `group_name` property usage
    - Add examples of naming family components
 
 ### Phase 2: User Collections (v0.3.0-beta)
@@ -443,7 +443,7 @@ Example:
 // Computed on every access, never stored
 interface FamilyComponent {
   index: number;              // 0, 1, 2... (sorted by size)
-  displayName: string;        // From collection_name or "Family 1"
+  displayName: string;        // From group_name or "Family 1"
   size: number;
   people: PersonNode[];
   representative: PersonNode;
@@ -464,7 +464,7 @@ collection: "Paternal Line"  # or "House Stark", etc.
    - Users control membership by editing relationships, not stored IDs
 
 2. **Component naming = STORED (optional)**
-   - `collection_name` property in person notes
+   - `group_name` property in person notes
    - Naming conflict resolution: most common name wins
    - Falls back to "Family 1", "Family 2" if no custom names
 
@@ -480,7 +480,7 @@ collection: "Paternal Line"  # or "House Stark", etc.
 
 **Implementation Phases:**
 
-- **Phase 1 (v0.2.0-beta):** Component naming with `collection_name` property
+- **Phase 1 (v0.2.0-beta):** Component naming with `group_name` property
 - **Phase 2 (v0.3.0-beta):** User collections with `collection` property and Collections tab
 - **Phase 3 (v1.x.x):** Advanced features (cross-collection trees, collection-specific styling)
 

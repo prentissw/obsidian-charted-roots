@@ -111,13 +111,13 @@ tags:
 - Always accurate, never stale
 - Used for "Generate all trees" command
 - Display as "Family 1", "Family 2", etc.
-- Optional `collection_name` property for custom labels
+- Optional `group_name` property for custom labels
 
 ```yaml
 ---
 cr_id: abc-123
 name: John Smith
-collection_name: "Smith Family Tree"  # Optional, sets display name
+group_name: "Smith Family Tree"  # Optional, sets display name
 ---
 ```
 
@@ -204,7 +204,7 @@ family_component_id: "component-1"  # What happens when relationships change?
 
 **Optional Component Names**
 ```yaml
-collection_name: "Smith Family Tree"
+group_name: "Smith Family Tree"
 ```
 
 - Any person in a component can set this
@@ -233,7 +233,7 @@ collection: "Paternal Line"
 // Detected family component (computed)
 interface FamilyComponent {
   index: number;              // 0, 1, 2... (sorted by size, largest first)
-  displayName: string;        // From collection_name or "Family 1"
+  displayName: string;        // From group_name or "Family 1"
   size: number;               // Person count
   people: PersonNode[];       // All members
   representative: PersonNode; // Oldest by birth or first alphabetically
@@ -279,9 +279,9 @@ class FamilyGraphService {
   }
 
   private findCollectionName(people: PersonNode[]): string | null {
-    // Scan frontmatter for collection_name property
+    // Scan frontmatter for group_name property
     const names = people
-      .map(p => this.getPropertyFromFrontmatter(p.file, 'collection_name'))
+      .map(p => this.getPropertyFromFrontmatter(p.file, 'group_name'))
       .filter(n => n);
 
     if (names.length === 0) return null;
@@ -334,7 +334,7 @@ Browse by:
 [When "Detected families" selected]
 Sidebar shows:
   ✓ All families (80 people)
-  ✓ Smith Family (45 people)      ← Custom name from collection_name
+  ✓ Smith Family (45 people)      ← Custom name from group_name
   ✓ Family 2 (20 people)           ← Default name
   ✓ Family 3 (15 people)
 
@@ -355,7 +355,7 @@ properties:
     displayName: "Collection"
     type: text  # Or dropdown with autocomplete
 
-  collection_name:
+  group_name:
     displayName: "Family Name"
     type: text
     help: "Sets display name for detected family group"
@@ -504,17 +504,17 @@ extendedRelationships:
 
 ### **Phase 1: Collection Naming (Minimal)** ✅ **COMPLETED (v0.1.2)**
 
-**Scope:** Support `collection_name` property for detected components
+**Scope:** Support `group_name` property for detected components
 
 **Implementation:**
-1. ✅ Modified `getFamilyComponents()` to check for `collection_name`
+1. ✅ Modified `getFamilyComponents()` to check for `group_name`
 2. ✅ Used as display label in sidebar
 3. ✅ Updated documentation
 4. ✅ Renamed UI to "group name" for clarity (per user feedback)
 5. ✅ Added context menu option: "Set group name"
 
 **Result:**
-- "Family 1" → "Smith Family" (when anyone sets collection_name)
+- "Family 1" → "Smith Family" (when anyone sets group_name)
 - Zero config required for basic users
 - Works with existing UI
 
@@ -595,7 +595,7 @@ extendedRelationships:
 
 ### **Case 2: Component Name Conflicts**
 
-**Scenario:** Multiple people set different `collection_name` values
+**Scenario:** Multiple people set different `group_name` values
 
 **Solution:** Use most common name, or alphabetically first if tie
 
@@ -740,7 +740,7 @@ We could use `#collection/name` tags instead of `collection` property.
 **What's Implemented:**
 
 **v0.1.2 Features:**
-- Auto-detected family groups with customizable group names (`collection_name` property)
+- Auto-detected family groups with customizable group names (`group_name` property)
 - User-defined collections (`collection` property) for manual organization
 - Context menu actions: "Set group name" and "Add to collection"
 - Collections tab with three browse modes: All people, Detected families, My collections

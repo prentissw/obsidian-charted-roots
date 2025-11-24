@@ -31,6 +31,9 @@ export default class CanvasRootsPlugin extends Plugin {
 		// Initialize logger with saved log level
 		LoggerFactory.setLogLevel(this.settings.logLevel);
 
+		// Run migration for property rename (collection_name -> group_name)
+		this.migrateCollectionNameToGroupName();
+
 		// Add settings tab
 		this.addSettingTab(new CanvasRootsSettingTab(this.app, this));
 
@@ -332,6 +335,18 @@ export default class CanvasRootsPlugin extends Plugin {
 											await this.promptSetCollection(file);
 										});
 								});
+
+								// Mark as root person
+								submenu.addItem((subItem) => {
+									const cache = this.app.metadataCache.getFileCache(file);
+									const isRootPerson = cache?.frontmatter?.root_person === true;
+									subItem
+										.setTitle(isRootPerson ? 'Unmark as root person' : 'Mark as root person')
+										.setIcon('crown')
+										.onClick(async () => {
+											await this.toggleRootPerson(file);
+										});
+								});
 							});
 						} else {
 							// Mobile: flat menu with prefix
@@ -433,6 +448,17 @@ export default class CanvasRootsPlugin extends Plugin {
 										await this.promptSetCollection(file);
 									});
 							});
+
+							menu.addItem((item) => {
+								const cache = this.app.metadataCache.getFileCache(file);
+								const isRootPerson = cache?.frontmatter?.root_person === true;
+								item
+									.setTitle(isRootPerson ? 'Canvas Roots: Unmark as root person' : 'Canvas Roots: Mark as root person')
+									.setIcon('crown')
+									.onClick(async () => {
+										await this.toggleRootPerson(file);
+									});
+							});
 						}
 					}
 				}
@@ -500,6 +526,15 @@ export default class CanvasRootsPlugin extends Plugin {
 										new FolderScanModal(this.app, file).open();
 									});
 							});
+
+							submenu.addItem((subItem) => {
+								subItem
+									.setTitle('New base from template')
+									.setIcon('table')
+									.onClick(async () => {
+										await this.createBaseTemplate(file);
+									});
+							});
 						});
 					} else {
 						// Mobile: flat menu with prefix
@@ -553,6 +588,15 @@ export default class CanvasRootsPlugin extends Plugin {
 								.setIcon('shield-alert')
 								.onClick(async () => {
 									new FolderScanModal(this.app, file).open();
+								});
+						});
+
+						menu.addItem((item) => {
+							item
+								.setTitle('Canvas Roots: New base from template')
+								.setIcon('table')
+								.onClick(async () => {
+									await this.createBaseTemplate(file);
 								});
 						});
 					}
@@ -708,9 +752,9 @@ export default class CanvasRootsPlugin extends Plugin {
 	}
 
 	private async promptSetCollectionName(file: TFile): Promise<void> {
-		// Get current collection_name if it exists
+		// Get current group_name if it exists
 		const cache = this.app.metadataCache.getFileCache(file);
-		const currentCollectionName = cache?.frontmatter?.collection_name || '';
+		const currentCollectionName = cache?.frontmatter?.group_name || '';
 
 		return new Promise((resolve) => {
 			const modal = new Modal(this.app);
@@ -750,12 +794,12 @@ export default class CanvasRootsPlugin extends Plugin {
 			saveBtn.addEventListener('click', async () => {
 				const collectionName = input.value.trim();
 
-				// Update or remove collection_name in frontmatter
+				// Update or remove group_name in frontmatter
 				await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 					if (collectionName) {
-						frontmatter.collection_name = collectionName;
+						frontmatter.group_name = collectionName;
 					} else {
-						delete frontmatter.collection_name;
+						delete frontmatter.group_name;
 					}
 				});
 
@@ -881,6 +925,26 @@ export default class CanvasRootsPlugin extends Plugin {
 				input.select();
 			}, 50);
 		});
+	}
+
+	private async toggleRootPerson(file: TFile): Promise<void> {
+		// Get current root_person status
+		const cache = this.app.metadataCache.getFileCache(file);
+		const isRootPerson = cache?.frontmatter?.root_person === true;
+
+		// Toggle the root_person property
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			if (isRootPerson) {
+				delete frontmatter.root_person;
+			} else {
+				frontmatter.root_person = true;
+			}
+		});
+
+		new Notice(isRootPerson
+			? 'Unmarked as root person'
+			: 'Marked as root person'
+		);
 	}
 
 	private async generateTreeForCurrentNote() {
@@ -1167,15 +1231,16 @@ export default class CanvasRootsPlugin extends Plugin {
 		}
 	}
 
-	private async createBaseTemplate() {
+	private async createBaseTemplate(folder?: TFolder) {
 		try {
-			// Suggest a filename
-			const defaultPath = 'family-members.base';
+			// Determine the target path
+			const folderPath = folder ? folder.path + '/' : '';
+			const defaultPath = folderPath + 'family-members.base';
 
 			// Check if file already exists
 			const existingFile = this.app.vault.getAbstractFileByPath(defaultPath);
 			if (existingFile) {
-				new Notice('Base template already exists at family-members.base');
+				new Notice(`Base template already exists at ${defaultPath}`);
 				// Open the existing file
 				if (existingFile instanceof TFile) {
 					const leaf = this.app.workspace.getLeaf(false);
@@ -1195,6 +1260,38 @@ export default class CanvasRootsPlugin extends Plugin {
 		} catch (error) {
 			console.error('Error creating Base template:', error);
 			new Notice('Failed to create Base template. Check console for details.');
+		}
+	}
+
+	/**
+	 * Migrate collection_name property to group_name
+	 * Runs once on plugin load to ensure all person notes use the new property name
+	 */
+	private async migrateCollectionNameToGroupName() {
+		try {
+			const files = this.app.vault.getMarkdownFiles();
+			let migratedCount = 0;
+
+			for (const file of files) {
+				const cache = this.app.metadataCache.getFileCache(file);
+
+				// Check if this file has collection_name but not group_name
+				if (cache?.frontmatter?.collection_name && !cache.frontmatter?.group_name) {
+					await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+						// Copy collection_name to group_name
+						frontmatter.group_name = frontmatter.collection_name;
+						// Remove old property
+						delete frontmatter.collection_name;
+					});
+					migratedCount++;
+				}
+			}
+
+			if (migratedCount > 0) {
+				logger.info('migration', `Migrated ${migratedCount} files from collection_name to group_name`);
+			}
+		} catch (error) {
+			logger.error('migration', 'Error during collection_name to group_name migration', error);
 		}
 	}
 }

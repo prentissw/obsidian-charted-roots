@@ -1,132 +1,216 @@
 /**
  * Obsidian Bases template for managing Canvas Roots family tree data
  */
-export const BASE_TEMPLATE = `# Canvas Roots - Family Members Base Template
-#
-# This base provides table views for managing family tree data.
-# Copy this file to your vault and customize as needed.
-#
-# Learn more: https://github.com/banisterious/obsidian-canvas-roots
-
+export const BASE_TEMPLATE = `visibleProperties:
+  - formula.display_name
+  - note.father
+  - note.mother
+  - note.spouse
+  - note.child
+  - formula.birth_display
+  - formula.death_display
+  - note.gender
+  - note.collection
+  - note.group_name
+  - note.root_person
+summaries:
+  generation_span: if(values.length > 0, values.max().year() - values.min().year(), 0)
 filters:
   or:
     - file.hasTag("person")
     - file.hasProperty("cr_id")
-
 formulas:
-  # Display the person's full name or fallback to filename
-  display_name: 'name || file.name'
-
-  # Calculate lifespan if both dates are present
-  full_lifespan: 'if(born && died, died.year() - born.year() + " years", "")'
-
-  # Calculate current age if born but not died
-  age_now: 'if(born && !died, now().year() - born.year(), "")'
-
-  # Format birth date for display
-  birth_display: 'if(born, born.format("YYYY-MM-DD"), "")'
-
-  # Format death date for display
-  death_display: 'if(died, died.format("YYYY-MM-DD"), "")'
-
+  display_name: name || file.name
+  full_lifespan: if(born && died, died.year() - born.year() + " years", "")
+  age_now: if(born && !died, now().year() - born.year(), "")
+  birth_display: if(born, born.format("YYYY-MM-DD"), "")
+  death_display: if(died, died.format("YYYY-MM-DD"), "")
 properties:
   cr_id:
-    displayName: "ID"
+    displayName: ID
   formula.display_name:
-    displayName: "Name"
+    displayName: Name
   note.father:
-    displayName: "Father"
+    displayName: Father
   note.mother:
-    displayName: "Mother"
+    displayName: Mother
   note.spouse:
-    displayName: "Spouse(s)"
+    displayName: Spouse(s)
   note.child:
-    displayName: "Children"
+    displayName: Children
   formula.birth_display:
-    displayName: "Born"
+    displayName: Born
   formula.death_display:
-    displayName: "Died"
+    displayName: Died
   formula.full_lifespan:
-    displayName: "Lifespan"
+    displayName: Lifespan
   formula.age_now:
-    displayName: "Age"
+    displayName: Age
   note.gender:
-    displayName: "Gender"
+    displayName: Gender
+  note.collection:
+    displayName: Collection
+  note.group_name:
+    displayName: Group name
+  note.root_person:
+    displayName: Root person
   file.path:
-    displayName: "Location"
-
-summaries:
-  # Custom summary to show generation span
-  generation_span: 'if(values.length > 0, values.max().year() - values.min().year(), 0)'
-
+    displayName: Location
 views:
-  # Default view: All family members ordered by birth date
   - type: table
-    name: "All Family Members"
+    name: All Family Members
+    filters:
+      and:
+        - note.cr_id
     order:
-      - note.born
+      - born
       - file.name
-    filters:
-      and:
-        - "note.cr_id"  # Only show notes with cr_id
+      - father
+      - mother
+      - spouse
+      - child
     summaries:
-      note.born: Earliest
-      note.died: Latest
+      born: Earliest
+      died: Latest
       formula.full_lifespan: Average
-
-  # Living members only
   - type: table
-    name: "Living Members"
+    name: Living Members
     filters:
       and:
-        - "note.cr_id"
-        - "!note.died"  # No death date
+        - note.cr_id
+        - "!note.died"
     order:
-      - note.born
+      - born
     summaries:
       formula.age_now: Average
-
-  # Deceased members only
   - type: table
-    name: "Deceased Members"
+    name: Deceased Members
     filters:
       and:
-        - "note.cr_id"
-        - "note.died"  # Has death date
+        - note.cr_id
+        - note.died
     order:
-      - note.died
+      - died
     summaries:
       formula.full_lifespan: Average
-      note.died: Latest
-
-  # Recent additions (last 30 days)
+      died: Latest
   - type: table
-    name: "Recently Added"
+    name: Recently Added
     filters:
       and:
-        - "note.cr_id"
-        - "file.ctime > now() - '30 days'"
+        - note.cr_id
+        - file.ctime > now() - '30 days'
     order:
       - file.ctime
     limit: 20
-
-  # Members without parents defined
   - type: table
-    name: "Missing Parents"
+    name: Missing Parents
     filters:
       and:
-        - "note.cr_id"
+        - note.cr_id
         - "!note.father && !note.mother"
     order:
       - file.name
-
-  # Members without complete data
   - type: table
-    name: "Incomplete Data"
+    name: Incomplete Data
     filters:
       and:
-        - "note.cr_id"
+        - note.cr_id
         - "!note.born || !note.name"
     order:
       - file.name
+  - type: table
+    name: By Collection
+    filters:
+      and:
+        - note.cr_id
+        - note.collection
+    order:
+      - collection
+      - file.name
+    summaries:
+      collection: Count
+      born: Earliest
+      died: Latest
+  - type: table
+    name: By Family Group
+    filters:
+      and:
+        - note.cr_id
+        - note.group_name
+    order:
+      - group_name
+      - file.name
+    summaries:
+      group_name: Count
+      born: Earliest
+      died: Latest
+  - type: table
+    name: Unassigned Collections
+    filters:
+      and:
+        - note.cr_id
+        - "!note.collection"
+    order:
+      - file.name
+  - type: table
+    name: Single Parents
+    filters:
+      and:
+        - note.cr_id
+        - note.child
+        - "!note.spouse"
+    order:
+      - file.name
+    summaries:
+      child: Count
+  - type: table
+    name: Childless Couples
+    filters:
+      and:
+        - note.cr_id
+        - note.spouse
+        - "!note.child"
+    order:
+      - file.name
+  - type: table
+    name: Multiple Marriages
+    filters:
+      and:
+        - note.cr_id
+        - note.spouse
+    order:
+      - file.name
+  - type: table
+    name: Sibling Groups
+    filters:
+      and:
+        - note.cr_id
+        - note.father
+    order:
+      - father
+      - mother
+      - born
+    summaries:
+      father: Count
+  - type: table
+    name: Root Generation
+    filters:
+      and:
+        - note.cr_id
+        - "!note.father && !note.mother"
+    order:
+      - born
+    summaries:
+      child: Count
+  - type: table
+    name: Marked Root Persons
+    filters:
+      and:
+        - note.cr_id
+        - note.root_person = true
+    order:
+      - born
+    summaries:
+      child: Count
 `;

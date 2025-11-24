@@ -1,6 +1,6 @@
 # Canvas Roots: Genealogical Family Tree Plugin for Obsidian
 
-> **Beta Status (v0.2.1):** Canvas Roots is feature-complete for core genealogical workflows. All essential features are stable and production-ready (GEDCOM import/export, tree generation, canvas styling, collections). Advanced features are planned for future releases. See [Roadmap](docs/roadmap.md) for details.
+> **Beta Status (v0.2.2):** Canvas Roots is feature-complete for core genealogical workflows. All essential features are stable and production-ready (GEDCOM import/export, bidirectional sync, tree generation, canvas styling, collections). Advanced features are planned for future releases. See [Roadmap](docs/roadmap.md) for details.
 
 **Canvas Roots** is an Obsidian plugin that automatically generates complex family trees directly onto the Canvas using specialized genealogical layout algorithms for non-overlapping, relationship-aware positioning.
 
@@ -9,9 +9,9 @@ This plugin is designed for genealogists, historians, and world-builders. It tra
 
 ## ✨ Key Features
 
-### Available in Beta (v0.2.1)
+### Available in Beta (v0.2.2)
 
-- **GEDCOM Import/Export:** Full round-trip support for GEDCOM 5.5.1 format. Import family trees from popular genealogy software (Gramps, Ancestry, FamilySearch) and export back to .ged format with UUID preservation, collection codes, and marriage metadata.
+- **GEDCOM Import/Export:** Full round-trip support for GEDCOM 5.5.1 format with pre-import validation and comprehensive import results modal. Import family trees from popular genealogy software (Gramps, Ancestry, FamilySearch) with birth/death places, occupation, and gender data. Export back to .ged format with UUID preservation, collection codes, and marriage metadata.
 
 - **Automated Layout:** Generate precise, non-overlapping pedigree (ancestor) and descendant charts using specialized genealogical layout algorithms designed for complex family relationships.
 
@@ -27,7 +27,7 @@ This plugin is designed for genealogists, historians, and world-builders. It tra
 
 - **Multiple Spouse Support:** Track complex marital histories with flat indexed YAML properties (`spouse1`, `spouse2`, etc.) including marriage dates, locations, and status. Optionally display spouse edges with marriage metadata labels on the canvas (toggle in Canvas Settings).
 
-- **Obsidian Bases Compatible:** Designed to work seamlessly with [Obsidian Bases](https://help.obsidian.md/bases) for efficient bulk data entry and management. Includes ready-to-use Base template.
+- **Obsidian Bases Compatible:** Designed to work seamlessly with [Obsidian Bases](https://help.obsidian.md/bases) for efficient bulk data entry and management. Includes ready-to-use Base template with six pre-configured relationship query views (Single Parents, Childless Couples, Multiple Marriages, Sibling Groups, Root Generation, Marked Root Persons).
 
 - **Bidirectional Relationship Sync:** Automatically maintains reciprocal relationships across your family tree. When you set someone as a parent in one note, Canvas Roots automatically adds the child relationship in the parent's note. When you delete a relationship, the reciprocal link is automatically removed. Works seamlessly with Bases table edits, direct frontmatter modifications, and external editors.
 
@@ -38,6 +38,8 @@ This plugin is designed for genealogists, historians, and world-builders. It tra
 - **Context Menu Actions:** Right-click person notes to add relationships, validate data integrity, or find canvases. Right-click folders to scan for relationship issues, import GEDCOM files, or export folder contents to GEDCOM. Right-click canvas files to regenerate or view statistics. Full desktop and mobile support.
 
 - **Collections & Groups:** Organize and browse people using auto-detected family groups (with customizable group names) or user-defined collections. Filter tree generation by collection and view cross-collection connections to identify bridge people connecting different parts of your family network.
+
+- **Root Person Marking:** Mark specific people as "root persons" to track key lineage anchor points. Use the crown-icon context menu action to designate research starting points, track multiple lineages simultaneously, and filter root persons in Obsidian Bases views.
 
 - **Excalidraw Export:** Export family tree canvases to Excalidraw format for manual annotation, drawing, and customization. Preserves node positioning and colors while enabling hand-drawn styling and freeform annotations.
 

@@ -5,7 +5,7 @@
  */
 
 import { App, Notice, TFile, normalizePath } from 'obsidian';
-import { GedcomParser, GedcomData, GedcomIndividual } from './gedcom-parser';
+import { GedcomParser, GedcomData, GedcomIndividual, GedcomValidationResult } from './gedcom-parser';
 import { createPersonNote, PersonData } from '../core/person-note-writer';
 import { generateCrId } from '../core/uuid';
 
@@ -23,11 +23,14 @@ export interface GedcomImportOptions {
  */
 export interface GedcomImportResult {
 	success: boolean;
-	individualsProcessed: number;
-	notesCreated: number;
+	individualsImported: number; // Renamed from individualsProcessed for clarity
+	familiesCreated: number; // Renamed from notesCreated for clarity
+	individualsProcessed: number; // Deprecated, use individualsImported
+	notesCreated: number; // Deprecated, use familiesCreated
 	notesUpdated: number;
 	notesSkipped: number;
 	errors: string[];
+	validation?: GedcomValidationResult;
 	gedcomData?: GedcomData;
 	fileName?: string;
 	malformedDataCount?: number; // Count of people with missing/invalid data
@@ -126,6 +129,8 @@ export class GedcomImporter {
 	): Promise<GedcomImportResult> {
 		const result: GedcomImportResult = {
 			success: false,
+			individualsImported: 0,
+			familiesCreated: 0,
 			individualsProcessed: 0,
 			notesCreated: 0,
 			notesUpdated: 0,
@@ -136,6 +141,23 @@ export class GedcomImporter {
 		};
 
 		try {
+			// Validate GEDCOM first
+			new Notice('Validating GEDCOM file...');
+			const validation = GedcomParser.validate(content);
+			result.validation = validation;
+
+			// Check for critical errors
+			if (!validation.valid) {
+				result.errors.push(...validation.errors.map(e => e.message));
+				new Notice(`GEDCOM validation failed: ${validation.errors[0].message}`);
+				return result;
+			}
+
+			// Show validation summary
+			if (validation.warnings.length > 0) {
+				new Notice(`Found ${validation.warnings.length} warning(s) - import will continue`);
+			}
+
 			// Parse GEDCOM
 			new Notice('Parsing GEDCOM file...');
 			const gedcomData = GedcomParser.parse(content);
@@ -163,8 +185,10 @@ export class GedcomImporter {
 					);
 
 					gedcomToCrId.set(gedcomId, crId);
-					result.notesCreated++;
-					result.individualsProcessed++;
+					result.individualsImported++;
+					result.familiesCreated++; // Count each person note
+					result.individualsProcessed++; // Keep for backward compat
+					result.notesCreated++; // Keep for backward compat
 
 					// Track malformed data (missing name or dates)
 					if (!individual.name || individual.name.trim() === '' ||
@@ -234,7 +258,11 @@ export class GedcomImporter {
 			name: individual.name || 'Unknown',
 			crId: crId,
 			birthDate: GedcomParser.gedcomDateToISO(individual.birthDate || ''),
-			deathDate: GedcomParser.gedcomDateToISO(individual.deathDate || '')
+			deathDate: GedcomParser.gedcomDateToISO(individual.deathDate || ''),
+			birthPlace: individual.birthPlace,
+			deathPlace: individual.deathPlace,
+			occupation: individual.occupation,
+			gender: individual.sex === 'M' ? 'Male' : individual.sex === 'F' ? 'Female' : undefined
 		};
 
 		// Add relationship references with both GEDCOM IDs (temporary) and names
@@ -258,6 +286,27 @@ export class GedcomImporter {
 				const spouse = gedcomData.individuals.get(ref);
 				return spouse?.name || 'Unknown';
 			});
+		}
+
+		// Extract children from families where this person is a parent
+		const childRefs: string[] = [];
+		const childNames: string[] = [];
+		for (const [, family] of gedcomData.families) {
+			// Check if this individual is a parent in this family
+			if (family.husbandRef === individual.id || family.wifeRef === individual.id) {
+				// Add all children from this family
+				for (const childRef of family.childRefs) {
+					if (!childRefs.includes(childRef)) {
+						childRefs.push(childRef);
+						const child = gedcomData.individuals.get(childRef);
+						childNames.push(child?.name || 'Unknown');
+					}
+				}
+			}
+		}
+		if (childRefs.length > 0) {
+			personData.childCrId = childRefs; // Temporary GEDCOM IDs
+			personData.childName = childNames;
 		}
 
 		// Write person note using the createPersonNote function

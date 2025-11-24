@@ -17,6 +17,7 @@ export interface GedcomIndividual {
 	birthPlace?: string;
 	deathDate?: string;
 	deathPlace?: string;
+	occupation?: string;
 	fatherRef?: string;
 	motherRef?: string;
 	spouseRefs: string[];
@@ -72,9 +73,99 @@ interface GedcomLine {
 }
 
 /**
+ * Validation result
+ */
+export interface GedcomValidationResult {
+	valid: boolean;
+	errors: Array<{ line?: number; message: string }>;
+	warnings: Array<{ line?: number; message: string }>;
+	stats: {
+		individualCount: number;
+		familyCount: number;
+		version?: string;
+	};
+}
+
+/**
  * Parse a GEDCOM file into structured data
  */
 export class GedcomParser {
+	/**
+	 * Validate GEDCOM content before parsing
+	 */
+	static validate(content: string): GedcomValidationResult {
+		const result: GedcomValidationResult = {
+			valid: true,
+			errors: [],
+			warnings: [],
+			stats: {
+				individualCount: 0,
+				familyCount: 0
+			}
+		};
+
+		if (!content || content.trim().length === 0) {
+			result.valid = false;
+			result.errors.push({ message: 'GEDCOM file is empty' });
+			return result;
+		}
+
+		try {
+			const lines = this.parseLines(content);
+
+			// Check for required header
+			const hasHeader = lines.some(l => l.level === 0 && l.tag === 'HEAD');
+			if (!hasHeader) {
+				result.errors.push({ message: 'Missing required GEDCOM header (0 HEAD)' });
+				result.valid = false;
+			}
+
+			// Check for trailer
+			const hasTrailer = lines.some(l => l.level === 0 && l.tag === 'TRLR');
+			if (!hasTrailer) {
+				result.warnings.push({ message: 'Missing GEDCOM trailer (0 TRLR)' });
+			}
+
+			// Count records and check version
+			let inHeader = false;
+			for (const line of lines) {
+				if (line.level === 0) {
+					if (line.tag === 'HEAD') {
+						inHeader = true;
+					} else if (line.tag === 'TRLR') {
+						inHeader = false;
+					} else if (line.xref && line.tag === 'INDI') {
+						result.stats.individualCount++;
+					} else if (line.xref && line.tag === 'FAM') {
+						result.stats.familyCount++;
+					}
+				}
+
+				if (inHeader && line.tag === 'VERS') {
+					result.stats.version = line.value;
+					// Warn if not 5.5 or 5.5.1
+					if (line.value && !line.value.startsWith('5.5')) {
+						result.warnings.push({
+							line: line.lineNumber,
+							message: `GEDCOM version ${line.value} may not be fully supported. Recommended: 5.5 or 5.5.1`
+						});
+					}
+				}
+			}
+
+			// Warn if no individuals
+			if (result.stats.individualCount === 0) {
+				result.warnings.push({ message: 'No individual records found in GEDCOM file' });
+			}
+
+		} catch (error) {
+			result.valid = false;
+			result.errors.push({ message: `Parse error: ${error.message}` });
+		}
+
+		return result;
+	}
+
 	/**
 	 * Parse GEDCOM content into structured data
 	 */
@@ -233,6 +324,10 @@ export class GedcomParser {
 
 			case 'SEX':
 				individual.sex = line.value === 'M' ? 'M' : line.value === 'F' ? 'F' : 'U';
+				break;
+
+			case 'OCCU':
+				individual.occupation = line.value;
 				break;
 
 			case 'DATE':

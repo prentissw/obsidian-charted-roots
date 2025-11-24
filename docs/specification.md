@@ -766,7 +766,7 @@ export interface FamilyComponent {
   // Component index (0-based, sorted by size descending)
   index: number;  // 0, 1, 2...
 
-  // Display name from user-provided collection_name or auto-generated
+  // Display name from user-provided group_name or auto-generated
   displayName: string;  // "Smith Family Tree" or "Family 1"
 
   // Number of people in this component
@@ -807,9 +807,9 @@ class FamilyGraphService {
   }
 
   private findCollectionName(people: PersonNode[]): string | null {
-    // Scan frontmatter for collection_name property
+    // Scan frontmatter for group_name property
     const names = people
-      .map(p => this.getPropertyFromFrontmatter(p.file, 'collection_name'))
+      .map(p => this.getPropertyFromFrontmatter(p.file, 'group_name'))
       .filter(n => n);
 
     if (names.length === 0) return null;
@@ -829,19 +829,19 @@ class FamilyGraphService {
 
 **YAML Properties for Naming:**
 
-Users can optionally name their family components by adding `collection_name` to person notes:
+Users can optionally name their family components by adding `group_name` to person notes:
 
 ```yaml
 ---
 cr_id: "abc-123"
 name: "John Smith"
-collection_name: "Smith Family Tree"  # Optional component name
+group_name: "Smith Family Tree"  # Optional component name
 ---
 ```
 
 **Naming Rules:**
-- If no one in component has `collection_name`: Auto-generate "Family 1", "Family 2", etc.
-- If 1+ people have same `collection_name`: Use that name
+- If no one in component has `group_name`: Auto-generate "Family 1", "Family 2", etc.
+- If 1+ people have same `group_name`: Use that name
 - If people have different names: Use most common, break ties alphabetically
 
 **Key Property: Component Membership is COMPUTED**
@@ -1038,7 +1038,7 @@ This creates a cross-collection connection:
 **Status:** Planned for next release
 
 **Scope:**
-- Add `collection_name` property support
+- Add `group_name` property support
 - Update UI to show custom names instead of "Family 1", "Family 2"
 - Naming conflict resolution (most common name wins)
 - Documentation for users
@@ -1105,7 +1105,7 @@ Tree Generation tab already shows detected components in sidebar:
 
 **Phase 1 Enhancement:**
 
-Show custom names when `collection_name` is present:
+Show custom names when `group_name` is present:
 
 ```
 ┌──────────────────────────────────────────┐
@@ -1159,8 +1159,8 @@ A user with a flat vault and no folder/tag organization:
 **Use Case 2: Custom Component Names (Phase 1)**
 
 A genealogist researching two main family lines:
-1. Add `collection_name: "Smith Paternal Line"` to Smith family members
-2. Add `collection_name: "Jones Maternal Line"` to Jones family members
+1. Add `group_name: "Smith Paternal Line"` to Smith family members
+2. Add `group_name: "Jones Maternal Line"` to Jones family members
 3. UI updates to show custom names instead of "Family 1", "Family 2"
 4. Person notes remain in flat structure (no folders required)
 

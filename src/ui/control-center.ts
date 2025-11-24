@@ -8,6 +8,7 @@ import { FamilyGraphService, TreeOptions } from '../core/family-graph';
 import { CanvasGenerator, CanvasData, CanvasGenerationOptions } from '../core/canvas-generator';
 import { getLogger, LoggerFactory, type LogLevel } from '../core/logging';
 import { GedcomImporter } from '../gedcom/gedcom-importer';
+import { GedcomImportResultsModal } from './gedcom-import-results-modal';
 import { BidirectionalLinker } from '../core/bidirectional-linker';
 import type { RecentTreeInfo, RecentImportInfo, ArrowStyle, ColorScheme, SpouseEdgeLabelFormat } from '../settings';
 
@@ -1088,7 +1089,7 @@ export class ControlCenterModal extends Modal {
 
 		const groupDetails = groupSection.createEl('ul', { cls: 'crc-mb-2' });
 		groupDetails.createEl('li', { text: 'Set via: Right-click person note → "Set group name"' });
-		groupDetails.createEl('li', { text: 'Property: collection_name in YAML frontmatter' });
+		groupDetails.createEl('li', { text: 'Property: group_name in YAML frontmatter' });
 		groupDetails.createEl('li', { text: 'Auto-detected: Based on relationship connections' });
 		groupDetails.createEl('li', { text: 'Examples: "Smith Family", "House Stark", "The Council"' });
 
@@ -1138,6 +1139,56 @@ export class ControlCenterModal extends Modal {
 		});
 
 		container.appendChild(organizationCard);
+
+		// Root Person Card
+		const rootPersonCard = this.createCard({
+			title: 'Marking root people',
+			icon: 'crown'
+		});
+		const rootPersonContent = rootPersonCard.querySelector('.crc-card__content') as HTMLElement;
+
+		rootPersonContent.createEl('p', {
+			text: 'Mark specific people as "root persons" to track ancestors and descendants in your family tree.',
+			cls: 'crc-mb-3'
+		});
+
+		// What is a root person
+		const whatSection = rootPersonContent.createDiv({ cls: 'crc-mb-4' });
+		whatSection.createEl('h4', { text: 'What is a root person?', cls: 'crc-mb-2' });
+		whatSection.createEl('p', {
+			text: 'A root person is an anchor point in your family tree - typically the person whose ancestors and descendants you want to explore. In genealogy research, this is often yourself, a specific ancestor, or a person of interest.',
+			cls: 'crc-text-muted crc-mb-2'
+		});
+
+		// How to mark
+		const howSection = rootPersonContent.createDiv({ cls: 'crc-mb-4' });
+		howSection.createEl('h4', { text: 'How to mark someone as a root person', cls: 'crc-mb-2' });
+
+		const howDetails = howSection.createEl('ul', { cls: 'crc-mb-2' });
+		howDetails.createEl('li', { text: 'Right-click a person note in the file explorer' });
+		howDetails.createEl('li', { text: 'Select "Canvas Roots" → "Mark as root person"' });
+		howDetails.createEl('li', { text: 'To unmark, use the same menu and select "Unmark as root person"' });
+		howDetails.createEl('li', { text: 'Property: root_person: true in YAML frontmatter' });
+
+		// When to use
+		const whenSection = rootPersonContent.createDiv({ cls: 'crc-mb-4' });
+		whenSection.createEl('h4', { text: 'When to use root person marking', cls: 'crc-mb-2' });
+
+		const whenDetails = whenSection.createEl('ul', { cls: 'crc-mb-2' });
+		whenDetails.createEl('li', { text: 'Track your direct lineage from multiple ancestral starting points' });
+		whenDetails.createEl('li', { text: 'Identify key figures in world-building projects (founders, monarchs)' });
+		whenDetails.createEl('li', { text: 'Use Obsidian Bases views to filter and analyze root generations' });
+		whenDetails.createEl('li', { text: 'Focus research on specific lineages or family branches' });
+
+		// Bases integration
+		const basesSection = rootPersonContent.createDiv({ cls: 'crc-info-box' });
+		basesSection.createEl('strong', { text: 'Obsidian Bases integration:' });
+		basesSection.createEl('p', {
+			text: 'The Canvas Roots base template includes a "Root Generation" view that automatically shows all people marked as root persons. This helps you track your starting points and see the beginning of each lineage at a glance.',
+			cls: 'crc-mt-2'
+		});
+
+		container.appendChild(rootPersonCard);
 
 		// Advanced Collections Features Card
 		const advancedCollectionsCard = this.createCard({
@@ -3015,10 +3066,9 @@ export class ControlCenterModal extends Modal {
 				await this.syncImportedRelationships();
 			}
 
-			// Show summary
-			new Notice(
-				`GEDCOM imported: ${result.notesCreated} notes created, ${result.errors.length} errors`
-			);
+			// Show detailed import results modal
+			const resultsModal = new GedcomImportResultsModal(this.app, result, result.validation);
+			resultsModal.open();
 
 			// Refresh status tab
 			if (result.notesCreated > 0) {
