@@ -95,11 +95,14 @@ canvas-roots/
 |-----------|--------|---------|
 | `bidirectional-linker.ts` | ✅ Complete | Automatic relationship synchronization with dual storage |
 | `canvas-generator.ts` | ✅ Complete | Converts positioned nodes to Canvas JSON format with styling |
+| `compact-layout.ts` | ✅ Complete | 50% tighter spacing layout for large trees (50+ people) |
 | `family-chart-layout.ts` | ✅ Complete | Family tree layout using family-chart library with support for complex relationships |
 | `family-graph.ts` | ✅ Complete | Builds relationship graphs from person notes with dual storage support |
+| `hourglass-layout.ts` | ✅ Complete | Ancestors above, descendants below root person layout |
 | `layout-engine.ts` | 🟡 Deprecated | Original D3.js hierarchy layout (superseded by family-chart-layout.ts) |
 | `logging.ts` | ✅ Complete | Structured logging with export capability and persistent log level settings |
-| `person-note-writer.ts` | ✅ Complete | Creates person notes with YAML frontmatter |
+| `person-note-writer.ts` | ✅ Complete | Creates person notes with YAML frontmatter, includes all essential properties by default |
+| `timeline-layout.ts` | ✅ Complete | Chronological positioning by birth year layout |
 | `uuid.ts` | ✅ Complete | UUID v4 generation for `cr_id` fields |
 | `vault-stats.ts` | ✅ Complete | Calculates vault-wide statistics |
 | **To Be Implemented** | | |
@@ -109,7 +112,7 @@ canvas-roots/
 
 | Component | Status | Purpose |
 |-----------|--------|---------|
-| `control-center.ts` | ✅ Complete | Main Control Center modal with Status, Tree Generation, Quick Actions, and Data Entry tabs |
+| `control-center.ts` | ✅ Complete | Main Control Center modal with Status, Tree Output, Quick Actions, and Data Entry tabs |
 | `person-picker.ts` | ✅ Complete | Person search modal with fuzzy matching |
 | `lucide-icons.ts` | ✅ Complete | Lucide icon integration helpers |
 | **To Be Implemented** | | |
@@ -133,7 +136,7 @@ canvas-roots/
 | Command | Status | Purpose |
 |---------|--------|---------|
 | Open Control Center | ✅ Complete | Opens main Control Center modal |
-| Generate Tree for Current Note | ✅ Complete | Opens Control Center with current person pre-selected in Tree Generation tab |
+| Generate Tree for Current Note | ✅ Complete | Opens Control Center with current person pre-selected in Tree Output tab |
 | Create Person Note | ✅ Complete | Opens Control Center to Data Entry tab for creating new person notes |
 | Re-Layout Current Canvas | ✅ Complete | Recalculates layout for active canvas using current settings and relationship data |
 | Generate All Trees | ✅ Complete | Generates separate canvases for each disconnected family component in vault |
@@ -144,7 +147,8 @@ canvas-roots/
 
 | Menu Item | Status | Trigger | Purpose |
 |-----------|--------|---------|---------|
-| "Generate Family Tree" | ✅ Complete | Right-click on person note (file explorer or tab) | Opens Control Center with person pre-selected as tree root |
+| "Generate tree" submenu | ✅ Complete | Right-click on person note | Quick access to Canvas (full options) or Excalidraw (instant) tree generation |
+| "Add essential properties" | ✅ Complete | Right-click on markdown file(s) | Bulk-add all 9 essential properties to person notes |
 | "Re-layout Family Tree" | ✅ Complete | Right-click on canvas file (file explorer, tab, or three-dot menu) | Recalculates canvas layout using current settings |
 
 ### Control Center Tabs
@@ -152,7 +156,7 @@ canvas-roots/
 | Tab | Status | Purpose |
 |-----|--------|---------|
 | Status | ✅ Complete | Displays vault statistics (people, relationships, health metrics) |
-| Tree Generation | ✅ Complete | Full tree generation UI with layout options and canvas export |
+| Tree Output | ✅ Complete | Tree generation and export UI with layout algorithm options, Excalidraw export instructions |
 | Quick Actions | ✅ Complete | Shortcuts to common operations (generate tree, re-layout, create person) |
 | Data Entry | ✅ Complete | Person note creation with relationship fields |
 | **To Be Implemented** | | |
