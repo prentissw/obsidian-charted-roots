@@ -72,18 +72,40 @@ export class BidirectionalLinker {
 			}
 
 			// Sync spouse relationship(s)
+			// Handle both simple spouse/spouse_id and indexed spouse1/spouse1_id format
+			const spousesToSync: Array<{link: string, index?: number}> = [];
+
+			// Check for simple spouse property
 			if (frontmatter.spouse) {
 				const spouses = Array.isArray(frontmatter.spouse)
 					? frontmatter.spouse
 					: [frontmatter.spouse];
 
 				for (const spouse of spouses) {
-					await this.syncSpouse(spouse, personFile, personName);
+					spousesToSync.push({ link: spouse });
 				}
 			}
 
+			// Check for indexed spouse properties (spouse1, spouse2, etc.)
+			for (const key of Object.keys(frontmatter)) {
+				const match = key.match(/^spouse(\d+)$/);
+				if (match) {
+					const index = parseInt(match[1]);
+					const spouseLink = frontmatter[key];
+					if (spouseLink) {
+						spousesToSync.push({ link: spouseLink, index });
+					}
+				}
+			}
+
+			// Sync all discovered spouse relationships
+			for (const spouse of spousesToSync) {
+				await this.syncSpouse(spouse.link, personFile, personName, personCrId, spouse.index);
+			}
+
 			logger.info('bidirectional-linking', 'Relationship sync completed', {
-				file: personFile.path
+				file: personFile.path,
+				spouseCount: spousesToSync.length
 			});
 		} catch (error) {
 			logger.error('bidirectional-linking', 'Failed to sync relationships', {
@@ -173,12 +195,19 @@ export class BidirectionalLinker {
 
 	/**
 	 * Sync spouse relationship (bidirectional, dual storage)
-	 * Ensures both spouses list each other in both spouse and spouse_id fields
+	 * Ensures both spouses list each other in spouse/spouse_id or indexed spouse properties
+	 * @param spouseLink Wikilink to spouse
+	 * @param personFile Person's file
+	 * @param personName Person's name
+	 * @param personCrId Person's cr_id
+	 * @param spouseIndex Optional index for indexed spouse properties (spouse1, spouse2, etc.)
 	 */
 	private async syncSpouse(
 		spouseLink: string,
 		personFile: TFile,
-		personName: string
+		personName: string,
+		personCrId: string,
+		spouseIndex?: number
 	): Promise<void> {
 		const spouseFile = this.resolveLink(spouseLink, personFile);
 		if (!spouseFile) {
@@ -189,7 +218,7 @@ export class BidirectionalLinker {
 			return;
 		}
 
-		// Read spouse's and person's frontmatter
+		// Read spouse's frontmatter
 		const spouseCache = this.app.metadataCache.getFileCache(spouseFile);
 		if (!spouseCache?.frontmatter) {
 			logger.warn('bidirectional-linking', 'Spouse has no frontmatter', {
@@ -198,19 +227,14 @@ export class BidirectionalLinker {
 			return;
 		}
 
-		const personCache = this.app.metadataCache.getFileCache(personFile);
-		const personCrId = personCache?.frontmatter?.cr_id;
+		const spouseFm = spouseCache.frontmatter;
 
-		if (!personCrId) {
-			logger.warn('bidirectional-linking', 'Person has no cr_id', {
-				personFile: personFile.path
-			});
-			return;
-		}
+		// Check if person is already linked (check both simple and indexed formats)
+		let alreadyLinked = false;
 
-		// Check if person is already in spouse's spouse fields (check both)
-		const spouseLinks = spouseCache.frontmatter.spouse;
-		const spouseIds = spouseCache.frontmatter.spouse_id;
+		// Check simple spouse/spouse_id properties
+		const spouseLinks = spouseFm.spouse;
+		const spouseIds = spouseFm.spouse_id;
 		const spouseLinksArray = spouseLinks
 			? Array.isArray(spouseLinks) ? spouseLinks : [spouseLinks]
 			: [];
@@ -218,53 +242,88 @@ export class BidirectionalLinker {
 			? Array.isArray(spouseIds) ? spouseIds : [spouseIds]
 			: [];
 
+		const personLinkText = `[[${personName}]]`;
+
 		// Check by cr_id first (more reliable)
-		const hasSpouseById = spouseIdsArray.includes(personCrId);
+		if (spouseIdsArray.includes(personCrId)) {
+			alreadyLinked = true;
+		}
 
 		// Also check wikilinks for backward compatibility
-		const personLinkText = `[[${personName}]]`;
-		const hasSpouseByLink = spouseLinksArray.some(spouse => {
+		if (spouseLinksArray.some(spouse => {
 			const linkText = typeof spouse === 'string' ? spouse : String(spouse);
 			return linkText.includes(personName) || linkText.includes(personFile.basename);
-		});
+		})) {
+			alreadyLinked = true;
+		}
 
-		if (hasSpouseById || hasSpouseByLink) {
+		// Check indexed spouse properties (spouse1_id, spouse2_id, etc.)
+		if (!alreadyLinked) {
+			for (const key of Object.keys(spouseFm)) {
+				const match = key.match(/^spouse(\d+)_id$/);
+				if (match && spouseFm[key] === personCrId) {
+					alreadyLinked = true;
+					break;
+				}
+			}
+		}
+
+		if (alreadyLinked) {
 			logger.debug('bidirectional-linking', 'Spouse already linked', {
 				spouseFile: spouseFile.path,
-				personFile: personFile.path,
-				hasById: hasSpouseById,
-				hasByLink: hasSpouseByLink
+				personFile: personFile.path
 			});
 			return;
 		}
 
-		// Add person to spouse's spouse fields (dual storage)
-		// Handle both wikilink and _id fields in parallel
-		if (spouseLinksArray.length === 0) {
-			// First spouse - set as single value
-			await this.setField(spouseFile, 'spouse', personLinkText);
-			await this.setField(spouseFile, 'spouse_id', personCrId);
-		} else if (spouseLinksArray.length === 1) {
-			// Second spouse - convert to array
-			await this.setField(spouseFile, 'spouse', [spouseLinksArray[0], personLinkText]);
-			// Handle spouse_id similarly
-			if (spouseIdsArray.length === 1) {
-				await this.setField(spouseFile, 'spouse_id', [spouseIdsArray[0], personCrId]);
-			} else {
-				await this.setField(spouseFile, 'spouse_id', personCrId);
+		// Add person to spouse's spouse fields
+		// Use indexed format if the source used indexed format, otherwise use simple format
+		if (spouseIndex !== undefined) {
+			// Find next available index in spouse's file
+			let nextIndex = 1;
+			while (spouseFm[`spouse${nextIndex}`] || spouseFm[`spouse${nextIndex}_id`]) {
+				nextIndex++;
 			}
-		} else {
-			// Multiple spouses - add to array
-			await this.addToArrayField(spouseFile, 'spouse', personLinkText);
-			await this.addToArrayField(spouseFile, 'spouse_id', personCrId);
-		}
 
-		logger.info('bidirectional-linking', 'Added spouse bidirectional link (dual storage)', {
-			spouseFile: spouseFile.path,
-			personFile: personFile.path,
-			wikilink: personLinkText,
-			crId: personCrId
-		});
+			// Add indexed spouse properties
+			await this.setField(spouseFile, `spouse${nextIndex}`, personLinkText);
+			await this.setField(spouseFile, `spouse${nextIndex}_id`, personCrId);
+
+			logger.info('bidirectional-linking', 'Added indexed spouse bidirectional link', {
+				spouseFile: spouseFile.path,
+				personFile: personFile.path,
+				index: nextIndex,
+				wikilink: personLinkText,
+				crId: personCrId
+			});
+		} else {
+			// Use simple spouse/spouse_id format
+			if (spouseLinksArray.length === 0) {
+				// First spouse - set as single value
+				await this.setField(spouseFile, 'spouse', personLinkText);
+				await this.setField(spouseFile, 'spouse_id', personCrId);
+			} else if (spouseLinksArray.length === 1) {
+				// Second spouse - convert to array
+				await this.setField(spouseFile, 'spouse', [spouseLinksArray[0], personLinkText]);
+				// Handle spouse_id similarly
+				if (spouseIdsArray.length === 1) {
+					await this.setField(spouseFile, 'spouse_id', [spouseIdsArray[0], personCrId]);
+				} else {
+					await this.setField(spouseFile, 'spouse_id', personCrId);
+				}
+			} else {
+				// Multiple spouses - add to array
+				await this.addToArrayField(spouseFile, 'spouse', personLinkText);
+				await this.addToArrayField(spouseFile, 'spouse_id', personCrId);
+			}
+
+			logger.info('bidirectional-linking', 'Added spouse bidirectional link (simple format)', {
+				spouseFile: spouseFile.path,
+				personFile: personFile.path,
+				wikilink: personLinkText,
+				crId: personCrId
+			});
+		}
 	}
 
 	/**
