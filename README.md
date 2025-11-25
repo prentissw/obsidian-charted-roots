@@ -69,10 +69,10 @@ See [Roadmap](docs/roadmap.md) for detailed feature descriptions and development
 
 ## 📸 Screenshots
 
-| Tree Generation Interface | Generated Family Tree |
-|:-------------------------:|:---------------------:|
-| ![Tree generation interface showing inline person browser with birth years, family group detection, and configuration options](docs/images/tree-generation-ui.png) | ![Multi-generational family tree canvas with automated genealogical layout](docs/images/family-tree-canvas.png) |
-| **Streamlined tree generation** with inline person browser, birth/death year display, and family group detection | **Automated genealogical layout** showing 4 generations with spouse relationships and parent-child connections |
+| Tree Output Interface | Generated Family Tree |
+|:---------------------:|:---------------------:|
+| ![Tree Output interface showing person selection, family groups, tree configuration with layout algorithms, and interactive preview with pan/zoom controls](docs/images/tree-generation-ui.png) | ![Multi-generational family tree canvas with automated genealogical layout](docs/images/family-tree-canvas.png) |
+| **Complete Tree Output workflow** with person browser, layout algorithm selection, interactive SVG preview, and export options | **Automated genealogical layout** showing 4 generations with spouse relationships and parent-child connections |
 
 
 ## 📥 Installation
