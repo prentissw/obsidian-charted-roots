@@ -7,6 +7,7 @@
 import { App, TFile, Notice } from 'obsidian';
 import { FamilyGraphService, type PersonNode } from '../core/family-graph';
 import { getLogger } from '../core/logging';
+import { getErrorMessage } from '../core/error-utils';
 
 const logger = getLogger('GedcomExporter');
 
@@ -125,10 +126,11 @@ export class GedcomExporter {
 
 			new Notice(`Export complete: ${result.individualsExported} people exported`);
 
-		} catch (error) {
-			result.errors.push(`Export failed: ${error.message}`);
+		} catch (error: unknown) {
+			const errorMsg = getErrorMessage(error);
+			result.errors.push(`Export failed: ${errorMsg}`);
 			logger.error('export', 'Export failed', error);
-			new Notice(`Export failed: ${error.message}`);
+			new Notice(`Export failed: ${errorMsg}`);
 		}
 
 		return result;

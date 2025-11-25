@@ -54,7 +54,7 @@ export class FolderScanModal extends Modal {
 
 			loadingEl.remove();
 			this.showResults(contentEl);
-		} catch (error) {
+		} catch (error: unknown) {
 			loadingEl.remove();
 			contentEl.createEl('p', {
 				text: 'Error scanning folder',

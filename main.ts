@@ -10,6 +10,7 @@ import { ValidationResultsModal } from './src/ui/validation-results-modal';
 import { FindOnCanvasModal } from './src/ui/find-on-canvas-modal';
 import { FolderScanModal } from './src/ui/folder-scan-modal';
 import { LoggerFactory, getLogger } from './src/core/logging';
+import { getErrorMessage } from './src/core/error-utils';
 import { FamilyGraphService } from './src/core/family-graph';
 import { CanvasGenerator } from './src/core/canvas-generator';
 import { BASE_TEMPLATE } from './src/constants/base-template';
@@ -763,9 +764,9 @@ export default class CanvasRootsPlugin extends Plugin {
 		setTimeout(async () => {
 			try {
 				await this.bidirectionalLinker!.initializeSnapshots();
-			} catch (error) {
+			} catch (error: unknown) {
 				logger.error('snapshot-init', 'Failed to initialize relationship snapshots', {
-					error: error.message
+					error: getErrorMessage(error)
 				});
 			}
 		}, 1000);
@@ -773,8 +774,9 @@ export default class CanvasRootsPlugin extends Plugin {
 
 	/**
 	 * Register event handler for file modifications to auto-sync relationships
+	 * Public to allow settings tab to re-register when settings change
 	 */
-	private registerFileModificationHandler() {
+	registerFileModificationHandler() {
 		// Unregister existing handler if present
 		if (this.fileModifyEventRef) {
 			this.app.metadataCache.offref(this.fileModifyEventRef);
@@ -808,10 +810,10 @@ export default class CanvasRootsPlugin extends Plugin {
 						this.bidirectionalLinker = new BidirectionalLinker(this.app);
 					}
 					await this.bidirectionalLinker.syncRelationships(file);
-				} catch (error) {
+				} catch (error: unknown) {
 					logger.error('file-watcher', 'Failed to sync relationships on file modify', {
 						file: file.path,
-						error: error.message
+						error: getErrorMessage(error)
 					});
 				}
 			});
@@ -1259,7 +1261,7 @@ export default class CanvasRootsPlugin extends Plugin {
 			await this.app.vault.modify(canvasFile, formattedJson);
 
 			new Notice(`Canvas regenerated successfully! (${newCanvasData.nodes.length} people)`);
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error regenerating canvas:', error);
 			new Notice('Failed to regenerate canvas. Check console for details.');
 		}
@@ -1322,7 +1324,7 @@ export default class CanvasRootsPlugin extends Plugin {
 			// Open Control Center to generate all trees
 			const modal = new ControlCenterModal(this.app, this);
 			await modal.openAndGenerateAllTrees();
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error generating all trees:', error);
 			new Notice('Failed to generate all trees. Check console for details.');
 		}
@@ -1360,9 +1362,9 @@ export default class CanvasRootsPlugin extends Plugin {
 				const leaf = this.app.workspace.getLeaf(false);
 				await leaf.openFile(excalidrawFile);
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error exporting to Excalidraw:', error);
-			new Notice(`Failed to export to Excalidraw: ${error.message}`);
+			new Notice(`Failed to export to Excalidraw: ${getErrorMessage(error)}`);
 		}
 	}
 
@@ -1479,7 +1481,7 @@ export default class CanvasRootsPlugin extends Plugin {
 					await this.app.vault.modify(file, newContent);
 					processedCount++;
 
-				} catch (error) {
+				} catch (error: unknown) {
 					console.error(`Error processing ${file.path}:`, error);
 					errorCount++;
 				}
@@ -1502,7 +1504,7 @@ export default class CanvasRootsPlugin extends Plugin {
 				new Notice(`Essential properties: ${parts.join(', ')}`);
 			}
 
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error adding essential properties:', error);
 			new Notice('Failed to add essential properties');
 		}
@@ -1602,9 +1604,9 @@ export default class CanvasRootsPlugin extends Plugin {
 				const leaf = this.app.workspace.getLeaf(false);
 				await leaf.openFile(excalidrawFile);
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error generating Excalidraw tree:', error);
-			new Notice(`Failed to generate Excalidraw tree: ${error.message}`);
+			new Notice(`Failed to generate Excalidraw tree: ${getErrorMessage(error)}`);
 		}
 	}
 
@@ -1634,7 +1636,7 @@ export default class CanvasRootsPlugin extends Plugin {
 			// Open the newly created file
 			const leaf = this.app.workspace.getLeaf(false);
 			await leaf.openFile(file);
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error creating Base template:', error);
 			new Notice('Failed to create Base template. Check console for details.');
 		}
@@ -1667,7 +1669,7 @@ export default class CanvasRootsPlugin extends Plugin {
 			if (migratedCount > 0) {
 				logger.info('migration', `Migrated ${migratedCount} files from collection_name to group_name`);
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.error('migration', 'Error during collection_name to group_name migration', error);
 		}
 	}

@@ -1,4 +1,5 @@
 import { App, TFile } from 'obsidian';
+import { SpouseValue } from '../types/frontmatter';
 
 /**
  * Vault statistics for person notes
@@ -155,7 +156,7 @@ export class VaultStatsService {
 				hasMother: !!(fm.mother || fm.mother_id),
 				spouseCount: this.getSpouseCount(fm.spouse || fm.spouse_id)
 			};
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error extracting person data from file:', file.path, error);
 			return null;
 		}
@@ -164,7 +165,7 @@ export class VaultStatsService {
 	/**
 	 * Get spouse count from frontmatter
 	 */
-	private getSpouseCount(spouse: any): number {
+	private getSpouseCount(spouse: SpouseValue): number {
 		if (!spouse) return 0;
 		if (Array.isArray(spouse)) return spouse.length;
 		return 1;

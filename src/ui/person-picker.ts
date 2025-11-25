@@ -111,7 +111,7 @@ export class PersonPickerModal extends Modal {
 					this.componentMap.set(person.crId, index);
 				});
 			});
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error loading family components:', error);
 			// Gracefully degrade - continue without component grouping
 			this.familyComponents = [];
@@ -208,7 +208,7 @@ export class PersonPickerModal extends Modal {
 				sex: fm.sex || fm.gender,
 				file
 			};
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error extracting person info from file:', file.path, error);
 			return null;
 		}

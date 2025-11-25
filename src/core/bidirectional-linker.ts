@@ -1,5 +1,7 @@
 import { App, TFile, Notice } from 'obsidian';
 import { getLogger } from './logging';
+import { getErrorMessage } from './error-utils';
+import { PersonFrontmatter } from '../types/frontmatter';
 
 const logger = getLogger('BidirectionalLinker');
 
@@ -164,12 +166,13 @@ export class BidirectionalLinker {
 				file: personFile.path,
 				spouseCount: spousesToSync.length
 			});
-		} catch (error) {
+		} catch (error: unknown) {
+			const errorMsg = getErrorMessage(error);
 			logger.error('bidirectional-linking', 'Failed to sync relationships', {
 				file: personFile.path,
-				error: error.message
+				error: errorMsg
 			});
-			new Notice(`Failed to sync relationships: ${error.message}`);
+			new Notice(`Failed to sync relationships: ${errorMsg}`);
 		}
 	}
 
@@ -178,7 +181,7 @@ export class BidirectionalLinker {
 	 */
 	private async syncDeletions(
 		previousSnapshot: RelationshipSnapshot,
-		currentFrontmatter: any,
+		currentFrontmatter: PersonFrontmatter,
 		personFile: TFile,
 		personName: string,
 		personCrId: string
@@ -226,7 +229,7 @@ export class BidirectionalLinker {
 	/**
 	 * Update the relationship snapshot for a person
 	 */
-	private updateSnapshot(filePath: string, frontmatter: any): void {
+	private updateSnapshot(filePath: string, frontmatter: PersonFrontmatter): void {
 		const snapshot: RelationshipSnapshot = {
 			father: frontmatter.father,
 			mother: frontmatter.mother,
@@ -236,9 +239,10 @@ export class BidirectionalLinker {
 
 		// Capture indexed spouse properties
 		for (let i = 1; i <= 10; i++) {
-			const key = `spouse${i}`;
-			if (frontmatter[key]) {
-				(snapshot as any)[key] = frontmatter[key];
+			const key = `spouse${i}` as `spouse${number}`;
+			const value = frontmatter[key];
+			if (value && typeof value === 'string') {
+				snapshot[key] = value;
 			}
 		}
 

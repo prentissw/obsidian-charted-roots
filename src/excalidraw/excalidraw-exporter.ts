@@ -6,6 +6,7 @@
 
 import { App, TFile, Notice } from 'obsidian';
 import { getLogger } from '../core/logging';
+import { getErrorMessage } from '../core/error-utils';
 import type { CanvasData } from '../core/canvas-generator';
 import type { CanvasNode, CanvasEdge } from '../models/canvas';
 
@@ -208,8 +209,8 @@ export class ExcalidrawExporter {
 			logger.info('export', 'Export completed successfully');
 			new Notice(`Export complete: ${result.elementsExported} elements exported`);
 
-		} catch (error) {
-			const errorMsg = error instanceof Error ? error.message : String(error);
+		} catch (error: unknown) {
+			const errorMsg = getErrorMessage(error);
 			const errorStack = error instanceof Error ? error.stack : '';
 			result.errors.push(`Export failed: ${errorMsg}`);
 			logger.error('export', 'Export failed', { error: errorMsg, stack: errorStack });

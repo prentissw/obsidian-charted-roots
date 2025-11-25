@@ -8,6 +8,7 @@ import { App, Notice, TFile, normalizePath } from 'obsidian';
 import { GedcomParser, GedcomData, GedcomIndividual, GedcomValidationResult } from './gedcom-parser';
 import { createPersonNote, PersonData } from '../core/person-note-writer';
 import { generateCrId } from '../core/uuid';
+import { getErrorMessage } from '../core/error-utils';
 
 /**
  * GEDCOM import options
@@ -197,9 +198,9 @@ export class GedcomImporter {
 							result.malformedDataCount++;
 						}
 					}
-				} catch (error) {
+				} catch (error: unknown) {
 					result.errors.push(
-						`Failed to import ${individual.name}: ${error.message}`
+						`Failed to import ${individual.name}: ${getErrorMessage(error)}`
 					);
 				}
 			}
@@ -213,9 +214,9 @@ export class GedcomImporter {
 						gedcomToCrId,
 						options
 					);
-				} catch (error) {
+				} catch (error: unknown) {
 					result.errors.push(
-						`Failed to update relationships for ${individual.name}: ${error.message}`
+						`Failed to update relationships for ${individual.name}: ${getErrorMessage(error)}`
 					);
 				}
 			}
@@ -234,9 +235,10 @@ export class GedcomImporter {
 			new Notice(importMessage, 8000); // Show for 8 seconds
 			result.success = result.errors.length === 0;
 
-		} catch (error) {
-			result.errors.push(`GEDCOM parse error: ${error.message}`);
-			new Notice(`Import failed: ${error.message}`);
+		} catch (error: unknown) {
+			const errorMsg = getErrorMessage(error);
+			result.errors.push(`GEDCOM parse error: ${errorMsg}`);
+			new Notice(`Import failed: ${errorMsg}`);
 		}
 
 		return result;

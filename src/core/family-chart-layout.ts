@@ -8,6 +8,9 @@
 import f3, { type Data, type Datum } from 'family-chart';
 import { FamilyTree, PersonNode } from './family-graph';
 import { LayoutOptions, NodePosition, LayoutResult } from './layout-engine';
+import { getLogger } from './logging';
+
+const logger = getLogger('FamilyChartLayout');
 
 /**
  * Default layout options for family-chart
@@ -49,8 +52,6 @@ export class FamilyChartLayoutEngine {
 		// family-chart places main_id at y=0 and shows parents above, children below
 		// So for a descendant tree, we want the eldest ancestor as the "main" person
 		const topAncestor = this.findTopAncestor(familyTree);
-		console.log('[FamilyChartLayout] Top ancestor:', topAncestor.name, 'crId:', topAncestor.crId);
-		console.log('[FamilyChartLayout] Family tree root:', familyTree.root.name, 'crId:', familyTree.root.crId);
 
 		// Use family-chart's layout engine
 		// Multiply spacing by 1.5x for family-chart - it needs extra room for complex trees
@@ -85,10 +86,6 @@ export class FamilyChartLayoutEngine {
 			}
 		}
 
-		console.log('[FamilyChartLayout] Raw positions:', positions.map(p =>
-			`${p.person.name}: (${Math.round(p.x)}, ${Math.round(p.y)})`
-		).join(', '));
-
 		// Add missing people (siblings-in-law, etc.) that family-chart excluded
 		// These are people connected only through marriage, not blood relation
 		const positionedIds = new Set(positions.map(p => p.crId));
@@ -109,7 +106,6 @@ export class FamilyChartLayoutEngine {
 							y: spousePos.y,
 							generation: spousePos.generation  // Same generation as spouse
 						});
-						console.log(`[FamilyChartLayout] Added ${person.name} next to spouse ${spousePos.person.name}`);
 						continue;
 					}
 				}
@@ -126,7 +122,6 @@ export class FamilyChartLayoutEngine {
 							y: childPos.y - opts.nodeSpacingY,
 							generation: childPos.generation !== undefined ? childPos.generation - 1 : undefined
 						});
-						console.log(`[FamilyChartLayout] Added ${person.name} above child ${childPos.person.name}`);
 						continue;
 					}
 				}
@@ -159,7 +154,6 @@ export class FamilyChartLayoutEngine {
 							y: rightmostSibling.y,
 							generation: rightmostSibling.generation  // Same generation as sibling
 						});
-						console.log(`[FamilyChartLayout] Added ${person.name} next to sibling ${rightmostSibling.person.name}`);
 						continue;
 					} else {
 						// No siblings positioned yet - place below parent (one generation later)
@@ -170,22 +164,17 @@ export class FamilyChartLayoutEngine {
 							y: parentPos.y + opts.nodeSpacingY,
 							generation: parentPos.generation !== undefined ? parentPos.generation + 1 : undefined
 						});
-						console.log(`[FamilyChartLayout] Added ${person.name} below parent ${parentPos.person.name}`);
 						continue;
 					}
 				}
 
-				console.warn(`[FamilyChartLayout] Could not position ${person.name} - no positioned relatives found`);
+				logger.warn('layout', `Could not position ${person.name} - no positioned relatives found`);
 			}
 		}
 
 		// Post-process positions to enforce minimum spacing
 		// Family-chart doesn't always respect our spacing parameters with complex trees
 		const adjustedPositions = this.enforceMinimumSpacing(positions, opts);
-
-		console.log('[FamilyChartLayout] Adjusted positions:', adjustedPositions.map(p =>
-			`${p.person.name}: (${Math.round(p.x)}, ${Math.round(p.y)})`
-		).join(', '));
 
 		return {
 			positions: adjustedPositions,
@@ -214,10 +203,7 @@ export class FamilyChartLayoutEngine {
 			}
 		}
 
-		console.log('[FamilyChartLayout] Top ancestors (no parents):', topAncestors.map(p => p.name).join(', '));
-
 		if (topAncestors.length === 0) {
-			console.log('[FamilyChartLayout] No top ancestors found, using root:', familyTree.root.name);
 			return familyTree.root;
 		}
 
@@ -276,11 +262,7 @@ export class FamilyChartLayoutEngine {
 		// Sort by score (highest first)
 		scoredAncestors.sort((a, b) => b.score - a.score);
 
-		const selected = scoredAncestors[0].ancestor;
-		console.log('[FamilyChartLayout] Ancestor scores:', scoredAncestors.map(s => `${s.ancestor.name}: ${s.score}`).join(', '));
-		console.log('[FamilyChartLayout] Selected top ancestor:', selected.name);
-
-		return selected;
+		return scoredAncestors[0].ancestor;
 	}
 
 	/**

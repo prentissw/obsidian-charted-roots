@@ -40,7 +40,7 @@ export class RegenerateOptionsModal extends Modal {
 				originalSettings = `Originally generated as "${gen.treeType}" tree from ${gen.rootPersonName} ` +
 					`with direction: ${gen.direction}`;
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			// Ignore errors - we'll just not show original settings
 		}
 

@@ -4,6 +4,8 @@
  * Parses GEDCOM files and converts them to Canvas Roots person data structures.
  */
 
+import { getErrorMessage } from '../core/error-utils';
+
 /**
  * Parsed GEDCOM individual record
  */
@@ -158,9 +160,9 @@ export class GedcomParser {
 				result.warnings.push({ message: 'No individual records found in GEDCOM file' });
 			}
 
-		} catch (error) {
+		} catch (error: unknown) {
 			result.valid = false;
-			result.errors.push({ message: `Parse error: ${error.message}` });
+			result.errors.push({ message: `Parse error: ${getErrorMessage(error)}` });
 		}
 
 		return result;

@@ -47,7 +47,7 @@ export class FindOnCanvasModal extends Modal {
 			} else {
 				this.showResults(contentEl);
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			loadingEl.remove();
 			contentEl.createEl('p', {
 				text: 'Error searching canvases',

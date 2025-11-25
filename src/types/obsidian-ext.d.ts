@@ -16,4 +16,17 @@ declare module 'obsidian' {
 		 */
 		setSubmenu(): Menu;
 	}
+
+	interface App {
+		/**
+		 * Command manager for executing commands programmatically
+		 */
+		commands: {
+			/**
+			 * Execute a command by its ID
+			 * @param commandId The command ID (e.g., 'plugin-id:command-name')
+			 */
+			executeCommandById(commandId: string): boolean;
+		};
+	}
 }

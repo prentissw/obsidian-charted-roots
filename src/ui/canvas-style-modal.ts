@@ -40,7 +40,7 @@ export class CanvasStyleModal extends Modal {
 			if (metadata?.plugin === 'canvas-roots') {
 				this.currentOverrides = metadata.styleOverrides as StyleOverrides | undefined;
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.error('style-modal', 'Failed to read canvas metadata', error);
 		}
 
@@ -253,7 +253,7 @@ export class CanvasStyleModal extends Modal {
 
 			new Notice('Canvas styles updated! Regenerate the canvas to see changes.');
 			this.close();
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.error('style-modal', 'Failed to save style overrides', error);
 			new Notice('Failed to save style overrides. Check console for details.');
 		}

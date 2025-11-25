@@ -241,7 +241,7 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 					this.plugin.settings.enableBidirectionalSync = value;
 					await this.plugin.saveSettings();
 					// Re-register file modification handler with new settings
-					(this.plugin as any).registerFileModificationHandler?.();
+					this.plugin.registerFileModificationHandler();
 					// Refresh display to update disabled state
 					this.display();
 				}));
@@ -255,7 +255,7 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 					this.plugin.settings.syncOnFileModify = value;
 					await this.plugin.saveSettings();
 					// Re-register file modification handler with new settings
-					(this.plugin as any).registerFileModificationHandler?.();
+					this.plugin.registerFileModificationHandler();
 				})
 				.setDisabled(!this.plugin.settings.enableBidirectionalSync));
 

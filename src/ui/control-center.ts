@@ -7,6 +7,7 @@ import { VaultStatsService, FullVaultStats } from '../core/vault-stats';
 import { FamilyGraphService, TreeOptions } from '../core/family-graph';
 import { CanvasGenerator, CanvasData, CanvasGenerationOptions } from '../core/canvas-generator';
 import { getLogger, LoggerFactory, type LogLevel } from '../core/logging';
+import { getErrorMessage } from '../core/error-utils';
 import { GedcomImporter } from '../gedcom/gedcom-importer';
 import { GedcomImportResultsModal } from './gedcom-import-results-modal';
 import { BidirectionalLinker } from '../core/bidirectional-linker';
@@ -443,13 +444,13 @@ export class ControlCenterModal extends Modal {
 						fileName,
 						nodeCount: canvasData.nodes.length
 					});
-				} catch (error) {
+				} catch (error: unknown) {
 					logger.error('generate-all-trees', `Failed to generate tree for ${rep.name}`, error);
 					results.push({
 						success: false,
 						familyName: component.collectionName || rep.name,
 						peopleCount: component.size,
-						error: error instanceof Error ? error.message : 'Unknown error'
+						error: getErrorMessage(error)
 					});
 				}
 			}
@@ -459,7 +460,7 @@ export class ControlCenterModal extends Modal {
 
 			// Show results summary modal
 			this.showGenerateAllTreesResults(results);
-		} catch (error) {
+		} catch (error: unknown) {
 			logger.error('generate-all-trees', 'Failed to generate all trees', error);
 			throw error;
 		}
@@ -605,8 +606,8 @@ export class ControlCenterModal extends Modal {
 				relayoutBtn.prepend(relayoutIcon);
 				relayoutBtn.addEventListener('click', async () => {
 					if (result.file) {
-						// Call the plugin's relayout method
-						await (this.plugin as any).relayoutCanvas(result.file);
+						// Call the plugin's regenerate method
+						await this.plugin.regenerateCanvas(result.file);
 					}
 				});
 			}
@@ -1681,7 +1682,7 @@ export class ControlCenterModal extends Modal {
 		});
 		createBaseBtn.addEventListener('click', async () => {
 			this.close();
-			await (this.app as any).commands.executeCommandById('canvas-roots:create-base-template');
+			this.app.commands.executeCommandById('canvas-roots:create-base-template');
 		});
 		dataToolsContent.createEl('p', {
 			cls: 'crc-form-help',
@@ -2166,9 +2167,9 @@ export class ControlCenterModal extends Modal {
 			if (openNote) {
 				this.close();
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Failed to create person note:', error);
-			new Notice(`❌ Failed to create person note: ${error.message}`);
+			new Notice(`❌ Failed to create person note: ${getErrorMessage(error)}`);
 		}
 	}
 
@@ -2559,7 +2560,7 @@ export class ControlCenterModal extends Modal {
 				await this.treePreviewRenderer?.renderPreview(familyTree, layoutOptions);
 
 				new Notice('Preview generated successfully');
-			} catch (error) {
+			} catch (error: unknown) {
 				console.error('Preview generation failed:', error);
 				new Notice('Failed to generate preview. See console for details.');
 			} finally {
@@ -3049,9 +3050,9 @@ export class ControlCenterModal extends Modal {
 
 			new Notice(`Family tree generated successfully! (${canvasData.nodes.length} people)`);
 			this.close();
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error generating tree:', error);
-			new Notice(`Error generating tree: ${error.message}`);
+			new Notice(`Error generating tree: ${getErrorMessage(error)}`);
 		}
 	}
 
@@ -3128,9 +3129,9 @@ export class ControlCenterModal extends Modal {
 
 			new Notice(`Collection overview generated! (${allCollections.length} collections)`);
 			this.close();
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error generating collection overview:', error);
-			new Notice(`Error generating overview: ${error.message}`);
+			new Notice(`Error generating overview: ${getErrorMessage(error)}`);
 		}
 	}
 
@@ -3220,7 +3221,7 @@ export class ControlCenterModal extends Modal {
 				});
 			}
 
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error loading analytics:', error);
 			container.empty();
 			container.createEl('p', {
@@ -3354,11 +3355,12 @@ export class ControlCenterModal extends Modal {
 				fileBtn.style.display = 'block';
 			});
 
-		} catch (error) {
-			logger.error('gedcom', `GEDCOM analysis failed: ${error.message}`);
+		} catch (error: unknown) {
+			const errorMsg = getErrorMessage(error);
+			logger.error('gedcom', `GEDCOM analysis failed: ${errorMsg}`);
 			analysisContainer.empty();
 			analysisContainer.createEl('p', {
-				text: `Failed to analyze file: ${error.message}`,
+				text: `Failed to analyze file: ${errorMsg}`,
 				cls: 'crc-error-text'
 			});
 
@@ -3430,9 +3432,10 @@ export class ControlCenterModal extends Modal {
 			if (result.notesCreated > 0) {
 				this.showTab('status');
 			}
-		} catch (error) {
-			logger.error('gedcom', `GEDCOM import failed: ${error.message}`);
-			new Notice(`Failed to import GEDCOM: ${error.message}`);
+		} catch (error: unknown) {
+			const errorMsg = getErrorMessage(error);
+			logger.error('gedcom', `GEDCOM import failed: ${errorMsg}`);
+			new Notice(`Failed to import GEDCOM: ${errorMsg}`);
 		}
 	}
 
@@ -3487,9 +3490,10 @@ export class ControlCenterModal extends Modal {
 			} else {
 				throw new Error('Export failed to generate content');
 			}
-		} catch (error) {
-			logger.error('gedcom-export', `GEDCOM export failed: ${error.message}`);
-			new Notice(`Failed to export GEDCOM: ${error.message}`);
+		} catch (error: unknown) {
+			const errorMsg = getErrorMessage(error);
+			logger.error('gedcom-export', `GEDCOM export failed: ${errorMsg}`);
+			new Notice(`Failed to export GEDCOM: ${errorMsg}`);
 		}
 	}
 
@@ -4634,7 +4638,7 @@ export class ControlCenterModal extends Modal {
 					allTreesBtn.addClass('crc-btn--disabled');
 					allTreesDesc.setText('Only one family tree detected. Use the "Generate family tree" button above instead.');
 				}
-			} catch (error) {
+			} catch (error: unknown) {
 				countBadge.setText('');
 			}
 		})();
@@ -4716,18 +4720,6 @@ export class ControlCenterModal extends Modal {
 		// Convert Date objects to ISO strings if necessary (Obsidian parses YAML dates as Date objects)
 		const birthDate = fm.born instanceof Date ? fm.born.toISOString().split('T')[0] : fm.born;
 		const deathDate = fm.died instanceof Date ? fm.died.toISOString().split('T')[0] : fm.died;
-
-		// Debug logging for William Anderson
-		if (file.basename === 'William Anderson') {
-			console.log('[Canvas Roots DEBUG - ControlCenter.extractPersonInfoFromFile] William Anderson:', {
-				'fm.born': fm.born,
-				'fm.born type': typeof fm.born,
-				'fm.born instanceof Date': fm.born instanceof Date,
-				'birthDate (converted)': birthDate,
-				'fm.died': fm.died,
-				'deathDate (converted)': deathDate
-			});
-		}
 
 		return {
 			name: file.basename,
@@ -4849,9 +4841,9 @@ export class ControlCenterModal extends Modal {
 							`Syncing relationships: ${syncedCount}/${personFiles.length} people processed`
 						);
 					}
-				} catch (error) {
+				} catch (error: unknown) {
 					logger.error('gedcom-sync', `Failed to sync relationships for ${file.path}`, {
-						error: error.message
+						error: getErrorMessage(error)
 					});
 				}
 			}
@@ -4861,12 +4853,13 @@ export class ControlCenterModal extends Modal {
 			new Notice(`✓ Relationships synced for ${syncedCount} people`);
 
 			logger.info('gedcom-sync', `Relationship sync complete: ${syncedCount}/${personFiles.length} files processed`);
-		} catch (error) {
+		} catch (error: unknown) {
 			progressNotice.hide();
+			const errorMsg = getErrorMessage(error);
 			logger.error('gedcom-sync', 'Failed to sync imported relationships', {
-				error: error.message
+				error: errorMsg
 			});
-			new Notice(`Relationship sync failed: ${error.message}`);
+			new Notice(`Relationship sync failed: ${errorMsg}`);
 		}
 	}
 }

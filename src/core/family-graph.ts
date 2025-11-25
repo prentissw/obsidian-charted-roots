@@ -8,6 +8,7 @@
 import { App, TFile } from 'obsidian';
 import { getLogger } from './logging';
 import { SpouseRelationship } from '../models/person';
+import { PersonFrontmatter } from '../types/frontmatter';
 
 const logger = getLogger('FamilyGraph');
 
@@ -744,19 +745,6 @@ export class FamilyGraphService {
 		const birthDate = fm.born instanceof Date ? fm.born.toISOString().split('T')[0] : fm.born;
 		const deathDate = fm.died instanceof Date ? fm.died.toISOString().split('T')[0] : fm.died;
 
-		// Debug logging
-		if (name === 'William Anderson') {
-			console.log('[Canvas Roots DEBUG - FamilyGraph] William Anderson:', {
-				'fm.born': fm.born,
-				'fm.born type': typeof fm.born,
-				'fm.born instanceof Date': fm.born instanceof Date,
-				'birthDate (converted)': birthDate,
-				'fm.died': fm.died,
-				'deathDate (converted)': deathDate,
-				'allKeys': Object.keys(fm)
-			});
-		}
-
 		return {
 			crId: fm.cr_id,
 			name,
@@ -781,7 +769,7 @@ export class FamilyGraphService {
 	 * Extracts cr_id from a wikilink string
 	 * Returns null if the value is not a wikilink or already a cr_id
 	 */
-	private extractCrIdFromWikilink(value: any): string | null {
+	private extractCrIdFromWikilink(value: unknown): string | null {
 		if (!value || typeof value !== 'string') {
 			return null;
 		}
@@ -799,32 +787,48 @@ export class FamilyGraphService {
 	}
 
 	/**
+	 * Safely extracts a string value from frontmatter (handles array case)
+	 */
+	private getStringValue(value: string | string[] | undefined): string | undefined {
+		if (!value) return undefined;
+		return Array.isArray(value) ? value[0] : value;
+	}
+
+	/**
 	 * Parses enhanced spouse relationships from flat indexed frontmatter properties
 	 * Scans for spouse1, spouse2, spouse3, etc. with their associated metadata fields
 	 */
-	private parseIndexedSpouseRelationships(fm: any): SpouseRelationship[] {
+	private parseIndexedSpouseRelationships(fm: PersonFrontmatter): SpouseRelationship[] {
 		const relationships: SpouseRelationship[] = [];
 		let index = 1;
 
 		// Scan for spouse1, spouse2, spouse3, etc.
 		while (fm[`spouse${index}`] || fm[`spouse${index}_id`]) {
 			// Extract person_id (required)
-			const personId = fm[`spouse${index}_id`] || this.extractCrIdFromWikilink(fm[`spouse${index}`]);
+			const personIdValue = this.getStringValue(fm[`spouse${index}_id`]) ||
+				this.extractCrIdFromWikilink(fm[`spouse${index}`]);
 
-			if (!personId) {
+			if (!personIdValue) {
 				logger.warn('parseIndexedSpouseRelationships', `Spouse ${index} missing person_id, skipping`);
 				index++;
 				continue;
 			}
 
+			// Extract marriage status and validate it's a valid value
+			const statusValue = this.getStringValue(fm[`spouse${index}_marriage_status`]);
+			const validStatuses = ['current', 'divorced', 'widowed', 'separated', 'annulled'] as const;
+			const marriageStatus = statusValue && validStatuses.includes(statusValue as typeof validStatuses[number])
+				? statusValue as SpouseRelationship['marriageStatus']
+				: undefined;
+
 			// Build relationship object from indexed properties
 			const relationship: SpouseRelationship = {
-				personId,
-				personLink: fm[`spouse${index}`] || undefined,
-				marriageDate: fm[`spouse${index}_marriage_date`] || undefined,
-				divorceDate: fm[`spouse${index}_divorce_date`] || undefined,
-				marriageStatus: fm[`spouse${index}_marriage_status`] || undefined,
-				marriageLocation: fm[`spouse${index}_marriage_location`] || undefined,
+				personId: personIdValue,
+				personLink: this.getStringValue(fm[`spouse${index}`]),
+				marriageDate: this.getStringValue(fm[`spouse${index}_marriage_date`]),
+				divorceDate: this.getStringValue(fm[`spouse${index}_divorce_date`]),
+				marriageStatus,
+				marriageLocation: this.getStringValue(fm[`spouse${index}_marriage_location`]),
 				marriageOrder: index, // Index naturally provides ordering
 			};
 

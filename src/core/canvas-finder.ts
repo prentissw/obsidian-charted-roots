@@ -1,4 +1,5 @@
 import { App, TFile } from 'obsidian';
+import { CanvasNode } from '../models/canvas';
 
 /**
  * Canvas search result
@@ -29,7 +30,7 @@ export class CanvasFinder {
 				const canvasData = JSON.parse(content);
 
 				// Check if any nodes reference this person
-				const hasPersonNode = canvasData.nodes?.some((node: any) => {
+				const hasPersonNode = canvasData.nodes?.some((node: CanvasNode) => {
 					// Canvas Roots person nodes are file nodes pointing to .md files
 					if (node.type === 'file' && node.file?.endsWith('.md')) {
 						// Check if the file matches the cr_id
@@ -41,7 +42,7 @@ export class CanvasFinder {
 
 				if (hasPersonNode) {
 					// Count person nodes in this canvas
-					const personNodes = canvasData.nodes?.filter((node: any) =>
+					const personNodes = canvasData.nodes?.filter((node: CanvasNode) =>
 						node.type === 'file' && node.file?.endsWith('.md')
 					) || [];
 
@@ -57,7 +58,7 @@ export class CanvasFinder {
 						rootPerson
 					});
 				}
-			} catch (error) {
+			} catch (error: unknown) {
 				// Skip invalid canvas files
 				console.error(`Error reading canvas ${canvasFile.path}:`, error);
 			}
@@ -79,7 +80,7 @@ export class CanvasFinder {
 
 			const cache = this.app.metadataCache.getFileCache(file);
 			return cache?.frontmatter?.cr_id === crId;
-		} catch (error) {
+		} catch (error: unknown) {
 			return false;
 		}
 	}

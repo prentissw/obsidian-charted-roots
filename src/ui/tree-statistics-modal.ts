@@ -1,5 +1,6 @@
 import { App, Modal, TFile } from 'obsidian';
 import { CanvasData } from 'obsidian/canvas';
+import { CanvasNode } from '../models/canvas';
 
 interface TreeStatistics {
 	peopleCount: number;
@@ -56,7 +57,7 @@ export class TreeStatisticsModal extends Modal {
 
 			// Count person nodes (file nodes with .md extension)
 			const personNodes = canvasData.nodes.filter(
-				(node: any) => node.type === 'file' && node.file?.endsWith('.md')
+				(node: CanvasNode) => node.type === 'file' && node.file?.endsWith('.md')
 			);
 
 			// Basic statistics
@@ -93,7 +94,7 @@ export class TreeStatisticsModal extends Modal {
 				direction,
 				generationDepth
 			};
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('Error calculating tree statistics:', error);
 			this.statistics = null;
 		}
@@ -114,7 +115,7 @@ export class TreeStatisticsModal extends Modal {
 		// In horizontal layout, by X position
 
 		const personNodes = canvasData.nodes.filter(
-			(node: any) => node.type === 'file' && node.file?.endsWith('.md')
+			(node: CanvasNode) => node.type === 'file' && node.file?.endsWith('.md')
 		);
 
 		if (personNodes.length === 0) {
@@ -124,7 +125,7 @@ export class TreeStatisticsModal extends Modal {
 		// For now, return a simplified count
 		// This could be enhanced to actually traverse the tree structure
 		const uniquePositions = new Set(
-			personNodes.map((node: any) => direction === 'vertical' ? node.y : node.x)
+			personNodes.map((node: CanvasNode) => direction === 'vertical' ? node.y : node.x)
 		);
 
 		const depth = uniquePositions.size;

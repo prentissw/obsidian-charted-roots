@@ -18,9 +18,9 @@ This document tracks issues identified through analysis of Obsidian plugin PR re
 |----------|----------|-------|--------|
 | HIGH | require() imports | 4 | ✅ Complete |
 | MEDIUM | Inline styles | 57→31 | ✅ Partial (dynamic styles remain) |
-| MEDIUM | Explicit `any` types | 16 | Pending |
-| LOW | Untyped catch errors | 36 | Pending |
-| LOW | Debug console.log statements | 30+ | Pending |
+| MEDIUM | Explicit `any` types | 16→0 | ✅ Complete |
+| LOW | Untyped catch errors | 36→0 | ✅ Complete |
+| LOW | Debug console.log statements | 30+→0 | ✅ Complete |
 
 **Total Issues:** ~143
 
@@ -124,134 +124,89 @@ These must remain as inline styles due to dynamic/calculated values:
 
 ---
 
-## Category 3: Explicit `any` Types
+## Category 3: Explicit `any` Types ✅ COMPLETE
 
 **Priority:** MEDIUM
-**Issue:** Reviewers flag `any` types. Should use proper TypeScript interfaces.
+**Status:** ✅ Fixed (all 16 occurrences resolved)
 
-### Occurrences
+### Resolution
 
-| # | File | Line | Pattern | Suggested Fix |
-|---|------|------|---------|---------------|
-| 1 | src/settings.ts | 248 | `(this.plugin as any)` | Add method to plugin interface |
-| 2 | src/settings.ts | 262 | `(this.plugin as any)` | Add method to plugin interface |
-| 3 | src/core/family-graph.ts | 784 | `value: any` | `value: unknown` |
-| 4 | src/core/family-graph.ts | 805 | `fm: any` | Define frontmatter interface |
-| 5 | src/core/vault-stats.ts | 167 | `spouse: any` | Define spouse type |
-| 6 | src/core/canvas-finder.ts | 32 | `node: any` | Define canvas node interface |
-| 7 | src/core/canvas-finder.ts | 44 | `node: any` | Define canvas node interface |
-| 8 | src/core/bidirectional-linker.ts | 181 | `frontmatter: any` | Define frontmatter interface |
-| 9 | src/core/bidirectional-linker.ts | 229 | `frontmatter: any` | Define frontmatter interface |
-| 10 | src/core/bidirectional-linker.ts | 241 | `snapshot as any` | Proper type assertion |
-| 11 | src/ui/control-center.ts | 609 | `(this.plugin as any)` | Add method to plugin interface |
-| 12 | src/ui/control-center.ts | 1684 | `(this.app as any)` | Use proper App interface |
-| 13 | src/ui/tree-statistics-modal.ts | 59 | `node: any` | Define canvas node interface |
-| 14 | src/ui/tree-statistics-modal.ts | 117 | `node: any` | Define canvas node interface |
-| 15 | src/ui/tree-statistics-modal.ts | 127 | `node: any` | Define canvas node interface |
+1. **Created `src/types/frontmatter.ts`** with `PersonFrontmatter` and `SpouseValue` interfaces
 
-### Fix Strategy
+2. **Extended `src/types/obsidian-ext.d.ts`** to add `App.commands.executeCommandById()` type
 
-1. **Create shared interfaces:**
-   ```typescript
-   // src/types/canvas.ts
-   interface CanvasNode {
-     type: 'file' | 'text' | 'link' | 'group';
-     file?: string;
-     x: number;
-     y: number;
-     width: number;
-     height: number;
-   }
+3. **Made `registerFileModificationHandler()` public** in main.ts for settings access
 
-   // src/types/frontmatter.ts
-   interface PersonFrontmatter {
-     cr_id?: string;
-     name?: string;
-     father?: string;
-     mother?: string;
-     spouse?: string | string[];
-     // ...
-   }
-   ```
+4. **Used existing `CanvasNode` interface** from `src/models/canvas.ts` for canvas node types
 
-2. **Extend plugin interface for internal methods**
+5. **Changed `value: any` to `value: unknown`** in `extractCrIdFromWikilink()` method
 
-3. **Use `unknown` instead of `any` where type is truly unknown**
+6. **Fixed bug**: Changed incorrect `relayoutCanvas` method call to `regenerateCanvas`
+
+**Files updated:**
+- `src/types/obsidian-ext.d.ts` - Added App.commands interface
+- `src/types/frontmatter.ts` - New file with PersonFrontmatter types
+- `main.ts` - Made registerFileModificationHandler public
+- `src/settings.ts` - Removed `as any` casts
+- `src/ui/control-center.ts` - Removed `as any` casts, fixed method name bug
+- `src/core/canvas-finder.ts` - Used CanvasNode type
+- `src/ui/tree-statistics-modal.ts` - Used CanvasNode type
+- `src/core/bidirectional-linker.ts` - Used PersonFrontmatter type
+- `src/core/family-graph.ts` - Used PersonFrontmatter type, changed to `unknown`
+- `src/core/vault-stats.ts` - Used SpouseValue type
 
 ---
 
-## Category 4: Untyped Catch Errors
+## Category 4: Untyped Catch Errors ✅ COMPLETE
 
 **Priority:** LOW
-**Issue:** `catch (error)` without type annotation treats error as `any`.
+**Status:** ✅ Fixed (all 41 occurrences in 15 files resolved)
 
-### Count by File
+### Resolution
 
-| File | Count |
-|------|-------|
-| src/ui/control-center.ts | 15 |
-| src/gedcom/gedcom-importer.ts | 3 |
-| src/core/bidirectional-linker.ts | 1 |
-| src/core/canvas-finder.ts | 2 |
-| src/core/vault-stats.ts | 1 |
-| src/gedcom/gedcom-parser.ts | 1 |
-| src/gedcom/gedcom-exporter.ts | 1 |
-| src/excalidraw/excalidraw-exporter.ts | 2 |
-| src/ui/find-on-canvas-modal.ts | 1 |
-| src/ui/folder-scan-modal.ts | 1 |
-| src/ui/person-picker.ts | 2 |
-| src/ui/regenerate-options-modal.ts | 1 |
-| src/ui/canvas-style-modal.ts | 2 |
-| src/ui/tree-statistics-modal.ts | 1 |
+1. **Created `src/core/error-utils.ts`** with `getErrorMessage()` helper function
 
-**Total:** 36 occurrences
+2. **Updated all catch blocks** to use `catch (error: unknown)` type annotation
 
-### Fix Strategy
+3. **Used `getErrorMessage(error)` utility** for consistent error message extraction
 
-Change all `catch (error)` to `catch (error: unknown)` and use type guards:
-
-```typescript
-// Before
-catch (error) {
-  console.error('Error:', error);
-}
-
-// After
-catch (error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error('Error:', message);
-}
-```
+**Files updated:**
+- `main.ts` (10 catch blocks)
+- `src/ui/control-center.ts` (14 catch blocks)
+- `src/core/bidirectional-linker.ts` (1 catch block)
+- `src/core/canvas-finder.ts` (2 catch blocks)
+- `src/core/vault-stats.ts` (1 catch block)
+- `src/gedcom/gedcom-parser.ts` (1 catch block)
+- `src/gedcom/gedcom-exporter.ts` (1 catch block)
+- `src/gedcom/gedcom-importer.ts` (3 catch blocks)
+- `src/excalidraw/excalidraw-exporter.ts` (1 catch block)
+- `src/ui/find-on-canvas-modal.ts` (1 catch block)
+- `src/ui/folder-scan-modal.ts` (1 catch block)
+- `src/ui/person-picker.ts` (2 catch blocks)
+- `src/ui/regenerate-options-modal.ts` (1 catch block)
+- `src/ui/canvas-style-modal.ts` (2 catch blocks)
+- `src/ui/tree-statistics-modal.ts` (1 catch block)
 
 ---
 
-## Category 5: Debug Console Statements
+## Category 5: Debug Console Statements ✅ COMPLETE
 
 **Priority:** LOW
-**Issue:** Debug `console.log` statements should be removed or gated behind log level.
+**Status:** ✅ Fixed (all debug logs removed)
 
-### Files with Debug Logs
+### Resolution
 
-| File | Count | Notes |
-|------|-------|-------|
-| src/core/family-chart-layout.ts | 15 | Layout debugging |
-| src/core/family-graph.ts | 1 | William Anderson debug |
-| src/ui/control-center.ts | 1 | William Anderson debug |
-| src/core/canvas-finder.ts | 1 | Error logging (keep) |
-| src/core/vault-stats.ts | 1 | Error logging (keep) |
-| Various files | ~10 | Error logging (keep) |
+1. **Removed all development debug logs from `src/core/family-chart-layout.ts`**
+   - Removed 15+ `[FamilyChartLayout]` console.log statements
+   - Added proper logger import
+   - Changed one `console.warn` to `logger.warn`
 
-### Fix Strategy
+2. **Removed "William Anderson" debug logs**
+   - `src/core/family-graph.ts` - Removed debug log
+   - `src/ui/control-center.ts` - Removed debug log
 
-1. **Remove development debug logs:**
-   - `[Canvas Roots DEBUG - ...]` logs
-   - `[FamilyChartLayout]` logs
-
-2. **Keep error logs but use logger:**
-   - Replace `console.error()` with `this.logger.error()`
-
-3. **Gate remaining debug logs behind log level:**
-   - Use existing `LoggerFactory` with appropriate log levels
+3. **Kept plugin load/unload logs in `main.ts`**
+   - These are acceptable informational logs for plugin lifecycle
 
 ---
 
@@ -288,9 +243,9 @@ catch (error: unknown) {
 
 ## Verification Checklist
 
-- [ ] Build passes (`npm run build`)
-- [ ] No TypeScript errors
-- [ ] No ESLint errors
+- [x] Build passes (`npm run build`)
+- [x] No TypeScript errors
+- [x] No ESLint errors
 - [ ] Plugin loads in Obsidian
 - [ ] Core functionality works:
   - [ ] Tree generation
