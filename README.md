@@ -1,6 +1,6 @@
 # Canvas Roots: Genealogical Family Tree Plugin for Obsidian
 
-> **Status (v0.2.9):** Canvas Roots is feature-complete for core genealogical workflows and submitted for Obsidian community plugin review. All essential features are stable and production-ready (GEDCOM import/export, bidirectional sync, alternative layout algorithms, tree generation, canvas styling, collections, relationship calculator, reference numbering, lineage tracking, relationship history). Advanced features are planned for future releases. See [Roadmap](docs/roadmap.md) for details.
+> **Status (v0.3.0):** Canvas Roots is feature-complete for core genealogical workflows and submitted for Obsidian community plugin review. All essential features are stable and production-ready (GEDCOM import/export, bidirectional sync, alternative layout algorithms, tree generation, canvas styling, collections, relationship calculator, reference numbering, lineage tracking, relationship history, interactive family chart view). Advanced features are planned for future releases. See [Roadmap](docs/roadmap.md) for details.
 
 **Canvas Roots** is an Obsidian plugin that automatically generates complex family trees directly onto the Canvas using specialized genealogical layout algorithms for non-overlapping, relationship-aware positioning.
 
@@ -16,7 +16,9 @@ This plugin is designed for genealogists, historians, and world-builders. It tra
 
 ## ✨ Key Features
 
-### Available Now (v0.2.9)
+### Available Now (v0.3.0)
+
+- **Interactive Family Chart View:** A persistent, interactive visualization panel for exploring and editing family trees in real-time. Pan, zoom, and navigate large trees with smooth animations. Click any person to center the view or open their note. Edit relationships directly in the chart with full undo/redo support. Changes automatically sync to your markdown notes. Choose from multiple color schemes (Gender, Generation, Collection, Monochrome) and adjustable spacing. Export as high-quality PNG or SVG. Access via "Open family chart" command or "Open current note in family chart" for the active person note.
 
 - **GEDCOM Import/Export:** Full round-trip support for GEDCOM 5.5.1 format with pre-import validation and comprehensive import results modal. Import family trees from popular genealogy software (Gramps, Ancestry, FamilySearch) with birth/death places, occupation, and gender data. Export back to .ged format with UUID preservation, collection codes, marriage metadata, and optional privacy protection for living persons.
 
@@ -73,7 +75,6 @@ This plugin is designed for genealogists, historians, and world-builders. It tra
 ### Planned Features
 
 See [Roadmap](docs/roadmap.md) for detailed feature descriptions and development priorities.
-- **Interactive Family Chart View:** Full family-chart library in an Obsidian leaf view with bidirectional note sync
 - **Import/Export Enhancements:** GEDCOM X, Gramps XML, CSV import/export, selective branch export
 - **World-Building Features:** Track fantasy dynasties, corporate succession, and historical kingdoms
 

@@ -1,6 +1,6 @@
 # Canvas Roots: User Guide
 
-> **Version:** v0.2.9
+> **Version:** v0.3.0
 > **Last Updated:** 2025-11-26
 
 This guide covers the complete workflow for using Canvas Roots to create and maintain family trees in Obsidian.
@@ -15,16 +15,17 @@ This guide covers the complete workflow for using Canvas Roots to create and mai
 4. [Collections & Groups](#collections--groups)
 5. [Generating Trees](#generating-trees)
 6. [Interactive Tree Preview](#interactive-tree-preview)
-7. [Maintaining Trees](#maintaining-trees)
-8. [GEDCOM Import/Export](#gedcom-importexport)
-9. [Relationship Calculator](#relationship-calculator)
-10. [Reference Numbering Systems](#reference-numbering-systems)
-11. [Lineage Tracking](#lineage-tracking)
-12. [Relationship History & Undo](#relationship-history--undo)
-13. [Folder Statistics](#folder-statistics)
-14. [Advanced Styling](#advanced-styling)
-15. [Excalidraw Export](#excalidraw-export)
-16. [Tips & Best Practices](#tips--best-practices)
+7. [Interactive Family Chart View](#interactive-family-chart-view)
+8. [Maintaining Trees](#maintaining-trees)
+9. [GEDCOM Import/Export](#gedcom-importexport)
+10. [Relationship Calculator](#relationship-calculator)
+11. [Reference Numbering Systems](#reference-numbering-systems)
+12. [Lineage Tracking](#lineage-tracking)
+13. [Relationship History & Undo](#relationship-history--undo)
+14. [Folder Statistics](#folder-statistics)
+15. [Advanced Styling](#advanced-styling)
+16. [Excalidraw Export](#excalidraw-export)
+17. [Tips & Best Practices](#tips--best-practices)
 
 ---
 
@@ -477,6 +478,135 @@ Export the preview as an image file for use outside Obsidian:
 - **Layout comparison**: Test different algorithms (Standard, Compact, Timeline, Hourglass)
 - **Quick exports**: Generate shareable images without creating canvas files
 - **Research review**: Visually verify relationships before finalizing
+
+---
+
+## Interactive Family Chart View
+
+The Interactive Family Chart View is a persistent, interactive visualization panel for exploring and editing family trees in real-time. Unlike the static canvas exports, it provides a dynamic, explorable interface powered by the [family-chart](https://github.com/donatso/family-chart) library.
+
+### Opening the Family Chart
+
+**Method 1: Command palette**
+1. Press `Ctrl/Cmd + P`
+2. Type "Canvas Roots: Open family chart"
+3. Select a root person when prompted
+4. The chart opens in a new view
+
+**Method 2: From a person note**
+1. Open a person note (must have `cr_id` property)
+2. Press `Ctrl/Cmd + P`
+3. Type "Canvas Roots: Open current note in family chart"
+4. The chart opens centered on that person
+
+### Navigation and Exploration
+
+**Pan and zoom:**
+- **Mouse wheel**: Zoom in/out
+- **Click and drag**: Pan around the chart
+- **Zoom buttons**: Fine-grained zoom control in the toolbar
+- **Fit to view**: Reset view to show entire tree
+
+**Click interactions:**
+- **Single click** on a person card: Center the view on that person
+- **Double click** on a person card: Open their note in the editor
+
+### Display Options
+
+**Color schemes:**
+Access via the color scheme dropdown in the toolbar:
+- **Gender**: Pink for female, blue for male (traditional genealogy colors)
+- **Generation**: Different colors for each generation level
+- **Collection**: Color by collection membership
+- **Monochrome**: Neutral coloring for clean appearance
+
+**Layout spacing:**
+Access via the layout settings button (gear icon):
+- **Compact**: 200px horizontal spacing (best for large trees)
+- **Normal**: 250px horizontal spacing (default)
+- **Spacious**: 350px horizontal spacing (best for readability)
+
+**Date display:**
+Toggle birth/death dates on person cards via the layout settings menu.
+
+### Edit Mode
+
+Enable edit mode to modify family relationships directly in the chart.
+
+**Enabling edit mode:**
+1. Click the **Edit** toggle button in the toolbar
+2. The toolbar shows undo/redo buttons when editing is active
+
+**Editing a person:**
+1. Click on any person card while in edit mode
+2. An edit form appears with fields for:
+   - First name and last name
+   - Birth date and death date
+   - Gender
+3. Make your changes and save
+
+**Undo and redo:**
+- Use the **Undo** and **Redo** buttons in the toolbar
+- Full edit history is maintained during the session
+
+**Bidirectional sync:**
+Changes made in the chart automatically update the underlying markdown notes:
+- Name changes update the `name` property
+- Date changes update `born` and `died` properties
+- Gender changes update the `gender` property
+
+### Exporting the Chart
+
+**PNG export:**
+1. Click the export menu button in the toolbar
+2. Select **Export as PNG**
+3. High-resolution image (2x resolution) is saved
+
+**SVG export:**
+1. Click the export menu button in the toolbar
+2. Select **Export as SVG**
+3. Scalable vector graphic is saved for further editing
+
+Both exports preserve your current color scheme and theme (dark/light mode).
+
+### State Persistence
+
+The Family Chart View automatically saves and restores:
+- Root person selection
+- Color scheme preference
+- Edit mode state
+- Layout spacing settings
+- Date visibility preference
+- Approximate zoom level
+
+When you close and reopen a family chart, it returns to the same state.
+
+### Toolbar Reference
+
+| Button | Function |
+|--------|----------|
+| Color dropdown | Switch between color schemes |
+| Zoom in/out | Adjust zoom level |
+| Search | Find and navigate to a specific person |
+| Edit toggle | Enable/disable edit mode |
+| Undo/Redo | Reverse or replay edits (edit mode only) |
+| Fit to view | Zoom to show entire tree |
+| Layout settings | Adjust spacing and date display |
+| Export menu | Save as PNG or SVG |
+| Refresh | Reload data from notes |
+
+### When to Use Family Chart vs Canvas
+
+| Feature | Family Chart View | Canvas Generation |
+|---------|-------------------|-------------------|
+| **Exploration** | Best for browsing large trees | Better for static documentation |
+| **Editing** | Direct in-chart editing | Edit source notes, regenerate |
+| **Persistence** | View survives reloads | Canvas file saved permanently |
+| **Export** | PNG/SVG images | Canvas file, Excalidraw |
+| **Integration** | Live sync with notes | Snapshot at generation time |
+| **Use case** | Interactive research | Shareable family tree |
+
+**Recommendation:** Use Family Chart View for day-to-day exploration and quick edits. Use Canvas Generation for creating permanent, shareable family tree documents.
 
 ---
 

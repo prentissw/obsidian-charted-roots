@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2025-11-26
+
+### Added
+
+- **Interactive Family Chart View**: A new persistent, interactive visualization panel for exploring and editing family trees in real-time
+  - Pan, zoom, and navigate large trees (50+ people) with smooth animations
+  - Click any person to center the view or open their note
+  - Built-in editing: add, modify, and delete relationships directly in the chart
+  - Full undo/redo support for confident editing
+  - Bidirectional sync: changes automatically update your markdown notes
+  - Color schemes: Gender, Generation, Collection, or Monochrome
+  - Adjustable layout spacing: Compact, Normal, or Spacious
+  - Toggle birth/death date display on person cards
+  - Export as high-quality PNG (2x resolution) or SVG
+  - Commands: "Open family chart", "Open current note in family chart"
+  - State persistence: view settings preserved across sessions
+
+---
+
 ## [0.2.9] - 2025-11-26
 
 ### Added
@@ -317,7 +336,8 @@ Initial alpha release with core genealogical features.
 
 ### Version Status
 
-- **Beta (v0.2.x)**: Feature-complete for core genealogical workflows. All essential features are stable and production-ready. Advanced features planned for future releases.
+- **Stable (v0.3.x)**: Feature-complete for core genealogical workflows with interactive family chart view. All essential features are stable and production-ready.
+- **Beta (v0.2.x)**: Core genealogical workflows with canvas generation, GEDCOM support, and relationship management.
 - **Alpha (v0.1.x)**: Initial testing releases with core functionality.
 
 ### Roadmap
