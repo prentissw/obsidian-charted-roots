@@ -1,6 +1,6 @@
 # Canvas Roots: Genealogical Family Tree Plugin for Obsidian
 
-> **Status (v0.3.1):** Canvas Roots is feature-complete for core genealogical workflows and submitted for Obsidian community plugin review. All essential features are stable and production-ready (GEDCOM import/export, bidirectional sync, alternative layout algorithms, tree generation, canvas styling, collections, relationship calculator, reference numbering, lineage tracking, relationship history, interactive family chart view). Advanced features are planned for future releases. See [Roadmap](docs/roadmap.md) for details.
+> **Status (v0.3.2):** Canvas Roots is feature-complete for core genealogical workflows and submitted for Obsidian community plugin review. All essential features are stable and production-ready (GEDCOM import/export, bidirectional sync, alternative layout algorithms, tree generation, canvas styling, collections, relationship calculator, reference numbering, lineage tracking, relationship history, interactive family chart view with PDF export). Advanced features are planned for future releases. See [Roadmap](docs/roadmap.md) for details.
 
 **Canvas Roots** is an Obsidian plugin that automatically generates complex family trees directly onto the Canvas using specialized genealogical layout algorithms for non-overlapping, relationship-aware positioning.
 
@@ -16,13 +16,13 @@ This plugin is designed for genealogists, historians, and world-builders. It tra
 
 ## ✨ Key Features
 
-### Available Now (v0.3.1)
+### Available Now (v0.3.2)
 
-- **Interactive Family Chart View:** A persistent, interactive visualization panel for exploring and editing family trees in real-time. Pan, zoom, and navigate large trees with smooth animations. Click any person to center the view or open their note. Edit relationships directly in the chart with full undo/redo support. Changes automatically sync to your markdown notes. Choose from multiple color schemes (Gender, Generation, Collection, Monochrome) and adjustable spacing. Export as high-quality PNG or SVG. Access via "Open family chart" command or "Open current note in family chart" for the active person note.
+- **Interactive Family Chart View:** A persistent, interactive visualization panel for exploring and editing family trees in real-time. Pan, zoom, and navigate large trees with smooth animations. Click any person to center the view or open their note. Edit relationships directly in the chart with full undo/redo support. Changes automatically sync to your markdown notes. Choose from multiple color schemes (Gender, Generation, Collection, Monochrome) and adjustable spacing. Export as high-quality PNG, SVG, or PDF. Customizable export filenames with `{name}` and `{date}` placeholders. Access via "Open family chart" command or "Open current note in family chart" for the active person note.
 
 - **GEDCOM Import/Export:** Full round-trip support for GEDCOM 5.5.1 format with pre-import validation and comprehensive import results modal. Import family trees from popular genealogy software (Gramps, Ancestry, FamilySearch) with birth/death places, occupation, and gender data. Export back to .ged format with UUID preservation, collection codes, marriage metadata, and optional privacy protection for living persons.
 
-- **Interactive Tree Preview:** Real-time visual preview of family trees before canvas generation. Pan, zoom, and explore layouts with interactive controls. Switch between color schemes (Gender, Generation, Monochrome) to visualize different data aspects. Hover over nodes to view person details (name, birth/death dates, generation). Export previews as high-resolution PNG or vector SVG for external use. Particularly useful for large trees (50+ people) to verify layout before generating the final canvas.
+- **Interactive Tree Preview:** Real-time visual preview of family trees before canvas generation. Pan, zoom, and explore layouts with interactive controls. Switch between color schemes (Gender, Generation, Monochrome) to visualize different data aspects. Hover over nodes to view person details (name, birth/death dates, generation). Export previews as high-resolution PNG, vector SVG, or PDF for external use. Particularly useful for large trees (50+ people) to verify layout before generating the final canvas.
 
 - **Alternative Layout Algorithms:** Choose from four layout algorithms to visualize your family tree in different ways:
   - **Standard:** Traditional family-chart layout with proper spouse handling
@@ -52,7 +52,7 @@ This plugin is designed for genealogists, historians, and world-builders. It tra
 
 - **YAML-First Data:** Uses native YAML frontmatter for maximum compatibility with Dataview, Bases, and other Obsidian tools.
 
-- **Context Menu Actions:** Right-click person notes to add relationships, validate data integrity, find canvases, or bulk-add essential properties. Generate trees quickly via "Generate tree" submenu (Canvas with full options, or Excalidraw with instant defaults). Right-click folders to scan for relationship issues, import GEDCOM files, or export folder contents to GEDCOM. Right-click canvas files to regenerate or view statistics. Multi-file selection support for batch operations. Full desktop and mobile support.
+- **Context Menu Actions:** Right-click person notes to add relationships, validate data integrity, find canvases, or bulk-add essential properties. Generate trees quickly via "Generate tree" submenu (Canvas with full options, or Excalidraw with instant defaults). Right-click folders to scan for relationship issues, import GEDCOM files, or export folder contents to GEDCOM. Right-click canvas files to regenerate, view statistics, or export as image (PNG, SVG, PDF). Multi-file selection support for batch operations. Full desktop and mobile support.
 
 - **Collections & Groups:** Organize and browse people using auto-detected family groups (with customizable group names) or user-defined collections. Filter tree generation by collection and view cross-collection connections to identify bridge people connecting different parts of your family network.
 

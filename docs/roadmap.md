@@ -1,7 +1,7 @@
 # Canvas Roots: Development Roadmap
 
-> **Last Updated:** 2025-11-26
-> **Current Version:** v0.2.9
+> **Last Updated:** 2025-11-28
+> **Current Version:** v0.3.2
 
 Canvas Roots is in beta with core functionality complete and stable. Advanced features and enhancements are planned for future releases.
 
@@ -9,7 +9,38 @@ Canvas Roots is in beta with core functionality complete and stable. Advanced fe
 
 ## 🎯 Released Versions
 
-### v0.2.9 (Current)
+### v0.3.2 (Current)
+
+**ESLint Compliance & Bug Fixes:**
+- ✅ Fixed 19 ESLint errors related to async/await and promise handling
+- ✅ Removed unnecessary async keywords from synchronous methods
+- ✅ Fixed floating promises in event handlers
+- ✅ Improved code quality for PR review compliance
+
+### v0.3.1
+
+**PDF Export & Export Customization:**
+- ✅ PDF export for Family Chart View (Export menu in toolbar)
+- ✅ PDF export for Tree Preview in Control Center
+- ✅ "Export as image" submenu on Canvas file context menu (PNG, SVG, PDF)
+- ✅ Customizable export filename pattern with `{name}` and `{date}` placeholders
+- ✅ New setting: Export filename pattern (default: `{name}-family-chart-{date}`)
+
+### v0.3.0
+
+**Interactive Family Chart View:**
+- ✅ Persistent leaf view for exploring family trees interactively
+- ✅ Full family-chart interactivity: pan, zoom, click-to-focus, smooth animations
+- ✅ Edit mode with inline relationship editing and undo/redo support
+- ✅ Bidirectional sync: chart edits update frontmatter, changes reflect in chart
+- ✅ Multiple color schemes: Gender, Generation, Collection, Monochrome
+- ✅ Export as PNG, SVG, PDF with customizable filenames
+- ✅ Toolbar UI: layout, color scheme, zoom, history, search
+- ✅ Command: "Open family chart view", "Open current note in family chart"
+- ✅ Context menu integration on person notes
+- ✅ Added jsPDF dependency for PDF generation
+
+### v0.2.9
 
 **Privacy Protection, Lineage Tracking, Relationship History, Folder Statistics:**
 - ✅ Privacy protection for living persons in GEDCOM exports (configurable birth year threshold)
@@ -304,94 +335,34 @@ Genealogical numbering systems for systematic identification of ancestors and de
 | Person Detail Panel | Low priority | Largely redundant with Bases table views and opening notes directly |
 | Rich inline person display | Low priority | Bases provides this; Family Chart View would do it better |
 | Quick editing | Low priority | Bases inline editing covers this use case |
-| Canvas export as image/PDF | Consider | PNG/SVG export exists in Tree Preview; PDF could add value |
+| Canvas export as image/PDF | ✅ Completed | PNG/SVG/PDF export in Family Chart View and Tree Preview (v0.3.1) |
 
 The "relationship visualization" aspect originally planned for Person Detail Panel is better served by the **Interactive Family Chart View**, which provides full tree context rather than just immediate relatives.
 
 ### Interactive Family Chart View
 
+**Status**: ✅ Completed in v0.3.0
+
 A dedicated Obsidian leaf view that renders the full family-chart library interactively, complementing the static canvas output. Leverages the complete [family-chart](https://github.com/donatso/family-chart) API for rich genealogical visualization.
 
-**Core Features:**
-- Persistent leaf view (sidebar, new tab, or split pane)
-- Full family-chart interactivity: pan, zoom, click-to-focus, smooth animated transitions
-- Bidirectional sync with markdown notes (chart edits update frontmatter, frontmatter changes reflect in chart)
-- Click node to open person note in editor
-- Auto-save edits (consistent with Obsidian behavior)
-- D3.js-powered rendering with configurable transition times
+**Implemented Features:**
+- ✅ Persistent leaf view (sidebar, new tab, or split pane)
+- ✅ Full family-chart interactivity: pan, zoom, click-to-focus, smooth animated transitions
+- ✅ Bidirectional sync with markdown notes (chart edits update frontmatter, frontmatter changes reflect in chart)
+- ✅ Click node to open person note in editor
+- ✅ Edit mode with inline relationship editing and undo/redo support
+- ✅ Multiple color schemes: Gender, Generation, Collection, Monochrome
+- ✅ Export as PNG, SVG, PDF with customizable filenames (v0.3.1)
+- ✅ Toolbar UI: layout, color scheme, zoom, history, search
+- ✅ Command: "Open family chart view", "Open current note in family chart"
+- ✅ Context menu integration on person notes
 
-**Toolbar UI (consistent with Obsidian Graph View pattern):**
-- Layout dropdown: Standard | Compact | Timeline | Hourglass
-- Color scheme dropdown: Gender | Generation | Monochrome | Collection
-- Depth controls: Ancestors ▾ | Descendants ▾
-- Toggle buttons: Edit mode | Kinship labels | Fit to view
-- Search icon (opens command palette-style overlay)
-- Chart dominates the view; rarely-changed settings in plugin settings
-
-**Editing Capabilities (via EditTree API):**
-- Built-in edit forms with configurable field sets
-- Add relationships: parent, child, spouse with gender inference
-- Delete person with automatic relationship cleanup (converts to "unknown" if relatives still connected)
-- Inline editing of basic fields (name, dates, custom properties) with sync back to notes
-- Form validation and data submission handling
-- `exportData()` for clean JSON export on every change
-
-**Card Display Options:**
-- SVG cards (default) or HTML cards for advanced styling
-- Configurable card dimensions (width, height, image size/position)
-- Custom card display fields (e.g., `[["first name", "last name"], ["birthday"]]`)
-- Avatar/image support with customizable positioning
-- Mini-tree indicators showing hidden relatives
-- Gender-based styling (male/female/unknown colors)
-- Main person highlight with scale and shadow effects
-- Hover effects and click interactions
-
-**Navigation & View Controls:**
-- `cardToMiddle()` - Animate to center on specific person
-- `treeFit()` - Fit entire tree in viewport
-- `manualZoom()` - Programmatic zoom in/out
-- `zoomTo()` - Set specific zoom level
-- Tree trimming with `ancestry_depth` and `progeny_depth` limits
-- Horizontal or vertical tree orientation
-
-**Built-in Kinship Display:**
-- Kinship calculation showing relationship labels (parent, uncle, 1st cousin 2x removed, etc.)
-- Kinship info popup with mini-tree visualization
-- In-law relationship support
-- Half-sibling detection
-- Toggle between kinship labels and person names
-
-**History & Undo (native family-chart feature):**
-- Built-in history tracking with back/forward navigation
-- History controls UI with back/forward buttons
-- State snapshots on each change
-- Could integrate with Canvas Roots' Relationship History feature (completed in v0.2.9)
-
-**Search & Filtering:**
-- Person search with autocomplete dropdown
-- Filter by any data property
-- Random person navigation (useful for large trees)
-
-**Layout Configuration:**
-- `node_separation` - Horizontal spacing between nodes
-- `level_separation` - Vertical spacing between generations
-- Single parent empty card toggle
-- Link break styling options
-- Custom sort function for children ordering
-
-**Integration:**
-- Command: "Open family chart view"
-- Context menu on person notes: "Show in family chart"
-- Link from canvas nodes to focus in chart view
-- Export (PNG, SVG) directly from the view
-- Settings for default view configuration
-- WikiData-style large tree support (tested with British Royal Family data)
-
-**Potential Enhancements:**
+**Potential Future Enhancements:**
 - Multiple chart views open simultaneously (different root persons)
 - Linked views that stay synchronized
 - Custom card components with Obsidian-specific actions
 - Info popup integration showing person note preview
+- Kinship labels display mode
 
 ### Privacy & Obfuscation
 
