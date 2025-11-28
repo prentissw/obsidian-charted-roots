@@ -2752,7 +2752,7 @@ export default class CanvasRootsPlugin extends Plugin {
 
 		// Reveal the leaf in case it is in a collapsed sidebar
 		if (leaf) {
-			workspace.revealLeaf(leaf);
+			void workspace.revealLeaf(leaf);
 
 			// If we have a root person, set it in the view
 			if (rootPersonId && leaf.view instanceof FamilyChartView) {
@@ -2782,7 +2782,7 @@ export default class CanvasRootsPlugin extends Plugin {
 		// Open in main workspace
 		const newLeaf = workspace.getLeaf('tab');
 		await newLeaf.setViewState({ type: VIEW_TYPE_FAMILY_CHART, active: true });
-		workspace.revealLeaf(newLeaf);
+		void workspace.revealLeaf(newLeaf);
 
 		// Restore the root person
 		if (rootPersonId && newLeaf.view instanceof FamilyChartView) {

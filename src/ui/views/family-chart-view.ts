@@ -126,6 +126,7 @@ export class FamilyChartView extends ItemView {
 		this.registerEventHandlers();
 	}
 
+	// eslint-disable-next-line @typescript-eslint/require-await -- Base class requires Promise<void> return type
 	async onClose(): Promise<void> {
 		logger.debug('view-close', 'Closing FamilyChartView');
 		this.destroyChart();
@@ -180,7 +181,7 @@ export class FamilyChartView extends ItemView {
 
 		colorSelect.addEventListener('change', () => {
 			this.colorScheme = colorSelect.value as ColorScheme;
-			this.refreshChart();
+			void this.refreshChart();
 		});
 
 		// Zoom controls group
@@ -215,7 +216,7 @@ export class FamilyChartView extends ItemView {
 		});
 		// Search icon
 		searchBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
-		searchBtn.addEventListener('click', () => this.openPersonSearch());
+		searchBtn.addEventListener('click', () => { void this.openPersonSearch(); });
 
 		// Edit mode toggle button
 		this.editModeBtn = rightControls.createEl('button', {
@@ -286,7 +287,7 @@ export class FamilyChartView extends ItemView {
 			attr: { 'aria-label': 'Refresh chart' }
 		});
 		refreshBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>';
-		refreshBtn.addEventListener('click', () => this.refreshChart());
+		refreshBtn.addEventListener('click', () => { void this.refreshChart(); });
 	}
 
 	/**
@@ -305,7 +306,7 @@ export class FamilyChartView extends ItemView {
 			text: 'Select a person',
 			cls: 'mod-cta'
 		});
-		selectBtn.addEventListener('click', () => this.promptSelectPerson());
+		selectBtn.addEventListener('click', () => { void this.promptSelectPerson(); });
 	}
 
 	/**
@@ -314,9 +315,9 @@ export class FamilyChartView extends ItemView {
 	private async promptSelectPerson(): Promise<void> {
 		const { PersonPickerModal } = await import('../person-picker');
 
-		new PersonPickerModal(this.app, async (selectedPerson) => {
+		new PersonPickerModal(this.app, (selectedPerson) => {
 			this.rootPersonId = selectedPerson.crId;
-			await this.initializeChart();
+			void this.initializeChart();
 		}).open();
 	}
 
@@ -460,7 +461,7 @@ export class FamilyChartView extends ItemView {
 		// In edit mode, EditTree handles the click via setCardClickOpen
 		// In view mode, open the person's note in addition to navigation
 		if (!this.editMode) {
-			this.openPersonNote(personId);
+			void this.openPersonNote(personId);
 		}
 
 		// Call default card click behavior for navigation (centers on the person)
@@ -763,7 +764,7 @@ export class FamilyChartView extends ItemView {
 	/**
 	 * Export the chart as PNG
 	 */
-	private async exportAsPng(): Promise<void> {
+	private exportAsPng(): void {
 		if (!this.f3Chart) return;
 
 		const svg = this.f3Chart.svg;
@@ -1133,7 +1134,7 @@ export class FamilyChartView extends ItemView {
 	/**
 	 * Export the chart as PDF
 	 */
-	private async exportAsPdf(): Promise<void> {
+	private exportAsPdf(): void {
 		if (!this.f3Chart) return;
 
 		const svg = this.f3Chart.svg;
@@ -1486,7 +1487,7 @@ export class FamilyChartView extends ItemView {
 	private registerEventHandlers(): void {
 		// Listen for note modifications to refresh the chart
 		this.registerEvent(
-			this.app.vault.on('modify', async (file: TFile) => {
+			this.app.vault.on('modify', (file: TFile) => {
 				if (file.extension !== 'md') return;
 
 				// Check if this is a person note

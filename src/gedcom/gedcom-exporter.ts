@@ -81,7 +81,7 @@ export class GedcomExporter {
 	/**
 	 * Export people to GEDCOM format
 	 */
-	async exportToGedcom(options: GedcomExportOptions): Promise<GedcomExportResult> {
+	exportToGedcom(options: GedcomExportOptions): GedcomExportResult {
 		const result: GedcomExportResult = {
 			success: false,
 			individualsExported: 0,

@@ -151,7 +151,7 @@ export class FamilyGraphService {
 	/**
 	 * Generates a family tree starting from a root person
 	 */
-	async generateTree(options: TreeOptions): Promise<FamilyTree | null> {
+	generateTree(options: TreeOptions): FamilyTree | null {
 		// Load all person nodes into cache
 		this.loadPersonCache();
 
@@ -214,7 +214,7 @@ export class FamilyGraphService {
 	 * Gets the total count of people in the vault (must call after generateTree)
 	 * This uses the cached person data from the most recent tree generation.
 	 */
-	async getTotalPeopleCount(): Promise<number> {
+	getTotalPeopleCount(): number {
 		// If cache is empty, load it
 		if (this.personCache.size === 0) {
 			this.loadPersonCache();
@@ -233,7 +233,7 @@ export class FamilyGraphService {
 	/**
 	 * Ensures the person cache is loaded
 	 */
-	async ensureCacheLoaded(): Promise<void> {
+	ensureCacheLoaded(): void {
 		if (this.personCache.size === 0) {
 			this.loadPersonCache();
 		}
@@ -278,7 +278,7 @@ export class FamilyGraphService {
 	 * Finds all disconnected family components in the vault
 	 * Returns an array of components, each with representative person, size, and collection name
 	 */
-	async findAllFamilyComponents(): Promise<Array<{ representative: PersonNode; size: number; people: PersonNode[]; collectionName?: string }>> {
+	findAllFamilyComponents(): Array<{ representative: PersonNode; size: number; people: PersonNode[]; collectionName?: string }> {
 		// Ensure cache is loaded
 		if (this.personCache.size === 0) {
 			this.loadPersonCache();
@@ -349,7 +349,7 @@ export class FamilyGraphService {
 	 * Gets all user-defined collections
 	 * Returns collections grouped by the 'collection' property
 	 */
-	async getUserCollections(): Promise<Array<{ name: string; people: PersonNode[]; size: number }>> {
+	getUserCollections(): Array<{ name: string; people: PersonNode[]; size: number }> {
 		// Ensure cache is loaded
 		if (this.personCache.size === 0) {
 			this.loadPersonCache();
@@ -387,7 +387,7 @@ export class FamilyGraphService {
 	 * Detects connections between user collections
 	 * Finds "bridge people" who have relationships across collection boundaries
 	 */
-	async detectCollectionConnections(): Promise<CollectionConnection[]> {
+	detectCollectionConnections(): CollectionConnection[] {
 		// Ensure cache is loaded
 		if (this.personCache.size === 0) {
 			this.loadPersonCache();
@@ -890,16 +890,16 @@ export class FamilyGraphService {
 	 * Calculate analytics for all collections
 	 * Returns statistics about data quality, completeness, and structure
 	 */
-	async calculateCollectionAnalytics(): Promise<CollectionAnalytics> {
+	calculateCollectionAnalytics(): CollectionAnalytics {
 		// Ensure cache is loaded
 		if (this.personCache.size === 0) {
 			this.loadPersonCache();
 		}
 
 		const allPeople = Array.from(this.personCache.values());
-		const families = await this.findAllFamilyComponents();
-		const userCollections = await this.getUserCollections();
-		const connections = await this.detectCollectionConnections();
+		const families = this.findAllFamilyComponents();
+		const userCollections = this.getUserCollections();
+		const connections = this.detectCollectionConnections();
 
 		// Calculate data completeness
 		const peopleWithBirthDate = allPeople.filter(p => p.birthDate).length;
