@@ -11,11 +11,13 @@ Canvas Roots is in beta with core functionality complete and stable. Advanced fe
 
 ### v0.3.2 (Current)
 
-**ESLint Compliance & Bug Fixes:**
+**ESLint Compliance & Bidirectional Name Sync:**
 - ✅ Fixed 19 ESLint errors related to async/await and promise handling
 - ✅ Removed unnecessary async keywords from synchronous methods
 - ✅ Fixed floating promises in event handlers
 - ✅ Improved code quality for PR review compliance
+- ✅ Bidirectional name sync: chart edits rename files, file renames update frontmatter
+- ✅ Chart automatically refreshes when person files are renamed
 
 ### v0.3.1
 
