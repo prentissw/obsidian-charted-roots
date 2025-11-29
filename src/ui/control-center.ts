@@ -3571,6 +3571,9 @@ export class ControlCenterModal extends Modal {
 		fileName: string;
 		collectionFilter?: string;
 		includeCollectionCodes: boolean;
+		branchRootCrId?: string;
+		branchDirection?: 'ancestors' | 'descendants';
+		branchIncludeSpouses?: boolean;
 	}): Promise<void> {
 		try {
 			logger.info('gedcom-export', `Starting GEDCOM export: ${options.fileName}`);
@@ -3583,6 +3586,9 @@ export class ControlCenterModal extends Modal {
 			const result = await exporter.exportToGedcom({
 				peopleFolder: this.plugin.settings.peopleFolder,
 				collectionFilter: options.collectionFilter,
+				branchRootCrId: options.branchRootCrId,
+				branchDirection: options.branchDirection,
+				branchIncludeSpouses: options.branchIncludeSpouses,
 				includeCollectionCodes: options.includeCollectionCodes,
 				fileName: options.fileName,
 				sourceApp: 'Canvas Roots',
@@ -3944,6 +3950,49 @@ export class ControlCenterModal extends Modal {
 				});
 			});
 
+		// Branch filter options
+		let branchRootCrId: string | undefined;
+		let branchRootName: string | undefined;
+		let branchDirection: 'ancestors' | 'descendants' | undefined;
+		let branchIncludeSpouses = false;
+
+		const branchSetting = new Setting(exportContent)
+			.setName('Branch filter (optional)')
+			.setDesc('Export only ancestors or descendants of a specific person')
+			.addButton(btn => {
+				btn.setButtonText('Select person')
+					.onClick(async () => {
+						const picker = new PersonPickerModal(this.app, (info) => {
+							branchRootCrId = info.crId;
+							branchRootName = info.name;
+							btn.setButtonText(info.name);
+						});
+						picker.open();
+					});
+			});
+
+		new Setting(exportContent)
+			.setName('Branch direction')
+			.setDesc('Include ancestors (up) or descendants (down)')
+			.addDropdown(dropdown => {
+				dropdown.addOption('', 'No branch filter');
+				dropdown.addOption('ancestors', 'Ancestors only');
+				dropdown.addOption('descendants', 'Descendants only');
+				dropdown.onChange(value => {
+					branchDirection = value as 'ancestors' | 'descendants' || undefined;
+				});
+			});
+
+		new Setting(exportContent)
+			.setName('Include spouses in descendants')
+			.setDesc('When exporting descendants, also include their spouses')
+			.addToggle(toggle => toggle
+				.setValue(false)
+				.onChange(value => {
+					branchIncludeSpouses = value;
+				})
+			);
+
 		// Include collection codes option
 		let includeCollectionCodes = true;
 		new Setting(exportContent)
@@ -3980,7 +4029,10 @@ export class ControlCenterModal extends Modal {
 				await this.handleGedcomExport({
 					fileName: exportFileName,
 					collectionFilter,
-					includeCollectionCodes
+					includeCollectionCodes,
+					branchRootCrId,
+					branchDirection,
+					branchIncludeSpouses
 				});
 			})();
 		});
@@ -4084,6 +4136,49 @@ export class ControlCenterModal extends Modal {
 				});
 			});
 
+		// Branch filter options for CSV
+		let csvBranchRootCrId: string | undefined;
+		let csvBranchRootName: string | undefined;
+		let csvBranchDirection: 'ancestors' | 'descendants' | undefined;
+		let csvBranchIncludeSpouses = false;
+
+		new Setting(exportContent)
+			.setName('Branch filter (optional)')
+			.setDesc('Export only ancestors or descendants of a specific person')
+			.addButton(btn => {
+				btn.setButtonText('Select person')
+					.onClick(async () => {
+						const picker = new PersonPickerModal(this.app, (info) => {
+							csvBranchRootCrId = info.crId;
+							csvBranchRootName = info.name;
+							btn.setButtonText(info.name);
+						});
+						picker.open();
+					});
+			});
+
+		new Setting(exportContent)
+			.setName('Branch direction')
+			.setDesc('Include ancestors (up) or descendants (down)')
+			.addDropdown(dropdown => {
+				dropdown.addOption('', 'No branch filter');
+				dropdown.addOption('ancestors', 'Ancestors only');
+				dropdown.addOption('descendants', 'Descendants only');
+				dropdown.onChange(value => {
+					csvBranchDirection = value as 'ancestors' | 'descendants' || undefined;
+				});
+			});
+
+		new Setting(exportContent)
+			.setName('Include spouses in descendants')
+			.setDesc('When exporting descendants, also include their spouses')
+			.addToggle(toggle => toggle
+				.setValue(false)
+				.onChange(value => {
+					csvBranchIncludeSpouses = value;
+				})
+			);
+
 		// Export file name
 		let exportFileName = 'family-tree';
 		new Setting(exportContent)
@@ -4107,7 +4202,10 @@ export class ControlCenterModal extends Modal {
 			void (async () => {
 				await this.handleCsvExport({
 					fileName: exportFileName,
-					collectionFilter
+					collectionFilter,
+					branchRootCrId: csvBranchRootCrId,
+					branchDirection: csvBranchDirection,
+					branchIncludeSpouses: csvBranchIncludeSpouses
 				});
 			})();
 		});
@@ -4300,6 +4398,9 @@ export class ControlCenterModal extends Modal {
 	private async handleCsvExport(options: {
 		fileName: string;
 		collectionFilter?: string;
+		branchRootCrId?: string;
+		branchDirection?: 'ancestors' | 'descendants';
+		branchIncludeSpouses?: boolean;
 	}): Promise<void> {
 		try {
 			logger.info('csv-export', `Starting CSV export: ${options.fileName}`);
@@ -4312,6 +4413,9 @@ export class ControlCenterModal extends Modal {
 			const result = exporter.exportToCsv({
 				peopleFolder: this.plugin.settings.peopleFolder,
 				collectionFilter: options.collectionFilter,
+				branchRootCrId: options.branchRootCrId,
+				branchDirection: options.branchDirection,
+				branchIncludeSpouses: options.branchIncludeSpouses,
 				fileName: options.fileName,
 				privacySettings: {
 					enablePrivacyProtection: this.plugin.settings.enablePrivacyProtection,
