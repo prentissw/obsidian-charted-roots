@@ -1,6 +1,6 @@
 # Import Cleanup Implementation Plan
 
-**Status:** Phase 1 Complete
+**Status:** Phases 1-3 Complete
 **Date:** 2025-11-30
 **Affects:** v0.4.0+ (Import Cleanup feature)
 **Prerequisites:** Folder Filtering (✅ Complete)
@@ -11,16 +11,13 @@
 
 Tools for consolidating multiple GEDCOM files, cleaning up messy imports, and improving data quality. This builds on the folder filtering foundation to provide a staging workflow for safely processing imports before merging into the main tree.
 
-**Goals (Phase 1 - Staging Workflow):**
-- Dedicated staging folder setting with auto-exclusion
-- Import destination toggle (main vs staging) in Control Center
-- Clear separation between staging data and production tree
-- "Promote to main" workflow for cleaned data
+**Implemented Features (v0.4.0):**
+- ✅ Phase 1: Staging workflow with folder settings and isolation
+- ✅ Phase 2: Cross-import duplicate detection between staging and main tree
+- ✅ Phase 3: Merge wizard with field-level conflict resolution
 
-**Future Phases (not this document):**
-- Phase 2: Cross-import duplicate detection
-- Phase 3: Merge & consolidation tools
-- Phase 4: Data quality tools
+**Future Phases:**
+- Phase 4: Data quality tools (planned)
 
 ---
 

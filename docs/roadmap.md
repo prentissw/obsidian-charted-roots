@@ -1,7 +1,7 @@
 # Canvas Roots: Development Roadmap
 
-> **Last Updated:** 2025-11-29
-> **Current Version:** v0.3.3
+> **Last Updated:** 2025-11-30
+> **Current Version:** v0.4.0
 
 Canvas Roots is in beta with core functionality complete and stable. Advanced features and enhancements are planned for future releases.
 
@@ -9,7 +9,18 @@ Canvas Roots is in beta with core functionality complete and stable. Advanced fe
 
 ## 🎯 Released Versions
 
-### v0.3.3 (Current)
+### v0.4.0 (Current)
+
+**Import Cleanup & Merge Tools:**
+- ✅ Staging folder workflow for safe import processing
+- ✅ Cross-import duplicate detection (staging vs main tree)
+- ✅ Merge wizard with field-level conflict resolution
+- ✅ Folder filtering for person note discovery
+- ✅ Staging tab in Control Center with subfolder management
+- ✅ Resolution tracking for duplicate matches (same/different person)
+- ✅ Relationship reconciliation during merge operations
+
+### v0.3.3
 
 **CSV Import/Export, Selective Branch Export, Duplicate Detection:**
 - ✅ CSV import/export with auto-detected column mapping
@@ -264,22 +275,44 @@ Canvas Roots is in beta with core functionality complete and stable. Advanced fe
 
 ---
 
-## 🚧 In Active Development
+## 📋 Planned Features
 
-### Import Cleanup - Phase 1: Staging Workflow
+### Import Cleanup & Consolidation
 
-**Status**: 🔨 In Progress
+**Status**: ✅ Phases 1-3 Complete (v0.4.0)
 
-See [import-cleanup-plan.md](architecture/import-cleanup-plan.md) for detailed implementation plan.
+Tools for consolidating multiple GEDCOM files, cleaning up messy imports, and improving data quality. Addresses the common scenario of having multiple old, overlapping GEDCOM files from various sources.
 
-**Current Phase Goals:**
+**Phase 1 - Staging Workflow:** ✅ Complete
 - Dedicated staging folder setting (auto-excluded from normal operations)
 - Import destination toggle (main vs staging) in Control Center
-- Staging folder isolation from tree generation, duplicate detection, etc.
+- "Promote to main" action to move cleaned data to person folder
+- Delete/archive staging data without affecting main tree
+- Staging folder isolated from: tree generation, duplicate detection, relationship sync, collections
+
+**Phase 2 - Cross-Import Duplicate Detection:** ✅ Complete
+- Detect duplicates between staging and existing data
+- Staging tab in Control Center with subfolder management
+- Side-by-side comparison view for potential matches
+- "Same person" / "Different people" resolution actions
+- Resolution persistence across sessions
+
+**Phase 3 - Merge & Consolidation Tools:** ✅ Complete
+- Merge wizard for combining duplicate records
+- Field-level conflict resolution (choose which source's date/place/etc.)
+- Support for combining arrays (spouses, children) from both sources
+- Relationship reconciliation when merging people with different connections
+- Merge available from both cross-import review and duplicate detection modals
+
+**Phase 4 - Data Quality Tools:** 🔜 Planned
+- Data quality report: missing dates, orphaned records, incomplete relationships
+- Batch operations: normalize name formats, standardize date formats
+- Inconsistency detection (e.g., child born before parent)
+- Completeness scoring per person
+
+See [import-cleanup-plan.md](architecture/import-cleanup-plan.md) for implementation details.
 
 ---
-
-## 📋 Planned Features
 
 ### Folder Filtering
 
@@ -303,282 +336,6 @@ Control which folders Canvas Roots scans for person notes. Useful for mixed-use 
 - All import/export operations
 
 See [folder-filtering-plan.md](architecture/folder-filtering-plan.md) for implementation details.
-
----
-
-### Import Cleanup & Consolidation
-
-**Status**: 🔨 Phase 1 In Progress
-
-Tools for consolidating multiple GEDCOM files, cleaning up messy imports, and improving data quality. Addresses the common scenario of having multiple old, overlapping GEDCOM files from various sources.
-
-**Phase 1 - Staging Workflow:**
-- Dedicated staging folder setting (auto-excluded from normal operations)
-- Import preview showing what will be created before committing
-- "Promote to main" action to move cleaned data to person folder
-- Delete/archive staging data without affecting main tree
-- Staging folder isolated from: tree generation, duplicate detection, relationship sync, collections
-
-**Phase 2 - Cross-Import Duplicate Detection:**
-- Detect duplicates between staging and existing data before import
-- Detect duplicates across multiple staged imports
-- Side-by-side comparison view for potential matches
-- "Same person" / "Different people" resolution actions
-- Source file tracking (which GEDCOM contributed which data)
-
-**Phase 3 - Merge & Consolidation Tools:**
-- Merge wizard for combining duplicate records
-- Field-level conflict resolution (choose which source's date/place/etc.)
-- Combine unique data from multiple sources into one record
-- Relationship reconciliation when merging people with different connections
-- Audit trail showing merge decisions
-
-**Phase 4 - Data Quality Tools:**
-- Data quality report: missing dates, orphaned records, incomplete relationships
-- Batch operations: normalize name formats, standardize date formats
-- "Fill in blanks" suggestions based on related records
-- Inconsistency detection (e.g., child born before parent)
-- Completeness scoring per person
-
-**Use Cases:**
-- Consolidating overlapping trees from multiple family researchers
-- Extracting useful branches from large, chaotic GEDCOM files
-- Cleaning up data accumulated over years from various sources
-- Quality assurance before sharing or publishing
-
-**Isolation Strategy:**
-
-The staging workflow requires clear separation from "production" data:
-
-*Default mode (simple):*
-- Single staging folder setting, auto-excluded from all normal operations
-- Main person folder + staging folder = complete isolation
-- Zero configuration beyond setting the staging path
-
-*Opt-in project mode (advanced):*
-- Enable "project-based organization" in settings
-- Define named projects, each with own person folder(s) and optional staging
-- Project switcher in Control Center
-- Commands scoped to active project
-- Use case: multiple family research projects in one vault, each fully isolated
-
-Both modes use Folder Filtering as the underlying mechanism.
-
-**Example Workflow:**
-
-Scenario: User has clean tree in `/People/` (200 notes), wants to process three old messy GEDCOMs.
-
-1. **Setup**: Configure staging folder (`/People-Staging/`) in settings
-2. **Import to staging**: Import each GEDCOM to separate subfolders (`import-1/`, `import-2/`, `import-3/`)
-3. **Clean within staging**:
-   - Run duplicate detection scoped to staging only
-   - Merge/delete internal duplicates across imports
-   - Review data quality report, fix issues in Bases
-   - Generate preview trees to visualize structure
-   - Delete obvious junk records
-4. **Compare staging to main**:
-   - Run "Compare staging to main tree" command
-   - Review potential matches side-by-side
-   - Mark each as "Same person" or "Different people"
-5. **Merge/promote**:
-   - For matches: merge wizard combines data with field-level conflict resolution
-   - For new people: "Promote to main" moves to `/People/`
-   - Relationships updated automatically
-6. **Cleanup**: Archive remaining staging data, run validation on main tree
-
-**Operation Scopes:**
-
-| Operation | Default Scope |
-|-----------|---------------|
-| Tree generation | Main only |
-| Normal duplicate detection | Main only |
-| Relationship sync | Main only |
-| Collections/groups | Main only |
-| "Compare staging to main" | Cross-boundary (explicit) |
-| "Find duplicates in staging" | Staging only (explicit) |
-| Data quality report | Configurable |
-
-**Tracked Metadata:**
-- `_source_file`: which GEDCOM this person originated from
-- `_import_date`: when the record was imported
-- Enables informed conflict resolution and audit trail
-
-**UI Design Mockups:**
-
-<details>
-<summary>Settings Page</summary>
-
-```
-┌─ Canvas Roots Settings ─────────────────────────────────┐
-│                                                         │
-│ ▼ Data                                                  │
-│   Person folder         [People           ] [📁]        │
-│   Staging folder        [People-Staging   ] [📁]        │
-│   ☑ Enable staging isolation                            │
-│                                                         │
-│ ▼ Folder Filtering                                      │
-│   Mode                  [Exclusion list ▼]              │
-│   Excluded folders      [+ Add folder]                  │
-│     • templates/                          [✕]           │
-│     • archive/                            [✕]           │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
-</details>
-
-<details>
-<summary>Control Center - Data Entry Tab (with staging)</summary>
-
-```
-┌─ Control Center ─────────────────────────────────────────┐
-│ [Tree Output] [Data Entry] [Collections] [Canvas] [Adv]  │
-├──────────────────────────────────────────────────────────┤
-│ ┌─[GEDCOM]─[CSV]─[Staging]─┐                             │
-│ │                          │                             │
-│ │ Import destination:                                    │
-│ │ ○ Main tree (/People/)                                 │
-│ │ ● Staging (/People-Staging/)                           │
-│ │                                                        │
-│ │ Subfolder name: [import-2024-11  ]                     │
-│ │                                                        │
-│ │ [Select GEDCOM file...]                                │
-│ │                                                        │
-│ │ ─────────────────────────────                          │
-│ │ Preview: 247 people will be created                    │
-│ │          12 potential duplicates with staging          │
-│ │          3 potential matches with main tree            │
-│ │                                                        │
-│ │ [Import to Staging]                                    │
-│ └────────────────────────────────────────────────────────┘
-└──────────────────────────────────────────────────────────┘
-```
-</details>
-
-<details>
-<summary>Control Center - Staging Tab</summary>
-
-```
-┌─ Control Center ─────────────────────────────────────────┐
-│ [Tree Output] [Data Entry] [Collections] [Staging] [...] │
-├──────────────────────────────────────────────────────────┤
-│                                                          │
-│ Staging: /People-Staging/                                │
-│ ┌────────────────────────────────────────────────────┐   │
-│ │ import-1/     87 people   2024-11-15               │   │
-│ │ import-2/     156 people  2024-11-20               │   │
-│ │ import-3/     42 people   2024-11-28               │   │
-│ └────────────────────────────────────────────────────┘   │
-│                                                          │
-│ Actions:                                                 │
-│ [Find duplicates in staging]                             │
-│ [Compare staging to main tree]                           │
-│ [Data quality report]                                    │
-│ [Preview tree from staging]                              │
-│                                                          │
-│ ─────────────────────────────────────────                │
-│ Quick stats:                                             │
-│   285 total in staging                                   │
-│   23 potential internal duplicates                       │
-│   47 potential matches with main tree                    │
-│   12 missing birth dates                                 │
-│                                                          │
-│ [Promote all to main...]  [Archive staging...]           │
-└──────────────────────────────────────────────────────────┘
-```
-</details>
-
-<details>
-<summary>Compare Modal (Staging vs Main)</summary>
-
-```
-┌─ Compare Staging to Main ────────────────────────────────┐
-│                                                          │
-│ Found 47 potential matches       [Dismiss all low conf.] │
-│                                                          │
-│ ┌─ High Confidence (12) ─────────────────────────────┐   │
-│ │                                                    │   │
-│ │ ┌─────────────────────┐  ┌─────────────────────┐   │   │
-│ │ │ STAGING             │  │ MAIN                │   │   │
-│ │ │ John Robert Smith   │  │ John R. Smith       │   │   │
-│ │ │ b. 1892-03-15       │  │ b. 1892             │   │   │
-│ │ │ d. 1965-08-20       │  │ d. 1965             │   │   │
-│ │ │ Boston, MA          │  │ (no place)          │   │   │
-│ │ │                     │  │                     │   │   │
-│ │ │ Source: smith.ged   │  │                     │   │   │
-│ │ └─────────────────────┘  └─────────────────────┘   │   │
-│ │                                                    │   │
-│ │ [Same Person → Merge]  [Different People]          │   │
-│ │                                                    │   │
-│ │ ────────────────────────────────────────────────   │   │
-│ │ (next match...)                                    │   │
-│ └────────────────────────────────────────────────────┘   │
-│                                                          │
-│ Progress: 3/47 reviewed                                  │
-└──────────────────────────────────────────────────────────┘
-```
-</details>
-
-<details>
-<summary>Merge Wizard Modal</summary>
-
-```
-┌─ Merge: John Smith ──────────────────────────────────────┐
-│                                                          │
-│ Merging staging record into main tree record             │
-│                                                          │
-│ Field          Staging              Main         Use     │
-│ ─────────────────────────────────────────────────────    │
-│ Name           John Robert Smith    John R. Smith  ○ ●   │
-│ Birth date     1892-03-15           1892           ● ○   │
-│ Birth place    Boston, MA           (empty)        ● ○   │
-│ Death date     1965-08-20           1965           ● ○   │
-│ Death place    Cambridge, MA        (empty)        ● ○   │
-│ Father         [[William Smith]]    [[Wm Smith]]   ○ ●   │
-│ Mother         [[Mary Jones]]       [[Mary Jones]] ═     │
-│                                                          │
-│ ☑ Delete staging record after merge                      │
-│ ☑ Update relationships pointing to staging record        │
-│                                                          │
-│                              [Cancel]  [Merge Records]   │
-└──────────────────────────────────────────────────────────┘
-```
-</details>
-
-<details>
-<summary>Data Quality Report Modal</summary>
-
-```
-┌─ Data Quality Report: Staging ───────────────────────────┐
-│                                                          │
-│ Scope: /People-Staging/  (285 people)                    │
-│                                                          │
-│ ▼ Missing Data (67 issues)                               │
-│   ├─ 12 missing birth date                    [View]     │
-│   ├─ 8 missing death date (deceased)          [View]     │
-│   ├─ 34 missing birth place                   [View]     │
-│   └─ 13 missing parents                       [View]     │
-│                                                          │
-│ ▼ Inconsistencies (4 issues)                             │
-│   ├─ 2 child born before parent               [View]     │
-│   ├─ 1 death before birth                     [View]     │
-│   └─ 1 impossible age (>120 years)            [View]     │
-│                                                          │
-│ ▼ Orphaned Records (8 issues)                            │
-│   └─ 8 people with no relationships           [View]     │
-│                                                          │
-│ Completeness Score: 72%                                  │
-│ ████████████████████░░░░░░░░                             │
-│                                                          │
-│                    [Export Report]  [Close]              │
-└──────────────────────────────────────────────────────────┘
-```
-</details>
-
-**Open Questions:**
-- How to handle conflicting data when merging (UI/UX for resolution)?
-- Should source tracking be per-field or per-person?
-- Integration with existing duplicate detection vs. new system?
-- Project mode: how much configuration per project? (settings, color schemes, etc.)
 
 ---
 

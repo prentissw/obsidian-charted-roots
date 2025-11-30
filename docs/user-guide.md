@@ -1,7 +1,7 @@
 # Canvas Roots: User Guide
 
-> **Version:** v0.3.3
-> **Last Updated:** 2025-11-29
+> **Version:** v0.4.0
+> **Last Updated:** 2025-11-30
 
 This guide covers the complete workflow for using Canvas Roots to create and maintain family trees in Obsidian.
 
@@ -22,13 +22,15 @@ This guide covers the complete workflow for using Canvas Roots to create and mai
 11. [Selective Branch Export](#selective-branch-export)
 12. [Relationship Calculator](#relationship-calculator)
 13. [Smart Duplicate Detection](#smart-duplicate-detection)
-14. [Reference Numbering Systems](#reference-numbering-systems)
-15. [Lineage Tracking](#lineage-tracking)
-16. [Relationship History & Undo](#relationship-history--undo)
-17. [Folder Statistics](#folder-statistics)
-18. [Advanced Styling](#advanced-styling)
-19. [Excalidraw Export](#excalidraw-export)
-20. [Tips & Best Practices](#tips--best-practices)
+14. [Staging & Import Cleanup](#staging--import-cleanup)
+15. [Merging Duplicate Records](#merging-duplicate-records)
+16. [Reference Numbering Systems](#reference-numbering-systems)
+17. [Lineage Tracking](#lineage-tracking)
+18. [Relationship History & Undo](#relationship-history--undo)
+19. [Folder Statistics](#folder-statistics)
+20. [Advanced Styling](#advanced-styling)
+21. [Excalidraw Export](#excalidraw-export)
+22. [Tips & Best Practices](#tips--best-practices)
 
 ---
 
@@ -1086,6 +1088,133 @@ Adjust detection sensitivity in Settings → Canvas Roots → Data:
 - Use consistent naming conventions
 - Enable bidirectional sync to catch relationship conflicts
 - Import from single authoritative source when possible
+
+---
+
+## Staging & Import Cleanup
+
+The staging workflow provides a safe way to process imported data before incorporating it into your main family tree. This is particularly useful when working with messy GEDCOM files, multiple overlapping imports, or data that needs cleanup.
+
+### Setting Up Staging
+
+1. Go to **Settings → Canvas Roots → Data**
+2. Set a **Staging folder** path (e.g., `People-Staging`)
+3. Enable **Staging isolation** to exclude staging from normal operations
+
+When staging is configured, imported data is kept separate from your main tree until you're ready to promote it.
+
+### Importing to Staging
+
+1. Open Control Center → **Data Entry** tab
+2. Select **Import destination**: choose "Staging" instead of "Main tree"
+3. Optionally specify a **Subfolder name** for this import batch (e.g., `smith-gedcom-2024`)
+4. Import your GEDCOM or CSV file
+5. Data is created in the staging folder, isolated from your main tree
+
+### Using the Staging Tab
+
+The **Staging** tab in Control Center provides tools for managing staged imports:
+
+**Subfolder Management:**
+- View all import batches with person counts and dates
+- Expand subfolders to see individual files
+- Delete subfolders you no longer need
+
+**Cross-Import Detection:**
+- Click "Review matches with main tree" to find potential duplicates
+- Compare staging records against your main tree
+- Mark matches as "Same person" or "Different people"
+
+**Promote Actions:**
+- **Promote subfolder**: Move all files from a subfolder to your main people folder
+- **Promote all**: Move all staging files to main
+- Files marked as "same person" (duplicates) are skipped during promote—use merge instead
+
+### Staging Isolation
+
+When staging is enabled, staged files are automatically excluded from:
+- Tree generation (your trees only show main tree data)
+- Normal duplicate detection
+- Relationship sync operations
+- Collections and groups
+- Vault statistics
+
+This ensures your production data stays clean while you work on imports.
+
+### Workflow Example
+
+1. Import `smith-family.ged` to staging subfolder `smith-2024`
+2. Import `jones-tree.ged` to staging subfolder `jones-2024`
+3. Open Staging tab, click "Review matches with main tree"
+4. For each match, decide: Same person → Merge, or Different people → will be promoted
+5. Click "Promote subfolder" for each batch
+6. New unique people are moved to main; duplicates were merged earlier
+
+---
+
+## Merging Duplicate Records
+
+When you find duplicate person records—either through duplicate detection or cross-import review—the Merge Wizard helps you combine them with field-level control.
+
+### Accessing the Merge Wizard
+
+**From Duplicate Detection:**
+1. Run command "Find duplicate people"
+2. For each potential duplicate, click **Merge**
+
+**From Cross-Import Review:**
+1. Open Staging tab → "Review matches with main tree"
+2. Click "Same person" for a match
+3. Click the **Merge** button that appears
+
+### Using the Merge Wizard
+
+The Merge Wizard shows a side-by-side comparison of both records:
+
+**Field Comparison Table:**
+- Each row shows one field (name, birth date, etc.)
+- **Staging** column: value from the staging/source record
+- **Main** column: value from the main/target record
+- **Use** column: dropdown to choose which value to keep
+
+**Field Choices:**
+- **Main**: Keep the main record's value
+- **Staging**: Use the staging record's value
+- **Both** (for arrays): Combine values from both (spouses, children)
+
+Fields that are identical show a checkmark instead of a dropdown.
+
+### Preview and Execute
+
+1. Click **Preview** to see what the merged record will look like
+2. Review the combined data
+3. Click **Merge** to execute
+
+**What Happens:**
+- The main record is updated with your selected field values
+- The staging record is deleted
+- All relationships pointing to the staging record are updated to point to main
+- A success notification confirms the merge
+
+### Relationship Reconciliation
+
+When merging, Canvas Roots automatically updates relationship references:
+
+- If the staging person was listed as someone's father, that reference updates to the main person
+- Spouse and child relationships are similarly updated
+- This ensures no orphaned relationship references remain
+
+### Best Practices
+
+**Before Merging:**
+- Review both records carefully
+- Check if the staging record has data the main record lacks
+- Consider using "Both" for array fields to preserve all relationships
+
+**After Merging:**
+- The staging file is deleted automatically
+- Check the main record to verify the merge result
+- Regenerate any canvases that included either person
 
 ---
 

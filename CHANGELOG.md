@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2025-11-30
+
+### Added
+
+- **Staging Workflow**: Safe import processing with isolated staging folder
+  - Configure staging folder in Settings → Data section
+  - Import destination toggle: choose main tree or staging
+  - Staging folder automatically excluded from tree generation, duplicate detection, etc.
+  - Staging tab in Control Center for managing import batches
+
+- **Cross-Import Duplicate Detection**: Find duplicates between staging and main tree
+  - CrossImportDetectionService compares staging records against main tree
+  - Side-by-side comparison modal for reviewing matches
+  - Resolution tracking: mark matches as "Same person" or "Different people"
+  - Resolutions persist across sessions
+
+- **Merge Wizard**: Field-level conflict resolution for duplicate records
+  - MergeWizardModal with side-by-side field comparison
+  - Dropdown per field to choose source (Main, Staging, or Both for arrays)
+  - Preview merged result before executing
+  - Automatic relationship reconciliation updates all references
+  - Available from both duplicate detection and cross-import review
+
+- **Staging Tab in Control Center**: Dedicated UI for import management
+  - View staging subfolders with person counts and modification dates
+  - Promote subfolders or all staging to main tree
+  - Delete staging subfolders
+  - Review cross-import matches before promoting
+  - Quick statistics for staging area
+
+- **Folder Filtering for Person Discovery**: Control which folders are scanned
+  - Exclusion list mode: ignore specific folders
+  - Inclusion list mode: only scan specified folders
+  - Applies to all person note operations
+
+### Changed
+
+- Promote operations now skip files marked as "same person" (duplicates should be merged instead)
+- StagingService updated with `PromoteOptions` for skip logic
+- DuplicateDetectionModal now accepts settings for merge button integration
+
+---
+
 ## [0.3.3] - 2025-11-29
 
 ### Added
@@ -404,7 +447,8 @@ Initial alpha release with core genealogical features.
 
 ### Version Status
 
-- **Stable (v0.3.x)**: Feature-complete for core genealogical workflows with interactive family chart view. All essential features are stable and production-ready.
+- **Stable (v0.4.x)**: Feature-complete for core genealogical workflows with import cleanup and merge tools. All essential features are stable and production-ready.
+- **Stable (v0.3.x)**: Interactive family chart view, CSV import/export, duplicate detection.
 - **Beta (v0.2.x)**: Core genealogical workflows with canvas generation, GEDCOM support, and relationship management.
 - **Alpha (v0.1.x)**: Initial testing releases with core functionality.
 
