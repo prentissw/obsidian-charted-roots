@@ -22,6 +22,7 @@ import type { CanvasData } from './canvas-generator';
 import {
 	writeCanvasFile,
 	toSafeFilename,
+	generateCanvasId,
 	type CanvasWriteResult
 } from './canvas-utils';
 import { getLogger } from './logging';
@@ -3385,6 +3386,24 @@ export class CanvasSplitService {
 			results.push(result);
 		}
 
+		// Generate overview canvas if requested
+		if (opts.generateOverview && activeRanges.length > 1) {
+			const overviewPath = this.generateCanvasPath(opts, 'overview');
+			const overviewData = this.generateOverviewCanvas(
+				activeRanges.map(range => ({
+					label: range.label,
+					path: rangePaths.get(range.label)!,
+					personCount: (assignment.byRange.get(range.label) || []).length,
+					info: `Generations ${range.start}-${range.end}`
+				})),
+				'generation-split',
+				opts.filenamePattern?.replace('{name}', '').replace(/-$/, '') || 'Family Tree'
+			);
+
+			const overviewResult = await writeCanvasFile(app, overviewPath, overviewData, true);
+			results.push(overviewResult);
+		}
+
 		return results;
 	}
 
@@ -3565,6 +3584,24 @@ export class CanvasSplitService {
 
 			const result = await writeCanvasFile(app, path, canvasData, true);
 			results.push(result);
+		}
+
+		// Generate overview canvas if requested
+		if (opts.generateOverview && branchData.length > 1) {
+			const overviewPath = `${opts.outputFolder || ''}/branch-overview`;
+			const overviewData = this.generateOverviewCanvas(
+				branchData.map(b => ({
+					label: b.def.label,
+					path: b.path.endsWith('.canvas') ? b.path : `${b.path}.canvas`,
+					personCount: b.extraction.people.length,
+					info: `${b.def.type} branch`
+				})),
+				'branch-split',
+				'Branch Overview'
+			);
+
+			const overviewResult = await writeCanvasFile(app, overviewPath, overviewData, true);
+			results.push(overviewResult);
 		}
 
 		return results;
@@ -3763,6 +3800,23 @@ export class CanvasSplitService {
 			results.push(result);
 		}
 
+		// Generate overview canvas if requested
+		if (opts.generateOverview && collectionData.length > 1) {
+			const overviewPath = `${opts.outputFolder || ''}/collection-overview`;
+			const overviewData = this.generateOverviewCanvas(
+				collectionData.map(c => ({
+					label: c.name,
+					path: c.path.endsWith('.canvas') ? c.path : `${c.path}.canvas`,
+					personCount: c.crIds.size
+				})),
+				'collection-split',
+				'Collection Overview'
+			);
+
+			const overviewResult = await writeCanvasFile(app, overviewPath, overviewData, true);
+			results.push(overviewResult);
+		}
+
 		return results;
 	}
 
@@ -3917,6 +3971,133 @@ export class CanvasSplitService {
 			results.push(result);
 		}
 
+		// Generate overview canvas if requested
+		if (opts.generateOverview && hasAncestors && hasDescendants) {
+			const overviewPath = `${opts.outputFolder || ''}/${toSafeFilename(labelPrefix)}-overview`;
+			const canvasInfos: Array<{ label: string; path: string; personCount: number; info?: string }> = [];
+
+			if (hasAncestors) {
+				canvasInfos.push({
+					label: `Ancestors of ${rootPerson.name}`,
+					path: `${ancestorPath}.canvas`,
+					personCount: ancestorExtraction.people.length,
+					info: `${ancestorExtraction.generationCount} generations`
+				});
+			}
+
+			if (hasDescendants) {
+				canvasInfos.push({
+					label: `Descendants of ${rootPerson.name}`,
+					path: `${descendantPath}.canvas`,
+					personCount: descendantExtraction.people.length,
+					info: `${descendantExtraction.generationCount} generations`
+				});
+			}
+
+			const overviewData = this.generateOverviewCanvas(
+				canvasInfos,
+				'ancestor-descendant',
+				`${rootPerson.name} Family Overview`
+			);
+
+			const overviewResult = await writeCanvasFile(app, overviewPath, overviewData, true);
+			results.push(overviewResult);
+		}
+
 		return results;
+	}
+
+	/**
+	 * Generate an overview canvas that links to all split canvases
+	 *
+	 * @param canvases - Array of canvas info to include in overview
+	 * @param splitType - Type of split (for metadata)
+	 * @param title - Title for the overview
+	 * @returns Canvas data for the overview
+	 */
+	private generateOverviewCanvas(
+		canvases: Array<{
+			label: string;
+			path: string;
+			personCount: number;
+			info?: string;
+		}>,
+		splitType: CanvasRelationshipType,
+		title: string
+	): CanvasData {
+		const nodes: CanvasData['nodes'] = [];
+		const edges: CanvasData['edges'] = [];
+
+		// Layout configuration
+		const nodeWidth = 250;
+		const nodeHeight = 80;
+		const horizontalSpacing = 50;
+		const verticalSpacing = 50;
+		const columns = Math.ceil(Math.sqrt(canvases.length));
+
+		// Add title node at top
+		const titleNode = {
+			id: generateCanvasId(),
+			type: 'text' as const,
+			text: `# ${title}\n\n*Overview of ${canvases.length} canvas files*`,
+			x: 0,
+			y: -150,
+			width: columns * (nodeWidth + horizontalSpacing) - horizontalSpacing,
+			height: 100,
+			color: '6' // Purple for overview header
+		};
+		nodes.push(titleNode);
+
+		// Add file link nodes for each canvas in a grid layout
+		canvases.forEach((canvas, index) => {
+			const row = Math.floor(index / columns);
+			const col = index % columns;
+
+			const x = col * (nodeWidth + horizontalSpacing);
+			const y = row * (nodeHeight + verticalSpacing);
+
+			// Create a text node with link to the canvas
+			const canvasName = canvas.path.replace(/\.canvas$/, '').split('/').pop() || canvas.label;
+			const infoLine = canvas.info ? `\n*${canvas.info}*` : '';
+
+			const node = {
+				id: generateCanvasId(),
+				type: 'text' as const,
+				text: `**${canvas.label}**\n${canvas.personCount} people${infoLine}\n\n[[${canvas.path}|→ Open canvas]]`,
+				x,
+				y,
+				width: nodeWidth,
+				height: nodeHeight,
+				color: '5' // Cyan for canvas links
+			};
+
+			nodes.push(node);
+
+			// Create edge from title to this node
+			edges.push({
+				id: generateCanvasId(),
+				fromNode: titleNode.id,
+				fromSide: 'bottom',
+				toNode: node.id,
+				toSide: 'top',
+				color: '5'
+			});
+		});
+
+		return {
+			nodes,
+			edges,
+			metadata: {
+				version: '1.0',
+				frontmatter: {
+					'canvas-roots': {
+						type: 'overview',
+						splitType,
+						generatedAt: Date.now(),
+						canvasCount: canvases.length
+					}
+				}
+			}
+		};
 	}
 }

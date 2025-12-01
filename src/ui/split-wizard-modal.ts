@@ -1754,7 +1754,8 @@ export class SplitWizardModal extends Modal {
 			generationDirection: this.generationDirection,
 			outputFolder: this.outputFolder,
 			filenamePattern: this.filenamePrefix ? `${this.filenamePrefix}-gen-{name}` : 'gen-{name}',
-			includeNavigationNodes: this.includeNavigationNodes
+			includeNavigationNodes: this.includeNavigationNodes,
+			generateOverview: this.generateOverview
 		};
 
 		return await this.splitService.generateGenerationSplitCanvases(
@@ -1782,7 +1783,8 @@ export class SplitWizardModal extends Modal {
 			branches: this.buildBranchDefinitions(),
 			maxGenerations: this.branchMaxGenerations,
 			outputFolder: this.outputFolder,
-			includeNavigationNodes: this.includeNavigationNodes
+			includeNavigationNodes: this.includeNavigationNodes,
+			generateOverview: this.generateOverview
 		};
 
 		return await this.splitService.generateBranchSplitCanvases(
@@ -1838,7 +1840,8 @@ export class SplitWizardModal extends Modal {
 			collections: this.selectedCollections,
 			bridgePeopleHandling: this.collectionIncludeBridgePeople ? 'duplicate' : 'primary-only',
 			outputFolder: this.outputFolder,
-			includeNavigationNodes: this.includeNavigationNodes
+			includeNavigationNodes: this.includeNavigationNodes,
+			generateOverview: this.generateOverview
 		};
 
 		return await this.splitService.generateCollectionSplitCanvases(
@@ -1869,7 +1872,8 @@ export class SplitWizardModal extends Modal {
 			maxDescendantGenerations: this.ancestorDescendantMaxDescendants,
 			outputFolder: this.outputFolder,
 			labelPrefix: this.filenamePrefix || this.ancestorDescendantRoot.name,
-			includeNavigationNodes: this.includeNavigationNodes
+			includeNavigationNodes: this.includeNavigationNodes,
+			generateOverview: this.generateOverview
 		};
 
 		return await this.splitService.generateAncestorDescendantCanvases(
