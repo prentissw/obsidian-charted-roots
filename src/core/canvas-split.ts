@@ -155,6 +155,60 @@ export const DEFAULT_COLLECTION_SPLIT_OPTIONS: CollectionSplitOptions = {
 };
 
 /**
+ * Options for lineage extraction (direct line between two people)
+ */
+export interface LineageSplitOptions extends Partial<SplitOptions> {
+	/** Starting person crId */
+	startCrId: string;
+	/** Ending person crId */
+	endCrId: string;
+	/** Include spouses of people on the lineage */
+	includeSpouses: boolean;
+	/** Include siblings at each generation */
+	includeSiblings: boolean;
+	/** Label for the lineage canvas */
+	label?: string;
+}
+
+/**
+ * Default lineage split options
+ */
+export const DEFAULT_LINEAGE_SPLIT_OPTIONS: Omit<LineageSplitOptions, 'startCrId' | 'endCrId'> = {
+	...DEFAULT_SPLIT_OPTIONS,
+	includeSpouses: true,
+	includeSiblings: false
+};
+
+/**
+ * Result of lineage extraction
+ */
+export interface LineageExtractionResult {
+	/** Whether a path was found */
+	pathFound: boolean;
+	/** People on the direct line (in order from start to end) */
+	lineagePath: PersonNode[];
+	/** CrIds of people on the direct line */
+	lineageCrIds: Set<string>;
+	/** All people included (line + spouses + siblings) */
+	allPeople: PersonNode[];
+	/** All crIds included */
+	allCrIds: Set<string>;
+	/** Number of generations in the path */
+	generationCount: number;
+	/** Relationship description (e.g., "3x great-grandfather") */
+	relationshipDescription: string;
+}
+
+/**
+ * Node in pathfinding search
+ */
+interface PathNode {
+	crId: string;
+	parent: PathNode | null;
+	relationship: 'parent' | 'child' | 'spouse';
+}
+
+/**
  * Information about a collection for splitting
  */
 export interface CollectionInfo {
@@ -1821,5 +1875,638 @@ export class CanvasSplitService {
 		}
 
 		return { nodes, edges };
+	}
+
+	// =========================================================================
+	// Phase 7: Single Lineage Extraction
+	// =========================================================================
+
+	/**
+	 * Extract a direct lineage between two people
+	 *
+	 * @param tree - The family tree
+	 * @param options - Lineage split options
+	 * @returns Split result with generated canvas information
+	 */
+	splitByLineage(
+		tree: FamilyTree,
+		options: LineageSplitOptions
+	): SplitResult {
+		const opts = { ...DEFAULT_LINEAGE_SPLIT_OPTIONS, ...options };
+
+		// Extract the lineage
+		const extraction = this.extractLineage(tree, opts);
+
+		if (!extraction.pathFound) {
+			return {
+				canvases: [],
+				totalPeople: 0
+			};
+		}
+
+		// Generate canvas path
+		const label = opts.label || this.generateLineageLabel(tree, opts.startCrId, opts.endCrId);
+		const canvasPath = this.generateLineageCanvasPath(opts, label);
+
+		const canvas: GeneratedCanvas = {
+			path: canvasPath,
+			label,
+			personCount: extraction.allPeople.length,
+			generationRange: [0, extraction.generationCount]
+		};
+
+		return {
+			canvases: [canvas],
+			totalPeople: extraction.allPeople.length
+		};
+	}
+
+	/**
+	 * Extract all people on a direct lineage between two individuals
+	 *
+	 * @param tree - The family tree
+	 * @param options - Lineage options
+	 * @returns Lineage extraction result
+	 */
+	extractLineage(
+		tree: FamilyTree,
+		options: LineageSplitOptions
+	): LineageExtractionResult {
+		const startPerson = tree.nodes.get(options.startCrId);
+		const endPerson = tree.nodes.get(options.endCrId);
+
+		if (!startPerson || !endPerson) {
+			return {
+				pathFound: false,
+				lineagePath: [],
+				lineageCrIds: new Set(),
+				allPeople: [],
+				allCrIds: new Set(),
+				generationCount: 0,
+				relationshipDescription: 'No path found'
+			};
+		}
+
+		// Find path between the two people
+		const path = this.findPathBetweenPeople(tree, options.startCrId, options.endCrId);
+
+		if (!path) {
+			return {
+				pathFound: false,
+				lineagePath: [],
+				lineageCrIds: new Set(),
+				allPeople: [],
+				allCrIds: new Set(),
+				generationCount: 0,
+				relationshipDescription: 'No path found'
+			};
+		}
+
+		// Convert path to PersonNodes
+		const lineagePath: PersonNode[] = [];
+		const lineageCrIds = new Set<string>();
+
+		for (const crId of path) {
+			const person = tree.nodes.get(crId);
+			if (person) {
+				lineagePath.push(person);
+				lineageCrIds.add(crId);
+			}
+		}
+
+		// Collect all people (line + optional spouses + optional siblings)
+		const allCrIds = new Set<string>(lineageCrIds);
+
+		// Add spouses if requested
+		if (options.includeSpouses) {
+			for (const crId of lineageCrIds) {
+				const person = tree.nodes.get(crId);
+				if (person) {
+					for (const spouseId of person.spouseCrIds) {
+						allCrIds.add(spouseId);
+					}
+				}
+			}
+		}
+
+		// Add siblings if requested
+		if (options.includeSiblings) {
+			for (const crId of lineageCrIds) {
+				const siblings = this.findSiblings(tree, crId);
+				for (const siblingId of siblings) {
+					allCrIds.add(siblingId);
+				}
+			}
+		}
+
+		// Convert to PersonNodes
+		const allPeople: PersonNode[] = [];
+		for (const crId of allCrIds) {
+			const person = tree.nodes.get(crId);
+			if (person) {
+				allPeople.push(person);
+			}
+		}
+
+		// Calculate generation count and relationship
+		const generationCount = lineagePath.length - 1;
+		const relationshipDescription = this.describeRelationship(
+			tree,
+			options.startCrId,
+			options.endCrId,
+			path
+		);
+
+		return {
+			pathFound: true,
+			lineagePath,
+			lineageCrIds,
+			allPeople,
+			allCrIds,
+			generationCount,
+			relationshipDescription
+		};
+	}
+
+	/**
+	 * Find the shortest path between two people in the family graph
+	 *
+	 * Uses BFS to find the path, considering parent-child relationships.
+	 * Does not traverse through spouse relationships for lineage purposes.
+	 *
+	 * @param tree - The family tree
+	 * @param startCrId - Starting person
+	 * @param endCrId - Ending person
+	 * @returns Array of crIds representing the path, or null if no path exists
+	 */
+	findPathBetweenPeople(
+		tree: FamilyTree,
+		startCrId: string,
+		endCrId: string
+	): string[] | null {
+		if (startCrId === endCrId) {
+			return [startCrId];
+		}
+
+		const startPerson = tree.nodes.get(startCrId);
+		const endPerson = tree.nodes.get(endCrId);
+
+		if (!startPerson || !endPerson) {
+			return null;
+		}
+
+		// BFS to find shortest path
+		const visited = new Set<string>();
+		const queue: PathNode[] = [{ crId: startCrId, parent: null, relationship: 'parent' }];
+
+		while (queue.length > 0) {
+			const current = queue.shift()!;
+
+			if (visited.has(current.crId)) continue;
+			visited.add(current.crId);
+
+			// Found the target
+			if (current.crId === endCrId) {
+				return this.reconstructPath(current);
+			}
+
+			const person = tree.nodes.get(current.crId);
+			if (!person) continue;
+
+			// Add parents (going up the tree)
+			if (person.fatherCrId && !visited.has(person.fatherCrId)) {
+				queue.push({
+					crId: person.fatherCrId,
+					parent: current,
+					relationship: 'parent'
+				});
+			}
+			if (person.motherCrId && !visited.has(person.motherCrId)) {
+				queue.push({
+					crId: person.motherCrId,
+					parent: current,
+					relationship: 'parent'
+				});
+			}
+
+			// Add children (going down the tree)
+			for (const childId of person.childrenCrIds) {
+				if (!visited.has(childId)) {
+					queue.push({
+						crId: childId,
+						parent: current,
+						relationship: 'child'
+					});
+				}
+			}
+		}
+
+		// No path found
+		return null;
+	}
+
+	/**
+	 * Reconstruct the path from the BFS result
+	 */
+	private reconstructPath(endNode: PathNode): string[] {
+		const path: string[] = [];
+		let current: PathNode | null = endNode;
+
+		while (current !== null) {
+			path.unshift(current.crId);
+			current = current.parent;
+		}
+
+		return path;
+	}
+
+	/**
+	 * Find all siblings of a person (people with the same parents)
+	 */
+	private findSiblings(tree: FamilyTree, crId: string): string[] {
+		const person = tree.nodes.get(crId);
+		if (!person) return [];
+
+		const siblings = new Set<string>();
+
+		// Find siblings through father
+		if (person.fatherCrId) {
+			const father = tree.nodes.get(person.fatherCrId);
+			if (father) {
+				for (const childId of father.childrenCrIds) {
+					if (childId !== crId) {
+						siblings.add(childId);
+					}
+				}
+			}
+		}
+
+		// Find siblings through mother
+		if (person.motherCrId) {
+			const mother = tree.nodes.get(person.motherCrId);
+			if (mother) {
+				for (const childId of mother.childrenCrIds) {
+					if (childId !== crId) {
+						siblings.add(childId);
+					}
+				}
+			}
+		}
+
+		return Array.from(siblings);
+	}
+
+	/**
+	 * Describe the relationship between two people based on the path
+	 */
+	private describeRelationship(
+		tree: FamilyTree,
+		startCrId: string,
+		endCrId: string,
+		path: string[]
+	): string {
+		if (path.length === 0) return 'No relationship';
+		if (path.length === 1) return 'Same person';
+
+		const startPerson = tree.nodes.get(startCrId);
+		const endPerson = tree.nodes.get(endCrId);
+
+		if (!startPerson || !endPerson) return 'Unknown relationship';
+
+		// Analyze the path to determine relationship
+		let upSteps = 0; // Steps going to ancestors
+		let downSteps = 0; // Steps going to descendants
+
+		for (let i = 1; i < path.length; i++) {
+			const prevPerson = tree.nodes.get(path[i - 1]);
+			const currPerson = tree.nodes.get(path[i]);
+
+			if (!prevPerson || !currPerson) continue;
+
+			// Check if current is a parent of previous (going up)
+			if (prevPerson.fatherCrId === currPerson.crId || prevPerson.motherCrId === currPerson.crId) {
+				upSteps++;
+			}
+			// Check if current is a child of previous (going down)
+			else if (prevPerson.childrenCrIds.includes(currPerson.crId)) {
+				downSteps++;
+			}
+		}
+
+		// Direct ancestor/descendant
+		if (downSteps === 0) {
+			return this.formatAncestorRelationship(upSteps, startPerson, endPerson);
+		}
+		if (upSteps === 0) {
+			return this.formatDescendantRelationship(downSteps, startPerson, endPerson);
+		}
+
+		// Collateral relationship (cousin, uncle, etc.)
+		return this.formatCollateralRelationship(upSteps, downSteps, startPerson, endPerson);
+	}
+
+	/**
+	 * Format ancestor relationship (parent, grandparent, etc.)
+	 */
+	private formatAncestorRelationship(
+		generations: number,
+		start: PersonNode,
+		end: PersonNode
+	): string {
+		const prefix = this.getGreatPrefix(generations - 1);
+
+		if (generations === 1) {
+			return end.sex === 'M' ? 'Father' : end.sex === 'F' ? 'Mother' : 'Parent';
+		}
+		if (generations === 2) {
+			return end.sex === 'M' ? 'Grandfather' : end.sex === 'F' ? 'Grandmother' : 'Grandparent';
+		}
+
+		const base = end.sex === 'M' ? 'Grandfather' : end.sex === 'F' ? 'Grandmother' : 'Grandparent';
+		return `${prefix}${base}`;
+	}
+
+	/**
+	 * Format descendant relationship (child, grandchild, etc.)
+	 */
+	private formatDescendantRelationship(
+		generations: number,
+		start: PersonNode,
+		end: PersonNode
+	): string {
+		const prefix = this.getGreatPrefix(generations - 1);
+
+		if (generations === 1) {
+			return end.sex === 'M' ? 'Son' : end.sex === 'F' ? 'Daughter' : 'Child';
+		}
+		if (generations === 2) {
+			return end.sex === 'M' ? 'Grandson' : end.sex === 'F' ? 'Granddaughter' : 'Grandchild';
+		}
+
+		const base = end.sex === 'M' ? 'Grandson' : end.sex === 'F' ? 'Granddaughter' : 'Grandchild';
+		return `${prefix}${base}`;
+	}
+
+	/**
+	 * Format collateral relationship (cousin, uncle, etc.)
+	 */
+	private formatCollateralRelationship(
+		upSteps: number,
+		downSteps: number,
+		start: PersonNode,
+		end: PersonNode
+	): string {
+		// Siblings
+		if (upSteps === 1 && downSteps === 1) {
+			return end.sex === 'M' ? 'Brother' : end.sex === 'F' ? 'Sister' : 'Sibling';
+		}
+
+		// Uncle/Aunt (parent's sibling)
+		if (upSteps === 2 && downSteps === 1) {
+			return end.sex === 'M' ? 'Uncle' : end.sex === 'F' ? 'Aunt' : 'Pibling';
+		}
+
+		// Nephew/Niece (sibling's child)
+		if (upSteps === 1 && downSteps === 2) {
+			return end.sex === 'M' ? 'Nephew' : end.sex === 'F' ? 'Niece' : 'Nibling';
+		}
+
+		// Cousins
+		if (upSteps === downSteps) {
+			const degree = upSteps - 1;
+			if (degree === 1) return 'First cousin';
+			if (degree === 2) return 'Second cousin';
+			if (degree === 3) return 'Third cousin';
+			return `${degree}th cousin`;
+		}
+
+		// Cousins once/twice removed
+		const minSteps = Math.min(upSteps, downSteps);
+		const degree = minSteps - 1;
+		const removed = Math.abs(upSteps - downSteps);
+
+		const degreeStr = degree === 1 ? 'First' : degree === 2 ? 'Second' : degree === 3 ? 'Third' : `${degree}th`;
+		const removedStr = removed === 1 ? 'once removed' : removed === 2 ? 'twice removed' : `${removed}x removed`;
+
+		return `${degreeStr} cousin, ${removedStr}`;
+	}
+
+	/**
+	 * Get the "great-" prefix for ancestor/descendant relationships
+	 */
+	private getGreatPrefix(greatCount: number): string {
+		if (greatCount <= 0) return '';
+		if (greatCount === 1) return 'Great-';
+		if (greatCount === 2) return 'Great-great-';
+		return `${greatCount}x great-`;
+	}
+
+	/**
+	 * Generate a label for a lineage
+	 */
+	private generateLineageLabel(
+		tree: FamilyTree,
+		startCrId: string,
+		endCrId: string
+	): string {
+		const startPerson = tree.nodes.get(startCrId);
+		const endPerson = tree.nodes.get(endCrId);
+
+		if (!startPerson || !endPerson) {
+			return 'Lineage';
+		}
+
+		const startName = startPerson.name || 'Unknown';
+		const endName = endPerson.name || 'Unknown';
+
+		return `${startName} to ${endName}`;
+	}
+
+	/**
+	 * Generate canvas path for a lineage
+	 */
+	private generateLineageCanvasPath(
+		options: LineageSplitOptions,
+		label: string
+	): string {
+		const folder = options.outputFolder || '';
+		const pattern = options.filenamePattern || '{name}';
+
+		const filename = pattern
+			.replace('{name}', this.sanitizeFilename(label))
+			.replace('{type}', 'lineage')
+			.replace('{date}', new Date().toISOString().split('T')[0]);
+
+		const extension = filename.endsWith('.canvas') ? '' : '.canvas';
+
+		if (folder) {
+			return `${folder}/${filename}${extension}`;
+		}
+		return `${filename}${extension}`;
+	}
+
+	/**
+	 * Preview a lineage extraction without creating files
+	 */
+	previewLineageExtraction(
+		tree: FamilyTree,
+		options: LineageSplitOptions
+	): {
+		pathFound: boolean;
+		lineageCount: number;
+		totalCount: number;
+		generationCount: number;
+		relationship: string;
+		path: Array<{ crId: string; name: string }>;
+	} {
+		const opts = { ...DEFAULT_LINEAGE_SPLIT_OPTIONS, ...options };
+		const extraction = this.extractLineage(tree, opts);
+
+		const path = extraction.lineagePath.map(person => ({
+			crId: person.crId,
+			name: person.name || 'Unknown'
+		}));
+
+		return {
+			pathFound: extraction.pathFound,
+			lineageCount: extraction.lineageCrIds.size,
+			totalCount: extraction.allCrIds.size,
+			generationCount: extraction.generationCount,
+			relationship: extraction.relationshipDescription,
+			path
+		};
+	}
+
+	/**
+	 * Find all possible lineages from a person (for surname studies)
+	 *
+	 * Returns all direct ancestor/descendant paths that could be extracted.
+	 */
+	findPossibleLineages(
+		tree: FamilyTree,
+		anchorCrId: string,
+		options?: { maxGenerations?: number; direction?: 'ancestors' | 'descendants' | 'both' }
+	): Array<{
+		endCrId: string;
+		endName: string;
+		generations: number;
+		direction: 'ancestor' | 'descendant';
+	}> {
+		const lineages: Array<{
+			endCrId: string;
+			endName: string;
+			generations: number;
+			direction: 'ancestor' | 'descendant';
+		}> = [];
+
+		const maxGen = options?.maxGenerations ?? 10;
+		const direction = options?.direction ?? 'both';
+
+		const anchor = tree.nodes.get(anchorCrId);
+		if (!anchor) return lineages;
+
+		// Find ancestors
+		if (direction === 'ancestors' || direction === 'both') {
+			const ancestorEndpoints = this.findLineageEndpoints(
+				tree,
+				anchorCrId,
+				'ancestors',
+				maxGen
+			);
+
+			for (const endpoint of ancestorEndpoints) {
+				lineages.push({
+					endCrId: endpoint.crId,
+					endName: endpoint.name,
+					generations: endpoint.generations,
+					direction: 'ancestor'
+				});
+			}
+		}
+
+		// Find descendants
+		if (direction === 'descendants' || direction === 'both') {
+			const descendantEndpoints = this.findLineageEndpoints(
+				tree,
+				anchorCrId,
+				'descendants',
+				maxGen
+			);
+
+			for (const endpoint of descendantEndpoints) {
+				lineages.push({
+					endCrId: endpoint.crId,
+					endName: endpoint.name,
+					generations: endpoint.generations,
+					direction: 'descendant'
+				});
+			}
+		}
+
+		// Sort by generation count (most distant first)
+		lineages.sort((a, b) => b.generations - a.generations);
+
+		return lineages;
+	}
+
+	/**
+	 * Find endpoints for lineage extraction (most distant ancestors/descendants)
+	 */
+	private findLineageEndpoints(
+		tree: FamilyTree,
+		startCrId: string,
+		direction: 'ancestors' | 'descendants',
+		maxGenerations: number
+	): Array<{ crId: string; name: string; generations: number }> {
+		const endpoints: Array<{ crId: string; name: string; generations: number }> = [];
+		const visited = new Set<string>();
+
+		const queue: Array<{ crId: string; generations: number }> = [
+			{ crId: startCrId, generations: 0 }
+		];
+
+		while (queue.length > 0) {
+			const { crId, generations } = queue.shift()!;
+
+			if (visited.has(crId)) continue;
+			if (generations > maxGenerations) continue;
+			visited.add(crId);
+
+			const person = tree.nodes.get(crId);
+			if (!person) continue;
+
+			let hasNext = false;
+
+			if (direction === 'ancestors') {
+				// Check parents
+				if (person.fatherCrId && !visited.has(person.fatherCrId)) {
+					queue.push({ crId: person.fatherCrId, generations: generations + 1 });
+					hasNext = true;
+				}
+				if (person.motherCrId && !visited.has(person.motherCrId)) {
+					queue.push({ crId: person.motherCrId, generations: generations + 1 });
+					hasNext = true;
+				}
+			} else {
+				// Check children
+				for (const childId of person.childrenCrIds) {
+					if (!visited.has(childId)) {
+						queue.push({ crId: childId, generations: generations + 1 });
+						hasNext = true;
+					}
+				}
+			}
+
+			// If no further nodes, this is an endpoint
+			if (!hasNext && generations > 0) {
+				endpoints.push({
+					crId: person.crId,
+					name: person.name || 'Unknown',
+					generations
+				});
+			}
+		}
+
+		return endpoints;
 	}
 }
