@@ -209,6 +209,63 @@ interface PathNode {
 }
 
 /**
+ * Options for generating ancestor-descendant canvas pairs
+ */
+export interface AncestorDescendantSplitOptions extends Partial<SplitOptions> {
+	/** The root person's crId (center of both canvases) */
+	rootCrId: string;
+	/** Include spouses in both canvases */
+	includeSpouses: boolean;
+	/** Maximum generations to include for ancestors (undefined = all) */
+	maxAncestorGenerations?: number;
+	/** Maximum generations to include for descendants (undefined = all) */
+	maxDescendantGenerations?: number;
+	/** Label prefix for generated canvases */
+	labelPrefix?: string;
+	/** Generate an overview canvas linking both */
+	generateOverview: boolean;
+}
+
+/**
+ * Default ancestor-descendant split options
+ */
+export const DEFAULT_ANCESTOR_DESCENDANT_OPTIONS: Omit<AncestorDescendantSplitOptions, 'rootCrId'> = {
+	...DEFAULT_SPLIT_OPTIONS,
+	includeSpouses: true,
+	generateOverview: true
+};
+
+/**
+ * Result of ancestor or descendant extraction
+ */
+export interface DirectionalExtractionResult {
+	/** People extracted */
+	people: PersonNode[];
+	/** CrIds of extracted people */
+	crIds: Set<string>;
+	/** Number of generations found */
+	generationCount: number;
+	/** Root person included */
+	rootPerson: PersonNode;
+}
+
+/**
+ * Result of ancestor-descendant pair generation
+ */
+export interface AncestorDescendantResult {
+	/** Ancestor canvas info */
+	ancestorCanvas: GeneratedCanvas;
+	/** Descendant canvas info */
+	descendantCanvas: GeneratedCanvas;
+	/** Overview canvas (if generated) */
+	overviewCanvas?: GeneratedCanvas;
+	/** Root person who is the center */
+	rootPerson: PersonNode;
+	/** Total people across both canvases (excluding duplicates) */
+	totalUniquePeople: number;
+}
+
+/**
  * Information about a collection for splitting
  */
 export interface CollectionInfo {
@@ -2508,5 +2565,454 @@ export class CanvasSplitService {
 		}
 
 		return endpoints;
+	}
+
+	// =========================================================================
+	// Phase 8: Ancestor-Descendant Pairs
+	// =========================================================================
+
+	/**
+	 * Generate a linked pair of ancestor and descendant canvases
+	 *
+	 * Creates two canvases centered on the same root person:
+	 * - Ancestor canvas: root person + all ancestors
+	 * - Descendant canvas: root person + all descendants
+	 * Both include navigation nodes linking to each other.
+	 *
+	 * @param tree - The family tree
+	 * @param options - Split options
+	 * @returns Split result with both canvases
+	 */
+	generateAncestorDescendantPair(
+		tree: FamilyTree,
+		options: AncestorDescendantSplitOptions
+	): SplitResult {
+		const opts = { ...DEFAULT_ANCESTOR_DESCENDANT_OPTIONS, ...options };
+
+		const rootPerson = tree.nodes.get(opts.rootCrId);
+		if (!rootPerson) {
+			return {
+				canvases: [],
+				totalPeople: 0
+			};
+		}
+
+		// Extract ancestors
+		const ancestorExtraction = this.extractAncestors(
+			tree,
+			opts.rootCrId,
+			opts.maxAncestorGenerations,
+			opts.includeSpouses
+		);
+
+		// Extract descendants
+		const descendantExtraction = this.extractDescendants(
+			tree,
+			opts.rootCrId,
+			opts.maxDescendantGenerations,
+			opts.includeSpouses
+		);
+
+		// Generate labels
+		const rootName = rootPerson.name || 'Unknown';
+		const labelPrefix = opts.labelPrefix || rootName;
+
+		// Generate canvas paths
+		const ancestorPath = this.generateAncestorDescendantCanvasPath(
+			opts,
+			`${labelPrefix} - Ancestors`
+		);
+		const descendantPath = this.generateAncestorDescendantCanvasPath(
+			opts,
+			`${labelPrefix} - Descendants`
+		);
+
+		// Create canvas info
+		const ancestorCanvas: GeneratedCanvas = {
+			path: ancestorPath,
+			label: `${labelPrefix} - Ancestors`,
+			personCount: ancestorExtraction.people.length,
+			generationRange: [0, ancestorExtraction.generationCount],
+			anchorPerson: opts.rootCrId
+		};
+
+		const descendantCanvas: GeneratedCanvas = {
+			path: descendantPath,
+			label: `${labelPrefix} - Descendants`,
+			personCount: descendantExtraction.people.length,
+			generationRange: [0, descendantExtraction.generationCount],
+			anchorPerson: opts.rootCrId
+		};
+
+		const canvases: GeneratedCanvas[] = [ancestorCanvas, descendantCanvas];
+
+		// Calculate unique people (root is in both)
+		const allCrIds = new Set<string>([
+			...ancestorExtraction.crIds,
+			...descendantExtraction.crIds
+		]);
+		const totalPeople = allCrIds.size;
+
+		// Generate overview canvas if requested
+		let overviewCanvas: GeneratedCanvas | undefined;
+		if (opts.generateOverview) {
+			const overviewPath = this.generateAncestorDescendantCanvasPath(
+				opts,
+				`${labelPrefix} - Overview`
+			);
+
+			overviewCanvas = {
+				path: overviewPath,
+				label: `${labelPrefix} - Overview`,
+				personCount: 1, // Just shows the root and links
+				anchorPerson: opts.rootCrId
+			};
+			canvases.push(overviewCanvas);
+		}
+
+		return {
+			canvases,
+			totalPeople,
+			overviewCanvas
+		};
+	}
+
+	/**
+	 * Extract all ancestors of a person
+	 *
+	 * @param tree - The family tree
+	 * @param rootCrId - Starting person
+	 * @param maxGenerations - Maximum generations to traverse (undefined = all)
+	 * @param includeSpouses - Whether to include spouses of ancestors
+	 * @returns Extraction result with ancestors
+	 */
+	extractAncestors(
+		tree: FamilyTree,
+		rootCrId: string,
+		maxGenerations?: number,
+		includeSpouses = true
+	): DirectionalExtractionResult {
+		const rootPerson = tree.nodes.get(rootCrId);
+		if (!rootPerson) {
+			return {
+				people: [],
+				crIds: new Set(),
+				generationCount: 0,
+				rootPerson: rootPerson!
+			};
+		}
+
+		const crIds = new Set<string>();
+		crIds.add(rootCrId);
+
+		let generationCount = 0;
+		const visited = new Set<string>();
+
+		// BFS to collect ancestors
+		const queue: Array<{ crId: string; generation: number }> = [
+			{ crId: rootCrId, generation: 0 }
+		];
+
+		while (queue.length > 0) {
+			const { crId, generation } = queue.shift()!;
+
+			if (visited.has(crId)) continue;
+			visited.add(crId);
+
+			const person = tree.nodes.get(crId);
+			if (!person) continue;
+
+			crIds.add(crId);
+			generationCount = Math.max(generationCount, generation);
+
+			// Check generation limit
+			if (maxGenerations !== undefined && generation >= maxGenerations) {
+				continue;
+			}
+
+			// Add parents
+			if (person.fatherCrId && !visited.has(person.fatherCrId)) {
+				queue.push({ crId: person.fatherCrId, generation: generation + 1 });
+			}
+			if (person.motherCrId && !visited.has(person.motherCrId)) {
+				queue.push({ crId: person.motherCrId, generation: generation + 1 });
+			}
+		}
+
+		// Add spouses if requested
+		if (includeSpouses) {
+			const spousesToAdd = new Set<string>();
+			for (const crId of crIds) {
+				const person = tree.nodes.get(crId);
+				if (person) {
+					for (const spouseId of person.spouseCrIds) {
+						if (!crIds.has(spouseId)) {
+							spousesToAdd.add(spouseId);
+						}
+					}
+				}
+			}
+			for (const spouseId of spousesToAdd) {
+				crIds.add(spouseId);
+			}
+		}
+
+		// Convert to PersonNodes
+		const people: PersonNode[] = [];
+		for (const crId of crIds) {
+			const person = tree.nodes.get(crId);
+			if (person) {
+				people.push(person);
+			}
+		}
+
+		return {
+			people,
+			crIds,
+			generationCount,
+			rootPerson
+		};
+	}
+
+	/**
+	 * Extract all descendants of a person
+	 *
+	 * @param tree - The family tree
+	 * @param rootCrId - Starting person
+	 * @param maxGenerations - Maximum generations to traverse (undefined = all)
+	 * @param includeSpouses - Whether to include spouses of descendants
+	 * @returns Extraction result with descendants
+	 */
+	extractDescendants(
+		tree: FamilyTree,
+		rootCrId: string,
+		maxGenerations?: number,
+		includeSpouses = true
+	): DirectionalExtractionResult {
+		const rootPerson = tree.nodes.get(rootCrId);
+		if (!rootPerson) {
+			return {
+				people: [],
+				crIds: new Set(),
+				generationCount: 0,
+				rootPerson: rootPerson!
+			};
+		}
+
+		const crIds = new Set<string>();
+		crIds.add(rootCrId);
+
+		let generationCount = 0;
+		const visited = new Set<string>();
+
+		// BFS to collect descendants
+		const queue: Array<{ crId: string; generation: number }> = [
+			{ crId: rootCrId, generation: 0 }
+		];
+
+		while (queue.length > 0) {
+			const { crId, generation } = queue.shift()!;
+
+			if (visited.has(crId)) continue;
+			visited.add(crId);
+
+			const person = tree.nodes.get(crId);
+			if (!person) continue;
+
+			crIds.add(crId);
+			generationCount = Math.max(generationCount, generation);
+
+			// Check generation limit
+			if (maxGenerations !== undefined && generation >= maxGenerations) {
+				continue;
+			}
+
+			// Add children
+			for (const childId of person.childrenCrIds) {
+				if (!visited.has(childId)) {
+					queue.push({ crId: childId, generation: generation + 1 });
+				}
+			}
+		}
+
+		// Add spouses if requested
+		if (includeSpouses) {
+			const spousesToAdd = new Set<string>();
+			for (const crId of crIds) {
+				const person = tree.nodes.get(crId);
+				if (person) {
+					for (const spouseId of person.spouseCrIds) {
+						if (!crIds.has(spouseId)) {
+							spousesToAdd.add(spouseId);
+						}
+					}
+				}
+			}
+			for (const spouseId of spousesToAdd) {
+				crIds.add(spouseId);
+			}
+		}
+
+		// Convert to PersonNodes
+		const people: PersonNode[] = [];
+		for (const crId of crIds) {
+			const person = tree.nodes.get(crId);
+			if (person) {
+				people.push(person);
+			}
+		}
+
+		return {
+			people,
+			crIds,
+			generationCount,
+			rootPerson
+		};
+	}
+
+	/**
+	 * Generate canvas path for ancestor-descendant pair
+	 */
+	private generateAncestorDescendantCanvasPath(
+		options: AncestorDescendantSplitOptions,
+		label: string
+	): string {
+		const folder = options.outputFolder || '';
+		const pattern = options.filenamePattern || '{name}';
+
+		const filename = pattern
+			.replace('{name}', this.sanitizeFilename(label))
+			.replace('{type}', 'pair')
+			.replace('{date}', new Date().toISOString().split('T')[0]);
+
+		const extension = filename.endsWith('.canvas') ? '' : '.canvas';
+
+		if (folder) {
+			return `${folder}/${filename}${extension}`;
+		}
+		return `${filename}${extension}`;
+	}
+
+	/**
+	 * Preview an ancestor-descendant pair generation without creating files
+	 */
+	previewAncestorDescendantPair(
+		tree: FamilyTree,
+		options: AncestorDescendantSplitOptions
+	): {
+		rootFound: boolean;
+		rootName: string;
+		ancestorCount: number;
+		ancestorGenerations: number;
+		descendantCount: number;
+		descendantGenerations: number;
+		totalUniquePeople: number;
+		overviewIncluded: boolean;
+	} {
+		const opts = { ...DEFAULT_ANCESTOR_DESCENDANT_OPTIONS, ...options };
+
+		const rootPerson = tree.nodes.get(opts.rootCrId);
+		if (!rootPerson) {
+			return {
+				rootFound: false,
+				rootName: 'Not found',
+				ancestorCount: 0,
+				ancestorGenerations: 0,
+				descendantCount: 0,
+				descendantGenerations: 0,
+				totalUniquePeople: 0,
+				overviewIncluded: opts.generateOverview
+			};
+		}
+
+		const ancestorExtraction = this.extractAncestors(
+			tree,
+			opts.rootCrId,
+			opts.maxAncestorGenerations,
+			opts.includeSpouses
+		);
+
+		const descendantExtraction = this.extractDescendants(
+			tree,
+			opts.rootCrId,
+			opts.maxDescendantGenerations,
+			opts.includeSpouses
+		);
+
+		// Calculate unique people
+		const allCrIds = new Set<string>([
+			...ancestorExtraction.crIds,
+			...descendantExtraction.crIds
+		]);
+
+		return {
+			rootFound: true,
+			rootName: rootPerson.name || 'Unknown',
+			ancestorCount: ancestorExtraction.people.length,
+			ancestorGenerations: ancestorExtraction.generationCount,
+			descendantCount: descendantExtraction.people.length,
+			descendantGenerations: descendantExtraction.generationCount,
+			totalUniquePeople: allCrIds.size,
+			overviewIncluded: opts.generateOverview
+		};
+	}
+
+	/**
+	 * Generate overview canvas data for an ancestor-descendant pair
+	 *
+	 * Creates a simple overview showing the root person with links to both canvases.
+	 */
+	generatePairOverviewData(
+		tree: FamilyTree,
+		options: AncestorDescendantSplitOptions,
+		ancestorCanvasPath: string,
+		descendantCanvasPath: string
+	): {
+		rootPerson: { crId: string; name: string };
+		ancestorLink: { path: string; label: string; count: number; generations: number };
+		descendantLink: { path: string; label: string; count: number; generations: number };
+	} | null {
+		const opts = { ...DEFAULT_ANCESTOR_DESCENDANT_OPTIONS, ...options };
+
+		const rootPerson = tree.nodes.get(opts.rootCrId);
+		if (!rootPerson) {
+			return null;
+		}
+
+		const ancestorExtraction = this.extractAncestors(
+			tree,
+			opts.rootCrId,
+			opts.maxAncestorGenerations,
+			opts.includeSpouses
+		);
+
+		const descendantExtraction = this.extractDescendants(
+			tree,
+			opts.rootCrId,
+			opts.maxDescendantGenerations,
+			opts.includeSpouses
+		);
+
+		const rootName = rootPerson.name || 'Unknown';
+		const labelPrefix = opts.labelPrefix || rootName;
+
+		return {
+			rootPerson: {
+				crId: opts.rootCrId,
+				name: rootName
+			},
+			ancestorLink: {
+				path: ancestorCanvasPath,
+				label: `${labelPrefix} - Ancestors`,
+				count: ancestorExtraction.people.length,
+				generations: ancestorExtraction.generationCount
+			},
+			descendantLink: {
+				path: descendantCanvasPath,
+				label: `${labelPrefix} - Descendants`,
+				count: descendantExtraction.people.length,
+				generations: descendantExtraction.generationCount
+			}
+		};
 	}
 }
