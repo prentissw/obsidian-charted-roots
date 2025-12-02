@@ -1,6 +1,6 @@
 # Geographic Features Plan
 
-> **Status:** Phase 1 Complete, Phase 2 Complete, Phase 2.5 Partial
+> **Status:** Phase 1 Complete, Phase 2 Complete, Phase 2.5 Partial, Phase 3 Partial
 > **Version:** 0.5.1+
 
 This document outlines the design for geographic/place-based features in Canvas Roots.
@@ -147,12 +147,12 @@ Place Hierarchy Issues
 | Create missing place notes | ✓ | Generate notes for places referenced but not created |
 | Build hierarchy | ✓ | Wizard to assign parent places to orphans |
 | View place index | ✓ | Alphabetical list with person counts |
-| Standardize place names | Planned | Find variations and unify them |
-| Migration diagram | Phase 3 | Visual showing flows between places |
+| Standardize place names | ✓ | Find variations and unify them |
+| Migration diagram | ✓ | Visual showing flows between places |
 
 ---
 
-## Phase 3: Simple Visualization
+## Phase 3: Simple Visualization (Partial)
 
 D3-based visualizations without external map dependencies.
 
@@ -163,11 +163,14 @@ D3-based visualizations without external map dependencies.
 - Color by category or hierarchy level
 - Show migration flows as directed edges
 
-### Migration Flow Diagram
+### Migration Flow Diagram ✓
 
-- Sankey or chord diagram showing movement between places
-- Filter by time period, generation, or branch
-- Aggregate by region or show individual places
+- ✓ Arc diagram showing movement between places
+- ✓ Filter by minimum flow count
+- ✓ Color-coded nodes (green=birth origin, red=death destination)
+- ✓ Interactive tooltips with flow details
+- Planned: Filter by time period, generation, or branch
+- Planned: Aggregate by region
 
 ---
 
@@ -258,13 +261,17 @@ When viewing a person note with unlinked place references:
 - One-click to open Create Place modal pre-populated with the place name
 - Option to auto-link after creation
 
-### Place Note Template Configuration
+### Place Note Template Configuration (Partial)
 
 Allow users to customize place note templates:
-- Default place category per folder/collection
-- Auto-populate parent place based on folder structure
-- Custom frontmatter fields
-- Template selection in Create Place modal
+- ✓ Templater-compatible template snippets (copy-paste)
+- ✓ Person and place note templates with Templater variables
+- ✓ Variable reference documentation
+- ✓ Link to frontmatter schema reference
+- Planned: Default place category per folder/collection
+- Planned: Auto-populate parent place based on folder structure
+- Planned: Custom frontmatter fields
+- Planned: Template selection in Create Place modal
 
 ### Geocoding Integration Prep
 
@@ -278,12 +285,15 @@ Prepare infrastructure for optional geocoding:
 
 Cross-feature integration with existing Canvas Roots functionality.
 
-### Filter Trees by Place
+### Filter Trees by Place ✓
 
 Add place-based filtering to tree views:
-- Filter by birth place, death place, or any associated place
-- Show all people born in a specific country/region
-- Highlight migration paths on tree canvas
+- ✓ Filter by birth place, death place, marriage location, or burial place
+- ✓ Configurable place type checkboxes (birth, death, marriage, burial)
+- ✓ Text input for place name matching
+- ✓ Integrated into Tree Output tab
+- Planned: Show all people born in a specific country/region
+- Planned: Highlight migration paths on tree canvas
 
 ### Place-Based Collections
 

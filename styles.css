@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-02 02:05:53 UTC
+ * - Generated: 2025-12-02 02:22:47 UTC
  * - Components: 20 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -187,7 +187,7 @@
    COMPONENT: MODALS.CSS
    ========================================================================== */
 
-/* Component Size: 2345 lines, 42.54 KB */
+/* Component Size: 2515 lines, 45.92 KB */
 
 /* ==========================================================================
    Canvas Roots Control Center - Styling
@@ -2532,6 +2532,176 @@
 
 .crc-text--center {
   text-align: center;
+}
+
+/* ==========================================================================
+   Template Snippets Modal
+   ========================================================================== */
+
+.crc-template-snippets-modal {
+  width: 700px;
+  max-width: 90vw;
+}
+
+.crc-template-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding-bottom: 12px;
+}
+
+.crc-template-tab {
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 150ms ease;
+}
+
+.crc-template-tab:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.crc-template-tab--active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+.crc-template-container {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.crc-template-card {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.crc-template-card-header {
+  margin-bottom: 12px;
+}
+
+.crc-template-card-header h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.crc-template-card-header p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.crc-template-code-wrapper {
+  position: relative;
+}
+
+.crc-template-code {
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 12px;
+  padding-right: 44px;
+  margin: 0;
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre;
+}
+
+.crc-template-code code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+  color: var(--text-normal);
+}
+
+.crc-template-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+}
+
+.crc-template-copy-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.crc-template-copy-btn--success {
+  background: var(--background-modifier-success);
+  border-color: var(--color-green);
+  color: var(--color-green);
+}
+
+.crc-template-reference {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 16px;
+}
+
+.crc-template-reference h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.crc-template-reference-content {
+  background: var(--background-secondary);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.crc-template-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.crc-template-table th {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.crc-template-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.crc-template-table tr:last-child td {
+  border-bottom: none;
+}
+
+.crc-template-var {
+  background: var(--background-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-monospace);
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 
@@ -5242,11 +5412,11 @@
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-02 02:05:53 UTC
+ * Build completed: 2025-12-02 02:22:47 UTC
  * Components processed: 20
- * Total lines: 5039
- * Total size: 95.75 KB
- * Build duration: 0.03 seconds
+ * Total lines: 5209
+ * Total size: 99.13 KB
+ * Build duration: 0.02 seconds
  *
  * Component breakdown:
  * - variables.css: 31 lines, 0.72 KB
@@ -5256,7 +5426,7 @@
  * - nodes.css: 12 lines, 0.3 KB
  * - edges.css: 4 lines, 0.07 KB
  * - settings.css: 4 lines, 0.07 KB
- * - modals.css: 2345 lines, 42.54 KB
+ * - modals.css: 2515 lines, 45.92 KB
  * - duplicate-detection.css: 163 lines, 2.82 KB
  * - tree-statistics.css: 41 lines, 0.6 KB
  * - validation.css: 84 lines, 1.47 KB

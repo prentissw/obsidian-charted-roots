@@ -30,6 +30,7 @@ import { CreateMissingPlacesModal } from './create-missing-places-modal';
 import { BuildPlaceHierarchyModal } from './build-place-hierarchy-modal';
 import { StandardizePlacesModal, findPlaceNameVariations } from './standardize-places-modal';
 import { MigrationDiagramModal } from './migration-diagram-modal';
+import { TemplateSnippetsModal } from './template-snippets-modal';
 
 const logger = getLogger('ControlCenter');
 
@@ -1714,6 +1715,58 @@ export class ControlCenterModal extends Modal {
 		});
 
 		container.appendChild(tasksCard);
+
+		// Templater Templates Card
+		const templaterCard = this.createCard({
+			title: 'Templater integration',
+			icon: 'file-code'
+		});
+		const templaterContent = templaterCard.querySelector('.crc-card__content') as HTMLElement;
+
+		templaterContent.createEl('p', {
+			text: 'Canvas Roots provides ready-to-use templates compatible with the Templater plugin for creating person and place notes.',
+			cls: 'crc-mb-3'
+		});
+
+		// What's included
+		const includesSection = templaterContent.createDiv({ cls: 'crc-mb-4' });
+		includesSection.createEl('h4', { text: 'Available templates', cls: 'crc-mb-2' });
+
+		const includesList = includesSection.createEl('ul', { cls: 'crc-mb-2' });
+		includesList.createEl('li', { text: 'Person notes: Basic, full, and interactive (with prompts)' });
+		includesList.createEl('li', { text: 'Place notes: Basic, with coordinates, historical, and fictional' });
+		includesList.createEl('li', { text: 'All templates include auto-generated cr_id and file title' });
+
+		// Common variables
+		const varsSection = templaterContent.createDiv({ cls: 'crc-mb-4' });
+		varsSection.createEl('h4', { text: 'Useful Templater variables', cls: 'crc-mb-2' });
+
+		const varsTable = varsSection.createEl('div', { cls: 'crc-template-vars-preview' });
+		const varsList = varsTable.createEl('ul', { cls: 'crc-text-muted' });
+		varsList.createEl('li').innerHTML = '<code>&lt;% tp.date.now("YYYYMMDDHHmmss") %&gt;</code> - Unique timestamp ID';
+		varsList.createEl('li').innerHTML = '<code>&lt;% tp.file.title %&gt;</code> - File name as note title';
+		varsList.createEl('li').innerHTML = '<code>&lt;% tp.system.suggester([...]) %&gt;</code> - Selection dialog';
+		varsList.createEl('li').innerHTML = '<code>&lt;% tp.system.prompt("...") %&gt;</code> - Input dialog';
+
+		// Access button
+		const templaterAccessSection = templaterContent.createDiv({ cls: 'crc-mt-3' });
+		const viewTemplatesBtn = templaterAccessSection.createEl('button', {
+			text: 'View and copy templates',
+			cls: 'crc-btn crc-btn--primary'
+		});
+		viewTemplatesBtn.addEventListener('click', () => {
+			new TemplateSnippetsModal(this.app).open();
+		});
+
+		// Info box
+		const templaterInfo = templaterContent.createDiv({ cls: 'crc-info-box crc-mt-4' });
+		templaterInfo.createEl('strong', { text: 'Requirements:' });
+		templaterInfo.createEl('p', {
+			text: 'Install the Templater plugin from the Community Plugins marketplace. Copy the template snippets into your Templater templates folder.',
+			cls: 'crc-mt-2'
+		});
+
+		container.appendChild(templaterCard);
 
 		// Tips Card
 		const tipsCard = this.createCard({
@@ -4147,6 +4200,15 @@ export class ControlCenterModal extends Modal {
 				.setButtonText('View diagram')
 				.onClick(() => {
 					new MigrationDiagramModal(this.app).open();
+				}));
+
+		new Setting(actionsContent)
+			.setName('Templater templates')
+			.setDesc('Copy ready-to-use templates for Templater integration')
+			.addButton(button => button
+				.setButtonText('View templates')
+				.onClick(() => {
+					new TemplateSnippetsModal(this.app).open();
 				}));
 
 		container.appendChild(actionsCard);

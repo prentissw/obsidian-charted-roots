@@ -69,7 +69,8 @@ export type LucideIconName =
 	| 'layers'         // Layers/generations
 	| 'arrow-up-down'  // Bidirectional/ancestor-descendant
 	| 'map-pin'        // Places/locations
-	| 'globe';         // World/geography
+	| 'globe'          // World/geography
+	| 'file-code';     // Templates/code files
 
 /**
  * Tab configuration for Control Center navigation
