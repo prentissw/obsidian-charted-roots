@@ -2352,11 +2352,16 @@
   max-width: 95vw;
 }
 
+.crc-migration-controls-container {
+  margin: 16px 0;
+}
+
 .crc-migration-controls {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  margin: 16px 0;
+  margin-bottom: 8px;
 }
 
 .crc-migration-slider {
@@ -2367,6 +2372,48 @@
 .crc-migration-count-label {
   min-width: 30px;
   font-weight: var(--font-medium);
+}
+
+.crc-migration-time-controls {
+  margin-top: 4px;
+}
+
+.crc-migration-year-input {
+  width: 70px;
+  padding: 4px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+}
+
+.crc-migration-year-input:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+
+.crc-migration-year-info {
+  margin-left: 8px;
+  font-size: var(--font-ui-smaller);
+}
+
+.crc-migration-presets {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.crc-migration-preset-buttons {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.crc-migration-preset-buttons .crc-btn {
+  padding: 2px 8px;
+  font-size: var(--font-ui-smaller);
 }
 
 .crc-migration-diagram {

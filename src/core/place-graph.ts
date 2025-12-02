@@ -552,6 +552,148 @@ export class PlaceGraphService {
 	}
 
 	/**
+	 * Get detailed migration data with birth/death years for filtering
+	 * Returns individual migrations rather than aggregated counts
+	 */
+	getDetailedMigrations(): Array<{
+		personId: string;
+		from: string;
+		to: string;
+		birthYear?: number;
+		deathYear?: number;
+	}> {
+		this.ensureCacheLoaded();
+
+		const migrations: Array<{
+			personId: string;
+			from: string;
+			to: string;
+			birthYear?: number;
+			deathYear?: number;
+		}> = [];
+
+		// Build a map of person data from frontmatter
+		const files = this.app.vault.getMarkdownFiles();
+		const personData = new Map<string, {
+			birthPlace?: string;
+			deathPlace?: string;
+			birthYear?: number;
+			deathYear?: number;
+		}>();
+
+		for (const file of files) {
+			if (this.folderFilter && !this.folderFilter.shouldIncludeFile(file)) {
+				continue;
+			}
+
+			const cache = this.app.metadataCache.getFileCache(file);
+			if (!cache?.frontmatter) continue;
+
+			const fm = cache.frontmatter;
+			if (fm.type === 'place' || !fm.cr_id) continue;
+
+			const data: {
+				birthPlace?: string;
+				deathPlace?: string;
+				birthYear?: number;
+				deathYear?: number;
+			} = {};
+
+			// Extract birth place
+			if (fm.birth_place) {
+				const wikilinkMatch = String(fm.birth_place).match(/\[\[([^\]]+)\]\]/);
+				data.birthPlace = wikilinkMatch ? wikilinkMatch[1] : fm.birth_place;
+			}
+
+			// Extract death place
+			if (fm.death_place) {
+				const wikilinkMatch = String(fm.death_place).match(/\[\[([^\]]+)\]\]/);
+				data.deathPlace = wikilinkMatch ? wikilinkMatch[1] : fm.death_place;
+			}
+
+			// Extract birth year from birth_date
+			if (fm.birth_date) {
+				const year = this.extractYear(fm.birth_date);
+				if (year) data.birthYear = year;
+			}
+
+			// Extract death year from death_date
+			if (fm.death_date) {
+				const year = this.extractYear(fm.death_date);
+				if (year) data.deathYear = year;
+			}
+
+			if (data.birthPlace || data.deathPlace) {
+				personData.set(fm.cr_id, data);
+			}
+		}
+
+		// Build migration records
+		for (const [personId, data] of personData) {
+			if (data.birthPlace && data.deathPlace && data.birthPlace !== data.deathPlace) {
+				migrations.push({
+					personId,
+					from: data.birthPlace,
+					to: data.deathPlace,
+					birthYear: data.birthYear,
+					deathYear: data.deathYear
+				});
+			}
+		}
+
+		return migrations;
+	}
+
+	/**
+	 * Extract year from a date string (supports various formats)
+	 */
+	private extractYear(dateValue: unknown): number | undefined {
+		if (!dateValue) return undefined;
+
+		const str = String(dateValue);
+
+		// Try ISO format (YYYY-MM-DD or YYYY)
+		const isoMatch = str.match(/^(\d{4})/);
+		if (isoMatch) {
+			return parseInt(isoMatch[1], 10);
+		}
+
+		// Try common formats with year at end (DD MMM YYYY, MM/DD/YYYY, etc.)
+		const yearAtEndMatch = str.match(/(\d{4})$/);
+		if (yearAtEndMatch) {
+			return parseInt(yearAtEndMatch[1], 10);
+		}
+
+		// Try to find any 4-digit year
+		const anyYearMatch = str.match(/\b(1[0-9]{3}|20[0-2][0-9])\b/);
+		if (anyYearMatch) {
+			return parseInt(anyYearMatch[1], 10);
+		}
+
+		return undefined;
+	}
+
+	/**
+	 * Get the range of years in migration data
+	 */
+	getMigrationYearRange(): { min: number; max: number } | null {
+		const migrations = this.getDetailedMigrations();
+		const years: number[] = [];
+
+		for (const m of migrations) {
+			if (m.birthYear) years.push(m.birthYear);
+			if (m.deathYear) years.push(m.deathYear);
+		}
+
+		if (years.length === 0) return null;
+
+		return {
+			min: Math.min(...years),
+			max: Math.max(...years)
+		};
+	}
+
+	/**
 	 * Clears the place cache
 	 */
 	clearCache(): void {

@@ -7,6 +7,14 @@ import { App, Modal } from 'obsidian';
 import { createLucideIcon } from './lucide-icons';
 import { PlaceGraphService } from '../core/place-graph';
 
+interface DetailedMigration {
+	personId: string;
+	from: string;
+	to: string;
+	birthYear?: number;
+	deathYear?: number;
+}
+
 interface MigrationFlow {
 	from: string;
 	to: string;
@@ -25,16 +33,27 @@ interface PlaceData {
  */
 export class MigrationDiagramModal extends Modal {
 	private placeService: PlaceGraphService;
-	private migrationPatterns: MigrationFlow[];
+	private allMigrations: DetailedMigration[];
+	private yearRange: { min: number; max: number } | null;
 	private minFlowCount: number = 1;
+	private startYear: number | null = null;
+	private endYear: number | null = null;
+	private diagramContainer: HTMLElement | null = null;
 
 	constructor(app: App) {
 		super(app);
 		this.placeService = new PlaceGraphService(app);
 		this.placeService.reloadCache();
 
-		const stats = this.placeService.calculateStatistics();
-		this.migrationPatterns = stats.migrationPatterns;
+		// Get detailed migration data with years
+		this.allMigrations = this.placeService.getDetailedMigrations();
+		this.yearRange = this.placeService.getMigrationYearRange();
+
+		// Set initial year range if available
+		if (this.yearRange) {
+			this.startYear = this.yearRange.min;
+			this.endYear = this.yearRange.max;
+		}
 	}
 
 	onOpen() {
@@ -57,7 +76,7 @@ export class MigrationDiagramModal extends Modal {
 			cls: 'crc-text--muted'
 		});
 
-		if (this.migrationPatterns.length === 0) {
+		if (this.allMigrations.length === 0) {
 			contentEl.createEl('p', {
 				text: 'No migration patterns found. People must have different birth and death places to show migration.',
 				cls: 'crc-text--muted crc-mt-3'
@@ -65,34 +84,129 @@ export class MigrationDiagramModal extends Modal {
 			return;
 		}
 
-		// Filter control
-		const controlsRow = contentEl.createDiv({ cls: 'crc-migration-controls' });
-		controlsRow.createEl('span', { text: 'Minimum people: ', cls: 'crc-text--muted' });
+		// Controls container
+		const controlsContainer = contentEl.createDiv({ cls: 'crc-migration-controls-container' });
 
-		const slider = controlsRow.createEl('input', {
+		// Row 1: Minimum people filter
+		const controlsRow1 = controlsContainer.createDiv({ cls: 'crc-migration-controls' });
+		controlsRow1.createEl('span', { text: 'Minimum people: ', cls: 'crc-text--muted' });
+
+		const slider = controlsRow1.createEl('input', {
 			type: 'range',
 			cls: 'crc-migration-slider'
 		});
 		slider.min = '1';
-		slider.max = String(Math.max(...this.migrationPatterns.map(p => p.count)));
+		slider.max = String(this.getMaxFlowCount());
 		slider.value = '1';
 
-		const countLabel = controlsRow.createEl('span', {
+		const countLabel = controlsRow1.createEl('span', {
 			text: '1',
 			cls: 'crc-migration-count-label'
 		});
 
+		// Row 2: Time period filter (only if we have year data)
+		if (this.yearRange) {
+			const controlsRow2 = controlsContainer.createDiv({ cls: 'crc-migration-controls crc-migration-time-controls' });
+			controlsRow2.createEl('span', { text: 'Time period: ', cls: 'crc-text--muted' });
+
+			// Start year input
+			const startInput = controlsRow2.createEl('input', {
+				type: 'number',
+				cls: 'crc-migration-year-input',
+				placeholder: String(this.yearRange.min)
+			});
+			startInput.value = String(this.yearRange.min);
+			startInput.min = String(this.yearRange.min);
+			startInput.max = String(this.yearRange.max);
+
+			controlsRow2.createEl('span', { text: ' – ', cls: 'crc-text--muted' });
+
+			// End year input
+			const endInput = controlsRow2.createEl('input', {
+				type: 'number',
+				cls: 'crc-migration-year-input',
+				placeholder: String(this.yearRange.max)
+			});
+			endInput.value = String(this.yearRange.max);
+			endInput.min = String(this.yearRange.min);
+			endInput.max = String(this.yearRange.max);
+
+			// Year range info
+			const yearInfo = controlsRow2.createEl('span', {
+				text: `(data spans ${this.yearRange.min}–${this.yearRange.max})`,
+				cls: 'crc-text--muted crc-migration-year-info'
+			});
+
+			// Handle year input changes
+			const updateYears = () => {
+				const start = parseInt(startInput.value) || this.yearRange!.min;
+				const end = parseInt(endInput.value) || this.yearRange!.max;
+				this.startYear = Math.max(this.yearRange!.min, Math.min(start, end));
+				this.endYear = Math.min(this.yearRange!.max, Math.max(start, end));
+				this.renderDiagram();
+			};
+
+			startInput.addEventListener('change', updateYears);
+			endInput.addEventListener('change', updateYears);
+
+			// Quick preset buttons
+			const presetsRow = controlsContainer.createDiv({ cls: 'crc-migration-presets' });
+			presetsRow.createEl('span', { text: 'Presets: ', cls: 'crc-text--muted' });
+
+			const presetContainer = presetsRow.createDiv({ cls: 'crc-migration-preset-buttons' });
+
+			// Generate century presets based on data range
+			const startCentury = Math.floor(this.yearRange.min / 100) * 100;
+			const endCentury = Math.floor(this.yearRange.max / 100) * 100;
+
+			for (let century = startCentury; century <= endCentury; century += 100) {
+				const centuryEnd = century + 99;
+				// Only show if there's data in this century
+				const hasMigrations = this.allMigrations.some(m => {
+					const year = m.birthYear || m.deathYear;
+					return year && year >= century && year <= centuryEnd;
+				});
+
+				if (hasMigrations) {
+					const btn = presetContainer.createEl('button', {
+						text: `${century}s`,
+						cls: 'crc-btn crc-btn--small'
+					});
+					btn.addEventListener('click', () => {
+						this.startYear = Math.max(this.yearRange!.min, century);
+						this.endYear = Math.min(this.yearRange!.max, centuryEnd);
+						startInput.value = String(this.startYear);
+						endInput.value = String(this.endYear);
+						this.renderDiagram();
+					});
+				}
+			}
+
+			// "All" preset
+			const allBtn = presetContainer.createEl('button', {
+				text: 'All',
+				cls: 'crc-btn crc-btn--small'
+			});
+			allBtn.addEventListener('click', () => {
+				this.startYear = this.yearRange!.min;
+				this.endYear = this.yearRange!.max;
+				startInput.value = String(this.startYear);
+				endInput.value = String(this.endYear);
+				this.renderDiagram();
+			});
+		}
+
 		// Diagram container
-		const diagramContainer = contentEl.createDiv({ cls: 'crc-migration-diagram' });
+		this.diagramContainer = contentEl.createDiv({ cls: 'crc-migration-diagram' });
 
 		// Initial render
-		this.renderDiagram(diagramContainer, this.minFlowCount);
+		this.renderDiagram();
 
 		// Update on slider change
 		slider.addEventListener('input', () => {
 			this.minFlowCount = parseInt(slider.value);
 			countLabel.textContent = slider.value;
-			this.renderDiagram(diagramContainer, this.minFlowCount);
+			this.renderDiagram();
 		});
 
 		// Legend
@@ -111,13 +225,66 @@ export class MigrationDiagramModal extends Modal {
 	}
 
 	/**
+	 * Get the maximum flow count for the slider
+	 */
+	private getMaxFlowCount(): number {
+		const flows = this.aggregateMigrations(this.allMigrations);
+		if (flows.length === 0) return 1;
+		return Math.max(...flows.map(f => f.count));
+	}
+
+	/**
+	 * Filter migrations by time period
+	 */
+	private filterByTimePeriod(migrations: DetailedMigration[]): DetailedMigration[] {
+		if (this.startYear === null || this.endYear === null) {
+			return migrations;
+		}
+
+		return migrations.filter(m => {
+			// Use birth year primarily, fall back to death year
+			const year = m.birthYear || m.deathYear;
+			if (!year) return true; // Include migrations without year data
+			return year >= this.startYear! && year <= this.endYear!;
+		});
+	}
+
+	/**
+	 * Aggregate individual migrations into flow counts
+	 */
+	private aggregateMigrations(migrations: DetailedMigration[]): MigrationFlow[] {
+		const counts = new Map<string, number>();
+
+		for (const m of migrations) {
+			const key = `${m.from}|${m.to}`;
+			counts.set(key, (counts.get(key) || 0) + 1);
+		}
+
+		return Array.from(counts.entries())
+			.map(([key, count]) => {
+				const [from, to] = key.split('|');
+				return { from, to, count };
+			})
+			.sort((a, b) => b.count - a.count);
+	}
+
+	/**
 	 * Render the migration diagram as an arc diagram
 	 */
-	private renderDiagram(container: HTMLElement, minCount: number): void {
+	private renderDiagram(): void {
+		if (!this.diagramContainer) return;
+
+		const container = this.diagramContainer;
 		container.empty();
 
+		// Filter by time period first
+		const filteredMigrations = this.filterByTimePeriod(this.allMigrations);
+
+		// Aggregate into flows
+		const allFlows = this.aggregateMigrations(filteredMigrations);
+
 		// Filter flows by minimum count
-		const flows = this.migrationPatterns.filter(p => p.count >= minCount);
+		const flows = allFlows.filter(f => f.count >= this.minFlowCount);
 
 		if (flows.length === 0) {
 			container.createEl('p', {
@@ -125,6 +292,19 @@ export class MigrationDiagramModal extends Modal {
 				cls: 'crc-text--muted crc-text--center'
 			});
 			return;
+		}
+
+		// Show filtered count
+		const totalMigrations = filteredMigrations.length;
+		const shownMigrations = flows.reduce((sum, f) => sum + f.count, 0);
+
+		if (this.startYear !== null && this.endYear !== null && this.yearRange) {
+			if (this.startYear !== this.yearRange.min || this.endYear !== this.yearRange.max) {
+				container.createEl('p', {
+					text: `Showing ${shownMigrations} of ${totalMigrations} migrations in ${this.startYear}–${this.endYear}`,
+					cls: 'crc-text--muted crc-text--center crc-mb-2'
+				});
+			}
 		}
 
 		// Collect unique places and calculate their stats
