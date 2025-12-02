@@ -909,6 +909,140 @@ oral_facts:
 - "Unverified facts" report (claims without source timestamps)
 - Transcript generation assistance (if external transcription exists)
 
+**Interview Subject Graph:**
+
+Map the relationship structure of interviews themselves with dedicated interview notes:
+
+```yaml
+---
+# Interview note frontmatter
+type: interview
+cr_id: "interview-001"
+title: "Andrew Wilson Interview 2019"
+media: "[[Andrew Wilson Interview 2019.mp4]]"
+date: 2019-08-15
+location: "Portland, Oregon"
+
+# Participants
+interviewer: "[[Me]]"
+interviewee: "[[Andrew Wilson]]"
+
+# People mentioned in the interview
+mentions:
+  - person: "[[Sue Wilson Robinson]]"
+    context: "sister"
+    timestamps: ["3m20s", "15m45s", "42m10s"]
+  - person: "[[Robert Wilson Sr]]"
+    context: "father"
+    timestamps: ["8m30s", "22m15s"]
+  - person: "[[Mary Chen Wilson]]"
+    context: "mother"
+    timestamps: ["10m05s"]
+---
+```
+
+**Canvas Visualization:**
+- "Visualize interview context" command renders interview as central hub node
+- Interviewee connected with primary edge (thick, labeled "subject")
+- Mentioned people radiate outward with labeled edges ("mentioned", "discussed")
+- Edge thickness or label indicates mention frequency
+- Click edges to see timestamp list for that person's mentions
+- Interview node styled distinctly (e.g., microphone icon, different color)
+
+**Interview Index:**
+- Bases view listing all interviews with participant counts
+- "People by interview coverage" report (who has been interviewed, who hasn't)
+- Cross-reference: which interviews mention a specific person
+- Timeline view of interviews by date
+
+**Use Cases:**
+- Oral history projects with multiple interview subjects
+- Podcast episode tracking for genealogy shows
+- Research interview management
+- Documentary source tracking
+
+**Chronological Story Mapping (Timeline Integration):**
+
+Transform extracted oral history facts into timeline events that integrate with Leaflet.js Time Slider and dedicated timeline views:
+
+```yaml
+---
+# Event object generated from oral fact extraction
+type: event
+cr_id: "evt-qom515nql022"
+date: 1949-04-05
+date_precision: month  # year | month | day | approximate
+description: "Moved to California"
+person: "[[Andrew Wilson]]"
+person_id: "person-uuid-123"
+place: "[[California]]"
+place_id: "place-california-001"
+
+# Source linkage
+source_type: oral_history
+source_media: "[[Interview 1.mp4]]"
+source_timestamp: "5m0s"
+source_quote: "I moved to California in 1949, right after the war ended"
+source_fact_id: "residence-001"
+
+# Event classification
+event_type: residence_change  # birth | death | marriage | residence_change | occupation | military | immigration | custom
+confidence: medium  # high | medium | low | uncertain
+---
+```
+
+**Fact-to-Event Translation:**
+- Extract date from quote context ("in 1949", "after the war", "when I was twelve")
+- Infer date precision (year only vs. specific date)
+- Link to existing place notes or create new ones
+- Preserve source linkage for verification
+- Flag uncertain dates for review
+
+**Timeline Integration:**
+- Events populate Leaflet.js Time Slider for geographic animation
+- Dedicated Markdown Timeline view (vertical chronological display)
+- Filter by person, place, event type, or confidence level
+- Click event to jump to source timestamp
+- Visual distinction between verified vs. extracted dates
+
+**Event Types:**
+- `birth`, `death` - Vital events (usually from frontmatter, but can be oral)
+- `marriage`, `divorce` - Relationship changes
+- `residence_change` - Moving to new location
+- `occupation` - Job changes, career milestones
+- `military` - Enlistment, discharge, deployments
+- `immigration` - Border crossings, naturalization
+- `education` - Graduation, enrollment
+- `anecdote` - Story moments without specific date
+- `lore_event` - World-building timeline events (fictional)
+
+**Extraction Workflow:**
+1. User captures oral fact with quote and timestamp
+2. "Convert to timeline event" action parses the fact
+3. Date extraction suggests date and precision
+4. User confirms/adjusts date, place, and event type
+5. Event note created and linked to person
+6. Timeline views automatically include new event
+
+**Timeline Views:**
+- **Person Timeline:** All events for one person, chronologically
+- **Family Timeline:** Events for a family group, interleaved
+- **Place Timeline:** All events at a specific location
+- **Global Timeline:** All events, filterable by criteria
+
+**World-Building Applications:**
+- Build narrative timelines from character dialogue
+- Track in-world historical events from lore recordings
+- Visualize story chronology across multiple characters
+- Identify timeline inconsistencies (plot holes)
+
+**Integration:**
+- Events sync with person note's `events` frontmatter array
+- Leaflet.js map animates event markers along timeline
+- Bases views for event inventory by type, person, or date range
+- "Timeline gaps" report (periods with no recorded events)
+- Export timeline to external formats (JSON-LD, GEDCOM events)
+
 ### World-Building Features
 
 - Visual grouping by house/faction
