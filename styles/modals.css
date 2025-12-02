@@ -2344,6 +2344,110 @@
 }
 
 /* ==========================================================================
+   PLACE NETWORK MODAL
+   ========================================================================== */
+
+.crc-place-network-modal {
+  width: 950px;
+  max-width: 95vw;
+}
+
+.crc-network-controls {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.crc-network-controls .setting-item {
+  border: none;
+  padding: 0;
+  flex: 0 0 auto;
+}
+
+.crc-network-controls .setting-item-info {
+  padding-right: 8px;
+}
+
+.crc-place-network {
+  position: relative;
+  overflow: auto;
+  background: var(--background-secondary);
+  border-radius: var(--radius-m);
+  min-height: 400px;
+}
+
+.crc-network-svg {
+  display: block;
+}
+
+.crc-network-edge {
+  transition: stroke-opacity 150ms ease;
+}
+
+.crc-network-node {
+  cursor: pointer;
+  transition: opacity 150ms ease;
+}
+
+.crc-network-node:hover circle {
+  stroke: var(--text-accent);
+  stroke-width: 3;
+}
+
+.crc-network-label {
+  font-size: 10px;
+  fill: var(--text-normal);
+  pointer-events: none;
+}
+
+.crc-network-tooltip {
+  position: absolute;
+  padding: 8px 12px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: var(--shadow-s);
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.crc-network-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.crc-network-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crc-network-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.crc-network-legend-gradient {
+  width: 60px;
+  height: 12px;
+  background: linear-gradient(to right, hsl(240, 70%, 50%), hsl(0, 70%, 50%));
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* ==========================================================================
    Template Snippets Modal
    ========================================================================== */
 

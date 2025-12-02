@@ -30,6 +30,7 @@ import { CreateMissingPlacesModal } from './create-missing-places-modal';
 import { BuildPlaceHierarchyModal } from './build-place-hierarchy-modal';
 import { StandardizePlacesModal, findPlaceNameVariations } from './standardize-places-modal';
 import { MigrationDiagramModal } from './migration-diagram-modal';
+import { PlaceNetworkModal } from './place-network-modal';
 import { TemplateSnippetsModal } from './template-snippets-modal';
 import { CreatePersonModal } from './create-person-modal';
 
@@ -4316,6 +4317,15 @@ export class ControlCenterModal extends Modal {
 				.setButtonText('View diagram')
 				.onClick(() => {
 					new MigrationDiagramModal(this.app).open();
+				}));
+
+		new Setting(actionsContent)
+			.setName('Place hierarchy')
+			.setDesc('Visualize place relationships as a network diagram')
+			.addButton(button => button
+				.setButtonText('View hierarchy')
+				.onClick(() => {
+					new PlaceNetworkModal(this.app).open();
 				}));
 
 		new Setting(actionsContent)

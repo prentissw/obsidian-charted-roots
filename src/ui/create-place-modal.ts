@@ -57,6 +57,8 @@ export class CreatePlaceModal extends Modal {
 	private coordSectionEl?: HTMLElement;
 	private parentPlaceSettingEl?: HTMLElement;
 	private parentDropdownEl?: HTMLSelectElement;
+	private latInputEl?: HTMLInputElement;
+	private longInputEl?: HTMLInputElement;
 
 	constructor(
 		app: App,
@@ -442,26 +444,43 @@ export class CreatePlaceModal extends Modal {
 			.setDesc('Real-world coordinates (for real, historical, disputed places)');
 		coordHeader.settingEl.addClass('crc-coord-header');
 
+		// Add geocoding lookup button to header
+		coordHeader.addButton(btn => {
+			const searchIcon = createLucideIcon('search', 14);
+			btn.buttonEl.empty();
+			btn.buttonEl.appendChild(searchIcon);
+			btn.buttonEl.appendText(' Look up');
+			btn.setClass('crc-btn crc-btn--small');
+			btn.setTooltip('Look up coordinates by place name');
+			btn.onClick(() => {
+				this.lookupCoordinates();
+			});
+		});
+
 		const coordInputs = this.coordSectionEl.createDiv({ cls: 'crc-coord-inputs' });
 
 		// Latitude
 		const latSetting = new Setting(coordInputs)
 			.setName('Latitude')
-			.addText(text => text
-				.setPlaceholder('-90 to 90')
-				.onChange(value => {
-					this.updateCoordinates('lat', value);
-				}));
+			.addText(text => {
+				this.latInputEl = text.inputEl;
+				text.setPlaceholder('-90 to 90')
+					.onChange(value => {
+						this.updateCoordinates('lat', value);
+					});
+			});
 		latSetting.settingEl.addClass('crc-coord-input');
 
 		// Longitude
 		const longSetting = new Setting(coordInputs)
 			.setName('Longitude')
-			.addText(text => text
-				.setPlaceholder('-180 to 180')
-				.onChange(value => {
-					this.updateCoordinates('long', value);
-				}));
+			.addText(text => {
+				this.longInputEl = text.inputEl;
+				text.setPlaceholder('-180 to 180')
+					.onChange(value => {
+						this.updateCoordinates('long', value);
+					});
+			});
 		longSetting.settingEl.addClass('crc-coord-input');
 
 		// Show/hide coordinates based on category
@@ -688,6 +707,73 @@ export class CreatePlaceModal extends Modal {
 			this.placeData.coordinates.lat = num;
 		} else {
 			this.placeData.coordinates.long = num;
+		}
+	}
+
+	/**
+	 * Look up coordinates using geocoding service (Nominatim)
+	 * Uses OpenStreetMap's Nominatim API for free geocoding
+	 */
+	private async lookupCoordinates(): Promise<void> {
+		const placeName = this.placeData.name?.trim();
+
+		if (!placeName) {
+			new Notice('Please enter a place name first');
+			return;
+		}
+
+		// Build search query including parent place for better accuracy
+		let searchQuery = placeName;
+		if (this.placeData.parentPlace) {
+			// Strip wikilinks if present
+			const parentName = this.placeData.parentPlace.replace(/\[\[|\]\]/g, '');
+			searchQuery = `${placeName}, ${parentName}`;
+		}
+
+		new Notice(`Looking up coordinates for "${searchQuery}"...`);
+
+		try {
+			// Use Nominatim API (free, but rate-limited to 1 request/second)
+			const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`;
+
+			const response = await fetch(url, {
+				headers: {
+					// Nominatim requires a User-Agent header
+					'User-Agent': 'CanvasRoots/0.5.1 (Obsidian Plugin)'
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+			}
+
+			const results = await response.json();
+
+			if (!results || results.length === 0) {
+				new Notice(`No coordinates found for "${searchQuery}". Try a more specific name.`);
+				return;
+			}
+
+			const result = results[0];
+			const lat = parseFloat(result.lat);
+			const long = parseFloat(result.lon);
+
+			// Update the data model
+			this.placeData.coordinates = { lat, long };
+
+			// Update the input fields
+			if (this.latInputEl) {
+				this.latInputEl.value = lat.toFixed(6);
+			}
+			if (this.longInputEl) {
+				this.longInputEl.value = long.toFixed(6);
+			}
+
+			new Notice(`Found: ${result.display_name}\nCoordinates: ${lat.toFixed(4)}, ${long.toFixed(4)}`);
+
+		} catch (error) {
+			console.error('Geocoding lookup failed:', error);
+			new Notice(`Failed to look up coordinates: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	}
 

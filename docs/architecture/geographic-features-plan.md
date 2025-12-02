@@ -1,6 +1,6 @@
 # Geographic Features Plan
 
-> **Status:** Phase 1 Complete, Phase 2 Complete, Phase 2.5 Mostly Complete, Phase 3 Partial
+> **Status:** Phase 1 Complete, Phase 2 Complete, Phase 2.5 Complete, Phase 3 Mostly Complete
 > **Version:** 0.5.1+
 
 This document outlines the design for geographic/place-based features in Canvas Roots.
@@ -152,16 +152,18 @@ Place Hierarchy Issues
 
 ---
 
-## Phase 3: Simple Visualization (Partial)
+## Phase 3: Simple Visualization (Mostly Complete)
 
 D3-based visualizations without external map dependencies.
 
-### Schematic/Network View
+### Schematic/Network View ✓
 
-- Places as nodes, connections as edges
-- Size nodes by number of associated people
-- Color by category or hierarchy level
-- Show migration flows as directed edges
+- ✓ Places as nodes, connections as edges
+- ✓ Size nodes by number of associated people
+- ✓ Color by category, place type, or hierarchy depth
+- ✓ Tree and radial layout options
+- ✓ Interactive tooltips with place details
+- Planned: Show migration flows as directed edges overlay
 
 ### Migration Flow Diagram ✓
 
@@ -276,11 +278,13 @@ Allow users to customize place note templates:
 - Planned: Custom frontmatter fields
 - Planned: Template selection in Create Place modal
 
-### Geocoding Integration Prep
+### Geocoding Integration Prep ✓
 
 Prepare infrastructure for optional geocoding:
-- "Look up coordinates" button for real/historical places
-- Preview on mini-map (Phase 4 integration point)
+- ✓ "Look up coordinates" button for real/historical places
+- ✓ Nominatim API integration for free geocoding
+- ✓ Parent place included in search query for better accuracy
+- Planned: Preview on mini-map (Phase 4 integration point)
 
 ---
 
