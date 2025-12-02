@@ -107,6 +107,7 @@ See [Roadmap](docs/roadmap.md) for detailed descriptions and development priorit
 
 | Feature | Description |
 |---------|-------------|
+| **Import/Export Enhancements** | GEDCOM X export, Gramps XML export, redacted exports, additional GEDCOM fields |
 | **Interactive Maps** | Leaflet.js integration with birth/death markers, migration paths, and animated timelines |
 | **Custom Relationships** | Non-familial relationships (mentor, liege, rival) with colored canvas edges |
 | **Fictional Dates** | Custom calendars and eras for world-building (e.g., "Third Age 2941") |

@@ -28,14 +28,15 @@ The following priority order guides future development:
 
 | Priority | Feature | Status |
 |:--------:|---------|--------|
-| 1 | [Geographic Features (Phase 4)](#geographic-features-phase-4) | Planned |
-| 2 | [Custom Relationship Types](#custom-relationship-types) | Planned |
-| 3 | [Schema Validation](#schema-validation--consistency-checks) | Planned |
-| 4 | [Fictional Date Systems](#fictional-date-systems) | Planned |
-| 5 | [Organization Notes](#organization-notes--hierarchy-views) | Planned |
-| 6 | [Source Media Gallery](#source-media-gallery--document-viewer) | Planned |
-| 7 | [Canvas Media Nodes](#canvas-media-nodes) | Planned |
-| 8 | [Transcript Nodes & Oral History](#transcript-nodes--quotable-facts) | Planned |
+| 1 | [Import/Export Enhancements](#importexport-enhancements) | Planned |
+| 2 | [Geographic Features (Phase 4)](#geographic-features-phase-4) | Planned |
+| 3 | [Custom Relationship Types](#custom-relationship-types) | Planned |
+| 4 | [Schema Validation](#schema-validation--consistency-checks) | Planned |
+| 5 | [Fictional Date Systems](#fictional-date-systems) | Planned |
+| 6 | [Organization Notes](#organization-notes--hierarchy-views) | Planned |
+| 7 | [Source Media Gallery](#source-media-gallery--document-viewer) | Planned |
+| 8 | [Canvas Media Nodes](#canvas-media-nodes) | Planned |
+| 9 | [Transcript Nodes & Oral History](#transcript-nodes--quotable-facts) | Planned |
 
 ---
 
