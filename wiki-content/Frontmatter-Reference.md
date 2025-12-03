@@ -643,7 +643,7 @@ for comparison with contemporary maps...
 
 ## Example Schema Note
 
-```yaml
+````
 ---
 type: schema
 cr_id: schema-date-validation
@@ -679,7 +679,7 @@ This schema validates that all person notes have logically consistent dates.
   ]
 }
 ```
-```
+````
 
 ---
 

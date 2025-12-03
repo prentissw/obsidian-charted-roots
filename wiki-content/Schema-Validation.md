@@ -53,7 +53,7 @@ Schema notes use flat frontmatter properties (Obsidian best practice) with the s
 
 The schema definition is stored in a fenced code block with language `json schema` (or just `json`):
 
-```yaml
+````
 ---
 type: schema
 cr_id: schema-example-001
@@ -83,7 +83,7 @@ This schema validates all person notes.
   "constraints": []
 }
 ```
-```
+````
 
 ---
 
@@ -365,7 +365,7 @@ Schema validation results appear in the Data Quality tab, providing:
 
 ### Basic Required Fields Schema
 
-```yaml
+````
 ---
 type: schema
 cr_id: schema-basic-required
@@ -383,11 +383,11 @@ applies_to_type: all
   "constraints": []
 }
 ```
-```
+````
 
 ### House Stark Schema (World-Building)
 
-```yaml
+````
 ---
 type: schema
 cr_id: schema-house-stark
@@ -432,11 +432,11 @@ applies_to_value: "House Stark"
   ]
 }
 ```
-```
+````
 
 ### Date Validation Schema
 
-```yaml
+````
 ---
 type: schema
 cr_id: schema-date-validation
@@ -470,11 +470,11 @@ applies_to_type: all
   ]
 }
 ```
-```
+````
 
 ### Import Quality Schema
 
-```yaml
+````
 ---
 type: schema
 cr_id: schema-import-quality
@@ -501,7 +501,7 @@ applies_to_value: "People/Staging"
   "constraints": []
 }
 ```
-```
+````
 
 ---
 
