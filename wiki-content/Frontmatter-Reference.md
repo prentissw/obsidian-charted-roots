@@ -371,6 +371,70 @@ For interactive image alignment and georeferencing, you can define corner positi
 
 ---
 
+## Schema Note Properties
+
+Schema notes define validation rules for person notes. See [Schema Validation](Schema-Validation) for complete documentation.
+
+### Identity
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `type` | `string` | Must be `"schema"` | `"schema"` |
+| `cr_id` | `string` | Unique identifier for the schema | `"schema-house-stark"` |
+
+### Basic Information
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `name` | `string` | Display name of the schema | `"House Stark Schema"` |
+| `description` | `string` | Optional description | `"Validation rules for House Stark"` |
+
+### Scope
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `applies_to_type` | `string` | Scope type: `collection`, `folder`, `universe`, or `all` | `"collection"` |
+| `applies_to_value` | `string` | Value for the scope (not needed for `all`) | `"House Stark"` |
+
+### Schema Definition (JSON Code Block)
+
+The validation rules are defined in a `json schema` code block in the note body:
+
+```json
+{
+  "requiredProperties": ["name", "allegiance"],
+  "properties": {
+    "gender": {
+      "type": "enum",
+      "values": ["Male", "Female"]
+    },
+    "birth_place": {
+      "type": "wikilink",
+      "targetType": "place"
+    }
+  },
+  "constraints": [
+    {
+      "rule": "!died || born",
+      "message": "Cannot have death date without birth date"
+    }
+  ]
+}
+```
+
+**Property Definition Options:**
+
+| Option | Description | Applies To |
+|--------|-------------|------------|
+| `type` | Property type: `string`, `number`, `date`, `boolean`, `enum`, `wikilink`, `array` | All |
+| `values` | Allowed values | `enum` |
+| `min`, `max` | Value range | `number` |
+| `targetType` | Required note type for link target | `wikilink` |
+| `requiredIf` | Conditional requirement | All |
+| `default` | Default value if missing | All |
+
+---
+
 ## Property Naming Conventions
 
 Canvas Roots follows these conventions:
@@ -577,7 +641,50 @@ for comparison with contemporary maps...
 
 ---
 
+## Example Schema Note
+
+```yaml
+---
+type: schema
+cr_id: schema-date-validation
+name: Date Validation
+description: Ensures date fields are logically consistent
+applies_to_type: all
+---
+
+# Date Validation Schema
+
+This schema validates that all person notes have logically consistent dates.
+
+```json schema
+{
+  "requiredProperties": [],
+  "properties": {
+    "born": {
+      "type": "date"
+    },
+    "died": {
+      "type": "date"
+    }
+  },
+  "constraints": [
+    {
+      "rule": "!died || born",
+      "message": "Cannot have death date without birth date"
+    },
+    {
+      "rule": "!died || !born || new Date(died) >= new Date(born)",
+      "message": "Death date must be on or after birth date"
+    }
+  ]
+}
+```
+```
+
+---
+
 ## See Also
 
-- [Geographic Features Plan](../docs/planning/geographic-features-plan.md) - Place notes design
-- [Coding Standards](../developer/coding-standards.md) - Property naming conventions
+- [Schema Validation](Schema-Validation) - Creating and using validation schemas
+- [Geographic Features](Geographic-Features) - Place notes and map features
+- [Data Management](Data-Management) - Managing your family data

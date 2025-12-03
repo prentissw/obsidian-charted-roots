@@ -32,6 +32,7 @@ import { SplitWizardModal } from './src/ui/split-wizard-modal';
 import { CreatePlaceModal } from './src/ui/create-place-modal';
 import { CreatePersonModal } from './src/ui/create-person-modal';
 import { PlaceGraphService } from './src/core/place-graph';
+import { SchemaService, ValidationService } from './src/schemas';
 
 const logger = getLogger('CanvasRootsPlugin');
 
@@ -345,6 +346,44 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 		});
 
+		// Add command: Open Schemas Tab
+		this.addCommand({
+			id: 'open-schemas-tab',
+			name: 'Open schemas tab',
+			callback: () => {
+				const modal = new ControlCenterModal(this.app, this);
+				modal.openToTab('schemas');
+			}
+		});
+
+		// Add command: Validate Vault Against Schemas
+		this.addCommand({
+			id: 'validate-vault-schemas',
+			name: 'Validate vault against schemas',
+			callback: async () => {
+				const schemaService = new SchemaService(this);
+				const validationService = new ValidationService(this, schemaService);
+
+				new Notice('Running schema validation...');
+
+				try {
+					const results = await validationService.validateVault();
+					const summary = validationService.getSummary(results);
+
+					const failedCount = new Set(results.filter(r => !r.isValid).map(r => r.filePath)).size;
+					const passedCount = summary.totalPeopleValidated - failedCount;
+
+					new Notice(`Schema validation: ${passedCount} passed, ${failedCount} failed, ${summary.totalErrors} errors`);
+
+					// Open Control Center to Schemas tab to show full results
+					const modal = new ControlCenterModal(this.app, this);
+					modal.openToTab('schemas');
+				} catch (error) {
+					new Notice(`Schema validation failed: ${getErrorMessage(error)}`);
+				}
+			}
+		});
+
 		// Add context menu items for person notes, canvas files, and folders
 		this.registerEvent(
 			this.app.workspace.on('file-menu', (menu, file) => {
@@ -563,15 +602,91 @@ export default class CanvasRootsPlugin extends Plugin {
 					}
 				}
 
-				// Markdown files: Person notes, Place notes, Map notes, or plain notes
+				// Markdown files: Person notes, Place notes, Map notes, Schema notes, or plain notes
 				if (file instanceof TFile && file.extension === 'md') {
 					const cache = this.app.metadataCache.getFileCache(file);
 					const hasCrId = !!cache?.frontmatter?.cr_id;
 					const isPlaceNote = cache?.frontmatter?.type === 'place';
 					const isMapNote = cache?.frontmatter?.type === 'map';
+					const isSchemaNote = cache?.frontmatter?.type === 'schema';
 
+					// Schema notes get schema-specific options
+					if (isSchemaNote) {
+						menu.addSeparator();
+
+						const schemaName = cache?.frontmatter?.name || file.basename;
+
+						if (useSubmenu) {
+							menu.addItem((item) => {
+								const submenu: Menu = item
+									.setTitle('Canvas Roots')
+									.setIcon('clipboard-check')
+									.setSubmenu();
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Edit schema')
+										.setIcon('edit')
+										.onClick(() => {
+											const modal = new ControlCenterModal(this.app, this);
+											modal.openToTab('schemas');
+											// Note: The actual editing would require passing the schema to the modal
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Validate matching notes')
+										.setIcon('play')
+										.onClick(async () => {
+											const schemaService = new SchemaService(this);
+											const validationService = new ValidationService(this, schemaService);
+
+											new Notice(`Validating notes against "${schemaName}"...`);
+
+											try {
+												const results = await validationService.validateVault();
+												// Filter results to only this schema
+												const schemaCrId = cache?.frontmatter?.cr_id;
+												const schemaResults = results.filter(r => r.schemaCrId === schemaCrId);
+
+												if (schemaResults.length === 0) {
+													new Notice(`No notes match schema "${schemaName}"`);
+												} else {
+													const errors = schemaResults.filter(r => !r.isValid).length;
+													new Notice(`Validated ${schemaResults.length} notes: ${schemaResults.length - errors} passed, ${errors} failed`);
+												}
+											} catch (error) {
+												new Notice(`Validation failed: ${getErrorMessage(error)}`);
+											}
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Open schemas tab')
+										.setIcon('external-link')
+										.onClick(() => {
+											const modal = new ControlCenterModal(this.app, this);
+											modal.openToTab('schemas');
+										});
+								});
+							});
+						} else {
+							// Mobile: flat menu for schema notes
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Open schemas tab')
+									.setIcon('clipboard-check')
+									.onClick(() => {
+										const modal = new ControlCenterModal(this.app, this);
+										modal.openToTab('schemas');
+									});
+							});
+						}
+					}
 					// Map notes get map-specific options (open map view with this map selected)
-					if (isMapNote) {
+					else if (isMapNote) {
 						menu.addSeparator();
 
 						const mapId = cache?.frontmatter?.map_id;
@@ -876,6 +991,36 @@ export default class CanvasRootsPlugin extends Plugin {
 											}
 											const result = await validator.validatePersonNote(file);
 											new ValidationResultsModal(this.app, result).open();
+										});
+								});
+
+								// Validate against schemas
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Validate against schemas')
+										.setIcon('clipboard-check')
+										.onClick(async () => {
+											const schemaService = new SchemaService(this);
+											const validationService = new ValidationService(this, schemaService);
+
+											const results = await validationService.validatePerson(file);
+
+											if (results.length === 0) {
+												new Notice('No schemas apply to this person.');
+												return;
+											}
+
+											const errors = results.reduce((sum, r) => sum + r.errors.length, 0);
+											const warnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
+
+											if (errors === 0 && warnings === 0) {
+												new Notice(`✓ Validated against ${results.length} schema${results.length > 1 ? 's' : ''} - all passed`);
+											} else {
+												new Notice(`Schema validation: ${errors} error${errors !== 1 ? 's' : ''}, ${warnings} warning${warnings !== 1 ? 's' : ''}`);
+												// Open schemas tab to show details
+												const modal = new ControlCenterModal(this.app, this);
+												modal.openToTab('schemas');
+											}
 										});
 								});
 

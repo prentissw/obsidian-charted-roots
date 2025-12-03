@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.3] - 2025-12-03
+
+### Added
+
+- **Schema Validation**: User-defined validation schemas to enforce data consistency
+  - **Schema Notes**: New note type (`type: schema`) with JSON code block for schema definition
+  - **Schemas Tab**: Dedicated Control Center tab for schema management
+    - Create Schema modal with full UI (no manual JSON editing required)
+    - Edit existing schemas via modal
+    - Schema gallery with scope badges (collection, folder, universe, all)
+    - Vault-wide validation with results display
+    - Recent violations list with clickable links to affected notes
+    - Schema statistics (total schemas, validation counts)
+  - **Property Validation**: Type checking for string, number, date, boolean, enum, wikilink, array
+    - Enum validation with allowed values list
+    - Number range validation (min/max)
+    - Wikilink target type validation (verify linked note has correct type)
+  - **Required Properties**: Enforce presence of specific frontmatter fields
+  - **Conditional Requirements**: `requiredIf` conditions based on other property values
+  - **Custom Constraints**: JavaScript expressions for cross-property validation
+    - Sandboxed evaluation with access to frontmatter properties
+    - Custom error messages for each constraint
+  - **Data Quality Integration**: Schema violations section in Data Quality tab
+    - Summary stats (validated, passed, failed)
+    - Error breakdown by type
+    - Re-validate button
+  - **Commands**: "Open schemas tab", "Validate vault against schemas"
+  - **Context Menu**:
+    - Person notes: "Validate against schemas"
+    - Schema notes: "Edit schema", "Validate matching notes", "Open schemas tab"
+
+- **Guide Tab Updates**: Schema validation integrated into Control Center Guide
+  - Schema notes section in Essential Properties collapsible
+  - Schema validation concept in Key Concepts card
+  - "Validate schemas" quick action in Common Tasks grid
+
+- **New Icons**: `clipboard-check` (schema validation), `file-check` (schema note)
+
+### Changed
+
+- **Tab Order**: Schemas tab added between Maps and Collections
+  - New order: Status → Guide → Import/Export → Staging → People → Places → Maps → **Schemas** → Collections → Data Quality → Tree Output → Canvas Settings → Advanced
+
+---
+
 ## [0.6.2] - 2025-12-03
 
 ### Added

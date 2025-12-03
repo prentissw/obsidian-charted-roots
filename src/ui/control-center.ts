@@ -1171,6 +1171,27 @@ export class ControlCenterModal extends Modal {
 			});
 		});
 
+		// Schema properties collapsible
+		this.createCollapsible(propsContent, 'Schema notes', 'clipboard-check', (body) => {
+			const list = body.createEl('ul', { cls: 'crc-field-list' });
+			[
+				{ name: 'type', desc: 'Must be "schema"', req: true },
+				{ name: 'cr_id', desc: 'Unique schema identifier', req: true },
+				{ name: 'name', desc: 'Display name', req: true },
+				{ name: 'applies_to_type', desc: 'Scope: collection, folder, universe, all', req: true },
+				{ name: 'applies_to_value', desc: 'Value for scope (if not "all")', req: false }
+			].forEach(p => {
+				const li = list.createEl('li');
+				const code = li.createEl('code', { text: p.name });
+				if (p.req) code.addClass('crc-field--required');
+				li.appendText(` - ${p.desc}`);
+			});
+			body.createEl('p', {
+				text: 'Schema definition goes in a json schema code block in the note body.',
+				cls: 'crc-text-muted crc-mt-2'
+			});
+		});
+
 		const schemaLink = propsContent.createEl('a', {
 			text: 'Full Frontmatter Reference →',
 			href: `${WIKI_BASE}/Frontmatter-Reference`,
@@ -1202,9 +1223,9 @@ export class ControlCenterModal extends Modal {
 				wiki: 'Data-Management#bidirectional-sync'
 			},
 			{
-				title: 'Root people',
-				desc: 'Mark key individuals as "root persons" to track ancestors and descendants. Use for tree generation starting points.',
-				wiki: 'Advanced-Features#root-people'
+				title: 'Schema validation',
+				desc: 'Define validation rules to ensure data consistency. Require properties, validate types, and create custom constraints.',
+				wiki: 'Schema-Validation'
 			},
 			{
 				title: 'Layout algorithms',
@@ -1239,7 +1260,7 @@ export class ControlCenterModal extends Modal {
 			{ icon: 'git-branch', title: 'Generate tree', desc: 'Create visual canvas', tab: 'tree-generation' },
 			{ icon: 'map', title: 'Open Map View', desc: 'Geographic visualization', tab: null, command: 'canvas-roots:open-map-view' },
 			{ icon: 'users', title: 'Manage people', desc: 'Browse and edit', tab: 'people' },
-			{ icon: 'settings', title: 'Customize styles', desc: 'Colors and edges', tab: 'quick-settings' }
+			{ icon: 'clipboard-check', title: 'Validate schemas', desc: 'Check data consistency', tab: 'schemas' }
 		];
 
 		const taskGrid = tasksContent.createDiv({ cls: 'crc-task-grid' });
@@ -5995,6 +6016,203 @@ export class ControlCenterModal extends Modal {
 	}
 
 	/**
+	 * Render schema violations section in Data Quality tab
+	 * Shows summary of schema validation results with quick actions
+	 */
+	private renderSchemaViolationsSection(container: HTMLElement): void {
+		const section = container.createDiv({ cls: 'crc-section crc-schema-violations-section' });
+
+		// Header with link to Schemas tab
+		const header = section.createDiv({ cls: 'crc-section-header' });
+		header.createEl('h3', { text: 'Schema validation' });
+
+		const schemaLink = header.createEl('button', {
+			cls: 'crc-link-button',
+			text: 'Open Schemas tab'
+		});
+		setIcon(schemaLink.createSpan({ cls: 'crc-button-icon-right' }), 'external-link');
+		schemaLink.addEventListener('click', () => {
+			this.showTab('schemas');
+		});
+
+		// Check if we have validation results
+		if (!this.lastValidationSummary || this.lastValidationResults.length === 0) {
+			const emptyState = section.createDiv({ cls: 'crc-empty-state crc-compact' });
+			setIcon(emptyState.createSpan({ cls: 'crc-empty-icon' }), 'clipboard-check');
+			emptyState.createEl('p', { text: 'No schema validation has been run yet.' });
+
+			const validateBtn = emptyState.createEl('button', {
+				cls: 'mod-cta',
+				text: 'Run schema validation'
+			});
+			validateBtn.addEventListener('click', async () => {
+				await this.runSchemaValidationFromDataQuality(section);
+			});
+			return;
+		}
+
+		// Summary stats
+		const summary = this.lastValidationSummary;
+		const statsRow = section.createDiv({ cls: 'crc-schema-summary-row' });
+
+		// Calculate passed/failed from results
+		const uniquePeople = new Set(this.lastValidationResults.map(r => r.filePath));
+		const failedPeople = new Set(this.lastValidationResults.filter(r => !r.isValid).map(r => r.filePath));
+		const passedCount = uniquePeople.size - failedPeople.size;
+		const failedCount = failedPeople.size;
+
+		// Total validated
+		const validatedStat = statsRow.createDiv({ cls: 'crc-schema-stat' });
+		setIcon(validatedStat.createSpan({ cls: 'crc-schema-stat-icon' }), 'users');
+		validatedStat.createSpan({ text: `${summary.totalPeopleValidated} validated`, cls: 'crc-schema-stat-text' });
+
+		// Passed
+		const passedStat = statsRow.createDiv({ cls: 'crc-schema-stat crc-schema-stat-success' });
+		setIcon(passedStat.createSpan({ cls: 'crc-schema-stat-icon' }), 'check');
+		passedStat.createSpan({ text: `${passedCount} passed`, cls: 'crc-schema-stat-text' });
+
+		// Failed
+		const failedStat = statsRow.createDiv({ cls: 'crc-schema-stat crc-schema-stat-error' });
+		setIcon(failedStat.createSpan({ cls: 'crc-schema-stat-icon' }), 'alert-circle');
+		failedStat.createSpan({ text: `${failedCount} failed`, cls: 'crc-schema-stat-text' });
+
+		// If there are errors, show breakdown by type
+		if (summary.totalErrors > 0) {
+			const errorBreakdown = section.createDiv({ cls: 'crc-schema-error-breakdown' });
+			errorBreakdown.createEl('h4', { text: 'Error breakdown', cls: 'crc-section-subtitle' });
+
+			const errorGrid = errorBreakdown.createDiv({ cls: 'crc-schema-error-grid' });
+			const errorTypes = summary.errorsByType;
+
+			const errorTypeLabels: Record<string, string> = {
+				missing_required: 'Missing required',
+				invalid_type: 'Invalid type',
+				invalid_enum: 'Invalid enum',
+				out_of_range: 'Out of range',
+				constraint_failed: 'Constraint failed',
+				conditional_required: 'Conditional required',
+				invalid_wikilink_target: 'Invalid wikilink'
+			};
+
+			for (const [type, count] of Object.entries(errorTypes)) {
+				if (count > 0) {
+					const errorItem = errorGrid.createDiv({ cls: 'crc-schema-error-item' });
+					errorItem.createSpan({ text: errorTypeLabels[type] || type, cls: 'crc-schema-error-label' });
+					errorItem.createSpan({ text: count.toString(), cls: 'crc-schema-error-count' });
+				}
+			}
+		}
+
+		// Recent violations (top 5)
+		const failedResults = this.lastValidationResults.filter(r => !r.isValid);
+		if (failedResults.length > 0) {
+			const recentSection = section.createDiv({ cls: 'crc-schema-recent-violations' });
+			recentSection.createEl('h4', { text: 'Recent violations', cls: 'crc-section-subtitle' });
+
+			const violationsList = recentSection.createDiv({ cls: 'crc-schema-violations-list' });
+			const displayCount = Math.min(5, failedResults.length);
+
+			for (let i = 0; i < displayCount; i++) {
+				const result = failedResults[i];
+				const item = violationsList.createDiv({ cls: 'crc-schema-violation-item' });
+
+				// Person link
+				const personLink = item.createEl('a', {
+					cls: 'crc-schema-violation-person',
+					text: result.personName
+				});
+				personLink.addEventListener('click', (e) => {
+					e.preventDefault();
+					this.app.workspace.openLinkText(result.filePath, '');
+				});
+
+				// Error count badge
+				item.createSpan({
+					cls: 'crc-schema-violation-count',
+					text: `${result.errors.length} error${result.errors.length > 1 ? 's' : ''}`
+				});
+
+				// First error preview
+				if (result.errors.length > 0) {
+					const firstError = result.errors[0];
+					item.createSpan({
+						cls: 'crc-schema-violation-preview',
+						text: firstError.message
+					});
+				}
+			}
+
+			if (failedResults.length > 5) {
+				recentSection.createEl('p', {
+					cls: 'crc-text-muted crc-schema-more-link',
+					text: `+${failedResults.length - 5} more violations. View all in Schemas tab.`
+				});
+			}
+		}
+
+		// Action buttons
+		const actions = section.createDiv({ cls: 'crc-schema-actions' });
+
+		const revalidateBtn = actions.createEl('button', {
+			text: 'Re-validate'
+		});
+		setIcon(revalidateBtn.createSpan({ cls: 'crc-button-icon' }), 'refresh-cw');
+		revalidateBtn.addEventListener('click', async () => {
+			await this.runSchemaValidationFromDataQuality(section);
+		});
+	}
+
+	/**
+	 * Run schema validation from Data Quality tab and update section
+	 */
+	private async runSchemaValidationFromDataQuality(sectionToReplace: HTMLElement): Promise<void> {
+		// Show loading state
+		sectionToReplace.empty();
+		const loading = sectionToReplace.createDiv({ cls: 'crc-loading' });
+		loading.createSpan({ text: 'Running schema validation...' });
+
+		try {
+			const schemaService = new SchemaService(this.plugin);
+			const validationService = new ValidationService(this.plugin, schemaService);
+
+			const results = await validationService.validateVault();
+			const summary = validationService.getSummary(results);
+
+			// Store results
+			this.lastValidationResults = results;
+			this.lastValidationSummary = summary;
+
+			// Clear and re-render the section
+			const parent = sectionToReplace.parentElement;
+			sectionToReplace.remove();
+
+			if (parent) {
+				// Find where to insert (at the beginning after the intro text)
+				const firstSection = parent.querySelector('.crc-section');
+				if (firstSection) {
+					const newSection = document.createElement('div');
+					parent.insertBefore(newSection, firstSection);
+					this.renderSchemaViolationsSection(newSection.parentElement!);
+					newSection.remove();
+				} else {
+					this.renderSchemaViolationsSection(parent);
+				}
+			}
+
+			// Calculate passed/failed counts for notice
+			const failedResultsCount = new Set(results.filter(r => !r.isValid).map(r => r.filePath)).size;
+			const passedResultsCount = summary.totalPeopleValidated - failedResultsCount;
+			new Notice(`Schema validation complete: ${passedResultsCount} passed, ${failedResultsCount} failed`);
+		} catch (error) {
+			sectionToReplace.empty();
+			sectionToReplace.createEl('p', {
+				cls: 'crc-error',
+				text: `Validation failed: ${getErrorMessage(error)}`
+			});
+		}
+	}
+
+	/**
 	 * State for Import/Export tab
 	 */
 	private importFormat: 'gedcom' | 'gedcomx' | 'gramps' | 'csv' = 'gedcom';
@@ -9791,6 +10009,9 @@ export class ControlCenterModal extends Modal {
 			text: 'Analyze your genealogy data for inconsistencies, missing information, and potential errors.',
 			cls: 'crc-text-muted'
 		});
+
+		// Schema Violations Section (at the top for visibility)
+		this.renderSchemaViolationsSection(container);
 
 		// Analysis scope selector
 		const scopeSection = container.createDiv({ cls: 'crc-section' });

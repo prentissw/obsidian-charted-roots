@@ -11,6 +11,7 @@ This document outlines planned features for Canvas Roots. For release history an
   - [Geographic Features (Phase 4)](#geographic-features-phase-4) ✅
   - [Maps Tab (Control Center)](#maps-tab-control-center) ✅
   - [Import/Export Enhancements](#importexport-enhancements) ✅
+  - [Schema Validation](#schema-validation--consistency-checks) ✅
   - [Evidence & Source Management](#evidence--source-management)
   - [World-Building Suite](#world-building-suite)
   - [Research & Analysis Tools](#research--analysis-tools)
@@ -29,7 +30,7 @@ The following priority order guides future development:
 | 1 | [Import/Export Enhancements](#importexport-enhancements) | ✅ Complete (v0.6.0) |
 | 2 | [Geographic Features (Phase 4)](#geographic-features-phase-4) | ✅ Complete (v0.6.0) |
 | 3 | [Maps Tab (Control Center)](#maps-tab-control-center) | ✅ Complete (v0.6.2) |
-| 4 | [Schema Validation](#schema-validation--consistency-checks) | Planned |
+| 4 | [Schema Validation](#schema-validation--consistency-checks) | ✅ Complete (v0.6.3) |
 | 5 | [Custom Relationship Types](#custom-relationship-types) | Planned |
 | 6 | [Fictional Date Systems](#fictional-date-systems) | Planned |
 | 7 | [Source Media Gallery](#source-media-gallery--document-viewer) | Planned |
@@ -135,48 +136,32 @@ relationships:
 
 ---
 
-#### Schema Validation & Consistency Checks
+#### Schema Validation & Consistency Checks ✅
 
-**Summary:** User-defined JSON schemas to catch data inconsistencies and plot holes.
+> **Complete in v0.6.3.** See [Schema Validation](Schema-Validation) wiki page for full documentation.
 
-**Schema Configuration:**
-```json
-{
-  "name": "House Stark Schema",
-  "applies_to": { "collection": "House Stark" },
-  "required_properties": ["allegiance", "combat_style"],
-  "properties": {
-    "race": {
-      "type": "enum",
-      "values": ["human", "direwolf"],
-      "default": "human"
-    },
-    "magic_type": {
-      "type": "enum",
-      "values": ["warging", "greensight", "none"],
-      "required_if": { "has_magic": true }
-    }
-  },
-  "constraints": [
-    {
-      "rule": "if magic_type == 'greensight' then race != 'direwolf'",
-      "message": "Direwolves cannot have greensight"
-    }
-  ]
-}
-```
+**Summary:** User-defined validation schemas to catch data inconsistencies and enforce data quality rules.
 
-**Validation Features:**
-- Required properties by collection, house, or custom criteria
-- Enum validation with allowed values
-- Conditional requirements (`required_if`)
-- Cross-property constraints with custom error messages
-- Type validation (string, number, date, wikilink, array)
-
-**Integration Points:**
-- Data Quality tab shows schema violations
-- Pre-visualization validation warnings
-- Batch "fix missing properties" with defaults
+**Implemented Features:**
+- **Schema Notes**: New note type (`type: schema`) with JSON code block for schema definition
+- **Schemas Tab**: Dedicated Control Center tab for schema management
+  - Create Schema modal with full UI (no manual JSON editing required)
+  - Edit existing schemas
+  - Schema gallery with scope badges
+  - Vault-wide validation with results display
+  - Recent violations list
+- **Schema Scopes**: Apply schemas by collection, folder, universe, or all people
+- **Property Validation**:
+  - Required properties
+  - Type validation (string, number, date, boolean, enum, wikilink, array)
+  - Enum validation with allowed values
+  - Number range validation (min/max)
+  - Wikilink target type validation (verify linked note type)
+- **Conditional Requirements**: `requiredIf` conditions based on other properties
+- **Custom Constraints**: JavaScript expressions for cross-property validation
+- **Data Quality Integration**: Schema violations section in Data Quality tab
+- **Commands**: "Open schemas tab", "Validate vault against schemas"
+- **Context Menu**: "Validate against schemas" for person notes, schema-specific actions for schema notes
 
 ---
 

@@ -21,6 +21,7 @@
 - [Context Menus](Context-Menus)
 - [Relationship Tools](Relationship-Tools)
 - [Geographic Features](Geographic-Features)
+- [Schema Validation](Schema-Validation)
 - [Advanced Features](Advanced-Features)
 - [Styling & Theming](Styling-And-Theming)
 
