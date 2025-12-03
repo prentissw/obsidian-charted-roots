@@ -8,14 +8,18 @@ The Map View provides a Leaflet.js-powered interactive map for visualizing where
 
 ### Opening Map View
 
-**Option 1: Ribbon Icon**
-- Click the map icon in the left ribbon
+**Option 1: Maps Tab (Control Center)**
+1. Open Control Center → **Maps** tab
+2. Click **Open Map View** in the first card
 
 **Option 2: Command Palette**
 1. Open Command Palette (Ctrl/Cmd + P)
 2. Search for "Canvas Roots: Open Map View"
 
-**Option 3: Context Menu**
+**Option 3: Custom Maps Gallery**
+- In the Maps tab, click any custom map thumbnail to open it directly in Map View
+
+**Option 4: Context Menu**
 - Right-click on a map note and select "Open in Map View"
 
 ### Map Features
