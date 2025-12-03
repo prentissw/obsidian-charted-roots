@@ -227,9 +227,6 @@ export class ControlCenterModal extends Modal {
 			case 'guide':
 				this.showGuideTab();
 				break;
-			case 'quick-actions':
-				this.showQuickActionsTab();
-				break;
 			case 'quick-settings':
 				this.showCanvasSettingsTab();
 				break;
@@ -1284,179 +1281,6 @@ export class ControlCenterModal extends Modal {
 		});
 
 		return wrapper;
-	}
-
-	/**
-	 * Show Quick Actions tab
-	 */
-	private showQuickActionsTab(): void {
-		const container = this.contentContainer;
-
-		// Tree Operations Card
-		const treeOpsCard = this.createCard({
-			title: 'Tree operations',
-			icon: 'git-branch'
-		});
-
-		const treeOpsContent = treeOpsCard.querySelector('.crc-card__content') as HTMLElement;
-
-		// Generate tree for current note button
-		const generateCurrentBtn = treeOpsContent.createEl('button', {
-			cls: 'crc-btn crc-btn--primary crc-btn--block',
-			text: 'Generate tree for current note'
-		});
-		generateCurrentBtn.addEventListener('click', () => {
-			this.switchTab('tree-generation');
-		});
-		treeOpsContent.createEl('p', {
-			cls: 'crc-form-help',
-			text: 'Create a family tree centered on the currently active person note'
-		});
-
-		// Re-layout current canvas button
-		const relayoutBtn = treeOpsContent.createEl('button', {
-			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-2',
-			text: 'Re-layout current canvas'
-		});
-		relayoutBtn.addEventListener('click', () => {
-			new Notice('⚠️ Re-layout functionality coming in Phase 2');
-		});
-		treeOpsContent.createEl('p', {
-			cls: 'crc-form-help',
-			text: 'Recalculate layout for the currently open canvas file'
-		});
-
-		container.appendChild(treeOpsCard);
-
-		// Person Management Card
-		const personMgmtCard = this.createCard({
-			title: 'Person management',
-			icon: 'users'
-		});
-
-		const personMgmtContent = personMgmtCard.querySelector('.crc-card__content') as HTMLElement;
-
-		// Create new person button
-		const createPersonBtn = personMgmtContent.createEl('button', {
-			cls: 'crc-btn crc-btn--primary crc-btn--block',
-			text: 'Create new person note'
-		});
-		createPersonBtn.addEventListener('click', () => {
-			this.switchTab('data-entry');
-		});
-		personMgmtContent.createEl('p', {
-			cls: 'crc-form-help',
-			text: 'Open the data entry form to create a new person'
-		});
-
-		// Open person detail panel button
-		const detailPanelBtn = personMgmtContent.createEl('button', {
-			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-2',
-			text: 'Open person detail panel'
-		});
-		detailPanelBtn.addEventListener('click', () => {
-			new Notice('⚠️ Person detail panel coming in Phase 4');
-		});
-		personMgmtContent.createEl('p', {
-			cls: 'crc-form-help',
-			text: 'View and edit person details in a side panel'
-		});
-
-		// Validate relationships button
-		const validateBtn = personMgmtContent.createEl('button', {
-			cls: 'crc-btn crc-btn--secondary crc-btn--block crc-mt-2',
-			text: 'Validate all relationships'
-		});
-		validateBtn.addEventListener('click', () => {
-			new Notice('⚠️ Relationship validation coming soon');
-		});
-		personMgmtContent.createEl('p', {
-			cls: 'crc-form-help',
-			text: 'Check for broken links and missing cr_id values'
-		});
-
-		container.appendChild(personMgmtCard);
-
-		// Data Tools Card
-		const dataToolsCard = this.createCard({
-			title: 'Data tools',
-			icon: 'file-text'
-		});
-
-		const dataToolsContent = dataToolsCard.querySelector('.crc-card__content') as HTMLElement;
-
-		// Create Base template button
-		const createBaseBtn = dataToolsContent.createEl('button', {
-			cls: 'crc-btn crc-btn--primary crc-btn--block',
-			text: 'Create base template'
-		});
-		createBaseBtn.addEventListener('click', () => {
-			this.close();
-			this.app.commands.executeCommandById('canvas-roots:create-base-template');
-		});
-		dataToolsContent.createEl('p', {
-			cls: 'crc-form-help',
-			text: 'Create a ready-to-use Obsidian Bases template for managing family members in table view'
-		});
-
-		container.appendChild(dataToolsCard);
-
-		// Recent Trees Card
-		const recentTrees = this.plugin.settings.recentTrees?.slice(0, 5) || [];
-		if (recentTrees.length > 0) {
-			const recentTreesCard = this.createCard({
-				title: 'Recent trees',
-				icon: 'clock'
-			});
-
-			const recentTreesContent = recentTreesCard.querySelector('.crc-card__content') as HTMLElement;
-
-			recentTreesContent.createEl('p', {
-				cls: 'crc-form-help crc-mb-3',
-				text: 'Quickly re-open your recently generated family trees'
-			});
-
-			recentTrees.forEach((tree, index) => {
-				const treeBtn = recentTreesContent.createEl('button', {
-					cls: `crc-btn crc-btn--secondary crc-btn--block ${index > 0 ? 'crc-mt-2' : ''}`,
-					text: tree.canvasName.replace('.canvas', '')
-				});
-				const treeIcon = createLucideIcon('file', 16);
-				treeBtn.prepend(treeIcon);
-
-				// Add metadata badge
-				treeBtn.createSpan({
-					cls: 'crc-badge crc-ml-2',
-					text: `${tree.peopleCount} people`
-				});
-
-				treeBtn.addEventListener('click', () => {
-					void (async () => {
-						const file = this.app.vault.getAbstractFileByPath(tree.canvasPath);
-						if (file instanceof TFile) {
-							const leaf = this.app.workspace.getLeaf(false);
-							await leaf.openFile(file);
-							this.close();
-						} else {
-							new Notice(`Canvas file not found: ${tree.canvasPath}`);
-						}
-					})();
-				});
-			});
-
-			// "View all" link
-			const viewAllLink = recentTreesContent.createDiv({ cls: 'crc-mt-3 crc-text--center' });
-			const link = viewAllLink.createEl('a', {
-				cls: 'crc-link',
-				text: 'View all recent trees →'
-			});
-			link.addEventListener('click', (e) => {
-				e.preventDefault();
-				this.switchTab('status');
-			});
-
-			container.appendChild(recentTreesCard);
-		}
 	}
 
 	/**
@@ -2770,6 +2594,54 @@ export class ControlCenterModal extends Modal {
 			text: 'The fastest way to export is via the canvas file context menu. Just right-click any Canvas Roots canvas in your file explorer.',
 			cls: 'crc-mt-1'
 		});
+
+		// Recent Trees Card (collapsible)
+		const recentTrees = this.plugin.settings.recentTrees?.slice(0, 5) || [];
+		if (recentTrees.length > 0) {
+			const recentTreesCard = container.createDiv({ cls: 'crc-card' });
+			const recentTreesHeader = recentTreesCard.createDiv({ cls: 'crc-card__header' });
+			const recentTreesTitle = recentTreesHeader.createEl('h3', {
+				cls: 'crc-card__title',
+				text: 'Recent trees'
+			});
+			const recentTreesIcon = createLucideIcon('clock', 20);
+			recentTreesTitle.prepend(recentTreesIcon);
+
+			const recentTreesContent = recentTreesCard.createDiv({ cls: 'crc-card__content' });
+
+			recentTreesContent.createEl('p', {
+				cls: 'crc-form-help crc-mb-3',
+				text: 'Quickly re-open your recently generated family trees'
+			});
+
+			recentTrees.forEach((tree, index) => {
+				const treeBtn = recentTreesContent.createEl('button', {
+					cls: `crc-btn crc-btn--secondary crc-btn--block ${index > 0 ? 'crc-mt-2' : ''}`,
+					text: tree.canvasName.replace('.canvas', '')
+				});
+				const treeIcon = createLucideIcon('file', 16);
+				treeBtn.prepend(treeIcon);
+
+				// Add metadata badge
+				treeBtn.createSpan({
+					cls: 'crc-badge crc-ml-2',
+					text: `${tree.peopleCount} people`
+				});
+
+				treeBtn.addEventListener('click', () => {
+					void (async () => {
+						const file = this.app.vault.getAbstractFileByPath(tree.canvasPath);
+						if (file instanceof TFile) {
+							const leaf = this.app.workspace.getLeaf(false);
+							await leaf.openFile(file);
+							this.close();
+						} else {
+							new Notice(`Canvas file not found: ${tree.canvasPath}`);
+						}
+					})();
+				});
+			});
+		}
 
 		// Wire up the Generate button (in Root person card)
 		this.treeGenerateBtn?.addEventListener('click', () => {
@@ -8321,6 +8193,30 @@ export class ControlCenterModal extends Modal {
 		});
 
 		container.appendChild(loggingCard);
+
+		// Data Tools Card
+		const toolsCard = this.createCard({
+			title: 'Data tools',
+			icon: 'file-code'
+		});
+
+		const toolsContent = toolsCard.querySelector('.crc-card__content') as HTMLElement;
+
+		// Create Base template button
+		const createBaseBtn = toolsContent.createEl('button', {
+			cls: 'crc-btn crc-btn--primary crc-btn--block',
+			text: 'Create base template'
+		});
+		createBaseBtn.addEventListener('click', () => {
+			this.close();
+			this.app.commands.executeCommandById('canvas-roots:create-base-template');
+		});
+		toolsContent.createEl('p', {
+			cls: 'crc-form-help',
+			text: 'Create a ready-to-use Obsidian Bases template for managing family members in table view'
+		});
+
+		container.appendChild(toolsCard);
 	}
 
 	/**

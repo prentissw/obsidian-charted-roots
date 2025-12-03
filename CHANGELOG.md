@@ -44,6 +44,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Integrated wiki links for detailed documentation
   - Streamlined "Getting Started" with clear 3-step workflow
 
+### Removed
+
+- **Quick Actions Tab**: Removed from Control Center to streamline the interface
+  - "Recent Trees" section moved to Tree Output tab
+  - "Create base template" button moved to Advanced tab
+  - Other actions were redundant (tab navigation buttons) or placeholder (coming soon notices)
+
 ---
 
 ## [0.6.0] - 2025-12-03

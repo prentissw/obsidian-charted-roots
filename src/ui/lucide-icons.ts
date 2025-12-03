@@ -10,7 +10,7 @@ import { setIcon } from 'obsidian';
  */
 export type LucideIconName =
 	| 'activity'       // Status tab
-	| 'zap'            // Quick Actions tab
+	| 'zap'            // Bulk actions
 	| 'user-plus'      // Data Entry tab
 	| 'git-branch'     // Tree Generation tab
 	| 'git-compare'    // Relationship calculator
@@ -101,12 +101,6 @@ export const TAB_CONFIGS: TabConfig[] = [
 		name: 'Guide',
 		icon: 'book-open',
 		description: 'Quick start guide and getting started'
-	},
-	{
-		id: 'quick-actions',
-		name: 'Quick actions',
-		icon: 'zap',
-		description: 'Frequently used commands'
 	},
 	{
 		id: 'import-export',
