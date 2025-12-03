@@ -105,6 +105,17 @@ export interface AggregatedPath extends MigrationPath {
 export type CoordinateSystemType = 'geographic' | 'pixel';
 
 /**
+ * Four corner positions for distortable image alignment
+ * Order: NW, NE, SW, SE (in a "Z" pattern)
+ */
+export interface ImageCorners {
+	nw: { lat: number; lng: number };
+	ne: { lat: number; lng: number };
+	sw: { lat: number; lng: number };
+	se: { lat: number; lng: number };
+}
+
+/**
  * Configuration for a custom image map (fictional worlds)
  */
 export interface CustomMapConfig {
@@ -135,6 +146,14 @@ export interface CustomMapConfig {
 	minZoom?: number;
 	/** Optional maximum zoom level */
 	maxZoom?: number;
+	/**
+	 * Corner positions for distortable image alignment.
+	 * When present, enables distortable image mode for interactive
+	 * scale/rotate/distort operations on the map image.
+	 */
+	corners?: ImageCorners;
+	/** Path to the source file for saving corner updates */
+	sourcePath?: string;
 }
 
 // ============================================================================

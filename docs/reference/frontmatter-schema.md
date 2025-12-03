@@ -291,6 +291,28 @@ For maps where coordinates match pixel positions:
 | `min_zoom` | `number` | Minimum zoom level | `-2` |
 | `max_zoom` | `number` | Maximum zoom level | `4` |
 
+### Distortable Image Corners (Advanced)
+
+For interactive image alignment and georeferencing, you can define corner positions. When corners are set, the map enters "distortable mode" where you can drag, rotate, scale, and distort the image to align it with your coordinate system.
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `corner_nw_lat` | `number` | Northwest corner latitude | `45.5` |
+| `corner_nw_lng` | `number` | Northwest corner longitude | `-90.0` |
+| `corner_ne_lat` | `number` | Northeast corner latitude | `45.5` |
+| `corner_ne_lng` | `number` | Northeast corner longitude | `-60.0` |
+| `corner_sw_lat` | `number` | Southwest corner latitude | `25.0` |
+| `corner_sw_lng` | `number` | Southwest corner longitude | `-90.0` |
+| `corner_se_lat` | `number` | Southeast corner latitude | `25.0` |
+| `corner_se_lng` | `number` | Southeast corner longitude | `-60.0` |
+
+**Use cases:**
+- Align historical maps to modern coordinates
+- Fit hand-drawn fictional world maps to a coordinate system
+- Adjust scanned maps that aren't perfectly rectangular
+
+**Note:** Corner positions are saved automatically when you use the "Save Alignment" button in edit mode.
+
 ---
 
 ## Property Naming Conventions
@@ -462,6 +484,39 @@ max_zoom: 3
 # Westeros Map
 
 Map of Westeros from A Song of Ice and Fire...
+```
+
+---
+
+## Example Map Note (Distortable with Corners)
+
+```yaml
+---
+type: map
+map_id: historical-europe
+name: Historical Europe 1850
+universe: real
+image: assets/maps/europe-1850.jpg
+coordinate_system: geographic
+bounds_north: 72
+bounds_south: 35
+bounds_west: -15
+bounds_east: 45
+default_zoom: 4
+corner_nw_lat: 71.5
+corner_nw_lng: -14.5
+corner_ne_lat: 71.8
+corner_ne_lng: 44.5
+corner_sw_lat: 35.2
+corner_sw_lng: -14.8
+corner_se_lat: 35.0
+corner_se_lng: 44.8
+---
+
+# Historical Europe 1850
+
+A historical map of Europe circa 1850, aligned to modern coordinates
+for comparison with contemporary maps...
 ```
 
 ---

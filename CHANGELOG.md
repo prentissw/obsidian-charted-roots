@@ -28,6 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - YAML frontmatter configuration for bounds, center, zoom
   - Coordinate system mapping for placing markers on fictional maps
 
+- **Map Image Alignment (Edit Mode)**: Interactive georeferencing for custom maps
+  - Drag corner handles to position, scale, rotate, and distort map images
+  - Align historical or hand-drawn maps to coordinate systems
+  - Edit banner with Save/Undo/Reset/Cancel controls
+  - Corner positions saved to map note frontmatter (`corner_nw_lat`, etc.)
+  - "Reset to default" clears alignment and restores rectangular bounds
+  - Powered by Leaflet.DistortableImage library
+
 - **Map Filtering & Controls**
   - Filter by collection (family branch)
   - Year range filtering with min/max inputs

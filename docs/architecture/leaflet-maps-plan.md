@@ -664,16 +664,52 @@ Options explored (deferred due to CORS complexity):
 
 **Workaround:** Document screenshot approach for users who need image export.
 
-### Interactive Image Overlay Manipulation (Leaflet.DistortableImage)
+### Interactive Image Overlay Manipulation (Leaflet.DistortableImage) ✅ Implemented
 - Enable users to interactively scale, rotate, and distort custom map images
 - Supports corner-dragging for perspective warping (rubber-sheet georeferencing)
-- Toolbar modes: distort, drag, rotate, scale, freeRotate, lock
 - Use cases:
   - Align historical maps to modern coordinates
   - Fit hand-drawn fictional world maps to a coordinate system
   - Adjust scanned maps that aren't perfectly rectangular
-- Library: [Leaflet.DistortableImage](https://github.com/publiclab/Leaflet.DistortableImage) (~50KB)
-- Depends on: Leaflet.toolbar, Leaflet.Path.Transform
+- Library: [Leaflet.DistortableImage](https://github.com/publiclab/Leaflet.DistortableImage) + leaflet-toolbar
+
+**Implementation Details:**
+
+| Component | Description |
+|-----------|-------------|
+| `ImageMapManager.createDistortableOverlay()` | Creates distortable image overlay with `suppressToolbar: true` |
+| `ImageMapManager.saveCorners()` | Saves corner positions to map note frontmatter |
+| `ImageMapManager.clearCorners()` | Removes corner properties to reset alignment |
+| `MapController.enableEditMode()` | Loads DistortableImage library, creates overlay, shows handles |
+| `MapController.disableEditMode()` | Removes distortable overlay, restores regular overlay |
+| `MapController.resetAlignment()` | Clears saved corners and reloads map with default bounds |
+| `MapView.showEditBanner()` | Displays edit controls (Save/Undo/Reset/Cancel) |
+
+**Edit Banner Controls:**
+- **Save alignment** - Persist corner positions to frontmatter
+- **Undo changes** - Revert to last saved position (calls `overlay.restore()`)
+- **Reset to default** - Clear all corners from frontmatter, return to rectangular bounds
+- **Cancel** - Exit edit mode without saving
+
+**Frontmatter Storage:**
+Corner positions stored as flat properties for Obsidian Properties view compatibility:
+```yaml
+corner_nw_lat: 48.5
+corner_nw_lng: -95.2
+corner_ne_lat: 49.1
+corner_ne_lng: -58.3
+corner_sw_lat: -45.8
+corner_sw_lng: -98.1
+corner_se_lat: -44.2
+corner_se_lng: -55.7
+```
+
+**Technical Notes:**
+- Library loaded dynamically via `require()` (dynamic `import()` not supported in Obsidian runtime)
+- `leaflet-toolbar` must load before `leaflet-distortableimage`
+- Default toolbar suppressed (`suppressToolbar: true`) to avoid initialization errors
+- Corners pre-set on overlay before `addTo(map)` to prevent undefined access
+- CSS styles in `styles/map-view.css` (search marker invisible, edit banner styling)
 
 ### Pixel-Based Coordinate System (L.CRS.Simple) ✅ Implemented
 

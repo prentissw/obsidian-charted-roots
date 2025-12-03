@@ -3,15 +3,431 @@
  *
  * Handles custom image maps for fictional worlds and historical maps.
  * Allows users to use their own map images with custom coordinate systems.
+ * Supports distortable images for interactive alignment and georeferencing.
  */
 
 import { TFile } from 'obsidian';
 import type { App } from 'obsidian';
 import * as L from 'leaflet';
 import { getLogger } from '../core/logging';
-import type { CustomMapConfig } from './types/map-types';
+import type { CustomMapConfig, ImageCorners } from './types/map-types';
 
+// Initialize logger early so it can be used by helper functions
 const logger = getLogger('ImageMapManager');
+
+// Track state for CSS injection and plugin initialization
+let distortableImageLoaded = false;
+let distortableImageCSSInjected = false;
+
+/**
+ * Initialize the distortable image plugins
+ * These libraries expect L to be globally available on window
+ * We use require() instead of import because we need to set window.L first
+ */
+function initDistortableImagePlugins(): void {
+	if (distortableImageLoaded) return;
+
+	// Ensure L is on window BEFORE loading the plugins
+	if (typeof window !== 'undefined') {
+		(window as unknown as { L: typeof L }).L = L;
+	}
+
+	// Use require() to load the plugins after setting window.L
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	require('leaflet-toolbar');
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	require('leaflet-distortableimage');
+
+	distortableImageLoaded = true;
+	logger.debug('init-plugins', 'Distortable image plugins initialized');
+}
+
+/**
+ * Inject the leaflet-toolbar and leaflet-distortableimage CSS into the document
+ */
+function injectDistortableImageCSS(): void {
+	if (distortableImageCSSInjected) return;
+
+	// Combined CSS from leaflet-toolbar and leaflet-distortableimage
+	// Copied here since dynamic CSS imports aren't well-supported in Obsidian
+	const css = `
+/* ============================================================================
+   Leaflet Toolbar CSS (from leaflet-toolbar/dist/leaflet.toolbar.css)
+   ============================================================================ */
+.leaflet-toolbar-0 {
+  list-style: none;
+  padding-left: 0;
+  border: 2px solid rgba(0,0,0,.2);
+  border-radius: 4px;
+}
+.leaflet-toolbar-0 > li {
+  position: relative;
+}
+.leaflet-toolbar-0 > li > .leaflet-toolbar-icon {
+  display: block;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  margin-right: 0;
+  padding-right: 0;
+  border-right: 0;
+  text-align: center;
+  text-decoration: none;
+  background-color: #fff;
+}
+.leaflet-toolbar-0 > li > .leaflet-toolbar-icon:hover {
+  background-color: #f4f4f4;
+}
+.leaflet-toolbar-0 .leaflet-toolbar-1 {
+  display: none;
+  list-style: none;
+}
+.leaflet-toolbar-tip-container {
+  margin: -16px auto 0;
+  height: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.leaflet-toolbar-tip {
+  width: 16px;
+  height: 16px;
+  margin: -8px auto 0;
+  background-color: #fff;
+  border: 2px solid rgba(0,0,0,.2);
+  background-clip: content-box;
+  transform: rotate(45deg);
+  border-radius: 4px;
+}
+.leaflet-control-toolbar .leaflet-toolbar-1 > li:last-child > .leaflet-toolbar-icon,
+.leaflet-popup-toolbar > li:last-child > .leaflet-toolbar-icon {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+.leaflet-control-toolbar > li > .leaflet-toolbar-icon {
+  border-bottom: 1px solid #ccc;
+}
+.leaflet-control-toolbar > li:first-child > .leaflet-toolbar-icon {
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+.leaflet-control-toolbar > li:last-child > .leaflet-toolbar-icon {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-bottom-width: 0;
+}
+.leaflet-control-toolbar .leaflet-toolbar-1 {
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  left: 30px;
+  top: 0;
+  white-space: nowrap;
+  height: 30px;
+}
+.leaflet-control-toolbar .leaflet-toolbar-1 > li {
+  display: inline-block;
+}
+.leaflet-control-toolbar .leaflet-toolbar-1 > li > .leaflet-toolbar-icon {
+  display: block;
+  background-color: #919187;
+  border-left: 1px solid #aaa;
+  color: #fff;
+  font: 11px/19px "Helvetica Neue", Arial, Helvetica, sans-serif;
+  line-height: 30px;
+  text-decoration: none;
+  padding-left: 10px;
+  padding-right: 10px;
+  height: 30px;
+}
+.leaflet-control-toolbar .leaflet-toolbar-1 > li > .leaflet-toolbar-icon:hover {
+  background-color: #a0a098;
+}
+.leaflet-popup-toolbar {
+  position: relative;
+  box-sizing: content-box;
+}
+.leaflet-popup-toolbar > li {
+  float: left;
+}
+.leaflet-popup-toolbar > li > .leaflet-toolbar-icon {
+  border-right: 1px solid #ccc;
+}
+.leaflet-popup-toolbar > li:first-child > .leaflet-toolbar-icon {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+.leaflet-popup-toolbar > li:last-child > .leaflet-toolbar-icon {
+  border-bottom-width: 0;
+  border-right: none;
+}
+.leaflet-popup-toolbar .leaflet-toolbar-1 {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  padding-left: 0;
+}
+.leaflet-popup-toolbar .leaflet-toolbar-1 > li > .leaflet-toolbar-icon {
+  position: relative;
+  float: left;
+  width: 30px;
+  height: 30px;
+}
+
+/* ============================================================================
+   Leaflet DistortableImage CSS (from leaflet-distortableimage/dist/leaflet.distortableimage.css)
+   ============================================================================ */
+.ldi .leaflet-popup-toolbar {
+  width: max-content !important;
+}
+
+.ldi .leaflet-pane .leaflet-overlay-pane img {
+  pointer-events: all !important;
+}
+
+.ldi .leaflet-pane .leaflet-overlay-pane img.disabled {
+  cursor: default;
+}
+
+.ldi img.leaflet-image-layer.collected {
+  box-shadow: 0px 0px 0px 12px #ffea00;
+}
+
+.ldi-icon {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+  fill: #0078a8;
+}
+
+.ldi-icon.ldi-delete_forever {
+  fill: #c10d0d;
+}
+
+.ldi-icon.ldi-keyboard_open {
+  fill: black;
+}
+
+input.ldi {
+  position: absolute;
+  top: -100px;
+}
+
+.ldi .leaflet-toolbar-icon {
+  box-sizing: initial;
+}
+
+.ldi .leaflet-toolbar-tip {
+  box-sizing: border-box;
+}
+
+.ldi-keymapper {
+  background-color: rgba(255, 255, 255, 1);
+  color: black;
+  padding: 8px;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  line-height: 1.3;
+  height: auto;
+  width: 235px;
+  border-radius: 21px;
+  overflow: hidden;
+}
+
+.ldi #keymapper-wrapper {
+  position: relative;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 186px;
+  min-height: 186px;
+}
+
+.ldi .left {
+  width: 46%;
+}
+
+.ldi .left span {
+  overflow-wrap: break-word;
+}
+
+.ldi .right {
+  display: flex;
+  max-width: 40%;
+  flex-wrap: wrap;
+  margin-left: 20px;
+  align-items: flex-start;
+}
+
+.ldi #keymapper-hr {
+  transform: rotate(90deg);
+  position: relative;
+  transform-origin: 0px;
+  left: 50%;
+  margin: -2px;
+  width: 200%;
+}
+
+.ldi-keymapper tr {
+  display: block;
+}
+
+.ldi-keymapper td {
+  padding: 0.2rem;
+  display: flex;
+  width: 100%;
+}
+
+.ldi-keymapper kbd {
+  padding: 0.2rem 0.4rem;
+  color: black;
+  background-color: rgb(247, 247, 247);
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2),
+    0 2px 0 0 rgba(255, 255, 255, 0.7) inset;
+  text-shadow: 0 0.5px 0 #fff;
+}
+
+#toggle-keymapper {
+  background-color: #fff;
+  padding: 0px;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  right: 16px;
+  cursor: pointer;
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  border: 2px solid rgba(184, 178, 173, 0.9);
+  line-height: 30px;
+}
+
+#toggle-keymapper:hover {
+  background-color: #f4f4f4;
+}
+
+.close-icon#toggle-keymapper {
+  text-transform: uppercase;
+  width: 254px;
+  font-size: 11px;
+  border: 1px solid lightgray;
+  margin: 0;
+  padding: 0;
+  background-color: whitesmoke;
+  border-radius: 0;
+  border-bottom-left-radius: 21px;
+  border-bottom-right-radius: 21px;
+  position: relative;
+  height: 21px;
+  line-height: 22px;
+  color: gray;
+  top: 10px;
+  left: -10px;
+}
+
+.close-icon#toggle-keymapper:hover {
+  background-color: #efefef;
+}
+
+a.leaflet-toolbar-icon.rotate.selected-mode,
+a.leaflet-toolbar-icon.freeRotate.selected-mode {
+  background-color: rgba(251, 18, 14, 0.75);
+  border: inset 0.5px lightgray;
+}
+
+a.leaflet-toolbar-icon.rotate.selected-mode .ldi-icon,
+a.leaflet-toolbar-icon.freeRotate.selected-mode .ldi-icon,
+a.leaflet-toolbar-icon.drag.selected-mode .ldi-icon {
+  fill: white;
+}
+
+a.leaflet-toolbar-icon.drag.selected-mode {
+  background-color: rgba(9, 155, 56, 0.75);
+  border: inset 0.5px lightgray;
+}
+
+a.leaflet-toolbar-icon.distort.selected-mode,
+a.leaflet-toolbar-icon.scale.selected-mode {
+  background-color: hsla(239, 97%, 55%, 0.75);
+  border: inset 0.5px lightgray;
+}
+
+a.leaflet-toolbar-icon.distort.selected-mode .ldi-icon,
+a.leaflet-toolbar-icon.scale.selected-mode .ldi-icon {
+  fill: white;
+}
+
+a.leaflet-toolbar-icon.lock.selected-mode {
+  background-color: hsla(0, 0%, 1%, 0.75);
+  border: inset 0.5px lightgray;
+}
+
+li.disabled {
+  cursor: auto;
+}
+
+a.leaflet-toolbar-icon.disabled {
+  filter: grayscale(1);
+  pointer-events: none;
+}
+
+a.leaflet-toolbar-icon.lock.selected-mode .ldi-icon {
+  fill: white;
+}
+
+a.leaflet-toolbar-icon[title='Loading...'] {
+  background-color: whitesmoke;
+  pointer-events: none;
+  cursor: default;
+}
+
+.ldi-icon.loader {
+  animation: ldi-spin 1.1s infinite;
+  fill: black;
+  width: 22px;
+  height: 22px;
+}
+
+#cancel {
+  fill: #c10d0d;
+}
+
+input[type="text"]::-webkit-input-placeholder {
+  color: #979797;
+}
+
+@keyframes ldi-spin {
+  0% { transform: rotate(0); }
+  100% { transform: rotate(360deg); }
+}
+`;
+
+	const styleEl = document.createElement('style');
+	styleEl.id = 'leaflet-distortableimage-css';
+	styleEl.textContent = css;
+	document.head.appendChild(styleEl);
+	distortableImageCSSInjected = true;
+}
+
+/**
+ * Ensure the distortable image plugins are loaded and CSS is injected
+ * This is called before creating a distortable overlay
+ */
+function ensureDistortableImageLoaded(): void {
+	// Initialize the plugins (sets window.L and requires the libraries)
+	initDistortableImagePlugins();
+
+	// Inject CSS
+	injectDistortableImageCSS();
+
+	// Verify the plugins loaded correctly
+	const globalWindow = window as unknown as { L: typeof L & { Toolbar2?: unknown; distortableImageOverlay?: unknown } };
+	if (!globalWindow.L.distortableImageOverlay) {
+		throw new Error('L.distortableImageOverlay not found after loading leaflet-distortableimage');
+	}
+}
 
 /**
  * Configuration for a custom image map stored in frontmatter
@@ -89,6 +505,24 @@ export interface ImageMapFrontmatter {
 	min_zoom?: number;
 	/** Optional maximum zoom */
 	max_zoom?: number;
+
+	// === Distortable image corners (for aligned/georeferenced maps) ===
+	/**
+	 * Four corner positions for distortable image alignment.
+	 * When present, the image will be rendered using these corners
+	 * instead of the standard bounds, allowing for rotation/distortion.
+	 * Format: Array of 4 lat/lng objects in NW, NE, SW, SE order
+	 */
+	corners?: Array<{ lat: number; lng: number }>;
+	/** Flat corner properties (preferred format for Obsidian Properties view) */
+	corner_nw_lat?: number;
+	corner_nw_lng?: number;
+	corner_ne_lat?: number;
+	corner_ne_lng?: number;
+	corner_sw_lat?: number;
+	corner_sw_lng?: number;
+	corner_se_lat?: number;
+	corner_se_lng?: number;
 }
 
 /**
@@ -251,6 +685,43 @@ export class ImageMapManager {
 			}
 		}
 
+		// Parse corner positions for distortable image alignment
+		// Supports both flat (corner_nw_lat, etc.) and nested (corners array) formats
+		let corners: ImageCorners | undefined;
+		const cornersArray = fm.corners as Array<{ lat: number; lng: number }> | undefined;
+
+		// Check for flat corner properties first (preferred format)
+		if (
+			typeof fm.corner_nw_lat === 'number' &&
+			typeof fm.corner_nw_lng === 'number' &&
+			typeof fm.corner_ne_lat === 'number' &&
+			typeof fm.corner_ne_lng === 'number' &&
+			typeof fm.corner_sw_lat === 'number' &&
+			typeof fm.corner_sw_lng === 'number' &&
+			typeof fm.corner_se_lat === 'number' &&
+			typeof fm.corner_se_lng === 'number'
+		) {
+			corners = {
+				nw: { lat: fm.corner_nw_lat as number, lng: fm.corner_nw_lng as number },
+				ne: { lat: fm.corner_ne_lat as number, lng: fm.corner_ne_lng as number },
+				sw: { lat: fm.corner_sw_lat as number, lng: fm.corner_sw_lng as number },
+				se: { lat: fm.corner_se_lat as number, lng: fm.corner_se_lng as number }
+			};
+		} else if (
+			cornersArray &&
+			Array.isArray(cornersArray) &&
+			cornersArray.length === 4 &&
+			cornersArray.every(c => typeof c.lat === 'number' && typeof c.lng === 'number')
+		) {
+			// Nested array format: [NW, NE, SW, SE]
+			corners = {
+				nw: { lat: cornersArray[0].lat, lng: cornersArray[0].lng },
+				ne: { lat: cornersArray[1].lat, lng: cornersArray[1].lng },
+				sw: { lat: cornersArray[2].lat, lng: cornersArray[2].lng },
+				se: { lat: cornersArray[3].lat, lng: cornersArray[3].lng }
+			};
+		}
+
 		return {
 			id: String(fm.map_id),
 			name: String(fm.name),
@@ -262,7 +733,9 @@ export class ImageMapManager {
 			center: centerPoint,
 			defaultZoom: typeof fm.default_zoom === 'number' ? fm.default_zoom : (coordinateSystem === 'pixel' ? 0 : 2),
 			minZoom: typeof fm.min_zoom === 'number' ? fm.min_zoom : (coordinateSystem === 'pixel' ? -2 : undefined),
-			maxZoom: typeof fm.max_zoom === 'number' ? fm.max_zoom : (coordinateSystem === 'pixel' ? 4 : undefined)
+			maxZoom: typeof fm.max_zoom === 'number' ? fm.max_zoom : (coordinateSystem === 'pixel' ? 4 : undefined),
+			corners,
+			sourcePath: file.path
 		};
 	}
 
@@ -453,6 +926,273 @@ export class ImageMapManager {
 	getMapUniverse(mapId: string): string | null {
 		const config = this.mapConfigs.get(mapId);
 		return config?.universe ?? null;
+	}
+
+	/**
+	 * Check if a map has distortable corners configured
+	 */
+	hasDistortableCorners(mapId: string): boolean {
+		const config = this.mapConfigs.get(mapId);
+		return config?.corners !== undefined;
+	}
+
+	/**
+	 * Get the distortable corners for a map
+	 */
+	getDistortableCorners(mapId: string): ImageCorners | undefined {
+		const config = this.mapConfigs.get(mapId);
+		return config?.corners;
+	}
+
+	/**
+	 * Create a distortable image overlay for interactive alignment
+	 * This allows users to scale, rotate, and distort the map image
+	 */
+	async createDistortableOverlay(mapId: string): Promise<L.DistortableImageOverlay | null> {
+		const config = this.mapConfigs.get(mapId);
+		if (!config) {
+			logger.warn('create-distortable', `Map config not found: ${mapId}`);
+			return null;
+		}
+
+		try {
+			// Ensure distortable image plugin is loaded (synchronous with require())
+			ensureDistortableImageLoaded();
+
+			const imageUrl = await this.getImageUrl(config.imagePath);
+			if (!imageUrl) {
+				logger.error('image-not-found', `Image not found: ${config.imagePath}`);
+				return null;
+			}
+
+			const globalL = (window as unknown as { L: typeof L }).L;
+
+			// Build options for distortable overlay
+			// The library expects corners as plain { lat, lon } objects, NOT L.LatLng
+			// If no corners are saved, DON'T pass corners - let the library auto-calculate
+			// from the image dimensions (it does this in _initImageDimensions)
+			interface DistortableOptions {
+				editable: boolean;
+				mode: 'distort' | 'drag' | 'rotate' | 'scale' | 'freeRotate' | 'lock';
+				selected: boolean;
+				suppressToolbar: boolean;
+				corners?: Array<{ lat: number; lon: number }>;
+			}
+
+			// ALWAYS start with editable:false to prevent the library from auto-calling
+			// editing.enable() on image load (which can fail before corners are fully ready)
+			// We'll manually enable editing in map-controller after verifying everything
+			const hasSavedCorners = !!config.corners;
+
+			const options: DistortableOptions = {
+				editable: false,  // Always false - we enable manually
+				mode: 'distort',
+				selected: false,
+				suppressToolbar: true  // Suppress default toolbar - we'll add our own controls
+			};
+
+			// Pass corners in options so _initImageDimensions uses them on image load
+			// The library checks this.options.corners before auto-calculating
+			if (hasSavedCorners && config.corners) {
+				// Use L.LatLng objects in options
+				options.corners = [
+					L.latLng(config.corners.nw.lat, config.corners.nw.lng),
+					L.latLng(config.corners.ne.lat, config.corners.ne.lng),
+					L.latLng(config.corners.sw.lat, config.corners.sw.lng),
+					L.latLng(config.corners.se.lat, config.corners.se.lng)
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				] as any;
+				logger.debug('create-distortable', `Using saved corners for ${config.name}`);
+			} else {
+				// No corners saved - library will auto-calculate from image dimensions
+				logger.debug('create-distortable', `No saved corners, library will auto-calculate for ${config.name}`);
+			}
+
+			// Create distortable overlay
+			// Use the global L to access the distortableImageOverlay factory
+			// Cast options because the library accepts plain { lat, lon } objects for corners,
+			// even though our type definitions say LatLng[]
+			const distortableOverlay = globalL.distortableImageOverlay(
+				imageUrl,
+				options as unknown as L.DistortableImageOverlayOptions
+			);
+
+			// CRITICAL: If we have corners, pre-set _corners on the overlay
+			// The library normally sets this in _initImageDimensions on image load,
+			// but we need it set earlier to prevent errors when editing.enable() is called
+			if (config.corners) {
+				// Convert to L.LatLng objects and set directly on the overlay
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(distortableOverlay as any)._corners = [
+					L.latLng(config.corners.nw.lat, config.corners.nw.lng),
+					L.latLng(config.corners.ne.lat, config.corners.ne.lng),
+					L.latLng(config.corners.sw.lat, config.corners.sw.lng),
+					L.latLng(config.corners.se.lat, config.corners.se.lng)
+				];
+				logger.debug('create-distortable', `Pre-set _corners on overlay for ${config.name}`);
+			}
+
+			logger.debug('create-distortable', `Created distortable overlay for ${config.name}`);
+			return distortableOverlay;
+		} catch (error) {
+			// Capture the actual error message and stack for debugging
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorStack = error instanceof Error ? error.stack : undefined;
+			logger.error('create-distortable-error', `Failed to create distortable overlay for ${mapId}: ${errorMessage}`, {
+				error: errorMessage,
+				stack: errorStack
+			});
+			return null;
+		}
+	}
+
+	/**
+	 * Save corner positions to the map note's frontmatter
+	 * Uses flat property format for Obsidian Properties view compatibility
+	 */
+	async saveCorners(mapId: string, corners: L.LatLng[]): Promise<boolean> {
+		const config = this.mapConfigs.get(mapId);
+		if (!config || !config.sourcePath) {
+			logger.warn('save-corners', `Cannot save corners: map config or source path not found for ${mapId}`);
+			return false;
+		}
+
+		try {
+			const file = this.app.vault.getAbstractFileByPath(config.sourcePath);
+			if (!(file instanceof TFile)) {
+				logger.error('save-corners', `Source file not found: ${config.sourcePath}`);
+				return false;
+			}
+
+			// Read file content
+			const content = await this.app.vault.read(file);
+
+			// Parse frontmatter
+			const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+			if (!frontmatterMatch) {
+				logger.error('save-corners', `No frontmatter found in ${config.sourcePath}`);
+				return false;
+			}
+
+			const frontmatterContent = frontmatterMatch[1];
+			let newFrontmatter = frontmatterContent;
+
+			// Corners array should be [NW, NE, SW, SE]
+			const cornerData = {
+				corner_nw_lat: corners[0].lat,
+				corner_nw_lng: corners[0].lng,
+				corner_ne_lat: corners[1].lat,
+				corner_ne_lng: corners[1].lng,
+				corner_sw_lat: corners[2].lat,
+				corner_sw_lng: corners[2].lng,
+				corner_se_lat: corners[3].lat,
+				corner_se_lng: corners[3].lng
+			};
+
+			// Update or add each corner property
+			for (const [key, value] of Object.entries(cornerData)) {
+				const propRegex = new RegExp(`^${key}:.*$`, 'm');
+				const newLine = `${key}: ${value}`;
+
+				if (propRegex.test(newFrontmatter)) {
+					// Update existing property
+					newFrontmatter = newFrontmatter.replace(propRegex, newLine);
+				} else {
+					// Add new property at end of frontmatter
+					newFrontmatter = newFrontmatter.trimEnd() + `\n${newLine}`;
+				}
+			}
+
+			// Rebuild file content with updated frontmatter
+			const newContent = content.replace(
+				/^---\n[\s\S]*?\n---/,
+				`---\n${newFrontmatter}\n---`
+			);
+
+			// Write back to file
+			await this.app.vault.modify(file, newContent);
+
+			// Update in-memory config
+			config.corners = {
+				nw: { lat: corners[0].lat, lng: corners[0].lng },
+				ne: { lat: corners[1].lat, lng: corners[1].lng },
+				sw: { lat: corners[2].lat, lng: corners[2].lng },
+				se: { lat: corners[3].lat, lng: corners[3].lng }
+			};
+
+			logger.info('save-corners', `Saved corners for map ${mapId} to ${config.sourcePath}`);
+			return true;
+		} catch (error) {
+			logger.error('save-corners-error', `Failed to save corners for ${mapId}`, { error });
+			return false;
+		}
+	}
+
+	/**
+	 * Clear corner positions from the map note's frontmatter
+	 * This resets the map to use default rectangular bounds
+	 */
+	async clearCorners(mapId: string): Promise<boolean> {
+		const config = this.mapConfigs.get(mapId);
+		if (!config || !config.sourcePath) {
+			logger.warn('clear-corners', `Cannot clear corners: map config or source path not found for ${mapId}`);
+			return false;
+		}
+
+		try {
+			const file = this.app.vault.getAbstractFileByPath(config.sourcePath);
+			if (!(file instanceof TFile)) {
+				logger.error('clear-corners', `Source file not found: ${config.sourcePath}`);
+				return false;
+			}
+
+			// Read file content
+			const content = await this.app.vault.read(file);
+
+			// Parse frontmatter
+			const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+			if (!frontmatterMatch) {
+				logger.error('clear-corners', `No frontmatter found in ${config.sourcePath}`);
+				return false;
+			}
+
+			let frontmatterContent = frontmatterMatch[1];
+
+			// Remove all corner properties
+			const cornerProps = [
+				'corner_nw_lat', 'corner_nw_lng',
+				'corner_ne_lat', 'corner_ne_lng',
+				'corner_sw_lat', 'corner_sw_lng',
+				'corner_se_lat', 'corner_se_lng'
+			];
+
+			for (const prop of cornerProps) {
+				// Remove the property line (including any trailing newline)
+				const propRegex = new RegExp(`^${prop}:.*\\n?`, 'gm');
+				frontmatterContent = frontmatterContent.replace(propRegex, '');
+			}
+
+			// Clean up any double newlines that may have been created
+			frontmatterContent = frontmatterContent.replace(/\n{3,}/g, '\n\n').trim();
+
+			// Rebuild file content with updated frontmatter
+			const newContent = content.replace(
+				/^---\n[\s\S]*?\n---/,
+				`---\n${frontmatterContent}\n---`
+			);
+
+			// Write back to file
+			await this.app.vault.modify(file, newContent);
+
+			// Clear in-memory config corners
+			config.corners = undefined;
+
+			logger.info('clear-corners', `Cleared corners for map ${mapId} from ${config.sourcePath}`);
+			return true;
+		} catch (error) {
+			logger.error('clear-corners-error', `Failed to clear corners for ${mapId}`, { error });
+			return false;
+		}
 	}
 
 	/**

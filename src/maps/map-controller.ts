@@ -6,6 +6,17 @@
 
 import * as L from 'leaflet';
 
+// Fix Leaflet's default marker icon path issue when bundled
+// The default icon tries to load from incorrect paths in bundled environments
+// We set an empty URL to prevent 404 errors for markers we don't use
+// Our markers use L.divIcon which doesn't require external images
+delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
+L.Icon.Default.mergeOptions({
+	iconUrl: '',
+	iconRetinaUrl: '',
+	shadowUrl: ''
+});
+
 // Track if plugins have been initialized
 let pluginsInitialized = false;
 
@@ -104,8 +115,10 @@ export class MapController {
 	// Custom image maps
 	private imageMapManager: ImageMapManager;
 	private currentImageOverlay: L.ImageOverlay | null = null;
+	private currentDistortableOverlay: L.DistortableImageOverlay | null = null;
 	private activeMapId: string = 'openstreetmap';
 	private currentCRS: 'geographic' | 'pixel' = 'geographic';
+	private editModeEnabled: boolean = false;
 
 	// Current data
 	private currentData: MapData | null = null;
@@ -120,6 +133,10 @@ export class MapController {
 
 	// Callback for when active map changes
 	private onMapChangeCallback: ((mapId: string, universe: string | null) => void) | null = null;
+	// Callback for when edit mode changes
+	private onEditModeChangeCallback: ((enabled: boolean) => void) | null = null;
+	// Callback for when corners are saved
+	private onCornersSavedCallback: (() => void) | null = null;
 
 	constructor(container: HTMLElement, settings: MapSettings, plugin: CanvasRootsPlugin) {
 		this.container = container;
@@ -330,6 +347,7 @@ export class MapController {
 				if (marker.crData) {
 					const searchMarker = L.marker([marker.crData.lat, marker.crData.lng], {
 						opacity: 0,
+						icon: L.divIcon({ className: 'cr-search-marker', iconSize: [1, 1] }),
 						// @ts-expect-error - custom property for search
 						placeName: marker.crData.placeName
 					}) as CRMarker;
@@ -345,6 +363,7 @@ export class MapController {
 				if (marker.crData) {
 					const searchMarker = L.marker([marker.crData.lat, marker.crData.lng], {
 						opacity: 0,
+						icon: L.divIcon({ className: 'cr-search-marker', iconSize: [1, 1] }),
 						// @ts-expect-error - custom property for search
 						placeName: marker.crData.placeName
 					}) as CRMarker;
@@ -915,6 +934,17 @@ export class MapController {
 			this.map.removeLayer(this.tileLayer);
 		}
 
+		// Clean up controls before destroying the map to avoid stale references
+		if (this.miniMap && this.map) {
+			this.map.removeControl(this.miniMap);
+		}
+		if (this.fullscreenControl && this.map) {
+			this.map.removeControl(this.fullscreenControl);
+		}
+		if (this.searchControl && this.map) {
+			this.map.removeControl(this.searchControl);
+		}
+
 		// Destroy the old map
 		this.map?.remove();
 		this.map = null;
@@ -1054,6 +1084,332 @@ export class MapController {
 	 */
 	getActiveMapId(): string {
 		return this.activeMapId;
+	}
+
+	// ========================================================================
+	// Edit Mode (Distortable Image) Methods
+	// ========================================================================
+
+	/**
+	 * Check if the current map supports edit mode (distortable images)
+	 * Only custom image maps can be edited, not OpenStreetMap
+	 */
+	canEnableEditMode(): boolean {
+		return this.activeMapId !== 'openstreetmap';
+	}
+
+	/**
+	 * Check if edit mode is currently enabled
+	 */
+	isEditModeEnabled(): boolean {
+		return this.editModeEnabled;
+	}
+
+	/**
+	 * Toggle edit mode for the current custom map
+	 * In edit mode, the map image becomes distortable (can be dragged, rotated, scaled)
+	 */
+	async toggleEditMode(): Promise<boolean> {
+		if (!this.map) return false;
+
+		if (this.editModeEnabled) {
+			await this.disableEditMode();
+			return false;
+		} else {
+			return this.enableEditMode();
+		}
+	}
+
+	/**
+	 * Enable edit mode - replace image overlay with distortable overlay
+	 */
+	async enableEditMode(): Promise<boolean> {
+		if (!this.map || this.activeMapId === 'openstreetmap') {
+			logger.warn('edit-mode', 'Cannot enable edit mode: no custom map active');
+			return false;
+		}
+
+		if (this.editModeEnabled) {
+			logger.debug('edit-mode', 'Edit mode already enabled');
+			return true;
+		}
+
+		try {
+			// Remove current regular image overlay
+			if (this.currentImageOverlay) {
+				this.map.removeLayer(this.currentImageOverlay);
+				this.currentImageOverlay = null;
+			}
+
+			// Create distortable overlay
+			const distortableOverlay = await this.imageMapManager.createDistortableOverlay(this.activeMapId);
+			if (!distortableOverlay) {
+				logger.error('edit-mode', 'Failed to create distortable overlay');
+				// Restore regular overlay
+				await this.restoreRegularOverlay();
+				return false;
+			}
+
+			// Add the 'ldi' class to the map container for distortable CSS to work
+			this.container.classList.add('ldi');
+
+			this.currentDistortableOverlay = distortableOverlay;
+
+			// Check if corners are already pre-set (for maps with saved corners)
+			const corners = distortableOverlay.getCorners?.();
+			const hasPrestClearedCorners = corners && corners.length === 4;
+
+			logger.debug('edit-mode', `Corners check: hasCorners=${!!corners}, length=${corners?.length}, valid=${hasPrestClearedCorners}`);
+			if (corners) {
+				logger.debug('edit-mode', `Corner 0: lat=${corners[0]?.lat}, lng=${corners[0]?.lng}`);
+			}
+
+			if (hasPrestClearedCorners) {
+				// Corners are pre-set, we can add to map and then manually enable editing
+				logger.debug('edit-mode', 'Taking happy path with pre-set corners');
+				distortableOverlay.addTo(this.map);
+
+				// After adding to map, verify corners are still set
+				const cornersAfterAdd = distortableOverlay.getCorners?.();
+				logger.debug('edit-mode', `Corners after addTo: hasCorners=${!!cornersAfterAdd}, length=${cornersAfterAdd?.length}`);
+
+				// Overlay was created with editable:false, so we need to manually enable
+				// Use a delay to ensure the image has loaded and library is fully initialized
+				setTimeout(() => {
+					// Check corners again before enabling
+					const cornersBeforeEnable = distortableOverlay.getCorners?.();
+					logger.debug('edit-mode', `Corners before enable: hasCorners=${!!cornersBeforeEnable}, length=${cornersBeforeEnable?.length}`);
+
+					// Enable editing - set the flag and call enable()
+					distortableOverlay.editable = true;
+					if (distortableOverlay.editing) {
+						distortableOverlay.editing.enable();
+						logger.debug('edit-mode', 'Called editing.enable()');
+					}
+
+					// Verify corners still valid before select
+					const cornersBeforeSelect = distortableOverlay.getCorners?.();
+					logger.debug('edit-mode', `Corners right before select: length=${cornersBeforeSelect?.length}`);
+					if (cornersBeforeSelect && cornersBeforeSelect.length >= 3) {
+						logger.debug('edit-mode', `Corner[2] lat=${cornersBeforeSelect[2]?.lat}, lng=${cornersBeforeSelect[2]?.lng}`);
+					}
+
+					// Toolbar is suppressed, so just show the handles for corner manipulation
+					// The select() call is what triggers _addToolbar() which causes the error
+					// With suppressToolbar: true, we just need the handles visible
+					logger.debug('edit-mode', 'Editing enabled - handles should be visible (toolbar suppressed)');
+				}, 200);  // Longer delay to ensure image loads
+			} else {
+				// No pre-set corners - need to wait for image load and _initImageDimensions
+				// Wrap select to prevent errors during initialization
+				const originalSelect = distortableOverlay.select.bind(distortableOverlay);
+				let cornersReady = false;
+
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(distortableOverlay as any).select = function(e?: Event) {
+					if (!cornersReady) {
+						logger.debug('edit-mode', 'Ignoring select() call - corners not ready yet');
+						if (e) {
+							L.DomEvent.stopPropagation(e);
+						}
+						return this;
+					}
+					return originalSelect(e);
+				};
+
+				distortableOverlay.addTo(this.map);
+
+				// Poll for corners to be ready
+				const waitForCorners = () => {
+					let attempts = 0;
+					const maxAttempts = 50;
+
+					const checkCorners = () => {
+						attempts++;
+						const currentCorners = distortableOverlay.getCorners?.();
+						const cornersValid = currentCorners &&
+							currentCorners.length === 4 &&
+							currentCorners.every((c: L.LatLng | null | undefined) =>
+								c && typeof c.lat === 'number' && !isNaN(c.lat)
+							);
+
+						if (cornersValid) {
+							cornersReady = true;
+							distortableOverlay.editable = true;
+							if (distortableOverlay.editing) {
+								distortableOverlay.editing.enable();
+							}
+							distortableOverlay.select();
+							logger.debug('edit-mode', 'Distortable overlay corners ready, editing enabled');
+						} else if (attempts < maxAttempts) {
+							setTimeout(checkCorners, 100);
+						} else {
+							logger.warn('edit-mode', 'Timed out waiting for corners to initialize');
+						}
+					};
+
+					setTimeout(checkCorners, 50);
+				};
+
+				waitForCorners();
+			}
+
+			this.editModeEnabled = true;
+
+			// Notify listeners
+			if (this.onEditModeChangeCallback) {
+				this.onEditModeChangeCallback(true);
+			}
+
+			logger.info('edit-mode', `Edit mode enabled for ${this.activeMapId}`);
+			return true;
+		} catch (error) {
+			logger.error('edit-mode-error', 'Failed to enable edit mode', { error });
+			// Try to restore regular overlay
+			await this.restoreRegularOverlay();
+			return false;
+		}
+	}
+
+	/**
+	 * Disable edit mode - replace distortable overlay with regular image overlay
+	 */
+	async disableEditMode(): Promise<void> {
+		if (!this.map || !this.editModeEnabled) return;
+
+		try {
+			// Remove distortable overlay
+			if (this.currentDistortableOverlay) {
+				// Safely deselect and disable editing
+				if (typeof this.currentDistortableOverlay.deselect === 'function') {
+					try {
+						this.currentDistortableOverlay.deselect();
+					} catch {
+						// Ignore deselect errors
+					}
+				}
+				if (this.currentDistortableOverlay.editing) {
+					try {
+						this.currentDistortableOverlay.editing.disable();
+					} catch {
+						// Ignore disable errors
+					}
+				}
+				this.map.removeLayer(this.currentDistortableOverlay);
+				this.currentDistortableOverlay = null;
+			}
+
+			// Remove the 'ldi' class from the map container
+			this.container.classList.remove('ldi');
+
+			// Restore regular overlay
+			await this.restoreRegularOverlay();
+
+			this.editModeEnabled = false;
+
+			// Notify listeners
+			if (this.onEditModeChangeCallback) {
+				this.onEditModeChangeCallback(false);
+			}
+
+			logger.info('edit-mode', 'Edit mode disabled');
+		} catch (error) {
+			logger.error('edit-mode-error', 'Failed to disable edit mode', { error });
+		}
+	}
+
+	/**
+	 * Save the current distortable overlay corners to frontmatter
+	 */
+	async saveEditedCorners(): Promise<boolean> {
+		if (!this.currentDistortableOverlay || !this.editModeEnabled) {
+			logger.warn('save-corners', 'No distortable overlay active');
+			return false;
+		}
+
+		try {
+			const corners = this.currentDistortableOverlay.getCorners();
+			const success = await this.imageMapManager.saveCorners(this.activeMapId, corners);
+
+			if (success && this.onCornersSavedCallback) {
+				this.onCornersSavedCallback();
+			}
+
+			return success;
+		} catch (error) {
+			logger.error('save-corners-error', 'Failed to save corners', { error });
+			return false;
+		}
+	}
+
+	/**
+	 * Restore the current distortable overlay to its original position
+	 */
+	restoreOverlay(): void {
+		if (this.currentDistortableOverlay && this.editModeEnabled) {
+			this.currentDistortableOverlay.restore();
+			logger.debug('edit-mode', 'Restored overlay to original position');
+		}
+	}
+
+	/**
+	 * Restore the regular (non-distortable) image overlay
+	 */
+	private async restoreRegularOverlay(): Promise<void> {
+		if (!this.map || this.activeMapId === 'openstreetmap') return;
+
+		const overlay = await this.imageMapManager.createImageOverlay(this.activeMapId);
+		if (overlay) {
+			this.currentImageOverlay = overlay;
+			overlay.addTo(this.map);
+		}
+	}
+
+	/**
+	 * Register a callback for when edit mode changes
+	 */
+	onEditModeChange(callback: (enabled: boolean) => void): void {
+		this.onEditModeChangeCallback = callback;
+	}
+
+	/**
+	 * Register a callback for when corners are saved
+	 */
+	onCornersSaved(callback: () => void): void {
+		this.onCornersSavedCallback = callback;
+	}
+
+	/**
+	 * Reset map alignment by clearing saved corners from frontmatter
+	 * This removes any custom alignment and returns the map to default rectangular bounds
+	 */
+	async resetAlignment(): Promise<boolean> {
+		if (!this.activeMapId || this.activeMapId === 'openstreetmap') {
+			logger.warn('reset-alignment', 'Cannot reset alignment: no custom map active');
+			return false;
+		}
+
+		try {
+			// Clear corners from frontmatter
+			const success = await this.imageMapManager.clearCorners(this.activeMapId);
+			if (!success) {
+				return false;
+			}
+
+			// If in edit mode, disable it first
+			if (this.editModeEnabled) {
+				await this.disableEditMode();
+			}
+
+			// Reload the map to apply default bounds
+			await this.setActiveMap(this.activeMapId);
+
+			logger.info('reset-alignment', `Reset alignment for map ${this.activeMapId}`);
+			return true;
+		} catch (error) {
+			logger.error('reset-alignment-error', 'Failed to reset alignment', { error });
+			return false;
+		}
 	}
 
 	/**
@@ -1260,6 +1616,22 @@ export class MapController {
 		this.marriageClusterGroup?.clearLayers();
 		this.burialClusterGroup?.clearLayers();
 		this.pathLayer?.clearLayers();
+
+		// Clean up distortable overlay if active
+		if (this.currentDistortableOverlay && this.map) {
+			try {
+				if (typeof this.currentDistortableOverlay.deselect === 'function') {
+					this.currentDistortableOverlay.deselect();
+				}
+				if (this.currentDistortableOverlay.editing) {
+					this.currentDistortableOverlay.editing.disable();
+				}
+				this.map.removeLayer(this.currentDistortableOverlay);
+			} catch {
+				// Ignore cleanup errors
+			}
+			this.currentDistortableOverlay = null;
+		}
 
 		// Clean up image map manager
 		this.imageMapManager.destroy();

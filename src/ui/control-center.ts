@@ -1237,6 +1237,17 @@ export class ControlCenterModal extends Modal {
 			cls: 'crc-text-muted crc-mb-2'
 		});
 
+		// Step 5: Align map image (optional)
+		const mapStep5 = customMapsContent.createDiv({ cls: 'crc-guide-step' });
+		const mapBadge5 = mapStep5.createDiv({ cls: 'crc-guide-step__badge' });
+		mapBadge5.textContent = '5';
+		const mapContent5 = mapStep5.createDiv({ cls: 'crc-guide-step__content' });
+		mapContent5.createEl('h4', { text: 'Align the map image (optional)', cls: 'crc-mb-1' });
+		mapContent5.createEl('p', {
+			text: 'Click "Edit" in the toolbar to enter alignment mode. Drag corner handles to position, scale, rotate, or distort your map image to match coordinates. Save alignment to persist changes.',
+			cls: 'crc-text-muted crc-mb-2'
+		});
+
 		// Example map configuration
 		const mapExampleSection = customMapsContent.createDiv({ cls: 'crc-info-box crc-mt-3' });
 		mapExampleSection.createEl('strong', { text: 'Example map configuration:' });

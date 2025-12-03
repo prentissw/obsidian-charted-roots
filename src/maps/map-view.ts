@@ -5,7 +5,7 @@
  * birth/death locations and migration patterns.
  */
 
-import { ItemView, WorkspaceLeaf, Menu } from 'obsidian';
+import { ItemView, WorkspaceLeaf, Menu, Notice } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
 import { getLogger } from '../core/logging';
 import { MapController } from './map-controller';
@@ -76,6 +76,11 @@ export class MapView extends ItemView {
 	};
 	private animationInterval: number | null = null;
 	private currentMapData: MapData | null = null;
+
+	// Edit mode state
+	private editModeEnabled: boolean = false;
+	private editBannerEl: HTMLElement | null = null;
+	private editBtn: HTMLButtonElement | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: CanvasRootsPlugin) {
 		super(leaf);
@@ -293,6 +298,16 @@ export class MapView extends ItemView {
 
 		// Right section: Actions
 		const rightSection = this.toolbarEl.createDiv({ cls: 'cr-map-toolbar-right' });
+
+		// Edit mode button (for custom maps only)
+		this.editBtn = rightSection.createEl('button', {
+			cls: 'cr-map-btn cr-map-btn-edit',
+			attr: { 'aria-label': 'Edit map alignment' }
+		});
+		this.editBtn.createSpan({ text: 'Edit' });
+		this.editBtn.addEventListener('click', () => this.toggleEditMode());
+		// Initially disabled (enabled when custom map is selected)
+		this.editBtn.disabled = true;
 
 		// Split view button (for side-by-side comparison)
 		const splitBtn = rightSection.createEl('button', {
@@ -795,8 +810,30 @@ export class MapView extends ItemView {
 					this.mapSelectEl.value = mapId;
 				}
 
+				// Enable/disable edit button based on map type
+				if (this.editBtn) {
+					const canEdit = this.mapController?.canEnableEditMode() ?? false;
+					this.editBtn.disabled = !canEdit;
+				}
+
+				// If edit mode was enabled and we switched maps, disable it
+				if (this.editModeEnabled) {
+					void this.disableEditMode();
+				}
+
 				// Refresh data with new universe filter
 				void this.refreshData();
+			});
+
+			// Register edit mode change callback
+			this.mapController.onEditModeChange((enabled) => {
+				this.editModeEnabled = enabled;
+				this.updateEditUI();
+			});
+
+			// Register corners saved callback
+			this.mapController.onCornersSaved(() => {
+				new Notice('Map alignment saved to frontmatter');
 			});
 
 			// Load custom maps and populate dropdown
@@ -1062,6 +1099,176 @@ export class MapView extends ItemView {
 			heatMapRadius: 25,
 			customMapsFolder: this.plugin.settings.mapsFolder || 'Canvas Roots/Places/Maps'
 		};
+	}
+
+	// ========================================================================
+	// Edit Mode Methods
+	// ========================================================================
+
+	/**
+	 * Toggle edit mode for image alignment
+	 */
+	private async toggleEditMode(): Promise<void> {
+		if (!this.mapController) return;
+
+		if (this.editModeEnabled) {
+			await this.disableEditMode();
+		} else {
+			await this.enableEditMode();
+		}
+	}
+
+	/**
+	 * Enable edit mode
+	 */
+	private async enableEditMode(): Promise<void> {
+		if (!this.mapController) return;
+
+		const success = await this.mapController.enableEditMode();
+		if (success) {
+			this.editModeEnabled = true;
+			this.updateEditUI();
+			logger.info('edit-mode', 'Edit mode enabled');
+		}
+	}
+
+	/**
+	 * Disable edit mode
+	 */
+	private async disableEditMode(): Promise<void> {
+		if (!this.mapController) return;
+
+		await this.mapController.disableEditMode();
+		this.editModeEnabled = false;
+		this.updateEditUI();
+		logger.info('edit-mode', 'Edit mode disabled');
+	}
+
+	/**
+	 * Update the UI to reflect edit mode state
+	 */
+	private updateEditUI(): void {
+		// Update edit button appearance
+		if (this.editBtn) {
+			if (this.editModeEnabled) {
+				this.editBtn.addClass('active');
+				const span = this.editBtn.querySelector('span');
+				if (span) span.textContent = 'Exit edit';
+			} else {
+				this.editBtn.removeClass('active');
+				const span = this.editBtn.querySelector('span');
+				if (span) span.textContent = 'Edit';
+			}
+		}
+
+		// Show/hide edit banner
+		if (this.editModeEnabled) {
+			this.showEditBanner();
+		} else {
+			this.hideEditBanner();
+		}
+	}
+
+	/**
+	 * Show the edit mode banner with Save/Restore/Cancel buttons
+	 */
+	private showEditBanner(): void {
+		if (this.editBannerEl) {
+			logger.debug('edit-banner', 'Banner already showing');
+			return; // Already showing
+		}
+
+		// contentEl itself has the .cr-map-view class
+		const container = this.contentEl;
+		if (!container.hasClass('cr-map-view')) {
+			logger.warn('edit-banner', 'Container missing .cr-map-view class');
+			return;
+		}
+		logger.debug('edit-banner', 'Creating edit banner');
+
+		this.editBannerEl = document.createElement('div');
+		this.editBannerEl.className = 'cr-map-edit-banner';
+
+		// Banner text
+		const textEl = this.editBannerEl.createDiv({ cls: 'cr-map-edit-banner-text' });
+		textEl.innerHTML = '<strong>Edit mode:</strong> Drag corners to align the map image.';
+
+		// Button container
+		const btnContainer = this.editBannerEl.createDiv({ cls: 'cr-map-edit-controls' });
+
+		// Save button
+		const saveBtn = btnContainer.createEl('button', {
+			cls: 'cr-map-btn cr-map-btn-edit cr-map-btn-save',
+			text: 'Save alignment'
+		});
+		saveBtn.addEventListener('click', () => this.saveEditedCorners());
+
+		// Restore button (undo unsaved changes)
+		const restoreBtn = btnContainer.createEl('button', {
+			cls: 'cr-map-btn cr-map-btn-edit cr-map-btn-restore',
+			text: 'Undo changes'
+		});
+		restoreBtn.addEventListener('click', () => this.mapController?.restoreOverlay());
+
+		// Reset button (clear saved alignment)
+		const resetBtn = btnContainer.createEl('button', {
+			cls: 'cr-map-btn cr-map-btn-edit cr-map-btn-reset',
+			text: 'Reset to default'
+		});
+		resetBtn.addEventListener('click', () => this.resetAlignment());
+
+		// Cancel button
+		const cancelBtn = btnContainer.createEl('button', {
+			cls: 'cr-map-btn cr-map-btn-edit',
+			text: 'Cancel'
+		});
+		cancelBtn.addEventListener('click', () => void this.disableEditMode());
+
+		// Insert banner before the map container (after toolbar and time slider)
+		if (this.mapContainerEl) {
+			container.insertBefore(this.editBannerEl, this.mapContainerEl);
+		} else {
+			container.appendChild(this.editBannerEl);
+		}
+	}
+
+	/**
+	 * Hide the edit mode banner
+	 */
+	private hideEditBanner(): void {
+		if (this.editBannerEl) {
+			this.editBannerEl.remove();
+			this.editBannerEl = null;
+		}
+	}
+
+	/**
+	 * Save the edited corners to frontmatter
+	 */
+	private async saveEditedCorners(): Promise<void> {
+		if (!this.mapController) return;
+
+		const success = await this.mapController.saveEditedCorners();
+		if (success) {
+			new Notice('Map alignment saved');
+		} else {
+			new Notice('Failed to save map alignment');
+		}
+	}
+
+	/**
+	 * Reset alignment to default (clear saved corners)
+	 */
+	private async resetAlignment(): Promise<void> {
+		if (!this.mapController) return;
+
+		const success = await this.mapController.resetAlignment();
+		if (success) {
+			new Notice('Map alignment reset to default');
+			this.hideEditBanner();
+		} else {
+			new Notice('Failed to reset map alignment');
+		}
 	}
 
 	/**

@@ -1677,6 +1677,118 @@ Configure place features in Settings → Canvas Roots:
 - Define automatic category assignment based on folder path or collection
 - Example: Places in "Places/Historical" default to `historical` category
 
+### Map Image Alignment (Edit Mode)
+
+Custom map images often need adjustment to align properly with your coordinate system. The Map Image Alignment feature lets you interactively position, scale, rotate, and distort your map image to match geographic coordinates.
+
+#### When to Use Map Alignment
+
+- **Historical maps**: Old maps may have different projections or orientations than modern coordinates
+- **Fantasy/fictional maps**: Hand-drawn maps rarely align perfectly with a coordinate grid
+- **Scanned images**: Scanning can introduce skew or distortion
+- **Composite images**: Maps assembled from multiple sources may need adjustment
+
+#### Entering Edit Mode
+
+1. Open the **Map View** (from ribbon icon or right-click a map note)
+2. Select your custom map from the dropdown (not OpenStreetMap)
+3. Click the **Edit** button in the toolbar
+4. The edit banner appears with alignment controls
+
+#### Using the Corner Handles
+
+When edit mode is active, four corner handles appear around your map image:
+
+- **Drag any corner** to reposition that corner independently
+- **Drag opposite corners** in opposite directions to scale the image
+- **Drag adjacent corners** to rotate or skew the image
+- The image updates in real-time as you drag
+
+**Tip:** Start with small adjustments. It's easier to fine-tune alignment incrementally than to fix large distortions.
+
+#### Edit Banner Controls
+
+| Button | Function |
+|--------|----------|
+| **Save alignment** | Save current corner positions to the map note's frontmatter |
+| **Undo changes** | Revert to the last saved position (discards unsaved edits) |
+| **Reset to default** | Clear all saved alignment and return to default rectangular bounds |
+| **Cancel** | Exit edit mode without saving |
+
+#### How Alignment is Stored
+
+Corner positions are saved as flat properties in your map note's frontmatter:
+
+```yaml
+---
+type: map
+map_id: middle-earth
+name: Middle-earth
+image: assets/maps/middle-earth.jpg
+bounds:
+  north: 50
+  south: -50
+  west: -100
+  east: 100
+# Saved alignment corners
+corner_nw_lat: 48.5
+corner_nw_lng: -95.2
+corner_ne_lat: 49.1
+corner_ne_lng: -58.3
+corner_sw_lat: -45.8
+corner_sw_lng: -98.1
+corner_se_lat: -44.2
+corner_se_lng: -55.7
+---
+```
+
+When corner properties are present, the map loads with that alignment. When they're absent, the map displays with default rectangular bounds based on the `bounds` configuration.
+
+#### Working with Multiple Map Versions
+
+For complex alignment scenarios, consider maintaining multiple map notes:
+
+**Approach 1: Separate notes for different alignments**
+- `Middle-earth.md` — Original unaligned version (no corner properties)
+- `Middle-earth (Aligned).md` — Aligned version with saved corners
+
+Both can reference the same image file but have different frontmatter configurations.
+
+**Approach 2: Use Reset to default**
+- Make alignment changes and save them
+- If you need the original, click "Reset to default" to clear corners
+- Re-align as needed
+
+**Approach 3: Manual frontmatter editing**
+- Copy the corner properties to a backup location
+- Use "Reset to default" to clear
+- Paste properties back when needed
+
+#### Best Practices
+
+**Before aligning:**
+- Identify reference points on your map (cities, coastlines, rivers)
+- Know the approximate coordinates these points should have
+- Consider the map's projection (most hand-drawn maps assume flat projection)
+
+**During alignment:**
+- Start with rough positioning of one corner
+- Work around the map adjusting each corner
+- Use known reference points to verify alignment
+- Save frequently as you refine
+
+**After alignment:**
+- Test by adding place markers and verifying their positions
+- Consider exporting the aligned map configuration for backup
+- Document your reference points in the map note for future reference
+
+#### Limitations
+
+- Alignment is saved per map note, not per image file
+- Very large distortions may cause visual artifacts
+- The underlying coordinate system remains unchanged; only the image position changes
+- Alignment affects the Map View display only, not canvas generation
+
 ---
 
 ## Advanced Styling
