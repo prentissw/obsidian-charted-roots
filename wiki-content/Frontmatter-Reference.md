@@ -208,7 +208,7 @@ Canvas Roots can generate genealogical reference numbers:
 
 ## Place Note Properties
 
-> **Status:** Phase 1 implemented. See [geographic-features-plan.md](../architecture/geographic-features-plan.md) for future enhancements.
+> **Status:** Phase 1 implemented. See [geographic-features-plan.md](../docs/planning/geographic-features-plan.md) for future enhancements.
 
 ### Identity
 
@@ -579,5 +579,5 @@ for comparison with contemporary maps...
 
 ## See Also
 
-- [Geographic Features Plan](../architecture/geographic-features-plan.md) - Place notes design
+- [Geographic Features Plan](../docs/planning/geographic-features-plan.md) - Place notes design
 - [Coding Standards](../developer/coding-standards.md) - Property naming conventions

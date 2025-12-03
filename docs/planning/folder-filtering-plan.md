@@ -392,4 +392,4 @@ plugin.createFamilyGraphService(): FamilyGraphService
 ```
 
 ### Next Phase
-See `docs/architecture/import-cleanup-plan.md` for Phase 2: Staging Folder workflow
+See `import-cleanup-plan.md` for Phase 2: Staging Folder workflow
