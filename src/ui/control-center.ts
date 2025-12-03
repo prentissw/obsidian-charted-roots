@@ -994,11 +994,15 @@ export class ControlCenterModal extends Modal {
 
 	/**
 	 * Show Guide tab - Quick start and getting started information
+	 * Streamlined version with wiki links for detailed documentation
 	 */
 	private showGuideTab(): void {
 		const container = this.contentContainer;
+		const WIKI_BASE = 'https://github.com/banisterious/obsidian-canvas-roots/wiki';
 
-		// Welcome Section
+		// =========================================================================
+		// Card 1: Welcome & Quick Start
+		// =========================================================================
 		const welcomeCard = this.createCard({
 			title: 'Welcome to Canvas Roots',
 			icon: 'book-open'
@@ -1006,971 +1010,276 @@ export class ControlCenterModal extends Modal {
 		const welcomeContent = welcomeCard.querySelector('.crc-card__content') as HTMLElement;
 
 		welcomeContent.createEl('p', {
-			text: 'Canvas Roots automatically generates family trees on the Obsidian Canvas using specialized genealogical layout algorithms.',
+			text: 'Canvas Roots generates family trees on the Obsidian Canvas from your markdown notes. Get started in three steps:',
 			cls: 'crc-mb-3'
 		});
 
-		welcomeContent.createEl('p', {
-			text: 'This guide will help you get started quickly.',
-			cls: 'crc-text-muted'
+		const steps = [
+			{ number: '1', title: 'Enter your data', tab: 'import-export', desc: 'Import GEDCOM, use Bases, or create notes manually' },
+			{ number: '2', title: 'Generate the tree', tab: 'tree-generation', desc: 'Select a root person and generate' },
+			{ number: '3', title: 'Maintain the layout', tab: null, desc: 'Right-click canvas → Regenerate after edits' }
+		];
+
+		steps.forEach((step) => {
+			const stepEl = welcomeContent.createDiv({ cls: 'crc-guide-step' });
+			const badge = stepEl.createDiv({ cls: 'crc-guide-step__badge' });
+			badge.textContent = step.number;
+			const content = stepEl.createDiv({ cls: 'crc-guide-step__content' });
+			const titleEl = content.createEl('h4', { cls: 'crc-mb-1' });
+			if (step.tab) {
+				const link = titleEl.createEl('a', { text: step.title, cls: 'crc-link' });
+				link.addEventListener('click', (e) => { e.preventDefault(); this.switchTab(step.tab as string); });
+			} else {
+				titleEl.textContent = step.title;
+			}
+			content.createEl('p', { text: step.desc, cls: 'crc-text-muted' });
 		});
+
+		const wikiLink = welcomeContent.createEl('a', {
+			text: 'Read the full Getting Started guide →',
+			href: `${WIKI_BASE}/Getting-Started`,
+			cls: 'crc-link crc-mt-3 cr-inline-block'
+		});
+		wikiLink.setAttr('target', '_blank');
 
 		container.appendChild(welcomeCard);
 
-		// Quick Start Card
-		const quickStartCard = this.createCard({
-			title: 'Quick start',
-			icon: 'zap'
+		// =========================================================================
+		// Card 2: Essential Properties (Collapsible)
+		// =========================================================================
+		const propsCard = this.createCard({
+			title: 'Essential properties',
+			icon: 'file-text',
+			subtitle: 'YAML frontmatter fields for person, place, and map notes'
 		});
-		const quickStartContent = quickStartCard.querySelector('.crc-card__content') as HTMLElement;
+		const propsContent = propsCard.querySelector('.crc-card__content') as HTMLElement;
 
-		const steps = [
-			{
-				number: '1',
-				title: 'Enter your data',
-				description: 'Create person notes with YAML frontmatter, import a GEDCOM file, or use Obsidian Bases for bulk entry.',
-				action: 'Go to Import/Export tab →'
-			},
-			{
-				number: '2',
-				title: 'Generate the tree',
-				description: 'Select a root person and configure tree options (ancestors, descendants, or full family tree).',
-				action: 'Go to Tree Output tab →'
-			},
-			{
-				number: '3',
-				title: 'Maintain the layout',
-				description: 'After editing relationships or changing settings, right-click any canvas file and select "Regenerate canvas".',
-				action: null
-			}
-		];
-
-		steps.forEach((step, index) => {
-			const stepEl = quickStartContent.createDiv({ cls: 'crc-guide-step' });
-
-			// Step number badge
-			const badge = stepEl.createDiv({ cls: 'crc-guide-step__badge' });
-			badge.textContent = step.number;
-
-			// Step content
-			const content = stepEl.createDiv({ cls: 'crc-guide-step__content' });
-			content.createEl('h4', { text: step.title, cls: 'crc-mb-1' });
-			content.createEl('p', { text: step.description, cls: 'crc-text-muted crc-mb-2' });
-
-			if (step.action) {
-				const actionLink = content.createEl('a', {
-					text: step.action,
-					cls: 'crc-link'
-				});
-				actionLink.addEventListener('click', (e) => {
-					e.preventDefault();
-					if (index === 0) this.switchTab('import-export');
-					if (index === 1) this.switchTab('tree-generation');
-				});
-			}
+		// Person properties collapsible
+		this.createCollapsible(propsContent, 'Person notes', 'user', (body) => {
+			const list = body.createEl('ul', { cls: 'crc-field-list' });
+			[
+				{ name: 'cr_id', desc: 'Unique identifier', req: true },
+				{ name: 'name', desc: 'Full name', req: true },
+				{ name: 'father / mother', desc: 'Wikilinks to parents', req: false },
+				{ name: 'spouse', desc: 'Array of spouse wikilinks', req: false },
+				{ name: 'born / died', desc: 'Dates (YYYY-MM-DD)', req: false }
+			].forEach(p => {
+				const li = list.createEl('li');
+				const code = li.createEl('code', { text: p.name });
+				if (p.req) code.addClass('crc-field--required');
+				li.appendText(` - ${p.desc}`);
+			});
 		});
 
-		container.appendChild(quickStartCard);
-
-		// Essential Person Note Properties Card
-		const personPropsCard = this.createCard({
-			title: 'Essential person note properties',
-			icon: 'user'
-		});
-		const personPropsContent = personPropsCard.querySelector('.crc-card__content') as HTMLElement;
-
-		personPropsContent.createEl('p', {
-			text: 'Add these properties to your person notes (YAML frontmatter):',
-			cls: 'crc-mb-3'
-		});
-
-		const personPropsList = personPropsContent.createEl('ul', { cls: 'crc-field-list' });
-
-		const personProps = [
-			{ name: 'cr_id', description: 'Unique identifier (auto-generated or from GEDCOM UUID)', required: true },
-			{ name: 'name', description: 'Full name of the person', required: true },
-			{ name: 'sex', description: 'M (male), F (female), or U (unknown)', required: false },
-			{ name: 'father', description: 'Wikilink to father\'s note: [[John Smith]]', required: false },
-			{ name: 'mother', description: 'Wikilink to mother\'s note: [[Jane Doe]]', required: false },
-			{ name: 'spouse', description: 'Array of spouse wikilinks: [[[Mary Jones]]]', required: false },
-			{ name: 'born', description: 'Birth date (YYYY-MM-DD format preferred)', required: false },
-			{ name: 'died', description: 'Death date (YYYY-MM-DD format preferred)', required: false }
-		];
-
-		personProps.forEach(prop => {
-			const li = personPropsList.createEl('li');
-			const propName = li.createEl('code', { text: prop.name });
-			if (prop.required) {
-				propName.addClass('crc-field--required');
-			}
-			li.appendText(` - ${prop.description}`);
+		// Place properties collapsible
+		this.createCollapsible(propsContent, 'Place notes', 'map-pin', (body) => {
+			const list = body.createEl('ul', { cls: 'crc-field-list' });
+			[
+				{ name: 'type', desc: 'Must be "place"', req: true },
+				{ name: 'cr_id', desc: 'Unique identifier', req: true },
+				{ name: 'name', desc: 'Place name', req: true },
+				{ name: 'coordinates', desc: 'lat/long for map display', req: false },
+				{ name: 'parent_place', desc: 'Wikilink to parent place', req: false }
+			].forEach(p => {
+				const li = list.createEl('li');
+				const code = li.createEl('code', { text: p.name });
+				if (p.req) code.addClass('crc-field--required');
+				li.appendText(` - ${p.desc}`);
+			});
 		});
 
-		container.appendChild(personPropsCard);
-
-		// Essential Place Note Properties Card
-		const placePropsCard = this.createCard({
-			title: 'Essential place note properties',
-			icon: 'map-pin'
-		});
-		const placePropsContent = placePropsCard.querySelector('.crc-card__content') as HTMLElement;
-
-		placePropsContent.createEl('p', {
-			text: 'Add these properties to your place notes (YAML frontmatter):',
-			cls: 'crc-mb-3'
-		});
-
-		const placePropsList = placePropsContent.createEl('ul', { cls: 'crc-field-list' });
-
-		const placeProps = [
-			{ name: 'type', description: 'Must be "place" to identify as a place note', required: true },
-			{ name: 'cr_id', description: 'Unique identifier for the place', required: true },
-			{ name: 'name', description: 'Primary name of the place', required: true },
-			{ name: 'place_type', description: 'Type: city, state, country, village, etc.', required: false },
-			{ name: 'place_category', description: 'Category: real, historical, fictional, etc.', required: false },
-			{ name: 'parent_place', description: 'Wikilink to parent place: [[England]]', required: false },
-			{ name: 'coordinates', description: 'lat/long for real-world places', required: false }
-		];
-
-		placeProps.forEach(prop => {
-			const li = placePropsList.createEl('li');
-			const propName = li.createEl('code', { text: prop.name });
-			if (prop.required) {
-				propName.addClass('crc-field--required');
-			}
-			li.appendText(` - ${prop.description}`);
+		// Map properties collapsible
+		this.createCollapsible(propsContent, 'Custom map notes', 'globe', (body) => {
+			const list = body.createEl('ul', { cls: 'crc-field-list' });
+			[
+				{ name: 'type', desc: 'Must be "map"', req: true },
+				{ name: 'map_id', desc: 'Unique map identifier', req: true },
+				{ name: 'universe', desc: 'Universe for filtering places', req: true },
+				{ name: 'image', desc: 'Path to map image', req: true },
+				{ name: 'bounds', desc: 'Coordinate bounds (north/south/east/west)', req: true }
+			].forEach(p => {
+				const li = list.createEl('li');
+				const code = li.createEl('code', { text: p.name });
+				if (p.req) code.addClass('crc-field--required');
+				li.appendText(` - ${p.desc}`);
+			});
 		});
 
-		container.appendChild(placePropsCard);
-
-		// Essential Map Note Properties Card
-		const mapPropsCard = this.createCard({
-			title: 'Essential map note properties',
-			icon: 'globe'
-		});
-		const mapPropsContent = mapPropsCard.querySelector('.crc-card__content') as HTMLElement;
-
-		mapPropsContent.createEl('p', {
-			text: 'Add these properties to map configuration notes (YAML frontmatter):',
-			cls: 'crc-mb-3'
-		});
-
-		const mapPropsList = mapPropsContent.createEl('ul', { cls: 'crc-field-list' });
-
-		const mapProps = [
-			{ name: 'type', description: 'Must be "map" to identify as a map configuration', required: true },
-			{ name: 'map_id', description: 'Unique identifier for this map (e.g., "middle-earth")', required: true },
-			{ name: 'name', description: 'Display name for the map', required: true },
-			{ name: 'universe', description: 'Universe this map belongs to (for filtering places)', required: true },
-			{ name: 'image', description: 'Path to the map image in your vault', required: true },
-			{ name: 'bounds', description: 'Coordinate bounds: north, south, east, west values', required: true },
-			{ name: 'center', description: 'Default center point: lat, lng', required: false },
-			{ name: 'default_zoom', description: 'Initial zoom level (default: 2)', required: false },
-			{ name: 'min_zoom', description: 'Minimum allowed zoom level', required: false },
-			{ name: 'max_zoom', description: 'Maximum allowed zoom level', required: false }
-		];
-
-		mapProps.forEach(prop => {
-			const li = mapPropsList.createEl('li');
-			const propName = li.createEl('code', { text: prop.name });
-			if (prop.required) {
-				propName.addClass('crc-field--required');
-			}
-			li.appendText(` - ${prop.description}`);
-		});
-
-		container.appendChild(mapPropsCard);
-
-		// Custom Maps for Fictional Worlds Card
-		const customMapsCard = this.createCard({
-			title: 'Custom maps for fictional worlds',
-			icon: 'globe'
-		});
-		const customMapsContent = customMapsCard.querySelector('.crc-card__content') as HTMLElement;
-
-		customMapsContent.createEl('p', {
-			text: 'Display fictional or historical places on custom map images using the Map View.',
-			cls: 'crc-mb-3'
-		});
-
-		// Step 1: Create map configuration
-		const mapStep1 = customMapsContent.createDiv({ cls: 'crc-guide-step' });
-		const mapBadge1 = mapStep1.createDiv({ cls: 'crc-guide-step__badge' });
-		mapBadge1.textContent = '1';
-		const mapContent1 = mapStep1.createDiv({ cls: 'crc-guide-step__content' });
-		mapContent1.createEl('h4', { text: 'Create a map configuration note', cls: 'crc-mb-1' });
-		mapContent1.createEl('p', {
-			text: 'Create a markdown note with type: map in the frontmatter. Include map_id, name, universe, image path, and coordinate bounds.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		// Step 2: Add place notes
-		const mapStep2 = customMapsContent.createDiv({ cls: 'crc-guide-step' });
-		const mapBadge2 = mapStep2.createDiv({ cls: 'crc-guide-step__badge' });
-		mapBadge2.textContent = '2';
-		const mapContent2 = mapStep2.createDiv({ cls: 'crc-guide-step__content' });
-		mapContent2.createEl('h4', { text: 'Create place notes with coordinates', cls: 'crc-mb-1' });
-		mapContent2.createEl('p', {
-			text: 'Add place notes with universe (matching the map) and coordinates that fit within the map bounds.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		// Step 3: Link people
-		const mapStep3 = customMapsContent.createDiv({ cls: 'crc-guide-step' });
-		const mapBadge3 = mapStep3.createDiv({ cls: 'crc-guide-step__badge' });
-		mapBadge3.textContent = '3';
-		const mapContent3 = mapStep3.createDiv({ cls: 'crc-guide-step__content' });
-		mapContent3.createEl('h4', { text: 'Link people to places', cls: 'crc-mb-1' });
-		mapContent3.createEl('p', {
-			text: 'Use birth_place, death_place, and burial_place to connect person notes to place notes via wikilinks.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		// Step 4: View on map
-		const mapStep4 = customMapsContent.createDiv({ cls: 'crc-guide-step' });
-		const mapBadge4 = mapStep4.createDiv({ cls: 'crc-guide-step__badge' });
-		mapBadge4.textContent = '4';
-		const mapContent4 = mapStep4.createDiv({ cls: 'crc-guide-step__content' });
-		mapContent4.createEl('h4', { text: 'View on the map', cls: 'crc-mb-1' });
-		mapContent4.createEl('p', {
-			text: 'Open the Map View from the ribbon icon or right-click a map note. Select your custom map from the dropdown.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		// Step 5: Align map image (optional)
-		const mapStep5 = customMapsContent.createDiv({ cls: 'crc-guide-step' });
-		const mapBadge5 = mapStep5.createDiv({ cls: 'crc-guide-step__badge' });
-		mapBadge5.textContent = '5';
-		const mapContent5 = mapStep5.createDiv({ cls: 'crc-guide-step__content' });
-		mapContent5.createEl('h4', { text: 'Align the map image (optional)', cls: 'crc-mb-1' });
-		mapContent5.createEl('p', {
-			text: 'Click "Edit" in the toolbar to enter alignment mode. Drag corner handles to position, scale, rotate, or distort your map image to match coordinates. Save alignment to persist changes.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		// Example map configuration
-		const mapExampleSection = customMapsContent.createDiv({ cls: 'crc-info-box crc-mt-3' });
-		mapExampleSection.createEl('strong', { text: 'Example map configuration:' });
-		const mapExample = mapExampleSection.createEl('pre', { cls: 'crc-mt-2' });
-		mapExample.style.fontSize = '0.85em';
-		mapExample.style.whiteSpace = 'pre-wrap';
-		mapExample.textContent = `---
-type: map
-map_id: middle-earth
-name: Middle-earth
-universe: tolkien
-image: assets/maps/middle-earth.jpg
-bounds:
-  north: 50
-  south: -50
-  west: -100
-  east: 100
----`;
-
-		const mapViewLink = customMapsContent.createEl('a', {
-			text: 'Open Map View →',
+		const schemaLink = propsContent.createEl('a', {
+			text: 'Full Frontmatter Reference →',
+			href: `${WIKI_BASE}/Frontmatter-Reference`,
 			cls: 'crc-link crc-mt-3 cr-inline-block'
 		});
-		mapViewLink.addEventListener('click', async (e) => {
-			e.preventDefault();
-			await (this.plugin as { activateMapView: () => Promise<void> }).activateMapView();
+		schemaLink.setAttr('target', '_blank');
+
+		container.appendChild(propsCard);
+
+		// =========================================================================
+		// Card 3: Key Concepts
+		// =========================================================================
+		const conceptsCard = this.createCard({
+			title: 'Key concepts',
+			icon: 'lightbulb',
+			subtitle: 'Important features to understand'
+		});
+		const conceptsContent = conceptsCard.querySelector('.crc-card__content') as HTMLElement;
+
+		const concepts = [
+			{
+				title: 'Groups vs Collections',
+				desc: 'Groups are auto-detected connected families. Collections are user-defined categories for organizing people across families.',
+				wiki: 'Data-Management#groups-and-collections'
+			},
+			{
+				title: 'Bidirectional sync',
+				desc: 'When you set someone as a parent, the reciprocal child link is automatically created. Works for all relationships.',
+				wiki: 'Data-Management#bidirectional-sync'
+			},
+			{
+				title: 'Root people',
+				desc: 'Mark key individuals as "root persons" to track ancestors and descendants. Use for tree generation starting points.',
+				wiki: 'Advanced-Features#root-people'
+			},
+			{
+				title: 'Layout algorithms',
+				desc: 'Choose Standard, Compact, Timeline, or Hourglass layouts depending on your tree size and visualization needs.',
+				wiki: 'Tree-Generation#layout-algorithms'
+			}
+		];
+
+		concepts.forEach(c => {
+			const item = conceptsContent.createDiv({ cls: 'crc-mb-3' });
+			item.createEl('strong', { text: c.title });
+			item.createEl('p', { text: c.desc, cls: 'crc-text-muted crc-mb-1' });
+			const link = item.createEl('a', { text: 'Learn more →', href: `${WIKI_BASE}/${c.wiki}`, cls: 'crc-link' });
+			link.setAttr('target', '_blank');
 		});
 
-		container.appendChild(customMapsCard);
-
-		// Link to full schema reference
-		const schemaLinkCard = this.createCard({
-			title: 'Schema reference',
-			icon: 'file-text'
-		});
-		const schemaLinkContent = schemaLinkCard.querySelector('.crc-card__content') as HTMLElement;
-		schemaLinkContent.createEl('p', {
-			cls: 'crc-text-muted'
-		}).innerHTML = 'For the complete property reference (including spouse metadata, reference numbering, and place hierarchies), see the <a href="https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/reference/frontmatter-schema.md" class="crc-link" target="_blank">Frontmatter Schema Reference</a>.';
-
-		container.appendChild(schemaLinkCard);
-
-		// Groups and Collections Card
-		const organizationCard = this.createCard({
-			title: 'Understanding groups and collections',
-			icon: 'folder'
-		});
-		const organizationContent = organizationCard.querySelector('.crc-card__content') as HTMLElement;
-
-		organizationContent.createEl('p', {
-			text: 'Canvas Roots offers two complementary ways to organize your people:',
-			cls: 'crc-mb-3'
-		});
-
-		// Group Names section
-		const groupSection = organizationContent.createDiv({ cls: 'crc-mb-4' });
-		const groupHeader = groupSection.createDiv({ cls: 'crc-flex crc-items-center crc-mb-2' });
-		const groupIcon = groupHeader.createDiv({ cls: 'crc-mr-2' });
-		setLucideIcon(groupIcon, 'users', 18);
-		groupHeader.createEl('h4', { text: 'Group names', cls: 'crc-mb-0' });
-
-		groupSection.createEl('p', {
-			text: 'Names for auto-detected connected groups (families, factions, organizations).',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		const groupDetails = groupSection.createEl('ul', { cls: 'crc-mb-2' });
-		groupDetails.createEl('li', { text: 'Set via: Right-click person note → "Set group name"' });
-		groupDetails.createEl('li', { text: 'Property: group_name in YAML frontmatter' });
-		groupDetails.createEl('li', { text: 'Auto-detected: based on relationship connections' });
-		groupDetails.createEl('li', { text: 'Examples: "Smith Family", "House Stark", "The Council"' });
-
-		groupSection.createEl('p', {
-			text: 'When to use: Name each connected family/faction/organization for clear canvas filenames.',
-			cls: 'crc-text-muted crc-font-italic'
-		});
-
-		// Collections section
-		const collectionSection = organizationContent.createDiv({ cls: 'crc-mb-4' });
-		const collectionHeader = collectionSection.createDiv({ cls: 'crc-flex crc-items-center crc-mb-2' });
-		const collectionIcon = collectionHeader.createDiv({ cls: 'crc-mr-2' });
-		setLucideIcon(collectionIcon, 'folder', 18);
-		collectionHeader.createEl('h4', { text: 'Collections', cls: 'crc-mb-0' });
-
-		collectionSection.createEl('p', {
-			text: 'User-defined groups for organizing people across family boundaries.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		const collectionDetails = collectionSection.createEl('ul', { cls: 'crc-mb-2' });
-		collectionDetails.createEl('li', { text: 'Set via: Right-click person note → "Add to collection"' });
-		collectionDetails.createEl('li', { text: 'Property: collection in YAML frontmatter' });
-		collectionDetails.createEl('li', { text: 'Manual assignment: You decide who belongs' });
-		collectionDetails.createEl('li', { text: 'Examples: "Paternal Line", "First Generation", "Main Characters"' });
-
-		collectionSection.createEl('p', {
-			text: 'When to use: Organize by lineage, time period, story role, or research focus.',
-			cls: 'crc-text-muted crc-font-italic'
-		});
-
-		// Quick comparison
-		const comparisonSection = organizationContent.createDiv({ cls: 'crc-info-box' });
-		comparisonSection.createEl('strong', { text: 'Quick comparison:' });
-		const comparisonList = comparisonSection.createEl('ul', { cls: 'crc-mt-2' });
-		comparisonList.createEl('li', { text: 'Group name = "What is this connected group called?" (auto-detected)' });
-		comparisonList.createEl('li', { text: 'Collection = "How do I want to organize people?" (manual)' });
-
-		const actionLink = organizationContent.createEl('a', {
-			text: 'Browse your collections →',
-			cls: 'crc-link crc-mt-3 cr-inline-block'
-		});
-		actionLink.addEventListener('click', (e) => {
-			e.preventDefault();
-			this.switchTab('collections');
-		});
-
-		container.appendChild(organizationCard);
-
-		// Root Person Card
-		const rootPersonCard = this.createCard({
-			title: 'Marking root people',
-			icon: 'crown'
-		});
-		const rootPersonContent = rootPersonCard.querySelector('.crc-card__content') as HTMLElement;
-
-		rootPersonContent.createEl('p', {
-			text: 'Mark specific people as "root persons" to track ancestors and descendants in your family tree.',
-			cls: 'crc-mb-3'
-		});
-
-		// What is a root person
-		const whatSection = rootPersonContent.createDiv({ cls: 'crc-mb-4' });
-		whatSection.createEl('h4', { text: 'What is a root person?', cls: 'crc-mb-2' });
-		whatSection.createEl('p', {
-			text: 'A root person is an anchor point in your family tree - typically the person whose ancestors and descendants you want to explore. In genealogy research, this is often yourself, a specific ancestor, or a person of interest.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		// How to mark
-		const howSection = rootPersonContent.createDiv({ cls: 'crc-mb-4' });
-		howSection.createEl('h4', { text: 'How to mark someone as a root person', cls: 'crc-mb-2' });
-
-		const howDetails = howSection.createEl('ul', { cls: 'crc-mb-2' });
-		howDetails.createEl('li', { text: 'Right-click a person note in the file explorer' });
-		howDetails.createEl('li', { text: 'Select "Canvas Roots" → "Mark as root person"' });
-		howDetails.createEl('li', { text: 'To unmark, use the same menu and select "Unmark as root person"' });
-		howDetails.createEl('li', { text: 'Property: root_person: true in YAML frontmatter' });
-
-		// When to use
-		const whenSection = rootPersonContent.createDiv({ cls: 'crc-mb-4' });
-		whenSection.createEl('h4', { text: 'When to use root person marking', cls: 'crc-mb-2' });
-
-		const whenDetails = whenSection.createEl('ul', { cls: 'crc-mb-2' });
-		whenDetails.createEl('li', { text: 'Track your direct lineage from multiple ancestral starting points' });
-		whenDetails.createEl('li', { text: 'Identify key figures in world-building projects (founders, monarchs)' });
-		whenDetails.createEl('li', { text: 'Use Obsidian Bases views to filter and analyze root generations' });
-		whenDetails.createEl('li', { text: 'Focus research on specific lineages or family branches' });
-
-		// Bases integration
-		const basesSection = rootPersonContent.createDiv({ cls: 'crc-info-box' });
-		basesSection.createEl('strong', { text: 'Obsidian Bases integration:' });
-		basesSection.createEl('p', {
-			text: 'The Canvas Roots base template includes a "Root Generation" view that automatically shows all people marked as root persons. This helps you track your starting points and see the beginning of each lineage at a glance.',
-			cls: 'crc-mt-2'
-		});
-
-		container.appendChild(rootPersonCard);
-
-		// Layout Algorithms Card
-		const layoutCard = this.createCard({
-			title: 'Layout algorithms',
-			icon: 'layout'
-		});
-		const layoutContent = layoutCard.querySelector('.crc-card__content') as HTMLElement;
-
-		layoutContent.createEl('p', {
-			text: 'Canvas Roots offers multiple layout algorithms to visualize your family tree in different ways.',
-			cls: 'crc-mb-3'
-		});
-
-		// Standard Layout
-		const standardSection = layoutContent.createDiv({ cls: 'crc-mb-4' });
-		standardSection.createEl('h4', { text: 'Standard', cls: 'crc-mb-2' });
-		standardSection.createEl('p', {
-			text: 'The default family-chart layout with proper spouse handling and hierarchical positioning.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		// Compact Layout
-		const compactSection = layoutContent.createDiv({ cls: 'crc-mb-4' });
-		compactSection.createEl('h4', { text: 'Compact', cls: 'crc-mb-2' });
-		compactSection.createEl('p', {
-			text: '50% tighter spacing (both horizontal and vertical) - ideal for large family trees.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-		const compactDetails = compactSection.createEl('ul');
-		compactDetails.createEl('li', { text: 'Same layout algorithm as Standard' });
-		compactDetails.createEl('li', { text: 'Reduces canvas size for better overview' });
-		compactDetails.createEl('li', { text: 'Best for trees with 50+ people' });
-
-		// Timeline Layout
-		const timelineSection = layoutContent.createDiv({ cls: 'crc-mb-4' });
-		timelineSection.createEl('h4', { text: 'Timeline', cls: 'crc-mb-2' });
-		timelineSection.createEl('p', {
-			text: 'Positions people chronologically by birth year, showing which family members were alive during the same time period.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-		const timelineDetails = timelineSection.createEl('ul');
-		timelineDetails.createEl('li', { text: 'X-axis: Birth year (chronological)' });
-		timelineDetails.createEl('li', { text: 'Y-axis: Generation number' });
-		timelineDetails.createEl('li', { text: 'Estimates positions for missing birth dates' });
-		timelineDetails.createEl('li', { text: 'Falls back to generation layout if no dates available' });
-
-		// Hourglass Layout
-		const hourglassSection = layoutContent.createDiv({ cls: 'crc-mb-4' });
-		hourglassSection.createEl('h4', { text: 'Hourglass', cls: 'crc-mb-2' });
-		hourglassSection.createEl('p', {
-			text: 'Focuses on a single person\'s complete lineage, with ancestors above and descendants below.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-		const hourglassDetails = hourglassSection.createEl('ul');
-		hourglassDetails.createEl('li', { text: 'Root person centered at Y=0' });
-		hourglassDetails.createEl('li', { text: 'Ancestors positioned above (negative Y)' });
-		hourglassDetails.createEl('li', { text: 'Descendants positioned below (positive Y)' });
-		hourglassDetails.createEl('li', { text: 'Each generation horizontally centered' });
-
-		// How to Select
-		const selectSection = layoutContent.createDiv({ cls: 'crc-info-box' });
-		selectSection.createEl('strong', { text: 'How to select a layout:' });
-		selectSection.createEl('p', {
-			text: 'In the Tree Output tab, use the "Layout algorithm" dropdown to choose your preferred layout. Canvas filenames will automatically include the layout type (e.g., "Family Tree - John Smith (timeline).canvas").',
-			cls: 'crc-mt-2'
-		});
-
-		container.appendChild(layoutCard);
-
-		// Advanced Collections Features Card
-		const advancedCollectionsCard = this.createCard({
-			title: 'Advanced collections features',
-			icon: 'git-branch'
-		});
-		const advancedCollectionsContent = advancedCollectionsCard.querySelector('.crc-card__content') as HTMLElement;
-
-		advancedCollectionsContent.createEl('p', {
-			text: 'Canvas Roots includes powerful features for working with multiple collections:',
-			cls: 'crc-mb-3'
-		});
-
-		// Collection Color Scheme
-		const colorSection = advancedCollectionsContent.createDiv({ cls: 'crc-mb-4' });
-		colorSection.createEl('h4', { text: 'Collection color scheme', cls: 'crc-mb-2' });
-		colorSection.createEl('p', {
-			text: 'Color nodes by collection instead of gender or generation. Each collection gets a consistent color based on its name.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		const colorDetails = colorSection.createEl('ul', { cls: 'crc-mb-2' });
-		colorDetails.createEl('li', { text: 'Enable in Canvas Settings → Node coloring → Collection' });
-		colorDetails.createEl('li', { text: 'Same collection = same color across all canvases' });
-		colorDetails.createEl('li', { text: 'People without collections appear gray' });
-		colorDetails.createEl('li', { text: 'Perfect for multi-collection canvases' });
-
-		// Collection Overview Canvas
-		const overviewSection = advancedCollectionsContent.createDiv({ cls: 'crc-mb-4' });
-		overviewSection.createEl('h4', { text: 'Collection overview canvas', cls: 'crc-mb-2' });
-		overviewSection.createEl('p', {
-			text: 'Generate a master canvas showing all your collections and how they connect.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		const overviewDetails = overviewSection.createEl('ul', { cls: 'crc-mb-2' });
-		overviewDetails.createEl('li', { text: 'Shows all detected families and user collections' });
-		overviewDetails.createEl('li', { text: 'Displays connection lines between related collections' });
-		overviewDetails.createEl('li', { text: 'Includes statistics (person count, representative)' });
-		overviewDetails.createEl('li', { text: 'Generate from Collections tab → "Generate overview"' });
-
-		// Collection Filtering
-		const filterSection = advancedCollectionsContent.createDiv({ cls: 'crc-mb-4' });
-		filterSection.createEl('h4', { text: 'Collection filtering', cls: 'crc-mb-2' });
-		filterSection.createEl('p', {
-			text: 'Generate trees showing only people from specific collections.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		const filterDetails = filterSection.createEl('ul');
-		filterDetails.createEl('li', { text: 'Available in Tree Output tab' });
-		filterDetails.createEl('li', { text: 'Works with all tree types (ancestors, descendants, full)' });
-		filterDetails.createEl('li', { text: 'Filter by detected family groups or user collections' });
-		filterDetails.createEl('li', { text: 'Perfect for focusing on specific lineages or story arcs' });
-
-		container.appendChild(advancedCollectionsCard);
-
-		// Per-Canvas Style Settings Card
-		const styleSettingsCard = this.createCard({
-			title: 'Per-canvas style customization',
-			icon: 'layout'
-		});
-		const styleSettingsContent = styleSettingsCard.querySelector('.crc-card__content') as HTMLElement;
-
-		styleSettingsContent.createEl('p', {
-			text: 'Customize the appearance of individual canvases with style overrides that take precedence over global settings.',
-			cls: 'crc-mb-3'
-		});
-
-		// During Tree Generation
-		const duringGenSection = styleSettingsContent.createDiv({ cls: 'crc-mb-4' });
-		duringGenSection.createEl('h4', { text: 'Setting styles during tree generation', cls: 'crc-mb-2' });
-		duringGenSection.createEl('p', {
-			text: 'When generating a new tree, you can optionally customize its styles in the Tree Output tab.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		const duringGenDetails = duringGenSection.createEl('ul', { cls: 'crc-mb-2' });
-		duringGenDetails.createEl('li', { text: 'Look for the "Style customization (optional)" card' });
-		duringGenDetails.createEl('li', { text: 'Toggle individual style options to enable overrides' });
-		duringGenDetails.createEl('li', { text: 'Disabled options will use global plugin settings' });
-		duringGenDetails.createEl('li', { text: 'Style overrides are saved in canvas metadata' });
-
-		// After Creation
-		const afterCreationSection = styleSettingsContent.createDiv({ cls: 'crc-mb-4' });
-		afterCreationSection.createEl('h4', { text: 'Editing styles after creation', cls: 'crc-mb-2' });
-		afterCreationSection.createEl('p', {
-			text: 'You can customize the styles of any existing canvas using the context menu.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		const afterCreationDetails = afterCreationSection.createEl('ul', { cls: 'crc-mb-2' });
-		afterCreationDetails.createEl('li', { text: 'Right-click any canvas file in the file explorer' });
-		afterCreationDetails.createEl('li', { text: 'Select "Canvas Roots" → "Customize canvas styles"' });
-		afterCreationDetails.createEl('li', { text: 'Choose "(Use global setting)" to clear an override' });
-		afterCreationDetails.createEl('li', { text: 'Click "Save styles" to apply changes' });
-		afterCreationDetails.createEl('li', { text: 'Regenerate the canvas to see the updated styles' });
-
-		// Available Style Options
-		const optionsSection = styleSettingsContent.createDiv({ cls: 'crc-mb-4' });
-		optionsSection.createEl('h4', { text: 'Customizable style options', cls: 'crc-mb-2' });
-
-		const optionsList = optionsSection.createEl('ul');
-		optionsList.createEl('li', { text: 'Node coloring: gender, generation, collection, or monochrome' });
-		optionsList.createEl('li', { text: 'Parent-child arrows: directed, bidirectional, or undirected' });
-		optionsList.createEl('li', { text: 'Spouse arrows: directed, bidirectional, or undirected' });
-		optionsList.createEl('li', { text: 'Parent-child edge color: 6 colors or theme default' });
-		optionsList.createEl('li', { text: 'Spouse edge color: 6 colors or theme default' });
-		optionsList.createEl('li', { text: 'Show spouse edges: enable or disable marriage relationship edges' });
-		optionsList.createEl('li', { text: 'Spouse edge labels: none, date-only, date-location, or full' });
-
-		// Use Case Example
-		const useCaseSection = styleSettingsContent.createDiv({ cls: 'crc-info-box' });
-		useCaseSection.createEl('strong', { text: 'Example use case:' });
-		useCaseSection.createEl('p', {
-			text: 'Use collection-based coloring for your main family tree to see lineages at a glance, but use generation-based coloring for ancestor charts to emphasize historical depth. Each canvas maintains its own style while sharing the same global settings as defaults.',
-			cls: 'crc-mt-2'
-		});
-
-		container.appendChild(styleSettingsCard);
-
-		// GEDCOM Export Card
-		const gedcomExportCard = this.createCard({
-			title: 'GEDCOM export',
-			icon: 'download'
-		});
-		const gedcomExportContent = gedcomExportCard.querySelector('.crc-card__content') as HTMLElement;
-
-		gedcomExportContent.createEl('p', {
-			text: 'Export your family tree data to GEDCOM 5.5.1 format for sharing with other genealogy software or creating backups.',
-			cls: 'crc-mb-3'
-		});
-
-		// Export Methods
-		const exportMethodsSection = gedcomExportContent.createDiv({ cls: 'crc-mb-4' });
-		exportMethodsSection.createEl('h4', { text: 'How to export', cls: 'crc-mb-2' });
-
-		const exportMethods = exportMethodsSection.createEl('ul', { cls: 'crc-mb-2' });
-		exportMethods.createEl('li', { text: 'Import/Export tab: Configure export options and export all people or a specific collection' });
-		exportMethods.createEl('li', { text: 'Folder context menu: Right-click any folder → "Export GEDCOM from this folder"' });
-
-		// Export Features
-		const featuresSection = gedcomExportContent.createDiv({ cls: 'crc-mb-4' });
-		featuresSection.createEl('h4', { text: 'Export features', cls: 'crc-mb-2' });
-
-		const features = featuresSection.createEl('ul', { cls: 'crc-mb-2' });
-		features.createEl('li', { text: 'GEDCOM 5.5.1 standard format for maximum compatibility' });
-		features.createEl('li', { text: 'UUID preservation using custom _UID tags' });
-		features.createEl('li', { text: 'Collection code preservation for round-trip imports' });
-		features.createEl('li', { text: 'Marriage metadata (dates, locations, status)' });
-		features.createEl('li', { text: 'Collection filtering to export specific family groups' });
-		features.createEl('li', { text: 'Automatic sex inference from relationships' });
-
-		// Use Cases
-		const exportUseCaseSection = gedcomExportContent.createDiv({ cls: 'crc-info-box' });
-		exportUseCaseSection.createEl('strong', { text: 'Common use cases:' });
-		const useCases = exportUseCaseSection.createEl('ul', { cls: 'crc-mt-2' });
-		useCases.createEl('li', { text: 'Share your research with family members using other genealogy software' });
-		useCases.createEl('li', { text: 'Create backups of your family tree data' });
-		useCases.createEl('li', { text: 'Export specific collections for collaborative research' });
-		useCases.createEl('li', { text: 'Migrate data to other genealogy platforms' });
-
-		container.appendChild(gedcomExportCard);
-
-		// Import Formats Card
-		const importFormatsCard = this.createCard({
-			title: 'Supported import formats',
-			icon: 'upload'
-		});
-		const importFormatsContent = importFormatsCard.querySelector('.crc-card__content') as HTMLElement;
-
-		importFormatsContent.createEl('p', {
-			text: 'Canvas Roots supports multiple genealogical data formats for importing family trees.',
-			cls: 'crc-mb-3'
-		});
-
-		// GEDCOM 5.5.1
-		const gedcom551Section = importFormatsContent.createDiv({ cls: 'crc-mb-4' });
-		gedcom551Section.createEl('h4', { text: 'GEDCOM 5.5.1', cls: 'crc-mb-2' });
-		gedcom551Section.createEl('p', {
-			text: 'The standard genealogy file format supported by most family tree software including Ancestry, FamilySearch, and Family Tree Maker.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-		const gedcom551Details = gedcom551Section.createEl('ul');
-		gedcom551Details.createEl('li', { text: 'File extension: .ged, .gedcom' });
-		gedcom551Details.createEl('li', { text: 'Full round-trip support (import and export)' });
-
-		// GEDCOM X
-		const gedcomXSection = importFormatsContent.createDiv({ cls: 'crc-mb-4' });
-		gedcomXSection.createEl('h4', { text: 'GEDCOM X (JSON)', cls: 'crc-mb-2' });
-		gedcomXSection.createEl('p', {
-			text: 'FamilySearch\'s modern JSON-based genealogical data format. More structured than traditional GEDCOM.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-		const gedcomXDetails = gedcomXSection.createEl('ul');
-		gedcomXDetails.createEl('li', { text: 'File extension: .json, .gedx' });
-		gedcomXDetails.createEl('li', { text: 'Import only (export planned for future release)' });
-
-		// Gramps XML
-		const grampsSection = importFormatsContent.createDiv({ cls: 'crc-mb-4' });
-		grampsSection.createEl('h4', { text: 'Gramps XML', cls: 'crc-mb-2' });
-		grampsSection.createEl('p', {
-			text: 'Native format from Gramps, the popular open-source genealogy software.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-		const grampsDetails = grampsSection.createEl('ul');
-		grampsDetails.createEl('li', { text: 'File extension: .gramps, .xml' });
-		grampsDetails.createEl('li', { text: 'Import only (export planned for future release)' });
-
-		// CSV
-		const csvSection = importFormatsContent.createDiv({ cls: 'crc-mb-4' });
-		csvSection.createEl('h4', { text: 'CSV/Spreadsheet', cls: 'crc-mb-2' });
-		csvSection.createEl('p', {
-			text: 'Comma-separated values for spreadsheet workflows. Auto-detects common column names.',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-		const csvDetails = csvSection.createEl('ul');
-		csvDetails.createEl('li', { text: 'File extension: .csv, .tsv' });
-		csvDetails.createEl('li', { text: 'Full round-trip support (import and export)' });
-
-		// How to Import
-		const importHowSection = importFormatsContent.createDiv({ cls: 'crc-info-box' });
-		importHowSection.createEl('strong', { text: 'How to import:' });
-		importHowSection.createEl('p', {
-			text: 'Go to the Import/Export tab, select your format from the dropdown, and choose Import. All formats support the staging folder workflow for safe import processing.',
-			cls: 'crc-mt-2'
-		});
-
-		container.appendChild(importFormatsCard);
-
-		// Bidirectional Relationship Sync Card
-		const bidirectionalSyncCard = this.createCard({
-			title: 'Bidirectional relationship sync',
-			icon: 'refresh-cw'
-		});
-		const bidirectionalSyncContent = bidirectionalSyncCard.querySelector('.crc-card__content') as HTMLElement;
-
-		bidirectionalSyncContent.createEl('p', {
-			text: 'Canvas Roots automatically maintains reciprocal relationships to ensure data consistency across your family tree.',
-			cls: 'crc-mb-3'
-		});
-
-		// How It Works
-		const howItWorksSection = bidirectionalSyncContent.createDiv({ cls: 'crc-mb-4' });
-		howItWorksSection.createEl('h4', { text: 'How it works', cls: 'crc-mb-2' });
-		howItWorksSection.createEl('p', {
-			text: 'When enabled (default), editing relationships automatically updates both person notes:',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		const howItWorksList = howItWorksSection.createEl('ul', { cls: 'crc-mb-2' });
-		howItWorksList.createEl('li', { text: 'Set someone as a parent → automatically added as child in parent\'s note' });
-		howItWorksList.createEl('li', { text: 'Add a spouse → reciprocal spouse link created in both notes' });
-		howItWorksList.createEl('li', { text: 'Delete a relationship → reciprocal link automatically removed' });
-		howItWorksList.createEl('li', { text: 'Works with Bases edits, frontmatter changes, and external editors' });
-
-		// What Gets Synced
-		const whatSyncedSection = bidirectionalSyncContent.createDiv({ cls: 'crc-mb-4' });
-		whatSyncedSection.createEl('h4', { text: 'What gets synced', cls: 'crc-mb-2' });
-
-		const whatSyncedList = whatSyncedSection.createEl('ul');
-		whatSyncedList.createEl('li', { text: 'Parent → Child: setting father/mother adds person to parent\'s children array' });
-		whatSyncedList.createEl('li', { text: 'Spouse ↔ Spouse: adding spouse creates reciprocal link in both notes' });
-		whatSyncedList.createEl('li', { text: 'Indexed spouses: full support for spouse1, spouse2, etc.' });
-		whatSyncedList.createEl('li', { text: 'Deletions: removing a relationship removes the reciprocal link' });
-
-		// Settings
-		const settingsSection = bidirectionalSyncContent.createDiv({ cls: 'crc-mb-4' });
-		settingsSection.createEl('h4', { text: 'Enable or disable', cls: 'crc-mb-2' });
-		settingsSection.createEl('p', {
-			text: 'Go to Settings → Canvas Roots → Data section:',
-			cls: 'crc-text-muted crc-mb-2'
-		});
-
-		const settingsList = settingsSection.createEl('ul');
-		settingsList.createEl('li', { text: 'Enable bidirectional relationship sync: master toggle (default: ON)' });
-		settingsList.createEl('li', { text: 'Sync on file modify: auto-sync when editing notes (default: ON)' });
-
-		// Known Limitations
-		const limitationsSection = bidirectionalSyncContent.createDiv({ cls: 'crc-info-box' });
-		limitationsSection.createEl('strong', { text: 'Known limitations:' });
-		const limitationsList = limitationsSection.createEl('ul', { cls: 'crc-mt-2' });
-		limitationsList.createEl('li', { text: 'Sync disabled during deletion: Reciprocal links won\'t be auto-cleaned' });
-		limitationsList.createEl('li', { text: 'Bulk external edits while Obsidian closed: Only final state is synced' });
-
-		limitationsSection.createEl('p', {
-			text: 'These are expected behaviors and don\'t affect normal usage. Sync works reliably for day-to-day editing.',
-			cls: 'crc-mt-2 crc-text-muted crc-font-italic'
-		});
-
-		container.appendChild(bidirectionalSyncCard);
-
-		// Split Canvas Wizard Card
-		const splitWizardCard = this.createCard({
-			title: 'Split canvas wizard',
-			icon: 'layers'
-		});
-		const splitWizardContent = splitWizardCard.querySelector('.crc-card__content') as HTMLElement;
-
-		splitWizardContent.createEl('p', {
-			text: 'Split large family trees into manageable segments with the multi-step Split Canvas Wizard.',
-			cls: 'crc-mb-3'
-		});
-
-		// Split Methods
-		const methodsSection = splitWizardContent.createDiv({ cls: 'crc-mb-4' });
-		methodsSection.createEl('h4', { text: 'Available split methods', cls: 'crc-mb-2' });
-
-		const methodsList = methodsSection.createEl('ul', { cls: 'crc-mb-2' });
-		methodsList.createEl('li', { text: 'By generation: Split every N generations' });
-		methodsList.createEl('li', { text: 'By branch: Separate paternal/maternal lines' });
-		methodsList.createEl('li', { text: 'Single lineage: Direct line between two people' });
-		methodsList.createEl('li', { text: 'By collection: One canvas per user-defined collection' });
-		methodsList.createEl('li', { text: 'Ancestor + descendant pair: Linked canvases for same root' });
-		methodsList.createEl('li', { text: 'By surname: Extract people sharing a surname (even unconnected)' });
-
-		// Navigation Features
-		const navSection = splitWizardContent.createDiv({ cls: 'crc-mb-4' });
-		navSection.createEl('h4', { text: 'Navigation features', cls: 'crc-mb-2' });
-
-		const navList = navSection.createEl('ul', { cls: 'crc-mb-2' });
-		navList.createEl('li', { text: 'Navigation nodes: Portal nodes link between related canvases' });
-		navList.createEl('li', { text: 'Master overview: Optional grid canvas with links to all split canvases' });
-		navList.createEl('li', { text: 'Both options configurable in the wizard' });
-
-		// How to Access
-		const accessSection = splitWizardContent.createDiv({ cls: 'crc-mb-4' });
-		accessSection.createEl('h4', { text: 'How to access', cls: 'crc-mb-2' });
-		accessSection.createEl('p', {
-			text: 'Right-click any canvas file → Canvas Roots → Split canvas wizard',
-			cls: 'crc-text-muted'
-		});
-
-		// Surname Split Highlight
-		const surnameSection = splitWizardContent.createDiv({ cls: 'crc-info-box' });
-		surnameSection.createEl('strong', { text: 'Surname extraction:' });
-		surnameSection.createEl('p', {
-			text: 'Extract all people with a given surname, even without established family connections. Useful for consolidating unconnected GEDCOM imports or surname-focused research. Options include matching maiden names and including spouses.',
-			cls: 'crc-mt-2'
-		});
-
-		container.appendChild(splitWizardCard);
-
-		// Common Tasks Card
+		container.appendChild(conceptsCard);
+
+		// =========================================================================
+		// Card 4: Common Tasks (Navigation Grid)
+		// =========================================================================
 		const tasksCard = this.createCard({
 			title: 'Common tasks',
-			icon: 'check'
+			icon: 'list-checks',
+			subtitle: 'Quick links to frequently used features'
 		});
 		const tasksContent = tasksCard.querySelector('.crc-card__content') as HTMLElement;
 
 		const tasks = [
-			{
-				icon: 'upload',
-				title: 'Import data',
-				description: 'Import from GEDCOM 5.5.1, GEDCOM X (JSON), Gramps XML, or CSV/spreadsheets',
-				tab: 'import-export'
-			},
-			{
-				icon: 'download',
-				title: 'Export data (GEDCOM/CSV)',
-				description: 'Export your family tree to share with other genealogy software or spreadsheets',
-				tab: 'import-export'
-			},
-			{
-				icon: 'git-branch',
-				title: 'Generate family tree',
-				description: 'Create a visual canvas from your person notes',
-				tab: 'tree-generation'
-			},
-			{
-				icon: 'user-plus',
-				title: 'Create person note',
-				description: 'Add a new individual to your family tree',
-				tab: 'people'
-			},
-			{
-				icon: 'map-pin',
-				title: 'Create place note',
-				description: 'Add a geographic location with hierarchy support',
-				tab: 'places'
-			},
-			{
-				icon: 'settings',
-				title: 'Customize styling',
-				description: 'Configure node colors, arrow styles, and edge colors',
-				tab: 'quick-settings'
-			}
+			{ icon: 'upload', title: 'Import data', desc: 'GEDCOM, CSV, Gramps', tab: 'import-export' },
+			{ icon: 'download', title: 'Export data', desc: 'GEDCOM, CSV formats', tab: 'import-export' },
+			{ icon: 'git-branch', title: 'Generate tree', desc: 'Create visual canvas', tab: 'tree-generation' },
+			{ icon: 'map', title: 'Open Map View', desc: 'Geographic visualization', tab: null, command: 'canvas-roots:open-map-view' },
+			{ icon: 'users', title: 'Manage people', desc: 'Browse and edit', tab: 'people' },
+			{ icon: 'settings', title: 'Customize styles', desc: 'Colors and edges', tab: 'quick-settings' }
 		];
 
+		const taskGrid = tasksContent.createDiv({ cls: 'crc-task-grid' });
 		tasks.forEach(task => {
-			const taskEl = tasksContent.createDiv({ cls: 'crc-task-item' });
+			const taskEl = taskGrid.createDiv({ cls: 'crc-task-grid__item' });
+			const iconWrap = taskEl.createDiv({ cls: 'crc-task-grid__icon' });
+			setLucideIcon(iconWrap, task.icon as LucideIconName, 20);
+			taskEl.createEl('strong', { text: task.title, cls: 'crc-task-grid__title' });
+			taskEl.createEl('span', { text: task.desc, cls: 'crc-task-grid__desc' });
 
-			// Icon
-			const iconEl = taskEl.createDiv({ cls: 'crc-task-item__icon' });
-			setLucideIcon(iconEl, task.icon as LucideIconName, 20);
-
-			// Content
-			const taskContent = taskEl.createDiv({ cls: 'crc-task-item__content' });
-			taskContent.createEl('h4', { text: task.title, cls: 'crc-mb-1' });
-			taskContent.createEl('p', { text: task.description, cls: 'crc-text-muted' });
-
-			// Arrow
-			const arrow = taskEl.createDiv({ cls: 'crc-task-item__arrow' });
-			setLucideIcon(arrow, 'chevron-right', 16);
-
-			// Click handler
-			taskEl.addClass('crc-task-item--clickable');
 			taskEl.addEventListener('click', () => {
-				this.switchTab(task.tab);
+				if (task.command) {
+					this.close();
+					this.app.commands.executeCommandById(task.command);
+				} else if (task.tab) {
+					this.switchTab(task.tab);
+				}
 			});
 		});
 
 		container.appendChild(tasksCard);
 
-		// Templater Templates Card
-		const templaterCard = this.createCard({
-			title: 'Templater integration',
-			icon: 'file-code'
+		// =========================================================================
+		// Card 5: Learn More
+		// =========================================================================
+		const learnCard = this.createCard({
+			title: 'Learn more',
+			icon: 'book-open',
+			subtitle: 'Documentation, templates, and tips'
 		});
-		const templaterContent = templaterCard.querySelector('.crc-card__content') as HTMLElement;
+		const learnContent = learnCard.querySelector('.crc-card__content') as HTMLElement;
 
-		templaterContent.createEl('p', {
-			text: 'Canvas Roots provides ready-to-use templates compatible with the Templater plugin for creating person and place notes.',
-			cls: 'crc-mb-3'
+		// Wiki links section
+		const wikiSection = learnContent.createDiv({ cls: 'crc-mb-4' });
+		wikiSection.createEl('h4', { text: 'Documentation', cls: 'crc-mb-2' });
+		const wikiLinks = [
+			{ text: 'Getting Started', wiki: 'Getting-Started' },
+			{ text: 'Data Entry Guide', wiki: 'Data-Entry' },
+			{ text: 'Tree Generation', wiki: 'Tree-Generation' },
+			{ text: 'Geographic Features', wiki: 'Geographic-Features' },
+			{ text: 'Context Menus', wiki: 'Context-Menus' }
+		];
+		const wikiList = wikiSection.createEl('ul', { cls: 'crc-wiki-links' });
+		wikiLinks.forEach(link => {
+			const li = wikiList.createEl('li');
+			const a = li.createEl('a', { text: link.text, href: `${WIKI_BASE}/${link.wiki}`, cls: 'crc-link' });
+			a.setAttr('target', '_blank');
 		});
 
-		// What's included
-		const includesSection = templaterContent.createDiv({ cls: 'crc-mb-4' });
-		includesSection.createEl('h4', { text: 'Available templates', cls: 'crc-mb-2' });
-
-		const includesList = includesSection.createEl('ul', { cls: 'crc-mb-2' });
-		includesList.createEl('li', { text: 'Person notes: Basic, full, and interactive (with prompts)' });
-		includesList.createEl('li', { text: 'Place notes: Basic, with coordinates, historical, and fictional' });
-		includesList.createEl('li', { text: 'All templates include auto-generated cr_id and file title' });
-
-		// Common variables
-		const varsSection = templaterContent.createDiv({ cls: 'crc-mb-4' });
-		varsSection.createEl('h4', { text: 'Useful Templater variables', cls: 'crc-mb-2' });
-
-		const varsTable = varsSection.createEl('div', { cls: 'crc-template-vars-preview' });
-		const varsList = varsTable.createEl('ul', { cls: 'crc-text-muted' });
-		varsList.createEl('li').innerHTML = '<code>&lt;% tp.date.now("YYYYMMDDHHmmss") %&gt;</code> - Unique timestamp ID';
-		varsList.createEl('li').innerHTML = '<code>&lt;% tp.file.title %&gt;</code> - File name as note title';
-		varsList.createEl('li').innerHTML = '<code>&lt;% tp.system.suggester([...]) %&gt;</code> - Selection dialog';
-		varsList.createEl('li').innerHTML = '<code>&lt;% tp.system.prompt("...") %&gt;</code> - Input dialog';
-
-		// Access button
-		const templaterAccessSection = templaterContent.createDiv({ cls: 'crc-mt-3' });
-		const viewTemplatesBtn = templaterAccessSection.createEl('button', {
-			text: 'View and copy templates',
-			cls: 'crc-btn crc-btn--primary'
+		// Templater button
+		const templaterSection = learnContent.createDiv({ cls: 'crc-mb-4' });
+		templaterSection.createEl('h4', { text: 'Templates', cls: 'crc-mb-2' });
+		templaterSection.createEl('p', {
+			text: 'Ready-to-use Templater snippets for person and place notes.',
+			cls: 'crc-text-muted crc-mb-2'
 		});
-		viewTemplatesBtn.addEventListener('click', () => {
+		const templaterBtn = templaterSection.createEl('button', {
+			text: 'View Templater snippets',
+			cls: 'crc-btn crc-btn--secondary'
+		});
+		templaterBtn.addEventListener('click', () => {
 			new TemplateSnippetsModal(this.app).open();
 		});
 
-		// Info box
-		const templaterInfo = templaterContent.createDiv({ cls: 'crc-info-box crc-mt-4' });
-		templaterInfo.createEl('strong', { text: 'Requirements:' });
-		templaterInfo.createEl('p', {
-			text: 'Install the Templater plugin from the Community Plugins marketplace. Copy the template snippets into your Templater templates folder.',
-			cls: 'crc-mt-2'
-		});
-
-		container.appendChild(templaterCard);
-
-		// Tips Card
-		const tipsCard = this.createCard({
-			title: 'Pro tips',
-			icon: 'info'
-		});
-		const tipsContent = tipsCard.querySelector('.crc-card__content') as HTMLElement;
-
+		// Pro tips
+		const tipsSection = learnContent.createDiv();
+		tipsSection.createEl('h4', { text: 'Pro tips', cls: 'crc-mb-2' });
 		const tips = [
-			'Use Obsidian Bases for efficient bulk data entry and table-view editing',
-			'After changing layout or styling settings, use "Regenerate canvas" to apply changes to existing trees',
-			'The cr_id field ensures stable identity mapping between notes and canvas nodes',
-			'Generation-based coloring creates visual layers that make tree structure clearer',
-			'Use per-canvas style settings to customize individual canvases while keeping global defaults',
-			'Canvas Roots stays JSON Canvas 1.0 compliant for maximum portability'
+			'Use Obsidian Bases for efficient bulk data entry',
+			'Use "Regenerate canvas" after changing layout settings',
+			'Per-canvas styles override global settings'
 		];
+		const tipsList = tipsSection.createEl('ul', { cls: 'crc-text-muted' });
+		tips.forEach(tip => tipsList.createEl('li', { text: tip }));
 
-		const tipsList = tipsContent.createEl('ul', { cls: 'crc-tips-list' });
-		tips.forEach(tip => {
-			tipsList.createEl('li', { text: tip });
+		container.appendChild(learnCard);
+	}
+
+	/**
+	 * Create a collapsible section within a card
+	 */
+	private createCollapsible(
+		container: HTMLElement,
+		title: string,
+		icon: LucideIconName,
+		renderContent: (body: HTMLElement) => void
+	): HTMLElement {
+		const wrapper = container.createDiv({ cls: 'crc-collapsible' });
+
+		const header = wrapper.createDiv({ cls: 'crc-collapsible__header' });
+		const headerLeft = header.createDiv({ cls: 'crc-collapsible__header-left' });
+		const iconEl = headerLeft.createDiv({ cls: 'crc-collapsible__icon' });
+		setLucideIcon(iconEl, icon, 16);
+		headerLeft.createSpan({ text: title, cls: 'crc-collapsible__title' });
+
+		const chevron = header.createDiv({ cls: 'crc-collapsible__chevron' });
+		setLucideIcon(chevron, 'chevron-down', 16);
+
+		const body = wrapper.createDiv({ cls: 'crc-collapsible__body' });
+		renderContent(body);
+
+		header.addEventListener('click', () => {
+			wrapper.toggleClass('crc-collapsible--open', !wrapper.hasClass('crc-collapsible--open'));
 		});
 
-		container.appendChild(tipsCard);
+		return wrapper;
 	}
 
 	/**

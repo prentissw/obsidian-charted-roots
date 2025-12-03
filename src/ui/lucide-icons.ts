@@ -70,7 +70,10 @@ export type LucideIconName =
 	| 'arrow-up-down'  // Bidirectional/ancestor-descendant
 	| 'map-pin'        // Places/locations
 	| 'globe'          // World/geography
-	| 'file-code';     // Templates/code files
+	| 'file-code'      // Templates/code files
+	| 'lightbulb'      // Ideas/concepts
+	| 'list-checks'    // Task lists
+	| 'map';           // Map view
 
 /**
  * Tab configuration for Control Center navigation

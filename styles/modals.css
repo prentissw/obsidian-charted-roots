@@ -1299,6 +1299,214 @@
   line-height: 1.6;
 }
 
+/* Collapsible Sections */
+.crc-collapsible {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.crc-collapsible__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--background-secondary);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.crc-collapsible__header:hover {
+  background: var(--background-modifier-hover);
+}
+
+.crc-collapsible__header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crc-collapsible__title {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.crc-collapsible__icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.crc-collapsible__chevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.crc-collapsible--open .crc-collapsible__chevron {
+  transform: rotate(180deg);
+}
+
+.crc-collapsible__body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease;
+}
+
+.crc-collapsible--open .crc-collapsible__body {
+  max-height: 500px;
+  padding: 16px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/* Guide Step Styles */
+.crc-guide-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.crc-guide-step:last-child {
+  border-bottom: none;
+}
+
+.crc-guide-step__badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.crc-guide-step__content {
+  flex: 1;
+}
+
+.crc-guide-step__content h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+}
+
+/* Task Grid Styles (Guide tab Card 4) */
+.crc-task-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.crc-task-grid__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 16px 12px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+
+.crc-task-grid__item:hover {
+  background: var(--background-modifier-hover);
+  transform: translateY(-1px);
+}
+
+.crc-task-grid__icon {
+  margin-bottom: 8px;
+  color: var(--text-accent);
+}
+
+.crc-task-grid__title {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.crc-task-grid__desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Field List Styles (Guide tab Card 2) */
+.crc-field-list {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.crc-field-list li {
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.crc-field-list code {
+  background: var(--background-secondary-alt);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.crc-field--required {
+  color: var(--text-accent);
+  font-weight: 500;
+}
+
+/* Utility Classes */
+.cr-inline-block {
+  display: inline-block;
+}
+
+/* Wiki Link Styles */
+.crc-wiki-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-accent);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.crc-wiki-link:hover {
+  text-decoration: underline;
+}
+
+.crc-wiki-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crc-wiki-links a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--text-normal);
+  transition: background 0.15s ease;
+}
+
+.crc-wiki-links a:hover {
+  background: var(--background-modifier-hover);
+}
+
+.crc-wiki-links a .external-link-icon {
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
 /* Analytics Dashboard Styles */
 .crc-stats-grid {
   display: grid;
