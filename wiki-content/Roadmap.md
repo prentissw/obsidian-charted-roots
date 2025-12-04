@@ -18,6 +18,10 @@ This document outlines planned features for Canvas Roots. For release history an
   - [World-Building Suite](#world-building-suite)
   - [Research & Analysis Tools](#research--analysis-tools)
 - [Future Considerations](#future-considerations)
+  - [Person Note Templates](#person-note-templates)
+  - [Print & PDF Export](#print--pdf-export)
+  - [Accessibility](#accessibility)
+  - [Obsidian Publish Support](#obsidian-publish-support)
   - [Style Settings Integration](#style-settings-integration)
 - [Known Limitations](#known-limitations)
 - [Contributing](#contributing)
@@ -459,6 +463,107 @@ confidence: medium
 ---
 
 ## Future Considerations
+
+### Person Note Templates
+
+**Summary:** Pre-configured note templates for different use cases and user types.
+
+**Template Types:**
+- **Researcher Template**: Full fields including sources, confidence, research notes, citation placeholders
+- **Casual User Template**: Minimal fields (name, dates, parents, spouse, children)
+- **World-Builder Template**: Includes universe, fictional dates, organization memberships
+- **Quick Add Template**: Bare minimum for fast data entry
+
+**Features:**
+- Template picker when creating new person notes
+- Default template setting in preferences
+- Custom template creation and editing
+- Templater plugin compatibility
+
+**Integration Points:**
+- Context menu "Create person note" actions
+- Control Center quick-add buttons
+- GEDCOM/CSV import (choose template for imported notes)
+
+---
+
+### Print & PDF Export
+
+**Summary:** Generate print-ready and PDF outputs of family trees and reports.
+
+**Export Types:**
+- **Pedigree Chart**: Ancestor-focused tree (4-5 generations per page)
+- **Descendant Chart**: Descendants of a selected person
+- **Family Group Sheet**: Single family unit with sources
+- **Full Tree Poster**: Large format for wall display
+
+**Features:**
+- Page size presets (Letter, A4, custom, poster sizes)
+- Multi-page output with page breaks
+- Print preview with zoom
+- Header/footer customization (title, date, researcher name)
+- Privacy filter (exclude/anonymize living persons)
+- SVG and high-resolution PNG export for printing
+
+**Technical Approach:**
+- Leverage browser print APIs
+- SVG-based rendering for scalability
+- Optional integration with PDF libraries (jsPDF or similar)
+
+---
+
+### Accessibility
+
+**Summary:** Ensure Canvas Roots is usable by people with disabilities.
+
+**Screen Reader Support:**
+- ARIA labels for all interactive elements
+- Semantic HTML structure in Control Center
+- Announce tree navigation changes
+- Describe relationship connections
+
+**Visual Accessibility:**
+- High contrast mode toggle
+- Respect system "reduce motion" preference
+- Sufficient color contrast ratios (WCAG AA)
+- Don't rely on color alone (use patterns/icons)
+
+**Keyboard Navigation:**
+- Full keyboard access to all features
+- Visible focus indicators
+- Logical tab order
+- Escape key to close modals
+
+**Testing:**
+- Screen reader testing (VoiceOver, NVDA)
+- Keyboard-only testing
+- Color blindness simulation testing
+
+---
+
+### Obsidian Publish Support
+
+**Summary:** Enable sharing family trees via Obsidian Publish for read-only web viewing.
+
+**Features:**
+- Static HTML/SVG tree generation for Publish sites
+- Privacy-aware export (automatic living person protection)
+- Clickable person nodes linking to published notes
+- Responsive design for mobile viewers
+- Optional password protection recommendation
+
+**Considerations:**
+- Canvas files aren't natively supported by Publish
+- Would require generating static image/SVG alternatives
+- Family Chart View is JavaScript-dependent (won't work on Publish)
+- Focus on static pedigree/descendant chart images
+
+**Integration:**
+- "Export for Publish" command
+- Automatic image regeneration on tree changes
+- Embed code for published pages
+
+---
 
 ### Style Settings Integration
 
