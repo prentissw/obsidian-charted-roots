@@ -6,11 +6,11 @@ Canvas Roots is designed to work seamlessly with [Obsidian Bases](https://help.o
 
 **Bases** provides a table-based interface for viewing and editing note properties, making it ideal for managing genealogical data:
 
-- **Table View**: Edit multiple people at once in a spreadsheet-like interface
-- **Filtering**: Focus on specific family members or data subsets
+- **Table View**: Edit multiple records at once in a spreadsheet-like interface
+- **Filtering**: Focus on specific subsets of data
 - **Formulas**: Calculate ages, lifespans, and other derived values
-- **Sorting**: Organize by birth date, name, or any property
-- **Summaries**: Aggregate statistics across your family tree
+- **Sorting**: Organize by date, name, or any property
+- **Summaries**: Aggregate statistics across your data
 
 **Canvas Roots** reads the same YAML frontmatter properties that Bases edits, creating a powerful dual-entry workflow:
 
@@ -19,8 +19,35 @@ Individual Notes ←→ Bases Table View
          ↓
    Canvas Roots
          ↓
-  Family Tree Visualization
+  Visualization (Trees, Maps, etc.)
 ```
+
+## Available Base Templates
+
+Canvas Roots provides ready-to-use templates for three types of data:
+
+| Template | Data Type | Key Features |
+|----------|-----------|--------------|
+| **People** | Person notes | Relationships, dates, lifespans |
+| **Places** | Place notes | Coordinates, hierarchies, categories |
+| **Organizations** | Organization notes | Types, members, universes |
+
+### Creating Base Templates
+
+**From Control Center:**
+- **People tab** → Data tools card → "Create base template"
+- **Places tab** → Data tools card → "Create base template"
+- **Organizations tab** → Data tools card → "Create base template"
+
+**From Context Menu:**
+Right-click any folder and select:
+- "Create people Base template"
+- "Create places Base template"
+- "Create organizations Base template"
+
+**From Command Palette:**
+- `Canvas Roots: Create base template` (People)
+- `Canvas Roots: Create organizations base template`
 
 ## Why Use Bases with Canvas Roots?
 
@@ -53,17 +80,18 @@ Bases is a core Obsidian plugin:
 1. Open Settings → Core plugins
 2. Enable "Bases"
 
-### 2. Copy the Template
+### 2. Create a Base Template
 
-Canvas Roots provides a ready-to-use Base template:
+Use Control Center to create a template:
 
-1. Navigate to `docs/assets/templates/family-members.base`
-2. Copy the file to your vault
-3. Rename it as desired (e.g., `My Family.base`)
+1. Open Control Center → **People** tab (or Places/Organizations)
+2. Find the **Data tools** card
+3. Click "Create base template"
+4. The template is created in your configured folder
 
 ### 3. Open the Base
 
-Double-click the `.base` file to open the table view. You should see all notes with a `cr_id` property.
+Double-click the `.base` file to open the table view. You should see all matching notes.
 
 ### 4. Start Editing
 
@@ -263,6 +291,49 @@ Don't try to make one view do everything. Create specialized views for different
 - **Research View**: All fields visible, sorted by missing data
 - **Analysis View**: Formulas and summaries, sorted by patterns
 
+## Places Base Template
+
+The Places template provides a table view for managing geographic locations:
+
+### Key Columns
+- **Name**: Place name
+- **Category**: Type of place (city, country, region, etc.)
+- **Parent**: Hierarchical parent location
+- **Coordinates**: Latitude/longitude
+- **Universe**: For fictional locations
+
+### Useful Formulas
+
+**Has Coordinates:**
+```yaml
+has_coords: 'if(latitude && longitude, "Yes", "No")'
+```
+
+**Hierarchy Depth:**
+```yaml
+depth: 'if(parent, 1, 0)'  # Simplified; actual hierarchy may be deeper
+```
+
+## Organizations Base Template
+
+The Organizations template provides a table view for managing organizations and memberships:
+
+### Key Columns
+- **Name**: Organization name
+- **Type**: Organization type (guild, corporation, noble_house, etc.)
+- **Universe**: For fictional organizations
+- **Members**: Count of people with membership
+
+### Organization Types
+Built-in types: noble_house, guild, corporation, military, religious, political, educational, custom
+
+### Useful Formulas
+
+**Type Display:**
+```yaml
+type_label: 'org_type || "Other"'
+```
+
 ## Troubleshooting
 
 ### Base Shows No Results
@@ -341,3 +412,5 @@ Don't try to make one view do everything. Create specialized views for different
 - [Obsidian Bases Documentation](https://help.obsidian.md/bases)
 - [Bases Syntax Reference](https://help.obsidian.md/bases/syntax)
 - [Frontmatter Reference](Frontmatter-Reference) - Complete property documentation
+- [Geographic Features](Geographic-Features) - Place notes and maps
+- [Organization Notes](Organization-Notes) - Organizations and memberships
