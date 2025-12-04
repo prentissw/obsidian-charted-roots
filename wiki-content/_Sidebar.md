@@ -30,6 +30,7 @@
 
 ### Reference
 - [Frontmatter Reference](Frontmatter-Reference)
+- [Privacy & Security](Privacy-And-Security)
 - [FAQ](FAQ)
 - [Troubleshooting](Troubleshooting)
 - [Roadmap](Roadmap)

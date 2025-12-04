@@ -1,0 +1,205 @@
+# Privacy & Security
+
+Canvas Roots handles sensitive genealogical data including names, dates, relationships, and family history. This guide covers how to protect your family's privacy and secure your data.
+
+## Data Storage Overview
+
+**All data stays local.** Canvas Roots does not:
+- Transmit data over the network
+- Connect to external services
+- Upload information to cloud servers
+- Share data with third parties
+
+Your family data is stored in your Obsidian vault as plain Markdown files with YAML frontmatter. This approach:
+- Follows Obsidian's local-first philosophy
+- Gives you full control over your data
+- Allows easy backup and migration
+- Works across all Obsidian platforms
+
+## What Data is Stored
+
+Canvas Roots creates and manages several types of files:
+
+| File Type | Location | Contains |
+|-----------|----------|----------|
+| Person notes | Your configured folder | Names, dates, relationships, cr_id |
+| Place notes | Your configured folder | Location names, coordinates |
+| Organization notes | Your configured folder | Org names, types, memberships |
+| Canvas files | Your choice | Visual layouts, node references |
+| Plugin settings | `.obsidian/plugins/canvas-roots/` | Configuration only (no personal data) |
+
+## Privacy Protection for Living Persons
+
+Canvas Roots includes built-in privacy protection for people who may still be living.
+
+### Enabling Privacy Protection
+
+1. Open **Settings** → **Canvas Roots**
+2. Scroll to the **Privacy** section
+3. Enable **Privacy protection for living persons**
+4. Configure the age threshold (default: 100 years)
+5. Choose a display format for protected persons
+
+### How Living Status is Determined
+
+A person is considered potentially living if:
+- They have **no death date** recorded, AND
+- They were born within the configured threshold (default: 100 years)
+
+For example, with a 100-year threshold:
+- Born 1950, no death date → **Protected** (potentially living)
+- Born 1900, no death date → **Not protected** (over threshold)
+- Born 1980, died 2020 → **Not protected** (has death date)
+
+### Manual Override
+
+You can explicitly mark someone as living or deceased using frontmatter:
+
+```yaml
+cr_living: true   # Always treat as living (protected)
+cr_living: false  # Always treat as deceased (not protected)
+```
+
+This overrides the automatic detection based on dates.
+
+### Display Formats
+
+When privacy protection is enabled, protected persons can be displayed as:
+
+| Format | Example | Use Case |
+|--------|---------|----------|
+| "Living" | Living | Clear indicator |
+| "Private" | Private | Neutral language |
+| Initials | J.S. | Preserves some identity |
+| Hidden | (blank) | Maximum privacy |
+
+### What Gets Protected
+
+When privacy protection is enabled:
+- **Exports**: Name replaced with chosen format, dates hidden
+- **Family structure**: Relationships preserved (allows tree viewing)
+- **Notes**: Original files unchanged (protection applies to outputs only)
+
+## Privacy in Exports
+
+### GEDCOM Export
+
+Privacy protection applies when exporting to GEDCOM format:
+
+1. In **Control Center** → **Import/Export** tab
+2. Set format to "GEDCOM", direction to "Export"
+3. Privacy options appear in the export dialog
+4. Choose to exclude or anonymize living persons
+5. Export creates a privacy-respecting GEDCOM file
+
+**Example output for protected person:**
+```
+0 @I123@ INDI
+1 NAME Living //
+1 BIRT
+2 DATE
+```
+
+### CSV Export
+
+Same privacy options are available for CSV exports:
+- Protected persons can be excluded entirely
+- Or anonymized with name replaced by display format
+- Dates hidden for protected persons
+
+### GEDCOM X and Gramps XML
+
+Privacy protection also works with:
+- GEDCOM X (JSON format for modern applications)
+- Gramps XML (for Gramps genealogy software)
+
+## Securing Your Vault
+
+Since Canvas Roots stores data locally, vault security is your responsibility.
+
+### Recommended Practices
+
+**Device Security:**
+- Use strong passwords for your OS accounts
+- Enable full-disk encryption
+- Lock your device when away
+- Keep Obsidian and plugins updated
+
+**Vault Protection:**
+- Store your vault on encrypted storage
+- Use Obsidian Sync's encryption if cloud syncing
+- Consider a separate vault for sensitive genealogical data
+
+**Cloud Sync Caution:**
+- Understand that sync services (Dropbox, iCloud, etc.) store copies
+- Enable 2FA on all cloud accounts
+- Consider local-only vaults for highly sensitive data
+
+**Git/Version Control:**
+- **Never** commit genealogical data to public repositories
+- Use private repositories only if necessary
+- Add person notes folders to `.gitignore` if using git
+
+### Backup Best Practices
+
+1. Maintain encrypted backups of your vault
+2. Test backup restoration periodically
+3. Store backups in a secure location
+4. Treat backups with same security as primary vault
+
+## Sharing Family Trees Safely
+
+### Before Sharing
+
+Consider these questions:
+- Does the tree include living relatives?
+- Have you enabled privacy protection?
+- Are there sensitive details (adoptions, paternity issues)?
+- Does the recipient need full details or just structure?
+
+### Safe Sharing Workflow
+
+1. **Enable privacy protection** in settings
+2. **Export with privacy options** enabled
+3. **Review the export** before sharing
+4. Consider creating separate "public" and "private" exports
+
+### Sharing Screenshots
+
+Canvas displays full data regardless of privacy settings (protection applies to exports only). When taking screenshots:
+- Review for sensitive information
+- Consider cropping or blurring names
+- Canvas obfuscation mode is planned for a future release
+
+## Compliance Considerations
+
+### GDPR (EU)
+
+If your family tree includes EU residents:
+- Living EU residents have privacy rights
+- Enable privacy protection for exports shared outside your family
+- Consider consent when recording living relatives' data
+
+### General Best Practices
+
+- Only record information you need
+- Get consent before adding living relatives
+- Handle adoptions, paternity, and medical info with care
+- Respect cultural norms around family information
+- Be mindful of historical injustices in records
+
+## Quick Reference
+
+| Task | How To |
+|------|--------|
+| Enable privacy protection | Settings → Canvas Roots → Privacy section |
+| Set age threshold | Settings → Configure threshold (default 100) |
+| Mark someone as living | Add `cr_living: true` to their frontmatter |
+| Export with privacy | Control Center → Export → Enable privacy options |
+| Exclude living from export | Choose "Exclude living persons" in export dialog |
+
+## See Also
+
+- [Import & Export](Import-Export) - Detailed export options including privacy
+- [Frontmatter Reference](Frontmatter-Reference) - All frontmatter properties including `cr_living`
+- [SECURITY.md](https://github.com/banisterious/obsidian-canvas-roots/blob/main/SECURITY.md) - Security policy and vulnerability reporting
