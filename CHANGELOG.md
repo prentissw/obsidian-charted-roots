@@ -84,6 +84,17 @@ World-Building Suite release: Custom Relationships, Fictional Date Systems, and 
   - "Create base template" button moved to Data Quality tab under "Data tools" section
   - Log export folder and obfuscation settings now accessible in plugin settings
 
+### Code Quality (2025-12-04)
+
+- Moved Leaflet plugin CSS from dynamic injection to static stylesheet
+- Replaced browser `fetch()` with Obsidian `requestUrl()` API
+- Replaced deprecated `substr()` with `substring()`
+- Replaced browser `confirm()` dialogs with Obsidian modals
+- Use `Vault#configDir` instead of hardcoded `.obsidian` path
+- Replaced `as TFile` casts with proper `instanceof` checks
+- Fixed TypeScript union type issue (`string | unknown` → `unknown`)
+- Removed unnecessary `async` from methods without `await`
+
 ---
 
 ## [0.6.3] - 2025-12-03
