@@ -222,9 +222,9 @@ export class VaultStatsService {
 	 */
 	private collectCanvasStats(): CanvasStats {
 		let totalCanvases = 0;
-		let canvasRootsCanvases = 0;
-		let totalNodes = 0;
-		let totalEdges = 0;
+		const canvasRootsCanvases = 0;
+		const totalNodes = 0;
+		const totalEdges = 0;
 
 		const allFiles = this.app.vault.getFiles();
 		const canvasFiles = allFiles.filter(f => f.extension === 'canvas');
@@ -234,7 +234,7 @@ export class VaultStatsService {
 
 			try {
 				// Read canvas file to check if it's a Canvas Roots canvas
-				const cacheData = this.app.metadataCache.getCache(file.path);
+				const _cacheData = this.app.metadataCache.getCache(file.path);
 				// Canvas files don't have standard metadata cache, so we need to check differently
 				// For now, we'll count all canvases and estimate nodes/edges would require async read
 				// We can mark Canvas Roots canvases by checking for our metadata in the JSON

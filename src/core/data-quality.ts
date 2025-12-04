@@ -1066,7 +1066,7 @@ export class DataQualityService {
 		}
 
 		// DD/MM/YYYY or DD-MM-YYYY
-		const dmySlashMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+		const dmySlashMatch = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
 		if (dmySlashMatch) {
 			const day = dmySlashMatch[1].padStart(2, '0');
 			const month = dmySlashMatch[2].padStart(2, '0');
@@ -1075,7 +1075,7 @@ export class DataQualityService {
 		}
 
 		// MM/DD/YYYY (US format) - assume if first number > 12, it's day first
-		const mdySlashMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+		const mdySlashMatch = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
 		if (mdySlashMatch) {
 			const first = parseInt(mdySlashMatch[1], 10);
 			const second = parseInt(mdySlashMatch[2], 10);

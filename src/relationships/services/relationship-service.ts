@@ -334,7 +334,7 @@ export class RelationshipService {
 	/**
 	 * Parse relationships from a person note's frontmatter
 	 */
-	private async parsePersonRelationships(file: TFile): Promise<ParsedRelationship[]> {
+	private parsePersonRelationships(file: TFile): ParsedRelationship[] {
 		const cache = this.plugin.app.metadataCache.getFileCache(file);
 		if (!cache?.frontmatter) return [];
 

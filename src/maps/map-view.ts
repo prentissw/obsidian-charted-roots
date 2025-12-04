@@ -11,7 +11,6 @@ import { getLogger } from '../core/logging';
 import { MapController } from './map-controller';
 import { MapDataService } from './map-data-service';
 import type {
-	MapState,
 	MapFilters,
 	LayerVisibility,
 	MapSettings,
@@ -157,6 +156,7 @@ export class MapView extends ItemView {
 		logger.warn('container-dimensions', 'Container dimensions not detected after waiting');
 	}
 
+	// eslint-disable-next-line @typescript-eslint/require-await -- ItemView requires async onClose
 	async onClose(): Promise<void> {
 		logger.debug('view-close', 'Closing MapView');
 		this.destroyMap();
@@ -198,7 +198,7 @@ export class MapView extends ItemView {
 				this.mapController.setView(state.center, state.zoom);
 			}
 			if (state.activeMap) {
-				this.mapController.setActiveMap(state.activeMap);
+				await this.mapController.setActiveMap(state.activeMap);
 			}
 			this.mapController.setLayerVisibility(this.layers);
 			await this.refreshData();
@@ -249,10 +249,10 @@ export class MapView extends ItemView {
 		});
 		this.mapSelectEl.createEl('option', { value: 'openstreetmap', text: 'Real World' });
 		// Custom maps will be populated after loading
-		this.mapSelectEl.addEventListener('change', async () => {
+		this.mapSelectEl.addEventListener('change', () => {
 			const mapId = this.mapSelectEl?.value || 'openstreetmap';
 			// The map change callback will handle filtering and data refresh
-			await this.mapController?.setActiveMap(mapId);
+			void this.mapController?.setActiveMap(mapId);
 		});
 
 		// Layers dropdown
@@ -316,7 +316,7 @@ export class MapView extends ItemView {
 			attr: { 'aria-label': 'Edit map alignment' }
 		});
 		this.editBtn.createSpan({ text: 'Edit' });
-		this.editBtn.addEventListener('click', () => this.toggleEditMode());
+		this.editBtn.addEventListener('click', () => void this.toggleEditMode());
 		// Initially disabled (enabled when custom map is selected)
 		this.editBtn.disabled = true;
 
@@ -585,7 +585,7 @@ export class MapView extends ItemView {
 		const sliderRow = this.timeSliderContainerEl.createDiv({ cls: 'cr-map-time-slider-row' });
 
 		// Min year label
-		const minLabel = sliderRow.createSpan({ cls: 'cr-map-time-label', text: '1800' });
+		const _minLabel = sliderRow.createSpan({ cls: 'cr-map-time-label', text: '1800' });
 
 		// Slider input
 		const slider = sliderRow.createEl('input', {
@@ -600,7 +600,7 @@ export class MapView extends ItemView {
 		});
 
 		// Max year label
-		const maxLabel = sliderRow.createSpan({ cls: 'cr-map-time-label', text: '2000' });
+		const _maxLabel = sliderRow.createSpan({ cls: 'cr-map-time-label', text: '2000' });
 
 		// Update slider on change
 		slider.addEventListener('input', () => {
@@ -621,7 +621,7 @@ export class MapView extends ItemView {
 		playBtn.addEventListener('click', () => this.toggleAnimation());
 
 		// Speed selector
-		const speedLabel = controlsRow.createSpan({ cls: 'cr-map-time-speed-label', text: 'Speed:' });
+		const _speedLabel = controlsRow.createSpan({ cls: 'cr-map-time-speed-label', text: 'Speed:' });
 		const speedSelect = controlsRow.createEl('select', {
 			cls: 'cr-map-select cr-map-time-speed',
 			attr: { 'aria-label': 'Animation speed' }
@@ -641,7 +641,7 @@ export class MapView extends ItemView {
 		});
 
 		// Mode toggle (snapshot vs cumulative)
-		const modeLabel = controlsRow.createSpan({ cls: 'cr-map-time-mode-label', text: 'Mode:' });
+		const _modeLabel = controlsRow.createSpan({ cls: 'cr-map-time-mode-label', text: 'Mode:' });
 		const modeSelect = controlsRow.createEl('select', {
 			cls: 'cr-map-select cr-map-time-mode',
 			attr: { 'aria-label': 'Display mode' }
@@ -1323,7 +1323,7 @@ export class MapView extends ItemView {
 			cls: 'cr-map-btn cr-map-btn-edit cr-map-btn-save',
 			text: 'Save alignment'
 		});
-		saveBtn.addEventListener('click', () => this.saveEditedCorners());
+		saveBtn.addEventListener('click', () => void this.saveEditedCorners());
 
 		// Restore button (undo unsaved changes)
 		const restoreBtn = btnContainer.createEl('button', {
@@ -1337,7 +1337,7 @@ export class MapView extends ItemView {
 			cls: 'cr-map-btn cr-map-btn-edit cr-map-btn-reset',
 			text: 'Reset to default'
 		});
-		resetBtn.addEventListener('click', () => this.resetAlignment());
+		resetBtn.addEventListener('click', () => void this.resetAlignment());
 
 		// Cancel button
 		const cancelBtn = btnContainer.createEl('button', {

@@ -5,7 +5,7 @@
  * field-by-field conflict resolution.
  */
 
-import { App, Modal, Notice, Setting, TFile } from 'obsidian';
+import { App, Modal, Notice, TFile } from 'obsidian';
 import {
 	MergeService,
 	MergeFieldChoice,
@@ -123,7 +123,7 @@ export class MergeWizardModal extends Modal {
 			text: 'Merge',
 			cls: 'cr-merge-btn mod-cta'
 		});
-		mergeBtn.addEventListener('click', () => this.executeMerge());
+		mergeBtn.addEventListener('click', () => void this.executeMerge());
 	}
 
 	private renderFieldRow(container: HTMLElement, diff: FieldDifference): void {
@@ -160,8 +160,8 @@ export class MergeWizardModal extends Modal {
 		} else {
 			const select = choiceCell.createEl('select', { cls: 'cr-merge-select' });
 
-			const mainOption = select.createEl('option', { value: 'main', text: 'Main' });
-			const stagingOption = select.createEl('option', { value: 'staging', text: 'Staging' });
+			const _mainOption = select.createEl('option', { value: 'main', text: 'Main' });
+			const _stagingOption = select.createEl('option', { value: 'staging', text: 'Staging' });
 
 			if (diff.canCombine) {
 				select.createEl('option', { value: 'both', text: 'Both' });

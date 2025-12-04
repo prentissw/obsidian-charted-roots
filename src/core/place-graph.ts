@@ -8,18 +8,14 @@
 import { App, TFile } from 'obsidian';
 import { getLogger } from './logging';
 import {
-	Place,
 	PlaceNode,
 	PlaceCategory,
-	PlaceType,
 	PlaceReference,
 	PlaceReferenceType,
 	PlaceStatistics,
 	PlaceIssue,
-	PlaceIssueType,
 	GeoCoordinates,
 	CustomCoordinates,
-	HistoricalName,
 	DEFAULT_PLACE_CATEGORY,
 	supportsUniverse,
 	supportsRealCoordinates
@@ -471,7 +467,7 @@ export class PlaceGraphService {
 			nameCount.get(lowerName)!.push(place);
 		}
 
-		for (const [name, places] of nameCount.entries()) {
+		for (const [_name, places] of nameCount.entries()) {
 			if (places.length > 1) {
 				issues.push({
 					type: 'duplicate_name',
@@ -926,7 +922,7 @@ export class PlaceGraphService {
 			: fm.aliases ? [fm.aliases] : [];
 
 		// Extract parent ID
-		let parentId: string | undefined = fm.parent_place_id;
+		const parentId: string | undefined = fm.parent_place_id;
 		if (!parentId && fm.parent_place) {
 			// Try to resolve from wikilink
 			const wikilinkMatch = String(fm.parent_place).match(/\[\[([^\]]+)\]\]/);

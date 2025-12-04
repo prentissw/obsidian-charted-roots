@@ -140,9 +140,7 @@ export class CreateMissingPlacesModal extends Modal {
 			text: 'Create selected',
 			cls: 'crc-btn crc-btn--primary'
 		});
-		createBtn.addEventListener('click', async () => {
-			await this.createSelectedPlaces();
-		});
+		createBtn.addEventListener('click', () => void this.createSelectedPlaces());
 	}
 
 	onClose() {

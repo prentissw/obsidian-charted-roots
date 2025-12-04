@@ -134,25 +134,27 @@ export class TemplateSnippetsModal extends Modal {
 			const copyIcon = createLucideIcon('copy', 16);
 			copyBtn.appendChild(copyIcon);
 
-			copyBtn.addEventListener('click', async () => {
-				try {
-					await navigator.clipboard.writeText(template.template);
-					new Notice('Template copied to clipboard');
+			copyBtn.addEventListener('click', () => {
+				void (async () => {
+					try {
+						await navigator.clipboard.writeText(template.template);
+						new Notice('Template copied to clipboard');
 
-					// Visual feedback
-					copyBtn.empty();
-					const checkIcon = createLucideIcon('check', 16);
-					copyBtn.appendChild(checkIcon);
-					copyBtn.addClass('crc-template-copy-btn--success');
-
-					setTimeout(() => {
+						// Visual feedback
 						copyBtn.empty();
-						copyBtn.appendChild(createLucideIcon('copy', 16));
-						copyBtn.removeClass('crc-template-copy-btn--success');
-					}, 2000);
-				} catch {
-					new Notice('Failed to copy template');
-				}
+						const checkIcon = createLucideIcon('check', 16);
+						copyBtn.appendChild(checkIcon);
+						copyBtn.addClass('crc-template-copy-btn--success');
+
+						setTimeout(() => {
+							copyBtn.empty();
+							copyBtn.appendChild(createLucideIcon('copy', 16));
+							copyBtn.removeClass('crc-template-copy-btn--success');
+						}, 2000);
+					} catch {
+						new Notice('Failed to copy template');
+					}
+				})();
 			});
 		}
 	}

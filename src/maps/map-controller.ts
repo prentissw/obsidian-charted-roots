@@ -69,7 +69,6 @@ import type {
 	MapData,
 	MapMarker,
 	MigrationPath,
-	AggregatedPath,
 	JourneyPath,
 	MapSettings,
 	MapState,
@@ -663,7 +662,7 @@ export class MapController {
 			const LSymbol = L.Symbol;
 
 			if (LPolylineDecorator && LSymbol) {
-				const decorator = LPolylineDecorator(polyline, {
+				const _decorator = LPolylineDecorator(polyline, {
 					patterns: [
 						{
 							offset: '50%',
@@ -1317,7 +1316,7 @@ export class MapController {
 	/**
 	 * Get available custom maps
 	 */
-	async getCustomMaps(): Promise<CustomMapConfig[]> {
+	getCustomMaps(): CustomMapConfig[] {
 		return this.imageMapManager.loadMapConfigs();
 	}
 

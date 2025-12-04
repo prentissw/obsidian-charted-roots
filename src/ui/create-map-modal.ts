@@ -187,7 +187,7 @@ export class CreateMapModal extends Modal {
 				}));
 
 		// Map ID (required, auto-generated in create mode)
-		const mapIdSetting = new Setting(form)
+		const _mapIdSetting = new Setting(form)
 			.setName('Map ID')
 			.setDesc(this.editMode
 				? 'Unique identifier (changing this may break references)'
@@ -376,11 +376,11 @@ export class CreateMapModal extends Modal {
 			text: this.editMode ? 'Save changes' : 'Create map',
 			cls: 'crc-btn crc-btn--primary'
 		});
-		submitBtn.addEventListener('click', async () => {
+		submitBtn.addEventListener('click', () => {
 			if (this.editMode) {
-				await this.updateMap();
+				void this.updateMap();
 			} else {
-				await this.createMap();
+				void this.createMap();
 			}
 		});
 	}
@@ -408,7 +408,7 @@ export class CreateMapModal extends Modal {
 	/**
 	 * Browse for an image file in the vault
 	 */
-	private async browseForImage(): Promise<void> {
+	private browseForImage(): void {
 		// Get all image files in the vault
 		const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'];
 		const allFiles = this.app.vault.getFiles();

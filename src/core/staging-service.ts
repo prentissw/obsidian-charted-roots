@@ -1,4 +1,4 @@
-import { App, TFile, TFolder, Notice } from 'obsidian';
+import { App, TFile, TFolder } from 'obsidian';
 import type { CanvasRootsSettings } from '../settings';
 
 /**
@@ -150,7 +150,7 @@ export class StagingService {
 			return { success: false, newPath: '', error: 'File is not in staging folder' };
 		}
 
-		const stagingPath = this.settings.stagingFolder;
+		const _stagingPath = this.settings.stagingFolder;
 		const mainPath = this.settings.peopleFolder;
 
 		// Calculate new path: replace staging folder with main folder

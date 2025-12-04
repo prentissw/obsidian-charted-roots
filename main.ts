@@ -2393,7 +2393,7 @@ export default class CanvasRootsPlugin extends Plugin {
 	/**
 	 * Open the place edit modal for a place note
 	 */
-	private async openEditPlaceModal(file: TFile): Promise<void> {
+	private openEditPlaceModal(file: TFile): void {
 		// Get the place cr_id from frontmatter
 		const cache = this.app.metadataCache.getFileCache(file);
 		const crId = cache?.frontmatter?.cr_id;
@@ -2430,7 +2430,7 @@ export default class CanvasRootsPlugin extends Plugin {
 	/**
 	 * Open the person edit modal for a person note
 	 */
-	private async openEditPersonModal(file: TFile): Promise<void> {
+	private openEditPersonModal(file: TFile): void {
 		// Get frontmatter data
 		const cache = this.app.metadataCache.getFileCache(file);
 		const fm = cache?.frontmatter;

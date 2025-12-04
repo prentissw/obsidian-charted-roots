@@ -6,7 +6,7 @@ import { PersonPickerModal, PersonInfo, PlaceInfo, extractPlaceInfo } from './pe
 import { VaultStatsService, FullVaultStats } from '../core/vault-stats';
 import { FamilyGraphService, TreeOptions } from '../core/family-graph';
 import { CanvasGenerator, CanvasData, CanvasGenerationOptions } from '../core/canvas-generator';
-import { getLogger, LoggerFactory, type LogLevel } from '../core/logging';
+import { getLogger } from '../core/logging';
 import { getErrorMessage } from '../core/error-utils';
 import { GedcomImporter } from '../gedcom/gedcom-importer';
 import { GedcomXImporter, GedcomXImportResult } from '../gedcomx/gedcomx-importer';
@@ -24,7 +24,7 @@ import { CrossImportDetectionService, CrossImportMatch } from '../core/cross-imp
 import { MergeWizardModal } from './merge-wizard-modal';
 import { DataQualityService, DataQualityReport, DataQualityIssue, IssueSeverity, IssueCategory, NormalizationPreview, BatchOperationResult } from '../core/data-quality';
 import { PlaceGraphService } from '../core/place-graph';
-import { PlaceCategory, PlaceStatistics, PlaceIssue } from '../models/place';
+import { PlaceCategory, PlaceIssue } from '../models/place';
 import { CreatePlaceModal } from './create-place-modal';
 import { CreateMissingPlacesModal } from './create-missing-places-modal';
 import { BuildPlaceHierarchyModal } from './build-place-hierarchy-modal';
@@ -37,8 +37,8 @@ import { CreateMapModal } from './create-map-modal';
 import { CreateSchemaModal } from './create-schema-modal';
 import { SchemaService, ValidationService } from '../schemas';
 import type { SchemaNote, ValidationResult, ValidationSummary } from '../schemas';
-import { RelationshipService, RELATIONSHIP_CATEGORY_NAMES, DEFAULT_RELATIONSHIP_TYPES } from '../relationships';
-import type { RelationshipTypeDefinition, ParsedRelationship, RelationshipStats, RelationshipCategory } from '../relationships';
+import { RelationshipService, RELATIONSHIP_CATEGORY_NAMES } from '../relationships';
+import type { RelationshipCategory } from '../relationships';
 import { createDateSystemsCard } from '../dates';
 import { renderOrganizationsTab } from '../organizations';
 
@@ -1098,7 +1098,7 @@ export class ControlCenterModal extends Modal {
 			const titleEl = content.createEl('h4', { cls: 'crc-mb-1' });
 			if (step.tab) {
 				const link = titleEl.createEl('a', { text: step.title, cls: 'crc-link' });
-				link.addEventListener('click', (e) => { e.preventDefault(); this.switchTab(step.tab as string); });
+				link.addEventListener('click', (e) => { e.preventDefault(); this.switchTab(step.tab); });
 			} else {
 				titleEl.textContent = step.title;
 			}
@@ -1588,7 +1588,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Show People tab - combined statistics, actions, and person list
 	 */
-	private async showPeopleTab(): Promise<void> {
+	private showPeopleTab(): void {
 		const container = this.contentContainer;
 
 		// Actions Card
@@ -1668,7 +1668,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Load person statistics into container
 	 */
-	private async loadPersonStatistics(container: HTMLElement): Promise<void> {
+	private loadPersonStatistics(container: HTMLElement): void {
 		container.empty();
 
 		const statsService = new VaultStatsService(this.app);
@@ -1751,7 +1751,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Load person list into container
 	 */
-	private async loadPersonList(container: HTMLElement): Promise<void> {
+	private loadPersonList(container: HTMLElement): void {
 		container.empty();
 
 		const familyGraph = this.plugin.createFamilyGraphService();
@@ -1880,9 +1880,9 @@ export class ControlCenterModal extends Modal {
 					text: person.name,
 					cls: 'crc-person-list-name'
 				});
-				nameEl.addEventListener('click', async () => {
+				nameEl.addEventListener('click', () => {
 					// Open the person's file
-					await this.app.workspace.getLeaf(false).openFile(person.file);
+					void this.app.workspace.getLeaf(false).openFile(person.file);
 				});
 
 				// Dates
@@ -1940,9 +1940,9 @@ export class ControlCenterModal extends Modal {
 						createBtn.appendChild(plusIcon);
 						createBtn.appendText('Create');
 
-						createBtn.addEventListener('click', async (e) => {
+						createBtn.addEventListener('click', (e) => {
 							e.stopPropagation();
-							await this.showQuickCreatePlaceModal(info.placeName);
+							void this.showQuickCreatePlaceModal(info.placeName);
 						});
 					}
 				}
@@ -2125,7 +2125,7 @@ export class ControlCenterModal extends Modal {
 
 		// Place filter input and type selection
 		let placeFilterInput: HTMLInputElement;
-		let placeFilterTypes: Set<'birth' | 'death' | 'marriage' | 'burial'> = new Set(['birth', 'death']);
+		const placeFilterTypes: Set<'birth' | 'death' | 'marriage' | 'burial'> = new Set(['birth', 'death']);
 
 		new Setting(configContent)
 			.setName('Filter by place')
@@ -3818,7 +3818,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Show the Places tab with geographic statistics
 	 */
-	private async showPlacesTab(): Promise<void> {
+	private showPlacesTab(): void {
 		const container = this.contentContainer;
 
 		// Actions Card
@@ -3963,7 +3963,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Load place statistics into container
 	 */
-	private async loadPlaceStatistics(container: HTMLElement): Promise<void> {
+	private loadPlaceStatistics(container: HTMLElement): void {
 		container.empty();
 
 		const placeService = new PlaceGraphService(this.app);
@@ -4088,7 +4088,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Load place list into container
 	 */
-	private async loadPlaceList(container: HTMLElement): Promise<void> {
+	private loadPlaceList(container: HTMLElement): void {
 		container.empty();
 
 		const placeService = new PlaceGraphService(this.app);
@@ -4142,11 +4142,11 @@ export class ControlCenterModal extends Modal {
 					text: place.name,
 					cls: 'crc-link'
 				});
-				link.addEventListener('click', async (e) => {
+				link.addEventListener('click', (e) => {
 					e.preventDefault();
 					const file = this.app.vault.getAbstractFileByPath(place.filePath);
 					if (file instanceof TFile) {
-						await this.app.workspace.getLeaf(false).openFile(file);
+						void this.app.workspace.getLeaf(false).openFile(file);
 						this.close();
 					}
 				});
@@ -4158,7 +4158,7 @@ export class ControlCenterModal extends Modal {
 				});
 				const editIcon = createLucideIcon('edit', 14);
 				editBtn.appendChild(editIcon);
-				editBtn.addEventListener('click', async (e) => {
+				editBtn.addEventListener('click', (e) => {
 					e.preventDefault();
 					e.stopPropagation();
 					const file = this.app.vault.getAbstractFileByPath(place.filePath);
@@ -4215,7 +4215,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Load referenced places into container
 	 */
-	private async loadReferencedPlaces(container: HTMLElement): Promise<void> {
+	private loadReferencedPlaces(container: HTMLElement): void {
 		container.empty();
 
 		const placeService = new PlaceGraphService(this.app);
@@ -4405,7 +4405,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Load place issues into container
 	 */
-	private async loadPlaceIssues(container: HTMLElement): Promise<void> {
+	private loadPlaceIssues(container: HTMLElement): void {
 		container.empty();
 
 		const placeService = new PlaceGraphService(this.app);
@@ -4464,7 +4464,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Show the Maps tab content
 	 */
-	private async showMapsTab(): Promise<void> {
+	private showMapsTab(): void {
 		const container = this.contentContainer;
 
 		// Card 1: Open Map View
@@ -4675,7 +4675,7 @@ export class ControlCenterModal extends Modal {
 			const editBtn = actionsContainer.createDiv({ cls: 'cr-map-thumbnail__action-btn' });
 			setLucideIcon(editBtn, 'edit', 14);
 			editBtn.setAttribute('aria-label', 'Edit map');
-			editBtn.addEventListener('click', async (e) => {
+			editBtn.addEventListener('click', (e) => {
 				e.stopPropagation(); // Prevent thumbnail click
 				const file = this.app.vault.getAbstractFileByPath(mapNote.filePath);
 				if (file instanceof TFile) {
@@ -4702,9 +4702,9 @@ export class ControlCenterModal extends Modal {
 			});
 
 			// Click to open in Map View with this specific map
-			thumbnail.addEventListener('click', async () => {
+			thumbnail.addEventListener('click', () => {
 				this.close();
-				await this.plugin.activateMapView(mapNote.id);
+				void this.plugin.activateMapView(mapNote.id);
 			});
 
 			// Right-click context menu
@@ -4739,7 +4739,7 @@ export class ControlCenterModal extends Modal {
 			item
 				.setTitle('Edit map')
 				.setIcon('edit')
-				.onClick(async () => {
+				.onClick(() => {
 					const file = this.app.vault.getAbstractFileByPath(mapNote.filePath);
 					if (file instanceof TFile) {
 						const cache = this.app.metadataCache.getFileCache(file);
@@ -4804,13 +4804,13 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Get all custom map notes from the vault
 	 */
-	private async getCustomMaps(): Promise<Array<{
+	private getCustomMaps(): Array<{
 		name: string;
 		filePath: string;
 		imagePath?: string;
 		universe?: string;
 		id?: string;
-	}>> {
+	}> {
 		const maps: Array<{
 			name: string;
 			filePath: string;
@@ -4874,6 +4874,7 @@ export class ControlCenterModal extends Modal {
 		let suffix = 1;
 		const parentPath = file.parent?.path || '';
 
+		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			const testPath = parentPath
 				? `${parentPath}/${finalName}.md`
@@ -5047,13 +5048,13 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Import a custom map from a JSON file
 	 */
-	private async importMapFromJson(gridContainer: HTMLElement): Promise<void> {
+	private importMapFromJson(gridContainer: HTMLElement): void {
 		// Create file input element
 		const input = document.createElement('input');
 		input.type = 'file';
 		input.accept = '.json';
 
-		input.addEventListener('change', async () => {
+		input.addEventListener('change', () => void (async () => {
 			const file = input.files?.[0];
 			if (!file) return;
 
@@ -5070,7 +5071,7 @@ export class ControlCenterModal extends Modal {
 				// Check for map_id or generate one
 				let mapId = data.map_id as string | undefined;
 				if (!mapId) {
-					mapId = this.generateMapId(data.name as string);
+					mapId = this.generateMapId(data.name);
 				}
 
 				// Check if a map with this ID already exists
@@ -5145,7 +5146,7 @@ export class ControlCenterModal extends Modal {
 
 				// Determine file path - use configured maps folder or vault root
 				const mapsDir = this.plugin.settings.mapsFolder || '';
-				const safeFileName = (data.name as string).replace(/[^a-z0-9\s-]/gi, '').replace(/\s+/g, '-');
+				const safeFileName = (data.name).replace(/[^a-z0-9\s-]/gi, '').replace(/\s+/g, '-');
 				const filePath = mapsDir
 					? `${mapsDir}/${safeFileName}.md`
 					: `${safeFileName}.md`;
@@ -5179,7 +5180,7 @@ export class ControlCenterModal extends Modal {
 					new Notice(`Failed to import: ${getErrorMessage(error)}`);
 				}
 			}
-		});
+		})());
 
 		// Trigger file picker
 		input.click();
@@ -5315,7 +5316,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Show modal to create missing place notes
 	 */
-	private async showCreateMissingPlacesModal(): Promise<void> {
+	private showCreateMissingPlacesModal(): void {
 		const placeService = new PlaceGraphService(this.app);
 		placeService.reloadCache();
 
@@ -5373,7 +5374,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Show modal to build place hierarchy (assign parents to orphan places)
 	 */
-	private async showBuildHierarchyModal(): Promise<void> {
+	private showBuildHierarchyModal(): void {
 		const placeService = new PlaceGraphService(this.app);
 		placeService.reloadCache();
 
@@ -5410,7 +5411,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Show modal to standardize place name variations
 	 */
-	private async showStandardizePlacesModal(): Promise<void> {
+	private showStandardizePlacesModal(): void {
 		// Find place name variations
 		const variationGroups = findPlaceNameVariations(this.app);
 
@@ -5505,7 +5506,7 @@ export class ControlCenterModal extends Modal {
 
 		const validateStatus = validationContent.createDiv({ cls: 'crc-validation-status crc-mt-2' });
 
-		validateBtn.addEventListener('click', async () => {
+		validateBtn.addEventListener('click', () => void (async () => {
 			validateBtn.disabled = true;
 			validateBtn.textContent = 'Validating...';
 			validateStatus.empty();
@@ -5536,7 +5537,7 @@ export class ControlCenterModal extends Modal {
 				validateBtn.textContent = 'Validate vault';
 				validateBtn.prepend(createLucideIcon('play', 16));
 			}
-		});
+		})());
 
 		container.appendChild(validationCard);
 
@@ -5691,11 +5692,11 @@ export class ControlCenterModal extends Modal {
 			});
 
 			// Click to open note
-			item.addEventListener('click', async (e) => {
+			item.addEventListener('click', (e) => {
 				if ((e.target as HTMLElement).closest('.crc-schema-actions')) return;
 				const file = this.app.vault.getAbstractFileByPath(schema.filePath);
 				if (file instanceof TFile) {
-					await this.app.workspace.getLeaf(false).openFile(file);
+					void this.app.workspace.getLeaf(false).openFile(file);
 					this.close();
 				}
 			});
@@ -5749,7 +5750,7 @@ export class ControlCenterModal extends Modal {
 			item
 				.setTitle('Validate matching notes')
 				.setIcon('play')
-				.onClick(async () => {
+				.onClick(() => {
 					new Notice(`Validating notes matching schema: ${schema.name}...`);
 					// TODO: Implement targeted validation
 				});
@@ -5864,7 +5865,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Import a schema from JSON
 	 */
-	private async importSchemaFromJson(schemaService: SchemaService, galleryContainer: HTMLElement): Promise<void> {
+	private importSchemaFromJson(schemaService: SchemaService, galleryContainer: HTMLElement): void {
 		const modal = new Modal(this.app);
 		modal.titleEl.setText('Import schema from JSON');
 
@@ -5890,7 +5891,7 @@ export class ControlCenterModal extends Modal {
 			text: 'Import',
 			cls: 'crc-btn crc-btn--primary'
 		});
-		importBtn.addEventListener('click', async () => {
+		importBtn.addEventListener('click', () => void (async () => {
 			const json = textarea.value.trim();
 			if (!json) {
 				new Notice('Please paste schema JSON');
@@ -5905,7 +5906,7 @@ export class ControlCenterModal extends Modal {
 			} catch (error) {
 				new Notice('Failed to import schema: ' + getErrorMessage(error));
 			}
-		});
+		})());
 
 		modal.open();
 	}
@@ -5954,10 +5955,10 @@ export class ControlCenterModal extends Modal {
 			}
 
 			// Click to open person note
-			item.addEventListener('click', async () => {
+			item.addEventListener('click', () => {
 				const file = this.app.vault.getAbstractFileByPath(result.filePath);
 				if (file instanceof TFile) {
-					await this.app.workspace.getLeaf(false).openFile(file);
+					void this.app.workspace.getLeaf(false).openFile(file);
 					this.close();
 				}
 			});
@@ -6057,9 +6058,7 @@ export class ControlCenterModal extends Modal {
 				cls: 'mod-cta',
 				text: 'Run schema validation'
 			});
-			validateBtn.addEventListener('click', async () => {
-				await this.runSchemaValidationFromDataQuality(section);
-			});
+			validateBtn.addEventListener('click', () => void this.runSchemaValidationFromDataQuality(section));
 			return;
 		}
 
@@ -6135,7 +6134,7 @@ export class ControlCenterModal extends Modal {
 				});
 				personLink.addEventListener('click', (e) => {
 					e.preventDefault();
-					this.app.workspace.openLinkText(result.filePath, '');
+					void this.app.workspace.openLinkText(result.filePath, '');
 				});
 
 				// Error count badge
@@ -6169,9 +6168,7 @@ export class ControlCenterModal extends Modal {
 			text: 'Re-validate'
 		});
 		setIcon(revalidateBtn.createSpan({ cls: 'crc-button-icon' }), 'refresh-cw');
-		revalidateBtn.addEventListener('click', async () => {
-			await this.runSchemaValidationFromDataQuality(section);
-		});
+		revalidateBtn.addEventListener('click', () => void this.runSchemaValidationFromDataQuality(section));
 	}
 
 	/**
@@ -6261,7 +6258,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Render Custom Relationship Types management card with table layout
 	 */
-	private async renderRelationshipTypesCard(container: HTMLElement, service: RelationshipService): Promise<void> {
+	private renderRelationshipTypesCard(container: HTMLElement, service: RelationshipService): void {
 		const card = this.createCard({
 			title: 'Custom relationship types',
 			icon: 'link-2'
@@ -6361,7 +6358,7 @@ export class ControlCenterModal extends Modal {
 					const deleteBtn = actionsCell.createEl('button', { cls: 'crc-icon-button clickable-icon crc-icon-button--danger' });
 					setIcon(deleteBtn, 'trash');
 					deleteBtn.setAttribute('aria-label', 'Delete');
-					deleteBtn.addEventListener('click', async () => {
+					deleteBtn.addEventListener('click', () => void (async () => {
 						if (confirm(`Delete relationship type "${type.name}"?`)) {
 							try {
 								await service.deleteRelationshipType(type.id);
@@ -6371,7 +6368,7 @@ export class ControlCenterModal extends Modal {
 								new Notice(`Failed to delete: ${getErrorMessage(error)}`);
 							}
 						}
-					});
+					})());
 				}
 			}
 		}
@@ -6454,7 +6451,7 @@ export class ControlCenterModal extends Modal {
 					});
 					fromLink.addEventListener('click', (e) => {
 						e.preventDefault();
-						this.app.workspace.openLinkText(rel.sourceFilePath, '');
+						void this.app.workspace.openLinkText(rel.sourceFilePath, '');
 					});
 
 					// Type
@@ -6476,7 +6473,7 @@ export class ControlCenterModal extends Modal {
 						});
 						toLink.addEventListener('click', (e) => {
 							e.preventDefault();
-							this.app.workspace.openLinkText(rel.targetFilePath!, '');
+							void this.app.workspace.openLinkText(rel.targetFilePath!, '');
 						});
 					} else {
 						toCell.createSpan({ text: rel.targetName, cls: 'crc-text-muted' });
@@ -7027,6 +7024,7 @@ export class ControlCenterModal extends Modal {
 					.onChange(value => {
 						importDestination = value as 'main' | 'staging';
 						// Show/hide subfolder input
+						// eslint-disable-next-line @typescript-eslint/no-misused-promises -- subfolderSetting is hoisted Setting, not a Promise
 						if (subfolderSetting) {
 							subfolderSetting.settingEl.style.display = value === 'staging' ? '' : 'none';
 						}
@@ -7138,7 +7136,7 @@ export class ControlCenterModal extends Modal {
 
 		// Branch filter options
 		let branchRootCrId: string | undefined;
-		let branchRootName: string | undefined;
+		let _branchRootName: string | undefined;
 		let branchDirection: 'ancestors' | 'descendants' | undefined;
 		let branchIncludeSpouses = false;
 
@@ -7147,10 +7145,10 @@ export class ControlCenterModal extends Modal {
 			.setDesc('Export only ancestors or descendants of a specific person')
 			.addButton(btn => {
 				btn.setButtonText('Select person')
-					.onClick(async () => {
+					.onClick(() => {
 						const picker = new PersonPickerModal(this.app, (info) => {
 							branchRootCrId = info.crId;
-							branchRootName = info.name;
+							_branchRootName = info.name;
 							btn.setButtonText(info.name);
 						});
 						picker.open();
@@ -7197,9 +7195,10 @@ export class ControlCenterModal extends Modal {
 		let privacyOverrideFormat: 'living' | 'private' | 'initials' | 'hidden' = this.plugin.settings.privacyDisplayFormat;
 
 		// Define updatePrivacyPreview before the settings that use it
+		// eslint-disable-next-line prefer-const
 		let updatePrivacyPreview: () => Promise<void>;
 
-		const privacyOverrideSetting = new Setting(content)
+		const _privacyOverrideSetting = new Setting(content)
 			.setName('Override privacy settings')
 			.setDesc('Use different privacy settings for this export only')
 			.addToggle(toggle => toggle
@@ -7362,6 +7361,7 @@ export class ControlCenterModal extends Modal {
 					.onChange(value => {
 						importDestination = value as 'main' | 'staging';
 						// Show/hide subfolder input
+						// eslint-disable-next-line @typescript-eslint/no-misused-promises -- subfolderSetting is hoisted Setting, not a Promise
 						if (subfolderSetting) {
 							subfolderSetting.settingEl.style.display = value === 'staging' ? '' : 'none';
 						}
@@ -7605,7 +7605,7 @@ export class ControlCenterModal extends Modal {
 
 		// Branch filter options
 		let gxBranchRootCrId: string | undefined;
-		let gxBranchRootName: string | undefined;
+		let _gxBranchRootName: string | undefined;
 		let gxBranchDirection: 'ancestors' | 'descendants' | undefined;
 		let gxBranchIncludeSpouses = false;
 
@@ -7614,10 +7614,10 @@ export class ControlCenterModal extends Modal {
 			.setDesc('Export only ancestors or descendants of a specific person')
 			.addButton(btn => {
 				btn.setButtonText('Select person')
-					.onClick(async () => {
+					.onClick(() => {
 						const picker = new PersonPickerModal(this.app, (info) => {
 							gxBranchRootCrId = info.crId;
-							gxBranchRootName = info.name;
+							_gxBranchRootName = info.name;
 							btn.setButtonText(info.name);
 						});
 						picker.open();
@@ -7652,9 +7652,10 @@ export class ControlCenterModal extends Modal {
 		let gxPrivacyOverrideFormat: 'living' | 'private' | 'initials' | 'hidden' = this.plugin.settings.privacyDisplayFormat;
 
 		// Define updateGxPrivacyPreview before the settings that use it
+		// eslint-disable-next-line prefer-const
 		let updateGxPrivacyPreview: () => Promise<void>;
 
-		const gxPrivacyOverrideSetting = new Setting(content)
+		const _gxPrivacyOverrideSetting = new Setting(content)
 			.setName('Override privacy settings')
 			.setDesc('Use different privacy settings for this export only')
 			.addToggle(toggle => toggle
@@ -7891,6 +7892,7 @@ export class ControlCenterModal extends Modal {
 					.onChange(value => {
 						importDestination = value as 'main' | 'staging';
 						// Show/hide subfolder input
+						// eslint-disable-next-line @typescript-eslint/no-misused-promises -- subfolderSetting is hoisted Setting, not a Promise
 						if (subfolderSetting) {
 							subfolderSetting.settingEl.style.display = value === 'staging' ? '' : 'none';
 						}
@@ -8134,7 +8136,7 @@ export class ControlCenterModal extends Modal {
 
 		// Branch filter options
 		let grampsBranchRootCrId: string | undefined;
-		let grampsBranchRootName: string | undefined;
+		let _grampsBranchRootName: string | undefined;
 		let grampsBranchDirection: 'ancestors' | 'descendants' | undefined;
 		let grampsBranchIncludeSpouses = false;
 
@@ -8143,10 +8145,10 @@ export class ControlCenterModal extends Modal {
 			.setDesc('Export only ancestors or descendants of a specific person')
 			.addButton(btn => {
 				btn.setButtonText('Select person')
-					.onClick(async () => {
+					.onClick(() => {
 						const picker = new PersonPickerModal(this.app, (info) => {
 							grampsBranchRootCrId = info.crId;
-							grampsBranchRootName = info.name;
+							_grampsBranchRootName = info.name;
 							btn.setButtonText(info.name);
 						});
 						picker.open();
@@ -8181,9 +8183,10 @@ export class ControlCenterModal extends Modal {
 		let grampsPrivacyOverrideFormat: 'living' | 'private' | 'initials' | 'hidden' = this.plugin.settings.privacyDisplayFormat;
 
 		// Define updateGrampsPrivacyPreview before the settings that use it
+		// eslint-disable-next-line prefer-const
 		let updateGrampsPrivacyPreview: () => Promise<void>;
 
-		const grampsPrivacyOverrideSetting = new Setting(content)
+		const _grampsPrivacyOverrideSetting = new Setting(content)
 			.setName('Override privacy settings')
 			.setDesc('Use different privacy settings for this export only')
 			.addToggle(toggle => toggle
@@ -8420,6 +8423,7 @@ export class ControlCenterModal extends Modal {
 					.onChange(value => {
 						csvImportDestination = value as 'main' | 'staging';
 						// Show/hide subfolder input
+						// eslint-disable-next-line @typescript-eslint/no-misused-promises -- csvSubfolderSetting is hoisted Setting, not a Promise
 						if (csvSubfolderSetting) {
 							csvSubfolderSetting.settingEl.style.display = value === 'staging' ? '' : 'none';
 						}
@@ -8531,7 +8535,7 @@ export class ControlCenterModal extends Modal {
 
 		// Branch filter options for CSV
 		let csvBranchRootCrId: string | undefined;
-		let csvBranchRootName: string | undefined;
+		let _csvBranchRootName: string | undefined;
 		let csvBranchDirection: 'ancestors' | 'descendants' | undefined;
 		let csvBranchIncludeSpouses = false;
 
@@ -8540,10 +8544,10 @@ export class ControlCenterModal extends Modal {
 			.setDesc('Export only ancestors or descendants of a specific person')
 			.addButton(btn => {
 				btn.setButtonText('Select person')
-					.onClick(async () => {
+					.onClick(() => {
 						const picker = new PersonPickerModal(this.app, (info) => {
 							csvBranchRootCrId = info.crId;
-							csvBranchRootName = info.name;
+							_csvBranchRootName = info.name;
 							btn.setButtonText(info.name);
 						});
 						picker.open();
@@ -8578,9 +8582,10 @@ export class ControlCenterModal extends Modal {
 		let csvPrivacyOverrideFormat: 'living' | 'private' | 'initials' | 'hidden' = this.plugin.settings.privacyDisplayFormat;
 
 		// Define updateCsvPrivacyPreview before the settings that use it
+		// eslint-disable-next-line prefer-const
 		let updateCsvPrivacyPreview: () => Promise<void>;
 
-		const csvPrivacyOverrideSetting = new Setting(content)
+		const _csvPrivacyOverrideSetting = new Setting(content)
 			.setName('Override privacy settings')
 			.setDesc('Use different privacy settings for this export only')
 			.addToggle(toggle => toggle
@@ -9472,7 +9477,7 @@ export class ControlCenterModal extends Modal {
 		const browserContent = browserSection.createDiv({ cls: 'crc-person-browser__content' });
 
 		// Load all people from vault
-		const { FamilyGraphService } = await import('../core/family-graph');
+		const { FamilyGraphService: _FamilyGraphService } = await import('../core/family-graph');
 		const allPeople: PersonInfo[] = [];
 		const files = this.app.vault.getMarkdownFiles();
 
@@ -10153,7 +10158,7 @@ export class ControlCenterModal extends Modal {
 		scopeSection.createEl('h3', { text: 'Analysis scope' });
 
 		let selectedScope: 'all' | 'staging' | 'folder' = 'all';
-		let selectedFolder = '';
+		const selectedFolder = '';
 
 		new Setting(scopeSection)
 			.setName('Scope')
@@ -10204,9 +10209,7 @@ export class ControlCenterModal extends Modal {
 			.addButton(btn => btn
 				.setButtonText('Apply')
 				.setCta()
-				.onClick(() => {
-					this.runBatchOperation('dates', selectedScope, selectedFolder);
-				})
+				.onClick(() => void this.runBatchOperation('dates', selectedScope, selectedFolder))
 			);
 
 		// Normalize gender
@@ -10215,16 +10218,12 @@ export class ControlCenterModal extends Modal {
 			.setDesc('Standardize to M/F format')
 			.addButton(btn => btn
 				.setButtonText('Preview')
-				.onClick(() => {
-					this.previewBatchOperation('gender', selectedScope, selectedFolder);
-				})
+				.onClick(() => void this.previewBatchOperation('gender', selectedScope, selectedFolder))
 			)
 			.addButton(btn => btn
 				.setButtonText('Apply')
 				.setCta()
-				.onClick(() => {
-					this.runBatchOperation('gender', selectedScope, selectedFolder);
-				})
+				.onClick(() => void this.runBatchOperation('gender', selectedScope, selectedFolder))
 			);
 
 		// Clear orphan references
@@ -10233,16 +10232,12 @@ export class ControlCenterModal extends Modal {
 			.setDesc('Remove parent references that point to non-existent records')
 			.addButton(btn => btn
 				.setButtonText('Preview')
-				.onClick(() => {
-					this.previewBatchOperation('orphans', selectedScope, selectedFolder);
-				})
+				.onClick(() => void this.previewBatchOperation('orphans', selectedScope, selectedFolder))
 			)
 			.addButton(btn => btn
 				.setButtonText('Apply')
 				.setWarning()
-				.onClick(() => {
-					this.runBatchOperation('orphans', selectedScope, selectedFolder);
-				})
+				.onClick(() => void this.runBatchOperation('orphans', selectedScope, selectedFolder))
 			);
 
 		// Data Tools section
@@ -10515,7 +10510,7 @@ export class ControlCenterModal extends Modal {
 			// Open the person's file
 			const file = issue.person.file;
 			if (file) {
-				this.app.workspace.openLinkText(file.path, '', false);
+				void this.app.workspace.openLinkText(file.path, '', false);
 				this.close();
 			}
 		});
@@ -10570,7 +10565,7 @@ export class ControlCenterModal extends Modal {
 			this.app,
 			operation,
 			preview,
-			() => this.runBatchOperation(operation, scope, folderPath)
+			() => void this.runBatchOperation(operation, scope, folderPath)
 		);
 		modal.open();
 	}

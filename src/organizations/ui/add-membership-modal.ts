@@ -65,13 +65,15 @@ export class AddMembershipModal extends Modal {
 			cancelBtn.addEventListener('click', () => this.close());
 
 			const createBtn = buttonContainer.createEl('button', { text: 'Create organization', cls: 'mod-cta' });
-			createBtn.addEventListener('click', async () => {
+			createBtn.addEventListener('click', () => {
 				this.close();
-				const { CreateOrganizationModal } = await import('./create-organization-modal');
-				new CreateOrganizationModal(this.app, this.plugin, () => {
-					// Re-open this modal after creating org
-					new AddMembershipModal(this.app, this.plugin, this.personFile, this.onSuccess).open();
-				}).open();
+				void (async () => {
+					const { CreateOrganizationModal } = await import('./create-organization-modal');
+					new CreateOrganizationModal(this.app, this.plugin, () => {
+						// Re-open this modal after creating org
+						new AddMembershipModal(this.app, this.plugin, this.personFile, this.onSuccess).open();
+					}).open();
+				})();
 			});
 
 			return;
@@ -133,7 +135,7 @@ export class AddMembershipModal extends Modal {
 		cancelBtn.addEventListener('click', () => this.close());
 
 		const addBtn = buttonContainer.createEl('button', { text: 'Add', cls: 'mod-cta' });
-		addBtn.addEventListener('click', () => this.addMembership());
+		addBtn.addEventListener('click', () => void this.addMembership());
 	}
 
 	onClose() {

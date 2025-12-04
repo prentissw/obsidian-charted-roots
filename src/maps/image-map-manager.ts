@@ -542,7 +542,7 @@ export class ImageMapManager {
 	/**
 	 * Load all custom map configurations from the vault
 	 */
-	async loadMapConfigs(): Promise<CustomMapConfig[]> {
+	loadMapConfigs(): CustomMapConfig[] {
 		this.mapConfigs.clear();
 		const configs: CustomMapConfig[] = [];
 
@@ -644,10 +644,10 @@ export class ImageMapManager {
 					logger.warn('invalid-bounds', `Map config in ${file.path} has invalid bounds`);
 					return null;
 				}
-				north = boundsNested.north as number;
-				south = boundsNested.south as number;
-				east = boundsNested.east as number;
-				west = boundsNested.west as number;
+				north = boundsNested.north;
+				south = boundsNested.south;
+				east = boundsNested.east;
+				west = boundsNested.west;
 			} else {
 				// Should not reach here due to earlier check
 				return null;
@@ -702,10 +702,10 @@ export class ImageMapManager {
 			typeof fm.corner_se_lng === 'number'
 		) {
 			corners = {
-				nw: { lat: fm.corner_nw_lat as number, lng: fm.corner_nw_lng as number },
-				ne: { lat: fm.corner_ne_lat as number, lng: fm.corner_ne_lng as number },
-				sw: { lat: fm.corner_sw_lat as number, lng: fm.corner_sw_lng as number },
-				se: { lat: fm.corner_se_lat as number, lng: fm.corner_se_lng as number }
+				nw: { lat: fm.corner_nw_lat, lng: fm.corner_nw_lng },
+				ne: { lat: fm.corner_ne_lat, lng: fm.corner_ne_lng },
+				sw: { lat: fm.corner_sw_lat, lng: fm.corner_sw_lng },
+				se: { lat: fm.corner_se_lat, lng: fm.corner_se_lng }
 			};
 		} else if (
 			cornersArray &&
@@ -1201,7 +1201,7 @@ export class ImageMapManager {
 	destroy(): void {
 		// Revoke any object URLs we created
 		for (const overlay of this.imageOverlays.values()) {
-			const url = (overlay as L.ImageOverlay).getElement()?.src;
+			const url = (overlay).getElement()?.src;
 			if (url && url.startsWith('blob:')) {
 				URL.revokeObjectURL(url);
 			}

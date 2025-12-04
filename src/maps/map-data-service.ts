@@ -224,7 +224,7 @@ export class MapDataService {
 	/**
 	 * Get person data from vault
 	 */
-	private async getPersonData(): Promise<PersonData[]> {
+	private getPersonData(): PersonData[] {
 		const people: PersonData[] = [];
 
 		const peopleFolder = this.plugin.settings.peopleFolder;

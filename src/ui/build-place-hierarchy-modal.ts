@@ -95,9 +95,7 @@ export class BuildPlaceHierarchyModal extends Modal {
 			text: 'Apply assignments',
 			cls: 'crc-btn crc-btn--primary'
 		});
-		applyBtn.addEventListener('click', async () => {
-			await this.applyAssignments();
-		});
+		applyBtn.addEventListener('click', () => void this.applyAssignments());
 	}
 
 	onClose() {

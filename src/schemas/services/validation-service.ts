@@ -10,9 +10,7 @@ import { getLogger } from '../../core/logging';
 import { SchemaService } from './schema-service';
 import type {
 	SchemaNote,
-	SchemaDefinition,
 	PropertyDefinition,
-	PropertyType,
 	SchemaConstraint,
 	ConditionalRequirement,
 	ValidationResult,

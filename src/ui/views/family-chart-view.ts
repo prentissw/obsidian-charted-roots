@@ -319,7 +319,7 @@ export class FamilyChartView extends ItemView {
 	/**
 	 * Open person picker to select root person
 	 */
-	private async promptSelectPerson(): Promise<void> {
+	private promptSelectPerson(): void {
 		const folderFilter = this.plugin.getFolderFilter() ?? undefined;
 
 		new PersonPickerModal(this.app, (selectedPerson) => {
@@ -575,7 +575,7 @@ export class FamilyChartView extends ItemView {
 	/**
 	 * Open person search modal to find and center on a person
 	 */
-	private async openPersonSearch(): Promise<void> {
+	private openPersonSearch(): void {
 		const folderFilter = this.plugin.getFolderFilter() ?? undefined;
 
 		new PersonPickerModal(this.app, (selectedPerson) => {

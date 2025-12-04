@@ -5,7 +5,7 @@
 
 import { App, Modal, Notice, Setting, TFile } from 'obsidian';
 import { PersonPickerModal, PersonInfo } from './person-picker';
-import { RelationshipService, DEFAULT_RELATIONSHIP_TYPES } from '../relationships';
+import { RelationshipService } from '../relationships';
 import type { RelationshipTypeDefinition, RawRelationship } from '../relationships';
 import type CanvasRootsPlugin from '../../main';
 
@@ -190,7 +190,7 @@ export class AddRelationshipModal extends Modal {
 			new Notice(`Added ${typeName} relationship to ${targetName}`);
 
 			// Refresh the relationship service cache
-			this.relationshipService.refreshCache();
+			await this.relationshipService.refreshCache();
 
 			this.close();
 		} catch (error) {

@@ -5,15 +5,14 @@
  * organizations list, statistics, and hierarchy.
  */
 
-import { setIcon, Notice, ToggleComponent, Setting } from 'obsidian';
+import { setIcon, ToggleComponent, Setting } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import type { LucideIconName } from '../../ui/lucide-icons';
 import { OrganizationService } from '../services/organization-service';
 import { MembershipService } from '../services/membership-service';
 import type {
 	OrganizationInfo,
-	OrganizationType,
-	OrganizationHierarchyNode
+	OrganizationType
 } from '../types/organization-types';
 import { getOrganizationType, DEFAULT_ORGANIZATION_TYPES } from '../constants/organization-types';
 import { CreateOrganizationModal } from './create-organization-modal';
@@ -21,12 +20,12 @@ import { CreateOrganizationModal } from './create-organization-modal';
 /**
  * Render the Organizations tab content
  */
-export async function renderOrganizationsTab(
+export function renderOrganizationsTab(
 	container: HTMLElement,
 	plugin: CanvasRootsPlugin,
 	createCard: (options: { title: string; icon?: LucideIconName }) => HTMLElement,
 	showTab: (tabId: string) => void
-): Promise<void> {
+): void {
 	const orgService = new OrganizationService(plugin);
 	const membershipService = new MembershipService(plugin, orgService);
 
@@ -67,7 +66,7 @@ function renderOrganizationsListCard(
 	setIcon(addBtn.createSpan({ cls: 'crc-button-icon' }), 'plus');
 	addBtn.createSpan({ text: 'Create organization' });
 	addBtn.addEventListener('click', () => {
-		new CreateOrganizationModal(plugin.app, plugin, async () => {
+		new CreateOrganizationModal(plugin.app, plugin, () => {
 			showTab('organizations');
 		}).open();
 	});
@@ -144,7 +143,7 @@ function renderOrganizationItem(
 	const nameLink = nameRow.createEl('a', { text: org.name, cls: 'cr-org-item-name' });
 	nameLink.addEventListener('click', (e) => {
 		e.preventDefault();
-		plugin.app.workspace.openLinkText(org.file.path, '');
+		void plugin.app.workspace.openLinkText(org.file.path, '');
 	});
 
 	if (org.motto) {
@@ -178,7 +177,7 @@ function renderOrganizationItem(
 	});
 	setIcon(viewBtn, 'external-link');
 	viewBtn.addEventListener('click', () => {
-		plugin.app.workspace.openLinkText(org.file.path, '');
+		void plugin.app.workspace.openLinkText(org.file.path, '');
 	});
 }
 

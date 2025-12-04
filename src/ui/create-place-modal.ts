@@ -474,7 +474,7 @@ export class CreatePlaceModal extends Modal {
 						this.customTypeInputEl.style.display = 'none';
 						this.customTypeInputEl.value = '';
 					}
-					this.placeData.placeType = value as PlaceType || undefined;
+					this.placeData.placeType = value || undefined;
 				}
 				// Update parent place dropdown to filter by hierarchy
 				this.updateParentPlaceDropdown();
@@ -755,11 +755,11 @@ export class CreatePlaceModal extends Modal {
 			text: this.editMode ? 'Save changes' : 'Create place',
 			cls: 'crc-btn crc-btn--primary'
 		});
-		submitBtn.addEventListener('click', async () => {
+		submitBtn.addEventListener('click', () => {
 			if (this.editMode) {
-				await this.updatePlace();
+				void this.updatePlace();
 			} else {
-				await this.createPlace();
+				void this.createPlace();
 			}
 		});
 	}

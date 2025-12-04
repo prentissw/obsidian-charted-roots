@@ -3,7 +3,7 @@
  * Finds similar place names and allows unification to a canonical form
  */
 
-import { App, Modal, Setting, Notice, TFile } from 'obsidian';
+import { App, Modal, Notice, TFile } from 'obsidian';
 import { createLucideIcon } from './lucide-icons';
 import { PlaceGraphService } from '../core/place-graph';
 
@@ -100,9 +100,7 @@ export class StandardizePlacesModal extends Modal {
 			text: 'Apply changes',
 			cls: 'crc-btn crc-btn--primary'
 		});
-		applyBtn.addEventListener('click', async () => {
-			await this.applyStandardization();
-		});
+		applyBtn.addEventListener('click', () => void this.applyStandardization());
 	}
 
 	onClose() {

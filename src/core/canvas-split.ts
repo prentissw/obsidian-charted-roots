@@ -5,7 +5,7 @@
  * Supports splitting by generation ranges, branches, collections, and lineage extraction.
  */
 
-import { App, TFile } from 'obsidian';
+import { App } from 'obsidian';
 import type { PersonNode, FamilyTree, FamilyEdge } from './family-graph';
 import type {
 	SplitOptions,
@@ -364,7 +364,7 @@ export interface CollectionExtractionResult {
  * Internal canvas data structure for manipulation (used by split operations)
  * Note: This is separate from CanvasData imported from canvas-generator
  */
-interface InternalCanvasData {
+interface _InternalCanvasData {
 	nodes: InternalCanvasNode[];
 	edges: InternalCanvasEdge[];
 	groups?: InternalCanvasGroup[];
@@ -4057,7 +4057,7 @@ export class CanvasSplitService {
 			const y = row * (nodeHeight + verticalSpacing);
 
 			// Create a text node with link to the canvas
-			const canvasName = canvas.path.replace(/\.canvas$/, '').split('/').pop() || canvas.label;
+			const _canvasName = canvas.path.replace(/\.canvas$/, '').split('/').pop() || canvas.label;
 			const infoLine = canvas.info ? `\n*${canvas.info}*` : '';
 
 			const node = {

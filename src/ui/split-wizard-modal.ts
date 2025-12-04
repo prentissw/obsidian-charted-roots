@@ -7,7 +7,7 @@
 
 import { App, Modal, Notice, Setting, TFile, TFolder } from 'obsidian';
 import type { CanvasRootsSettings } from '../settings';
-import { FamilyGraphService, type FamilyTree, type PersonNode } from '../core/family-graph';
+import { FamilyGraphService, type FamilyTree } from '../core/family-graph';
 import { FolderFilterService } from '../core/folder-filter';
 import {
 	CanvasSplitService,
@@ -16,7 +16,6 @@ import {
 	type LineageSplitOptions,
 	type CollectionSplitOptions,
 	type AncestorDescendantSplitOptions,
-	type SurnameSplitOptions,
 	DEFAULT_GENERATION_SPLIT_OPTIONS,
 	DEFAULT_BRANCH_SPLIT_OPTIONS,
 	DEFAULT_LINEAGE_SPLIT_OPTIONS,
@@ -1562,9 +1561,7 @@ export class SplitWizardModal extends Modal {
 				generateBtn.disabled = true;
 			}
 
-			generateBtn.addEventListener('click', async () => {
-				await this.executeGeneration();
-			});
+			generateBtn.addEventListener('click', () => void this.executeGeneration());
 		} else {
 			const nextBtn = buttonsEl.createEl('button', {
 				text: 'Next',
@@ -1936,7 +1933,7 @@ export class SplitWizardModal extends Modal {
 	 *
 	 * @returns Map of file path -> matched surname
 	 */
-	private async findPeopleBySurname(surnames: string[]): Promise<Map<string, string>> {
+	private findPeopleBySurname(surnames: string[]): Map<string, string> {
 		const peopleFiles = new Map<string, string>();
 		const files = this.app.vault.getMarkdownFiles();
 		const peopleFolder = this.settings.peopleFolder;

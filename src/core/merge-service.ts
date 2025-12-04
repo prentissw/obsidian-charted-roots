@@ -281,7 +281,7 @@ export class MergeService {
 					}
 					break;
 
-				case 'both':
+				case 'both': {
 					// Combine arrays
 					merged[choice.field] = this.combineArrayValues(stagingValue, mainValue);
 					// Also combine _id fields
@@ -290,6 +290,7 @@ export class MergeService {
 						merged[idField] = this.combineArrayValues(staging[idField], main[idField]);
 					}
 					break;
+				}
 
 				case 'main':
 				default:

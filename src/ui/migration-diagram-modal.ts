@@ -139,7 +139,7 @@ export class MigrationDiagramModal extends Modal {
 			endInput.max = String(this.yearRange.max);
 
 			// Year range info
-			const yearInfo = controlsRow2.createEl('span', {
+			const _yearInfo = controlsRow2.createEl('span', {
 				text: `(data spans ${this.yearRange.min}–${this.yearRange.max})`,
 				cls: 'crc-text--muted crc-migration-year-info'
 			});
@@ -213,7 +213,7 @@ export class MigrationDiagramModal extends Modal {
 			});
 
 			// "No grouping" option
-			const noGroupOption = aggregationSelect.createEl('option', {
+			const _noGroupOption = aggregationSelect.createEl('option', {
 				text: 'No grouping (show all places)',
 				value: '-1'
 			});

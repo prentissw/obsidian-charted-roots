@@ -127,7 +127,7 @@ export class CreateOrganizationModal extends Modal {
 		cancelBtn.addEventListener('click', () => this.close());
 
 		const createBtn = buttonContainer.createEl('button', { text: 'Create', cls: 'mod-cta' });
-		createBtn.addEventListener('click', () => this.createOrganization());
+		createBtn.addEventListener('click', () => void this.createOrganization());
 	}
 
 	onClose() {

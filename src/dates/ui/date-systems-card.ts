@@ -275,16 +275,18 @@ function createSystemItem(
 		// Delete button
 		const deleteBtn = actions.createEl('button', { cls: 'cr-btn-icon cr-btn-icon--danger', attr: { 'aria-label': 'Delete' } });
 		setIcon(deleteBtn, 'trash');
-		deleteBtn.addEventListener('click', async () => {
-			const confirm = await confirmDelete(plugin.app, system.name);
-			if (confirm) {
-				plugin.settings.fictionalDateSystems = plugin.settings.fictionalDateSystems.filter(
-					s => s.id !== system.id
-				);
-				await plugin.saveSettings();
-				renderDateSystemsList(listContainer, plugin, createCard);
-				new Notice(`Deleted date system: ${system.name}`);
-			}
+		deleteBtn.addEventListener('click', () => {
+			void (async () => {
+				const confirm = await confirmDelete(plugin.app, system.name);
+				if (confirm) {
+					plugin.settings.fictionalDateSystems = plugin.settings.fictionalDateSystems.filter(
+						s => s.id !== system.id
+					);
+					await plugin.saveSettings();
+					renderDateSystemsList(listContainer, plugin, createCard);
+					new Notice(`Deleted date system: ${system.name}`);
+				}
+			})();
 		});
 	} else {
 		// View-only indicator for built-in
@@ -484,7 +486,7 @@ class DateSystemModal extends Modal {
 			cancelBtn.addEventListener('click', () => this.close());
 
 			const saveBtn = buttonContainer.createEl('button', { cls: 'mod-cta', text: 'Save' });
-			saveBtn.addEventListener('click', async () => {
+			saveBtn.addEventListener('click', () => {
 				if (this.validate()) {
 					const system: FictionalDateSystem = {
 						id: this.formData.id,
@@ -494,8 +496,7 @@ class DateSystemModal extends Modal {
 						defaultEra: this.formData.defaultEra || undefined,
 						builtIn: false
 					};
-					await this.onSave(system);
-					this.close();
+					void this.onSave(system).then(() => this.close());
 				}
 			});
 		}

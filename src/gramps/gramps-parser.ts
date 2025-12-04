@@ -12,8 +12,6 @@ import {
 	GrampsPlace,
 	GrampsName,
 	GrampsDate,
-	GrampsEventRef,
-	GrampsChildRef,
 	GrampsValidationResult,
 	GrampsGender,
 	GrampsFamilyRelType,

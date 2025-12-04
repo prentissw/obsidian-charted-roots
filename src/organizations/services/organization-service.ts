@@ -11,11 +11,9 @@ import type {
 	OrganizationInfo,
 	OrganizationType,
 	OrganizationStats,
-	OrganizationHierarchyNode,
-	OrganizationWithMembers,
-	PersonMembership
+	OrganizationHierarchyNode
 } from '../types/organization-types';
-import { getOrganizationType, isValidOrganizationType } from '../constants/organization-types';
+import { isValidOrganizationType } from '../constants/organization-types';
 import { getLogger } from '../../core/logging';
 
 const logger = getLogger('OrganizationService');

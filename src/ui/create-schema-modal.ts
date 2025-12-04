@@ -3,17 +3,15 @@
  * Modal for creating and editing schema notes for validation
  */
 
-import { App, Modal, Setting, TFile, Notice, normalizePath, DropdownComponent } from 'obsidian';
+import { App, Modal, Setting, TFile, Notice } from 'obsidian';
 import { createLucideIcon, setLucideIcon } from './lucide-icons';
 import type CanvasRootsPlugin from '../../main';
 import { SchemaService } from '../schemas';
 import type {
 	SchemaNote,
-	SchemaDefinition,
 	PropertyDefinition,
 	PropertyType,
 	SchemaConstraint,
-	ConditionalRequirement,
 	SchemaAppliesTo
 } from '../schemas';
 
@@ -157,11 +155,11 @@ export class CreateSchemaModal extends Modal {
 			text: this.editMode ? 'Save changes' : 'Create schema',
 			cls: 'crc-btn crc-btn--primary'
 		});
-		submitBtn.addEventListener('click', async () => {
+		submitBtn.addEventListener('click', () => {
 			if (this.editMode) {
-				await this.updateSchema();
+				void this.updateSchema();
 			} else {
-				await this.createSchema();
+				void this.createSchema();
 			}
 		});
 	}

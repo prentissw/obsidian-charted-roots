@@ -291,11 +291,11 @@ export async function updatePlaceNote(
  * @param directory - Optional directory to limit search
  * @returns The TFile if found, null otherwise
  */
-export async function findPlaceNoteByCrId(
+export function findPlaceNoteByCrId(
 	app: App,
 	crId: string,
 	directory?: string
-): Promise<TFile | null> {
+): TFile | null {
 	const files = app.vault.getMarkdownFiles();
 
 	for (const file of files) {

@@ -319,11 +319,11 @@ export class CreatePersonModal extends Modal {
 			text: this.editMode ? 'Save changes' : 'Create person',
 			cls: 'crc-btn crc-btn--primary'
 		});
-		submitBtn.addEventListener('click', async () => {
+		submitBtn.addEventListener('click', () => {
 			if (this.editMode) {
-				await this.updatePerson();
+				void this.updatePerson();
 			} else {
-				await this.createPerson();
+				void this.createPerson();
 			}
 		});
 	}
@@ -449,7 +449,7 @@ export class CreatePersonModal extends Modal {
 			}
 
 			// Get collection value from the closure
-			const collection = this.getCollectionValue();
+			const _collection = this.getCollectionValue();
 			// Note: PersonData doesn't have a collection field yet
 			// This would need to be added to person-note-writer.ts if needed
 
