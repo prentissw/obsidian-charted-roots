@@ -48,6 +48,7 @@ const CONFIG = {
     'leaflet-distortable.css', // Leaflet toolbar/distortable image plugins (vendored)
     'date-systems.css',  // Date systems card
     'organizations.css', // Organizations tab
+    'sources.css',       // Sources tab
     'animations.css',    // Keyframes and transitions
     'responsive.css',    // Responsive breakpoints
     'theme.css'          // Theme compatibility (last)

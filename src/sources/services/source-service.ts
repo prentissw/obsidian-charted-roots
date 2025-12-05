@@ -14,6 +14,7 @@ import {
 	getAllSourceTypes,
 	getSourceType
 } from '../types/source-types';
+import { getSourceTemplate, applyTemplatePlaceholders } from '../types/source-templates';
 import { generateCrId } from '../../core/uuid';
 
 /**
@@ -131,6 +132,20 @@ export class SourceService {
 	}
 
 	/**
+	 * Get all unique locations
+	 */
+	getUniqueLocations(): string[] {
+		const sources = this.getAllSources();
+		const locations = new Set<string>();
+		for (const source of sources) {
+			if (source.location) {
+				locations.add(source.location);
+			}
+		}
+		return Array.from(locations).sort();
+	}
+
+	/**
 	 * Calculate source statistics
 	 */
 	getSourceStats(): SourceStats {
@@ -202,16 +217,16 @@ export class SourceService {
 		];
 
 		if (data.date) {
-			frontmatterLines.push(`date: ${data.date}`);
+			frontmatterLines.push(`source_date: ${data.date}`);
 		}
 		if (data.dateAccessed) {
-			frontmatterLines.push(`date_accessed: ${data.dateAccessed}`);
+			frontmatterLines.push(`source_date_accessed: ${data.dateAccessed}`);
 		}
 		if (data.repository) {
-			frontmatterLines.push(`repository: "${data.repository.replace(/"/g, '\\"')}"`);
+			frontmatterLines.push(`source_repository: "${data.repository.replace(/"/g, '\\"')}"`);
 		}
 		if (data.repositoryUrl) {
-			frontmatterLines.push(`repository_url: "${data.repositoryUrl}"`);
+			frontmatterLines.push(`source_repository_url: "${data.repositoryUrl}"`);
 		}
 		if (data.collection) {
 			frontmatterLines.push(`collection: "${data.collection.replace(/"/g, '\\"')}"`);
@@ -231,20 +246,36 @@ export class SourceService {
 
 		frontmatterLines.push('---');
 
-		// Build note body
-		const bodyLines: string[] = [
-			'',
-			`# ${data.title}`,
-			''
-		];
+		// Build note body using template
+		// Check if this is a custom type with a template
+		const customTemplates: Record<string, string> = {};
+		for (const customType of this.settings.customSourceTypes) {
+			if (customType.template) {
+				customTemplates[customType.id] = customType.template;
+			}
+		}
+		let body = getSourceTemplate(data.sourceType, customTemplates);
+		body = applyTemplatePlaceholders(body, { title: data.title });
 
+		// If user provided a transcription, insert it into the template
 		if (data.transcription) {
-			bodyLines.push('## Transcription', '', data.transcription, '');
+			// Find the Transcription section and add content after it
+			const transcriptionHeader = '## Transcription';
+			const transcriptionIndex = body.indexOf(transcriptionHeader);
+			if (transcriptionIndex !== -1) {
+				const afterHeader = transcriptionIndex + transcriptionHeader.length;
+				const nextSection = body.indexOf('\n## ', afterHeader);
+				if (nextSection !== -1) {
+					// Insert transcription between header and next section
+					body = body.slice(0, afterHeader) + '\n\n' + data.transcription + '\n' + body.slice(nextSection);
+				} else {
+					// No next section, append at end of transcription area
+					body = body.slice(0, afterHeader) + '\n\n' + data.transcription + body.slice(afterHeader);
+				}
+			}
 		}
 
-		bodyLines.push('## Research Notes', '', '');
-
-		const content = frontmatterLines.join('\n') + '\n' + bodyLines.join('\n');
+		const content = frontmatterLines.join('\n') + body;
 
 		// Create file
 		const fileName = this.slugify(data.title) + '.md';
@@ -261,6 +292,94 @@ export class SourceService {
 		this.invalidateCache();
 
 		return file;
+	}
+
+	/**
+	 * Update an existing source note's frontmatter
+	 */
+	async updateSource(file: TFile, data: {
+		title: string;
+		sourceType: string;
+		date?: string;
+		dateAccessed?: string;
+		repository?: string;
+		repositoryUrl?: string;
+		collection?: string;
+		location?: string;
+		confidence?: SourceConfidence;
+		media?: string[];
+	}): Promise<void> {
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			// Update fields
+			frontmatter.title = data.title;
+			frontmatter.source_type = data.sourceType;
+
+			// Optional fields - set or remove
+			// Also clean up legacy property names if present
+			if (data.date) {
+				frontmatter.source_date = data.date;
+			} else {
+				delete frontmatter.source_date;
+			}
+			delete frontmatter.date; // Remove legacy
+
+			if (data.dateAccessed) {
+				frontmatter.source_date_accessed = data.dateAccessed;
+			} else {
+				delete frontmatter.source_date_accessed;
+			}
+			delete frontmatter.date_accessed; // Remove legacy
+
+			if (data.repository) {
+				frontmatter.source_repository = data.repository;
+			} else {
+				delete frontmatter.source_repository;
+			}
+			delete frontmatter.repository; // Remove legacy
+
+			if (data.repositoryUrl) {
+				frontmatter.source_repository_url = data.repositoryUrl;
+			} else {
+				delete frontmatter.source_repository_url;
+			}
+			delete frontmatter.repository_url; // Remove legacy
+
+			if (data.collection) {
+				frontmatter.collection = data.collection;
+			} else {
+				delete frontmatter.collection;
+			}
+
+			if (data.location) {
+				frontmatter.location = data.location;
+			} else {
+				delete frontmatter.location;
+			}
+
+			if (data.confidence) {
+				frontmatter.confidence = data.confidence;
+			} else {
+				delete frontmatter.confidence;
+			}
+
+			// Handle media fields - clear existing and set new
+			// First, remove all existing media fields
+			delete frontmatter.media;
+			for (let i = 2; i <= 20; i++) {
+				delete frontmatter[`media_${i}`];
+			}
+
+			// Then add new media fields
+			if (data.media && data.media.length > 0) {
+				frontmatter.media = data.media[0];
+				for (let i = 1; i < data.media.length; i++) {
+					frontmatter[`media_${i + 1}`] = data.media[i];
+				}
+			}
+		});
+
+		// Invalidate cache
+		this.invalidateCache();
 	}
 
 	/**
@@ -309,10 +428,11 @@ export class SourceService {
 			crId,
 			title,
 			sourceType,
-			date: frontmatter.date ? String(frontmatter.date) : undefined,
-			dateAccessed: frontmatter.date_accessed ? String(frontmatter.date_accessed) : undefined,
-			repository: frontmatter.repository ? String(frontmatter.repository) : undefined,
-			repositoryUrl: frontmatter.repository_url ? String(frontmatter.repository_url) : undefined,
+			// Support both new and legacy property names for backwards compatibility
+			date: (frontmatter.source_date || frontmatter.date) ? String(frontmatter.source_date || frontmatter.date) : undefined,
+			dateAccessed: (frontmatter.source_date_accessed || frontmatter.date_accessed) ? String(frontmatter.source_date_accessed || frontmatter.date_accessed) : undefined,
+			repository: (frontmatter.source_repository || frontmatter.repository) ? String(frontmatter.source_repository || frontmatter.repository) : undefined,
+			repositoryUrl: (frontmatter.source_repository_url || frontmatter.repository_url) ? String(frontmatter.source_repository_url || frontmatter.repository_url) : undefined,
 			collection: frontmatter.collection ? String(frontmatter.collection) : undefined,
 			location: frontmatter.location ? String(frontmatter.location) : undefined,
 			media,

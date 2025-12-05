@@ -243,6 +243,14 @@ Features for genealogists managing documentary evidence and oral history.
 
 **Summary:** Centralized evidence management linking source documents to person notes.
 
+**Partially Implemented (v0.7.x):**
+- Source note type (`type: source`) with frontmatter schema
+- Source counting during cache loading (counts links from source notes to person notes)
+- **Source indicators on generated trees**: Small badges (e.g., "📎 3") on person nodes showing linked source count
+  - Color-coded: green for 3+ sources (well-documented), yellow for 1-2 sources
+  - Toggle in Settings → Canvas Roots → Canvas styling → "Show source indicators"
+- Sources Bases template for managing source notes
+
 **Schema:**
 ```yaml
 sources:
@@ -260,7 +268,7 @@ source_media:  # Simple format
 
 **Source Types:** census, vital_record, photo, correspondence, newspaper, military, immigration, custom
 
-**Features:**
+**Remaining Features:**
 - Thumbnail grid with PDF previews
 - Sort by date, type, or filename
 - Filter by source type

@@ -65,6 +65,18 @@ Click the **Tree Generation** tab at the top of the Control Center modal.
 - **Vertical spacing**: Distance between generations
 - Adjust in Canvas Settings tab
 
+### Source Indicators
+
+Display badges showing how many source notes link to each person:
+
+- **Show source indicators**: Toggle in Settings → Canvas Roots → Canvas styling
+- When enabled, nodes show badges like "📎 3" indicating 3 linked sources
+- **Color coding**: Green for 3+ sources (well-documented), yellow for 1-2 sources
+- Only appears on nodes that have at least one linked source
+- Source notes are identified by `type: source` in their frontmatter
+
+This feature helps visualize research quality at a glance—nodes without badges may need more documentation.
+
 ## Step 5: Generate
 
 ### Single Tree

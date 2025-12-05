@@ -27,6 +27,8 @@ export interface SourceTypeDefinition {
 	color: string;
 	category: 'vital' | 'census' | 'church' | 'legal' | 'military' | 'media' | 'other';
 	isBuiltIn: boolean;
+	/** Markdown template for the note body (without frontmatter) */
+	template?: string;
 }
 
 /**

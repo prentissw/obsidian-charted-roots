@@ -508,12 +508,276 @@ No migration needed - new feature with new note type. Existing vaults unaffected
 
 ---
 
+## Phase 1.5: Source Templates & Custom Types
+
+### Source Type Templates
+
+When creating a source note, the note body is pre-populated with a type-specific markdown template. Templates help users capture the right information for each source type.
+
+**Implementation:**
+
+1. Add `template` field to `SourceTypeDefinition`:
+
+```typescript
+interface SourceTypeDefinition {
+  id: string;
+  name: string;
+  category: SourceCategory;
+  icon: string;
+  color: string;
+  description: string;
+  isBuiltIn: boolean;
+  template?: string;  // Markdown template for note body
+}
+```
+
+2. Built-in templates for common source types:
+
+**Census template:**
+```markdown
+## Transcription
+
+**Enumeration District:**
+**Sheet:**
+**Dwelling:**
+**Family:**
+
+| Name | Relation | Age | Birthplace | Occupation |
+|------|----------|-----|------------|------------|
+|      |          |     |            |            |
+
+## Research Notes
+
+```
+
+**Vital Record template:**
+```markdown
+## Document Details
+
+**Certificate Number:**
+**Filed:**
+**Registrar:**
+
+## Transcription
+
+## Research Notes
+
+```
+
+**Photograph template:**
+```markdown
+## Description
+
+**People shown:**
+**Location:**
+**Approximate date:**
+**Photographer:**
+
+## Notes
+
+```
+
+3. Template insertion in `CreateSourceModal`:
+   - After creating the note with frontmatter, append the template body
+   - Only insert template if note body would otherwise be empty
+
+4. User-configurable via Templater integration (optional):
+   - Setting: `sourceTypeTemplatePath` - folder containing type-specific templates
+   - Naming convention: `census.md`, `vital_record.md`, etc.
+   - If template file exists, use it instead of built-in
+
+### Custom Source Types UI
+
+Add UI to create/edit/delete custom source types, matching the pattern used for custom relationship types.
+
+**Location:** Sources tab → Source Types card → "Add custom type" button
+
+**Modal fields:**
+1. **ID** (required) - Snake case identifier (e.g., `land_grant`)
+2. **Name** (required) - Display name (e.g., "Land Grant")
+3. **Category** - Dropdown of existing categories
+4. **Icon** - Icon picker (Lucide icons)
+5. **Color** - Color picker
+6. **Description** - Short description
+7. **Template** - Textarea for markdown template
+
+**Settings storage:**
+Already defined in plan: `customSourceTypes: SourceTypeDefinition[]`
+
+**UI patterns:**
+- List of custom types in Source Types card
+- Edit button → reopens modal with existing values
+- Delete button → confirmation dialog
+- Custom types shown with "custom" badge (vs "built-in")
+
+### Documentation Updates
+
+Update `docs/Frontmatter-Reference.md` with:
+
+1. **Source Note Properties** - Full table of source frontmatter fields
+2. **Source Type Values** - List of built-in source types with descriptions
+3. **Person-Source Linking** - How `source`, `source_2`, etc. work on person notes
+4. **Mermaid Diagram** - Entity relationship showing:
+   - Source note → Person note (via `source` property on person)
+   - Source note → Media files (via `media` properties)
+   - Source types and confidence levels
+
+Example diagram to add:
+
+```mermaid
+erDiagram
+    PERSON ||--o{ SOURCE : "sources"
+    SOURCE ||--o{ MEDIA : "media attachments"
+    SOURCE {
+        string type "source"
+        string cr_id
+        string title
+        string source_type
+        string confidence
+        string repository
+        date date
+    }
+    PERSON {
+        string source "wikilink"
+        string source_2 "wikilink"
+    }
+```
+
+### Prioritization
+
+This phase should be implemented **after Phase 1 core features** and **before Phase 2 Media Gallery**:
+
+1. ~~Phase 1 core~~ (complete): Source notes, Sources tab, Create modal, essential properties
+2. **Phase 1 remaining**: Link sources to person notes
+3. **Phase 1.5**: Source templates, Custom source types UI, Documentation updates
+4. Phase 2: Media Gallery, Citation generator, Missing sources report
+
+**Rationale:**
+- Templates improve UX immediately with minimal effort
+- Custom types complete the source type system before adding gallery/citations
+- Documentation ensures users can discover and use the feature correctly
+- All are prerequisites for users who want to customize before building large source collections
+
+---
+
+## Phase 3: Bulk Import from Media (Future)
+
+### Overview
+
+For users with existing collections of source images (census records, vital records, photographs), provide a workflow to bulk-create source notes from a folder of media files.
+
+### Workflow
+
+1. User selects folder containing media files (or multi-selects files)
+2. Plugin scans for image/PDF files
+3. Modal shows preview of files to import
+4. User selects source type to apply (or "detect from filename")
+5. Plugin creates one source note per file (or per group if configured)
+6. Source notes link to original media files
+
+### Filename Parsing (Optional)
+
+If filenames follow conventions, extract metadata:
+- `1900-census-smith-brooklyn.jpg` → year: 1900, type: census, title hint: "smith brooklyn"
+- `birth-cert-john-smith-1865.pdf` → type: vital_record, title hint: "john smith 1865"
+
+### Grouping Options
+
+- **One note per file** (default) - Each image gets its own source note
+- **Group by prefix** - Files sharing a prefix become one source with multiple media
+  - `1900-census-smith-p1.jpg`, `1900-census-smith-p2.jpg` → single source with `media` and `media_2`
+
+---
+
+## Transcription Guidance
+
+Canvas Roots does not include built-in OCR or AI transcription, but users may want to transcribe source documents. The documentation should guide users toward external tools.
+
+### Best Practices for Census Transcription
+
+1. **Citation first** - Always document the source location before transcribing
+2. **Full vs partial transcription**:
+   - Full: Copy every column exactly as written (preserves original spelling, abbreviations)
+   - Partial: Extract only facts relevant to your research
+3. **One source per household** - Link the same source note to all family members on that census page
+4. **Keep original images** - Transcriptions can have errors; the image is the primary evidence
+
+### External Transcription Tools
+
+Include in user documentation:
+
+| Tool | Type | Notes |
+|------|------|-------|
+| [Transkribus](https://transkribus.eu/) | AI/HTR | Free tier available, specialized for historical documents |
+| [FamilySearch Indexing](https://www.familysearch.org/indexing/) | Crowdsourced | Many records already indexed and searchable |
+| [Google Cloud Vision](https://cloud.google.com/vision) | OCR API | Good for typed documents, requires API key |
+| [Claude/GPT-4](https://claude.ai) | AI chat | Can transcribe images via chat interface |
+| Manual | — | Most accurate for difficult handwriting |
+
+### Workflow Suggestion
+
+1. Create source note with metadata and media link
+2. Open image in external tool or AI chat
+3. Paste transcription into source note body
+4. Add research notes interpreting the transcription
+
+---
+
+## Source Indicators on Generated Trees
+
+### Overview
+
+When enabled, generated family trees display source count indicators on person nodes, showing at a glance how many source notes link to each person. This provides research quality visibility without cluttering the tree.
+
+### How It Works
+
+1. **Source Detection**: During cache loading, the plugin scans all source notes (notes with `type: source` frontmatter) and counts how many link to each person note using Obsidian's `resolvedLinks` metadata.
+
+2. **PersonNode Interface**: Added optional `sourceCount?: number` property to track linked sources.
+
+3. **Canvas Generation**: When `showSourceIndicators` is enabled, small text nodes are added near person nodes:
+   - Only shown for people with at least 1 source
+   - Positioned at top-right of person node
+   - Displays paperclip emoji with count (e.g., "📎 3")
+   - Color-coded: green for well-sourced (3+), yellow for some sources (1-2)
+
+### Setting
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `showSourceIndicators` | boolean | `false` | Display source count badges on person nodes in generated trees |
+
+Located in: Settings → Canvas Roots → Canvas Generation → "Show source indicators"
+
+### Usage
+
+1. Go to Settings → Canvas Roots → Canvas Generation
+2. Enable "Show source indicators"
+3. Generate or regenerate a family tree canvas
+4. Source count badges will appear on person nodes that have linked sources
+
+### Design Rationale
+
+**Why badges instead of embedded counts?**
+- Canvas file nodes cannot be modified to show custom content
+- Text nodes provide a clean, non-intrusive indicator
+- Users can delete individual badges if desired
+
+**Why default to OFF?**
+- Keeps generated canvases clean for users who don't need this feature
+- Avoids adding nodes that might confuse new users
+- Users opt-in when they want research quality visibility
+
+### Related Files
+
+- `src/core/family-graph.ts` - Source counting in `countSourceBacklinks()`
+- `src/core/canvas-generator.ts` - Indicator node generation in `addSourceIndicatorNodes()`
+- `src/settings.ts` - `showSourceIndicators` setting
+
+---
+
 ## Open Questions
 
 1. **Repository suggestions** - Should we maintain a list of common repositories (Ancestry, FamilySearch, FindMyPast) for autocomplete?
 
 2. **Media file organization** - Should source media be co-located with source notes, or in a separate attachments folder?
-
-3. **Bulk import** - Should we support importing sources from a CSV/spreadsheet?
-
-4. **Source templates** - Pre-fill fields based on source type (e.g., census template has location, enumeration district fields)?

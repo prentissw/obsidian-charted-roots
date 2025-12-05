@@ -41,6 +41,7 @@ import { RelationshipService, RELATIONSHIP_CATEGORY_NAMES } from '../relationshi
 import type { RelationshipCategory } from '../relationships';
 import { createDateSystemsCard } from '../dates';
 import { renderOrganizationsTab } from '../organizations';
+import { renderSourcesTab } from '../sources';
 
 const logger = getLogger('ControlCenter');
 
@@ -267,6 +268,9 @@ export class ControlCenterModal extends Modal {
 			case 'organizations':
 				void this.showOrganizationsTab();
 				break;
+			case 'sources':
+				void this.showSourcesTab();
+				break;
 			default:
 				this.showPlaceholderTab(tabId);
 		}
@@ -414,6 +418,7 @@ export class ControlCenterModal extends Modal {
 						spouseEdgeColor: this.plugin.settings.spouseEdgeColor,
 						showSpouseEdges: this.plugin.settings.showSpouseEdges,
 						spouseEdgeLabelFormat: this.plugin.settings.spouseEdgeLabelFormat,
+						showSourceIndicators: this.plugin.settings.showSourceIndicators,
 						canvasRootsMetadata: {
 							plugin: 'canvas-roots' as const,
 							generation: {
@@ -1120,7 +1125,7 @@ export class ControlCenterModal extends Modal {
 		const propsCard = this.createCard({
 			title: 'Essential properties',
 			icon: 'file-text',
-			subtitle: 'YAML frontmatter fields for person, place, and map notes'
+			subtitle: 'YAML frontmatter fields for person, place, source, and map notes'
 		});
 		const propsContent = propsCard.querySelector('.crc-card__content') as HTMLElement;
 
@@ -1167,6 +1172,25 @@ export class ControlCenterModal extends Modal {
 				{ name: 'universe', desc: 'Universe for filtering places', req: true },
 				{ name: 'image', desc: 'Path to map image', req: true },
 				{ name: 'bounds', desc: 'Coordinate bounds (north/south/east/west)', req: true }
+			].forEach(p => {
+				const li = list.createEl('li');
+				const code = li.createEl('code', { text: p.name });
+				if (p.req) code.addClass('crc-field--required');
+				li.appendText(` - ${p.desc}`);
+			});
+		});
+
+		// Source properties collapsible
+		this.createCollapsible(propsContent, 'Source notes', 'archive', (body) => {
+			const list = body.createEl('ul', { cls: 'crc-field-list' });
+			[
+				{ name: 'type', desc: 'Must be "source"', req: true },
+				{ name: 'cr_id', desc: 'Unique identifier', req: true },
+				{ name: 'title', desc: 'Source title', req: true },
+				{ name: 'source_type', desc: 'Type (census, vital_record, etc.)', req: true },
+				{ name: 'source_repository', desc: 'Archive or website holding source', req: false },
+				{ name: 'source_date', desc: 'Document date', req: false },
+				{ name: 'confidence', desc: 'high, medium, low, or unknown', req: false }
 			].forEach(p => {
 				const li = list.createEl('li');
 				const code = li.createEl('code', { text: p.name });
@@ -2838,8 +2862,9 @@ export class ControlCenterModal extends Modal {
 				spouseArrowStyle: this.plugin.settings.spouseArrowStyle,
 				parentChildEdgeColor: this.plugin.settings.parentChildEdgeColor,
 				spouseEdgeColor: this.plugin.settings.spouseEdgeColor,
-			showSpouseEdges: this.plugin.settings.showSpouseEdges,
-			spouseEdgeLabelFormat: this.plugin.settings.spouseEdgeLabelFormat,
+				showSpouseEdges: this.plugin.settings.showSpouseEdges,
+				spouseEdgeLabelFormat: this.plugin.settings.spouseEdgeLabelFormat,
+				showSourceIndicators: this.plugin.settings.showSourceIndicators,
 				canvasRootsMetadata: {
 					plugin: 'canvas-roots',
 					generation: {
@@ -6245,6 +6270,19 @@ export class ControlCenterModal extends Modal {
 	private showOrganizationsTab(): void {
 		const container = this.contentContainer;
 		renderOrganizationsTab(
+			container,
+			this.plugin,
+			(options) => this.createCard(options),
+			(tabId) => this.showTab(tabId)
+		);
+	}
+
+	/**
+	 * Show Sources tab with source list and statistics
+	 */
+	private showSourcesTab(): void {
+		const container = this.contentContainer;
+		renderSourcesTab(
 			container,
 			this.plugin,
 			(options) => this.createCard(options),

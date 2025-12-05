@@ -152,6 +152,9 @@ export interface CanvasGenerationOptions extends LayoutOptions {
 
 	/** Format for spouse edge labels */
 	spouseEdgeLabelFormat?: SpouseEdgeLabelFormat;
+
+	/** Show source count indicators on person nodes */
+	showSourceIndicators?: boolean;
 }
 
 /**
@@ -221,7 +224,8 @@ export class CanvasGenerator {
 			parentChildEdgeColor: effectiveStyles.parentChildEdgeColor,
 			spouseEdgeColor: effectiveStyles.spouseEdgeColor,
 			showSpouseEdges: effectiveStyles.showSpouseEdges,
-			spouseEdgeLabelFormat: effectiveStyles.spouseEdgeLabelFormat
+			spouseEdgeLabelFormat: effectiveStyles.spouseEdgeLabelFormat,
+			showSourceIndicators: options.showSourceIndicators ?? false
 		};
 
 		logger.debug('canvas-generation', 'Canvas generation options', {
@@ -405,6 +409,11 @@ export class CanvasGenerator {
 			opts
 		);
 
+		// Add source indicator nodes if enabled
+		if (opts.showSourceIndicators) {
+			this.addSourceIndicatorNodes(canvasNodes, familyTree, nodeMap, opts);
+		}
+
 		return {
 			nodes: canvasNodes,
 			edges: canvasEdges,
@@ -413,6 +422,44 @@ export class CanvasGenerator {
 				frontmatter: metadata ? (metadata as unknown as Record<string, unknown>) : {}
 			}
 		};
+	}
+
+	/**
+	 * Adds small text nodes as source indicators near person nodes
+	 * Shows the number of source notes linking to each person
+	 */
+	private addSourceIndicatorNodes(
+		canvasNodes: CanvasNode[],
+		familyTree: FamilyTree,
+		nodeMap: Map<string, { x: number; y: number }>,
+		opts: { nodeWidth: number; nodeHeight: number }
+	): void {
+		// Indicator node dimensions
+		const indicatorWidth = 40;
+		const indicatorHeight = 24;
+		const offsetX = opts.nodeWidth - indicatorWidth - 4; // Position at top-right
+		const offsetY = -indicatorHeight - 2; // Position above the node
+
+		for (const [crId, person] of familyTree.nodes) {
+			const pos = nodeMap.get(crId);
+			if (!pos) continue;
+
+			// Only show indicator if person has sources
+			const sourceCount = person.sourceCount ?? 0;
+			if (sourceCount === 0) continue;
+
+			// Create source indicator text node
+			canvasNodes.push({
+				id: this.generateId(),
+				type: 'text',
+				text: `📎 ${sourceCount}`,
+				x: pos.x + offsetX,
+				y: pos.y + offsetY,
+				width: indicatorWidth,
+				height: indicatorHeight,
+				color: sourceCount >= 3 ? '4' : sourceCount >= 1 ? '3' : undefined // Green for well-sourced, yellow for some sources
+			});
+		}
 	}
 
 	/**

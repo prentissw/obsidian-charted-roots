@@ -18,6 +18,7 @@ import { CanvasGenerator } from './src/core/canvas-generator';
 import { BASE_TEMPLATE } from './src/constants/base-template';
 import { PLACES_BASE_TEMPLATE } from './src/constants/places-base-template';
 import { ORGANIZATIONS_BASE_TEMPLATE } from './src/constants/organizations-base-template';
+import { SOURCES_BASE_TEMPLATE } from './src/constants/sources-base-template';
 import { ExcalidrawExporter } from './src/excalidraw/excalidraw-exporter';
 import { BidirectionalLinker } from './src/core/bidirectional-linker';
 import { generateCrId } from './src/core/uuid';
@@ -35,6 +36,7 @@ import { CreatePersonModal } from './src/ui/create-person-modal';
 import { PlaceGraphService } from './src/core/place-graph';
 import { SchemaService, ValidationService } from './src/schemas';
 import { AddRelationshipModal } from './src/ui/add-relationship-modal';
+import { SourcePickerModal, SourceService, CreateSourceModal, CitationGeneratorModal } from './src/sources';
 
 const logger = getLogger('CanvasRootsPlugin');
 
@@ -165,6 +167,15 @@ export default class CanvasRootsPlugin extends Plugin {
 			name: 'Create organizations base template',
 			callback: () => {
 				void this.createOrganizationsBaseTemplate();
+			}
+		});
+
+		// Add command: Create Sources Base Template
+		this.addCommand({
+			id: 'create-sources-base-template',
+			name: 'Create sources base template',
+			callback: () => {
+				void this.createSourcesBaseTemplate();
 			}
 		});
 
@@ -450,6 +461,28 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 		});
 
+		// Add command: Create Source Note
+		this.addCommand({
+			id: 'create-source-note',
+			name: 'Create source note',
+			callback: async () => {
+				const { CreateSourceModal } = await import('./src/sources');
+				new CreateSourceModal(this.app, this, () => {
+					// Optionally open to sources tab after creation
+				}).open();
+			}
+		});
+
+		// Add command: Open Sources Tab
+		this.addCommand({
+			id: 'open-sources-tab',
+			name: 'Open sources tab',
+			callback: () => {
+				const modal = new ControlCenterModal(this.app, this);
+				modal.openToTab('sources');
+			}
+		});
+
 		// Add context menu items for person notes, canvas files, and folders
 		this.registerEvent(
 			this.app.workspace.on('file-menu', (menu, file) => {
@@ -668,11 +701,12 @@ export default class CanvasRootsPlugin extends Plugin {
 					}
 				}
 
-				// Markdown files: Person notes, Place notes, Map notes, Schema notes, or plain notes
+				// Markdown files: Person notes, Place notes, Source notes, Map notes, Schema notes, or plain notes
 				if (file instanceof TFile && file.extension === 'md') {
 					const cache = this.app.metadataCache.getFileCache(file);
 					const hasCrId = !!cache?.frontmatter?.cr_id;
 					const isPlaceNote = cache?.frontmatter?.type === 'place';
+					const isSourceNote = cache?.frontmatter?.type === 'source';
 					const isMapNote = cache?.frontmatter?.type === 'map';
 					const isSchemaNote = cache?.frontmatter?.type === 'schema';
 
@@ -873,6 +907,15 @@ export default class CanvasRootsPlugin extends Plugin {
 												await this.addEssentialPlaceProperties([file]);
 											});
 									});
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Add essential source properties')
+											.setIcon('archive')
+											.onClick(async () => {
+												await this.addEssentialSourceProperties([file]);
+											});
+									});
 								});
 							});
 						} else {
@@ -921,10 +964,156 @@ export default class CanvasRootsPlugin extends Plugin {
 										await this.addEssentialPlaceProperties([file]);
 									});
 							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add essential source properties')
+									.setIcon('archive')
+									.onClick(async () => {
+										await this.addEssentialSourceProperties([file]);
+									});
+							});
+						}
+					}
+					// Source notes with cr_id get source-specific options
+					else if (hasCrId && isSourceNote) {
+						menu.addSeparator();
+
+						if (useSubmenu) {
+							menu.addItem((item) => {
+								const submenu: Menu = item
+									.setTitle('Canvas Roots')
+									.setIcon('archive')
+									.setSubmenu();
+
+								// Edit source
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Edit source')
+										.setIcon('edit')
+										.onClick(() => {
+											this.openEditSourceModal(file);
+										});
+								});
+
+								// Generate citation
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Generate citation')
+										.setIcon('quote')
+										.onClick(() => {
+											this.openCitationGenerator(file);
+										});
+								});
+
+								// Open in Sources tab
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Open sources tab')
+										.setIcon('archive')
+										.onClick(() => {
+											const modal = new ControlCenterModal(this.app, this);
+											modal.openToTab('sources');
+										});
+								});
+
+								submenu.addSeparator();
+
+								// Add essential properties submenu
+								submenu.addItem((subItem) => {
+									const propsSubmenu: Menu = subItem
+										.setTitle('Add essential properties')
+										.setIcon('file-plus')
+										.setSubmenu();
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Add essential person properties')
+											.setIcon('user')
+											.onClick(async () => {
+												await this.addEssentialPersonProperties([file]);
+											});
+									});
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Add essential place properties')
+											.setIcon('map-pin')
+											.onClick(async () => {
+												await this.addEssentialPlaceProperties([file]);
+											});
+									});
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Add essential source properties')
+											.setIcon('archive')
+											.onClick(async () => {
+												await this.addEssentialSourceProperties([file]);
+											});
+									});
+								});
+							});
+						} else {
+							// Mobile: flat menu for source notes
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Edit source')
+									.setIcon('edit')
+									.onClick(() => {
+										this.openEditSourceModal(file);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Generate citation')
+									.setIcon('quote')
+									.onClick(() => {
+										this.openCitationGenerator(file);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Open sources tab')
+									.setIcon('archive')
+									.onClick(() => {
+										const modal = new ControlCenterModal(this.app, this);
+										modal.openToTab('sources');
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add essential person properties')
+									.setIcon('user')
+									.onClick(async () => {
+										await this.addEssentialPersonProperties([file]);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add essential place properties')
+									.setIcon('map-pin')
+									.onClick(async () => {
+										await this.addEssentialPlaceProperties([file]);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add essential source properties')
+									.setIcon('archive')
+									.onClick(async () => {
+										await this.addEssentialSourceProperties([file]);
+									});
+							});
 						}
 					}
 					// Person notes with cr_id get full person options
-					else if (hasCrId && !isPlaceNote) {
+					else if (hasCrId && !isPlaceNote && !isSourceNote) {
 						menu.addSeparator();
 
 						if (useSubmenu) {
@@ -1181,6 +1370,16 @@ export default class CanvasRootsPlugin extends Plugin {
 										});
 								});
 
+								// Add source
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add source...')
+										.setIcon('archive')
+										.onClick(async () => {
+											await this.addSourceToPersonNote(file);
+										});
+								});
+
 								// Mark as root person
 								submenu.addItem((subItem) => {
 									const cache = this.app.metadataCache.getFileCache(file);
@@ -1306,6 +1505,15 @@ export default class CanvasRootsPlugin extends Plugin {
 											.setIcon('map-pin')
 											.onClick(async () => {
 												await this.addEssentialPlaceProperties([file]);
+											});
+									});
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Add essential source properties')
+											.setIcon('archive')
+											.onClick(async () => {
+												await this.addEssentialSourceProperties([file]);
 											});
 									});
 								});
@@ -1461,6 +1669,15 @@ export default class CanvasRootsPlugin extends Plugin {
 							});
 
 							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add source...')
+									.setIcon('archive')
+									.onClick(async () => {
+										await this.addSourceToPersonNote(file);
+									});
+							});
+
+							menu.addItem((item) => {
 								const cache = this.app.metadataCache.getFileCache(file);
 								const isRootPerson = cache?.frontmatter?.root_person === true;
 								item
@@ -1562,6 +1779,15 @@ export default class CanvasRootsPlugin extends Plugin {
 										await this.addEssentialPlaceProperties([file]);
 									});
 							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add essential source properties')
+									.setIcon('archive')
+									.onClick(async () => {
+										await this.addEssentialSourceProperties([file]);
+									});
+							});
 						}
 					}
 					// Notes without cr_id still get "Add essential properties" option
@@ -1599,6 +1825,15 @@ export default class CanvasRootsPlugin extends Plugin {
 												await this.addEssentialPlaceProperties([file]);
 											});
 									});
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Add essential source properties')
+											.setIcon('archive')
+											.onClick(async () => {
+												await this.addEssentialSourceProperties([file]);
+											});
+									});
 								});
 							});
 						} else {
@@ -1618,6 +1853,15 @@ export default class CanvasRootsPlugin extends Plugin {
 									.setIcon('map-pin')
 									.onClick(async () => {
 										await this.addEssentialPlaceProperties([file]);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add essential source properties')
+									.setIcon('archive')
+									.onClick(async () => {
+										await this.addEssentialSourceProperties([file]);
 									});
 							});
 						}
@@ -1704,6 +1948,49 @@ export default class CanvasRootsPlugin extends Plugin {
 
 							submenu.addSeparator();
 
+							// Add essential properties submenu
+							submenu.addItem((subItem) => {
+								const propsSubmenu: Menu = subItem
+									.setTitle('Add essential properties')
+									.setIcon('file-plus')
+									.setSubmenu();
+
+								propsSubmenu.addItem((propItem) => {
+									propItem
+										.setTitle('Add essential person properties')
+										.setIcon('user')
+										.onClick(async () => {
+											const files = this.app.vault.getMarkdownFiles()
+												.filter(f => f.path.startsWith(file.path + '/'));
+											await this.addEssentialPersonProperties(files);
+										});
+								});
+
+								propsSubmenu.addItem((propItem) => {
+									propItem
+										.setTitle('Add essential place properties')
+										.setIcon('map-pin')
+										.onClick(async () => {
+											const files = this.app.vault.getMarkdownFiles()
+												.filter(f => f.path.startsWith(file.path + '/'));
+											await this.addEssentialPlaceProperties(files);
+										});
+								});
+
+								propsSubmenu.addItem((propItem) => {
+									propItem
+										.setTitle('Add essential source properties')
+										.setIcon('archive')
+										.onClick(async () => {
+											const files = this.app.vault.getMarkdownFiles()
+												.filter(f => f.path.startsWith(file.path + '/'));
+											await this.addEssentialSourceProperties(files);
+										});
+								});
+							});
+
+							submenu.addSeparator();
+
 							// Bases submenu
 							submenu.addItem((subItem) => {
 								const basesSubmenu: Menu = subItem
@@ -1735,6 +2022,15 @@ export default class CanvasRootsPlugin extends Plugin {
 										.setIcon('building')
 										.onClick(async () => {
 											await this.createOrganizationsBaseTemplate(file);
+										});
+								});
+
+								basesSubmenu.addItem((baseItem) => {
+									baseItem
+										.setTitle('New sources base from template')
+										.setIcon('archive')
+										.onClick(async () => {
+											await this.createSourcesBaseTemplate(file);
 										});
 								});
 							});
@@ -1838,6 +2134,40 @@ export default class CanvasRootsPlugin extends Plugin {
 								});
 						});
 
+						// Essential properties (mobile)
+						menu.addItem((item) => {
+							item
+								.setTitle('Canvas Roots: Add essential person properties')
+								.setIcon('user')
+								.onClick(async () => {
+									const files = this.app.vault.getMarkdownFiles()
+										.filter(f => f.path.startsWith(file.path + '/'));
+									await this.addEssentialPersonProperties(files);
+								});
+						});
+
+						menu.addItem((item) => {
+							item
+								.setTitle('Canvas Roots: Add essential place properties')
+								.setIcon('map-pin')
+								.onClick(async () => {
+									const files = this.app.vault.getMarkdownFiles()
+										.filter(f => f.path.startsWith(file.path + '/'));
+									await this.addEssentialPlaceProperties(files);
+								});
+						});
+
+						menu.addItem((item) => {
+							item
+								.setTitle('Canvas Roots: Add essential source properties')
+								.setIcon('archive')
+								.onClick(async () => {
+									const files = this.app.vault.getMarkdownFiles()
+										.filter(f => f.path.startsWith(file.path + '/'));
+									await this.addEssentialSourceProperties(files);
+								});
+						});
+
 						// Bases templates (mobile)
 						menu.addItem((item) => {
 							item
@@ -1863,6 +2193,15 @@ export default class CanvasRootsPlugin extends Plugin {
 								.setIcon('building')
 								.onClick(async () => {
 									await this.createOrganizationsBaseTemplate(file);
+								});
+						});
+
+						menu.addItem((item) => {
+							item
+								.setTitle('Canvas Roots: New sources base from template')
+								.setIcon('archive')
+								.onClick(async () => {
+									await this.createSourcesBaseTemplate(file);
 								});
 						});
 
@@ -1908,9 +2247,10 @@ export default class CanvasRootsPlugin extends Plugin {
 
 				if (markdownFiles.length === 0) return;
 
-				// Check if any files are missing essential person properties
+				// Check if any files are missing essential properties
 				let hasMissingPersonProperties = false;
 				let hasMissingPlaceProperties = false;
+				let hasMissingSourceProperties = false;
 
 				for (const file of markdownFiles) {
 					const fileCache = this.app.metadataCache.getFileCache(file);
@@ -1936,15 +2276,24 @@ export default class CanvasRootsPlugin extends Plugin {
 						('place_type' in frontmatter) &&
 						('place_category' in frontmatter);
 
+					// Check source properties
+					const hasAllSourceProperties =
+						frontmatter.type === 'source' &&
+						frontmatter.cr_id &&
+						frontmatter.title &&
+						frontmatter.source_type &&
+						('confidence' in frontmatter);
+
 					if (!hasAllPersonProperties) hasMissingPersonProperties = true;
 					if (!hasAllPlaceProperties) hasMissingPlaceProperties = true;
+					if (!hasAllSourceProperties) hasMissingSourceProperties = true;
 
-					// If both types are missing properties, no need to keep checking
-					if (hasMissingPersonProperties && hasMissingPlaceProperties) break;
+					// If all types are missing properties, no need to keep checking
+					if (hasMissingPersonProperties && hasMissingPlaceProperties && hasMissingSourceProperties) break;
 				}
 
 				// Only show submenu if at least one type is missing properties
-				if (hasMissingPersonProperties || hasMissingPlaceProperties) {
+				if (hasMissingPersonProperties || hasMissingPlaceProperties || hasMissingSourceProperties) {
 					const useSubmenu = Platform.isDesktop && !Platform.isMobile;
 					menu.addSeparator();
 
@@ -1976,6 +2325,17 @@ export default class CanvasRootsPlugin extends Plugin {
 										});
 								});
 							}
+
+								if (hasMissingSourceProperties) {
+									propsSubmenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add essential source properties')
+										.setIcon('archive')
+										.onClick(async () => {
+											await this.addEssentialSourceProperties(markdownFiles);
+										});
+									});
+								}
 						});
 					} else {
 						// Mobile: flat menu
@@ -2000,8 +2360,19 @@ export default class CanvasRootsPlugin extends Plugin {
 									});
 							});
 						}
+
+						if (hasMissingSourceProperties) {
+							menu.addItem((item) => {
+								item
+								.setTitle(`Canvas Roots: Add essential source properties (${markdownFiles.length} files)`)
+								.setIcon('archive')
+								.onClick(async () => {
+									await this.addEssentialSourceProperties(markdownFiles);
+								});
+							});
+						}
 					}
-				}
+					}
 			})
 		);
 
@@ -2391,6 +2762,58 @@ export default class CanvasRootsPlugin extends Plugin {
 	}
 
 	/**
+	 * Add a source link to a person note
+	 * Opens source picker, then adds the selected source to the person's sources
+	 */
+	private async addSourceToPersonNote(file: TFile): Promise<void> {
+		new SourcePickerModal(this.app, this, async (source) => {
+			// Get current sources from frontmatter
+			const cache = this.app.metadataCache.getFileCache(file);
+			const frontmatter = cache?.frontmatter || {};
+
+			// Find the next available source slot
+			let nextSlot = 1;
+			if (frontmatter.source) {
+				nextSlot = 2;
+				while (frontmatter[`source_${nextSlot}`]) {
+					nextSlot++;
+				}
+			}
+
+			// Create the wikilink
+			const sourceLink = `[[${source.filePath.replace(/\.md$/, '')}]]`;
+
+			// Check if this source is already linked
+			const existingSources: string[] = [];
+			if (frontmatter.source) existingSources.push(String(frontmatter.source));
+			for (let i = 2; i <= 50; i++) {
+				const key = `source_${i}`;
+				if (frontmatter[key]) {
+					existingSources.push(String(frontmatter[key]));
+				} else {
+					break;
+				}
+			}
+
+			if (existingSources.some(s => s.includes(source.filePath.replace(/\.md$/, '')))) {
+				new Notice(`Source "${source.title}" is already linked to this person`);
+				return;
+			}
+
+			// Add the source to frontmatter
+			await this.app.fileManager.processFrontMatter(file, (fm) => {
+				if (nextSlot === 1) {
+					fm.source = sourceLink;
+				} else {
+					fm[`source_${nextSlot}`] = sourceLink;
+				}
+			});
+
+			new Notice(`Linked source: ${source.title}`);
+		}).open();
+	}
+
+	/**
 	 * Open the place edit modal for a place note
 	 */
 	private openEditPlaceModal(file: TFile): void {
@@ -2425,6 +2848,64 @@ export default class CanvasRootsPlugin extends Plugin {
 			placeGraph,
 			settings: this.settings
 		}).open();
+	}
+
+	/**
+	 * Open the source edit modal for a source note
+	 */
+	private openEditSourceModal(file: TFile): void {
+		// Get source data from frontmatter
+		const cache = this.app.metadataCache.getFileCache(file);
+		const fm = cache?.frontmatter;
+
+		if (!fm?.cr_id) {
+			new Notice('Source note does not have a cr_id');
+			return;
+		}
+
+		// Get source from service
+		const sourceService = new SourceService(this.app, this.settings);
+		const source = sourceService.getSourceByPath(file.path);
+
+		if (!source) {
+			new Notice('Could not find source data');
+			return;
+		}
+
+		// Open the modal in edit mode
+		new CreateSourceModal(this.app, this, {
+			editFile: file,
+			editSource: source,
+			onSuccess: () => {
+				new Notice('Source updated');
+			}
+		}).open();
+	}
+
+	/**
+	 * Open the citation generator modal for a source note
+	 */
+	private openCitationGenerator(file: TFile): void {
+		// Get source data from frontmatter
+		const cache = this.app.metadataCache.getFileCache(file);
+		const fm = cache?.frontmatter;
+
+		if (!fm?.cr_id) {
+			new Notice('Source note does not have a cr_id');
+			return;
+		}
+
+		// Get source from service
+		const sourceService = new SourceService(this.app, this.settings);
+		const source = sourceService.getSourceByPath(file.path);
+
+		if (!source) {
+			new Notice('Could not find source data');
+			return;
+		}
+
+		// Open the citation generator modal
+		new CitationGeneratorModal(this.app, this, source).open();
 	}
 
 	/**
@@ -3076,6 +3557,7 @@ export default class CanvasRootsPlugin extends Plugin {
 				spouseEdgeColor: this.settings.spouseEdgeColor,
 				showSpouseEdges: this.settings.showSpouseEdges,
 				spouseEdgeLabelFormat: this.settings.spouseEdgeLabelFormat,
+				showSourceIndicators: this.settings.showSourceIndicators,
 				canvasRootsMetadata: {
 					plugin: 'canvas-roots',
 					generation: {
@@ -3766,6 +4248,188 @@ export default class CanvasRootsPlugin extends Plugin {
 	}
 
 	/**
+	 * Add essential properties to source note(s)
+	 * Supports batch operations on multiple files
+	 */
+	private async addEssentialSourceProperties(files: TFile[]) {
+		try {
+			let processedCount = 0;
+			let skippedCount = 0;
+			let errorCount = 0;
+
+			for (const file of files) {
+				try {
+					// Read current file content
+					const content = await this.app.vault.read(file);
+					const cache = this.app.metadataCache.getFileCache(file);
+
+					// Check if file already has frontmatter
+					const hasFrontmatter = content.startsWith('---');
+					const existingFrontmatter = cache?.frontmatter || {};
+
+					// Define essential source properties
+					const essentialProperties: Record<string, unknown> = {};
+
+					// type: Must be "source"
+					if (existingFrontmatter.type !== 'source') {
+						essentialProperties.type = 'source';
+					}
+
+					// cr_id: Generate if missing
+					if (!existingFrontmatter.cr_id) {
+						essentialProperties.cr_id = generateCrId();
+					}
+
+					// title: Use filename if missing
+					if (!existingFrontmatter.title) {
+						essentialProperties.title = file.basename;
+					}
+
+					// source_type: Default to 'other' if missing
+					if (!existingFrontmatter.source_type) {
+						essentialProperties.source_type = 'other';
+					}
+
+					// confidence: Default to 'unknown' if missing
+					if (!existingFrontmatter.confidence) {
+						essentialProperties.confidence = 'unknown';
+					}
+
+					// source_repository: Add empty if missing (check both new and legacy names)
+					if (!existingFrontmatter.source_repository && !existingFrontmatter.repository) {
+						essentialProperties.source_repository = '';
+					}
+
+					// source_date: Add empty if missing (check both new and legacy names)
+					if (!existingFrontmatter.source_date && !existingFrontmatter.date) {
+						essentialProperties.source_date = '';
+					}
+
+					// Skip if no properties to add
+					if (Object.keys(essentialProperties).length === 0) {
+						skippedCount++;
+						continue;
+					}
+
+					// Build new frontmatter with proper ordering
+					const orderedFrontmatter: Record<string, unknown> = {};
+
+					// type first
+					if (essentialProperties.type || existingFrontmatter.type) {
+						orderedFrontmatter.type = essentialProperties.type || existingFrontmatter.type;
+					}
+
+					// Then cr_id
+					if (essentialProperties.cr_id || existingFrontmatter.cr_id) {
+						orderedFrontmatter.cr_id = essentialProperties.cr_id || existingFrontmatter.cr_id;
+					}
+
+					// Then title
+					if (essentialProperties.title || existingFrontmatter.title) {
+						orderedFrontmatter.title = essentialProperties.title || existingFrontmatter.title;
+					}
+
+					// Then source_type
+					if (essentialProperties.source_type || existingFrontmatter.source_type) {
+						orderedFrontmatter.source_type = essentialProperties.source_type || existingFrontmatter.source_type;
+					}
+
+					// Then confidence
+					if (essentialProperties.confidence || existingFrontmatter.confidence) {
+						orderedFrontmatter.confidence = essentialProperties.confidence || existingFrontmatter.confidence;
+					}
+
+					// Then source_repository
+					if (essentialProperties.source_repository !== undefined || existingFrontmatter.source_repository !== undefined) {
+						orderedFrontmatter.source_repository = essentialProperties.source_repository ?? existingFrontmatter.source_repository;
+					}
+
+					// Then source_date
+					if (essentialProperties.source_date !== undefined || existingFrontmatter.source_date !== undefined) {
+						orderedFrontmatter.source_date = essentialProperties.source_date ?? existingFrontmatter.source_date;
+					}
+
+					// Then remaining existing properties
+					for (const [key, value] of Object.entries(existingFrontmatter)) {
+						if (!(key in orderedFrontmatter)) {
+							orderedFrontmatter[key] = value;
+						}
+					}
+
+					// Convert frontmatter to YAML string
+					const yamlLines = ['---'];
+					for (const [key, value] of Object.entries(orderedFrontmatter)) {
+						if (Array.isArray(value)) {
+							if (value.length === 0) {
+								yamlLines.push(`${key}: []`);
+							} else {
+								yamlLines.push(`${key}:`);
+								value.forEach(item => yamlLines.push(`  - ${String(item)}`));
+							}
+						} else if (typeof value === 'object' && value !== null) {
+							// Handle nested objects
+							yamlLines.push(`${key}:`);
+							for (const [subKey, subValue] of Object.entries(value)) {
+								yamlLines.push(`  ${subKey}: ${String(subValue)}`);
+							}
+						} else if (value === '') {
+							yamlLines.push(`${key}: ""`);
+						} else if (typeof value === 'string' && (value.includes(':') || value.includes('"'))) {
+							yamlLines.push(`${key}: "${value.replace(/"/g, '\\"')}"`);
+						} else {
+							yamlLines.push(`${key}: ${String(value)}`);
+						}
+					}
+					yamlLines.push('---');
+
+					// Get body content (everything after frontmatter)
+					let bodyContent = '';
+					if (hasFrontmatter) {
+						const endOfFrontmatter = content.indexOf('---', 3);
+						if (endOfFrontmatter !== -1) {
+							bodyContent = content.substring(endOfFrontmatter + 3).trim();
+						}
+					} else {
+						bodyContent = content.trim();
+					}
+
+					// Construct new file content
+					const newContent = yamlLines.join('\n') + '\n\n' + bodyContent;
+
+					// Write back to file
+					await this.app.vault.modify(file, newContent);
+					processedCount++;
+
+				} catch (error: unknown) {
+					console.error(`Error processing ${file.path}:`, error);
+					errorCount++;
+				}
+			}
+
+			// Show summary
+			if (files.length === 1) {
+				if (processedCount === 1) {
+					new Notice('Added essential source properties');
+				} else if (skippedCount === 1) {
+					new Notice('File already has all essential source properties');
+				} else {
+					new Notice('Failed to add essential source properties');
+				}
+			} else {
+				const parts = [];
+				if (processedCount > 0) parts.push(`${processedCount} updated`);
+				if (skippedCount > 0) parts.push(`${skippedCount} already complete`);
+				if (errorCount > 0) parts.push(`${errorCount} errors`);
+				new Notice(`Essential source properties: ${parts.join(', ')}`);
+			}
+
+		} catch (error: unknown) {
+			console.error('Error adding essential source properties:', error);
+			new Notice('Failed to add essential source properties');
+		}
+	}
+
+	/**
 	 * Generate an Excalidraw tree directly from a person note
 	 * Uses default settings for quick generation
 	 */
@@ -3812,7 +4476,8 @@ export default class CanvasRootsPlugin extends Plugin {
 				parentChildEdgeColor: this.settings.parentChildEdgeColor,
 				spouseEdgeColor: this.settings.spouseEdgeColor,
 				showSpouseEdges: this.settings.showSpouseEdges,
-				spouseEdgeLabelFormat: this.settings.spouseEdgeLabelFormat
+				spouseEdgeLabelFormat: this.settings.spouseEdgeLabelFormat,
+				showSourceIndicators: this.settings.showSourceIndicators
 			});
 
 			// Create temporary canvas file
@@ -4056,6 +4721,72 @@ export default class CanvasRootsPlugin extends Plugin {
 				new Notice('Disk full. Free up space and try again.');
 			} else {
 				new Notice(`Failed to create Organizations base template: ${errorMsg}`);
+			}
+		}
+	}
+
+	/**
+	 * Create a sources base template file in the specified folder
+	 */
+	private async createSourcesBaseTemplate(folder?: TFolder) {
+		try {
+			// Validate: Check if Bases feature is available
+			// Bases is a core Obsidian feature (1.9.0+), not a community plugin
+			const baseFiles = this.app.vault.getFiles().filter(f => f.extension === 'base');
+			// @ts-expect-error - accessing internal plugins
+			const basesInternalPlugin = this.app.internalPlugins?.plugins?.['bases'];
+			const isBasesAvailable = baseFiles.length > 0 ||
+				(basesInternalPlugin?.enabled === true);
+
+			if (!isBasesAvailable) {
+				const proceed = await this.confirmBaseCreation();
+				if (!proceed) return;
+			}
+
+			// Determine the target path
+			const folderPath = folder ? folder.path + '/' : '';
+			const defaultPath = folderPath + 'sources.base';
+
+			// Check if file already exists
+			const existingFile = this.app.vault.getAbstractFileByPath(defaultPath);
+			if (existingFile) {
+				new Notice(`Sources base template already exists at ${defaultPath}`);
+				// Open the existing file
+				if (existingFile instanceof TFile) {
+					const leaf = this.app.workspace.getLeaf(false);
+					await leaf.openFile(existingFile);
+				}
+				return;
+			}
+
+			// Validate folder exists if specified
+			if (folder && !this.app.vault.getAbstractFileByPath(folder.path)) {
+				new Notice(`Folder not found: ${folder.path}`);
+				return;
+			}
+
+			// Create the file with template content
+			const file = await this.app.vault.create(defaultPath, SOURCES_BASE_TEMPLATE);
+
+			new Notice('Sources base template created with 18 pre-configured views!');
+			logger.info('sources-base-template', `Created sources base template at ${defaultPath}`);
+
+			// Open the newly created file
+			const leaf = this.app.workspace.getLeaf(false);
+			await leaf.openFile(file);
+		} catch (error: unknown) {
+			const errorMsg = getErrorMessage(error);
+			logger.error('sources-base-template', 'Failed to create sources base template', error);
+
+			// Provide specific error messages
+			if (errorMsg.includes('already exists')) {
+				new Notice('A file with this name already exists.');
+			} else if (errorMsg.includes('permission') || errorMsg.includes('EACCES')) {
+				new Notice('Permission denied. Check file system permissions.');
+			} else if (errorMsg.includes('ENOSPC')) {
+				new Notice('Disk full. Free up space and try again.');
+			} else {
+				new Notice(`Failed to create Sources base template: ${errorMsg}`);
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 # Frontmatter Reference
 
-This document defines all frontmatter properties recognized by Canvas Roots for person notes, place notes, organization notes, and map notes.
+This document defines all frontmatter properties recognized by Canvas Roots for person notes, place notes, source notes, organization notes, and map notes.
 
 ---
 
@@ -19,6 +19,7 @@ erDiagram
     PERSON }o--o| PLACE : "burial_place"
     PERSON ||--o{ EVENT : "events"
     PERSON ||--o{ MEMBERSHIP : "memberships"
+    PERSON }o--o{ SOURCE : "source"
     EVENT }o--o| PLACE : "place"
     PLACE ||--o| PLACE : "parent_place"
     ORGANIZATION ||--o| ORGANIZATION : "parent_org"
@@ -54,6 +55,16 @@ erDiagram
         float long
     }
 
+    SOURCE {
+        string cr_id PK
+        string title
+        string source_type
+        string source_date
+        string source_repository
+        string confidence
+        string media
+    }
+
     ORGANIZATION {
         string cr_id PK
         string name
@@ -78,6 +89,7 @@ erDiagram
 - **Person → Person**: Family relationships (father, mother, spouse, child) with dual wikilink + `_id` storage
 - **Person → Place**: Geographic links for life events (birth, death, burial, marriage locations)
 - **Person → Event → Place**: Life events (residence, occupation, education, military, etc.) with locations
+- **Person → Source**: Documentary evidence linked to person notes (census, vital records, photos, etc.)
 - **Person → Membership → Organization**: Organization affiliations with roles and dates
 - **Organization → Organization**: Hierarchical structure (sub-organizations under parent)
 - **Organization → Place**: Seat location linking to place notes
@@ -313,6 +325,182 @@ historical_names:
 | `collection` | `string` | User-defined grouping (shared with person notes) | `"Smith Family"` |
 
 The `collection` property allows places to be grouped with related person notes. For example, a "Smith Family" collection could include both the Smith family members and the places associated with them.
+
+---
+
+## Source Note Properties
+
+Source notes document evidence and citations for genealogical research. Each source can be linked to person notes to provide documentary evidence for facts in the family tree.
+
+### Identity
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `type` | `string` | Must be `"source"` | `"source"` |
+| `cr_id` | `string` | Unique identifier for the source | `"src_abc123"` |
+
+### Basic Information
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `title` | `string` | Descriptive title of the source | `"1900 US Census - Smith Family"` |
+| `source_type` | `string` | Type of source (see types below) | `"census"` |
+| `source_date` | `string` | Date of the original document | `"1900-06-01"` |
+| `source_date_accessed` | `string` | When the source was accessed | `"2024-03-15"` |
+
+### Source Types
+
+Canvas Roots includes built-in source types organized by category. Custom types can also be created in the Control Center.
+
+| Category | Source Types |
+|----------|--------------|
+| Vital records | `vital_record`, `obituary` |
+| Census | `census` |
+| Church records | `church_record` |
+| Legal & property | `court_record`, `land_deed`, `probate` |
+| Military | `military` |
+| Other | `immigration` |
+| Media & correspondence | `photo`, `correspondence`, `newspaper`, `oral_history` |
+| Custom | `custom` (or user-defined types) |
+
+### Repository Information
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `source_repository` | `string` | Archive or website where source is held | `"Ancestry.com"` |
+| `source_repository_url` | `string` | Direct URL to the online source | `"https://..."` |
+| `collection` | `string` | Record group or collection name | `"1900 United States Federal Census"` |
+| `location` | `string` | Geographic location of the record | `"New York, Kings County, Brooklyn"` |
+
+### Confidence Level
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `confidence` | `string` | How reliable is this source | `"high"`, `"medium"`, `"low"`, `"unknown"` |
+
+**Confidence Levels Explained:**
+
+| Level | Description |
+|-------|-------------|
+| `high` | Primary source with direct evidence (e.g., original certificate, firsthand account) |
+| `medium` | Secondary source or indirect evidence (e.g., derivative, transcription) |
+| `low` | Unverified or questionable source |
+| `unknown` | Not yet assessed |
+
+### Media Files
+
+Sources can link to media files (images, scans, documents) in the vault:
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `media` | `string` | Wikilink to first media file | `"[[census-1900-smith.jpg]]"` |
+| `media_2` | `string` | Wikilink to second media file | `"[[census-1900-smith-p2.jpg]]"` |
+| `media_3` | `string` | Continue pattern for additional files | ... |
+
+### Citation Override
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `citation_override` | `string` | Manual citation text (overrides auto-generated) | See example below |
+
+---
+
+## Linking Sources to Person Notes
+
+Sources are linked to person notes using the `source` property (with indexed properties for multiple sources):
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `source` | `string` | Wikilink to first source | `"[[1900 US Census - Smith Family]]"` |
+| `source_2` | `string` | Wikilink to second source | `"[[1910 US Census - Smith Family]]"` |
+| `source_3` | `string` | Continue pattern for additional sources | ... |
+
+---
+
+## Example Source Note (Census)
+
+```yaml
+---
+type: source
+cr_id: "src_1900_census_smith"
+title: "1900 US Census - Smith Family"
+source_type: census
+source_date: "1900-06-01"
+source_date_accessed: "2024-03-15"
+source_repository: "Ancestry.com"
+collection: "1900 United States Federal Census"
+location: "New York, Kings County, Brooklyn"
+confidence: high
+media: "[[census-1900-smith.jpg]]"
+---
+
+# 1900 US Census - Smith Family
+
+## Census Information
+
+| Field | Value |
+|-------|-------|
+| Census year | 1900 |
+| State/country | New York |
+| County | Kings |
+| Township/city | Brooklyn |
+| Enumeration district | 123 |
+| Sheet/page | 5A |
+
+## Household Members
+
+| Name | Relation | Age | Birthplace | Occupation |
+|------|----------|-----|------------|------------|
+| John Smith | Head | 45 | New York | Merchant |
+| Mary Smith | Wife | 42 | Ireland | |
+| John Jr. | Son | 18 | New York | Clerk |
+
+## Transcription
+
+[Full transcription of census entries...]
+
+## Research Notes
+
+Confirms John Smith's age and occupation...
+```
+
+---
+
+## Example Source Note (Vital Record)
+
+```yaml
+---
+type: source
+cr_id: "src_birth_john_smith"
+title: "Birth Certificate - John Robert Smith"
+source_type: vital_record
+source_date: "1855-03-15"
+source_repository: "New York City Municipal Archives"
+location: "New York, NY"
+confidence: high
+---
+
+# Birth Certificate - John Robert Smith
+
+## Document Information
+
+| Field | Value |
+|-------|-------|
+| Event type | Birth |
+| Event date | 1855-03-15 |
+| Event place | New York, NY |
+| Certificate number | 12345 |
+
+## People Named
+
+- John Robert Smith (subject)
+- John Smith Sr. (father)
+- Mary Jones (mother)
+
+## Transcription
+
+[Transcription of birth certificate...]
+```
 
 ---
 
@@ -820,6 +1008,7 @@ The principal house of the North...
 
 ## See Also
 
+- [Evidence & Sources](Evidence-And-Sources) - Complete source documentation
 - [Organization Notes](Organization-Notes) - Complete organization documentation
 - [Schema Validation](Schema-Validation) - Creating and using validation schemas
 - [Geographic Features](Geographic-Features) - Place notes and map features

@@ -42,6 +42,9 @@ export interface PersonNode {
 
 	// User-defined collection (optional)
 	collection?: string;
+
+	// Source count (number of source notes linking to this person)
+	sourceCount?: number;
 }
 
 /**
@@ -752,6 +755,52 @@ export class FamilyGraphService {
 			person.childrenCrIds = person.childrenCrIds.filter(childCrId =>
 				this.personCache.has(childCrId)
 			);
+		}
+
+		// Third pass: count source backlinks for each person
+		this.countSourceBacklinks();
+	}
+
+	/**
+	 * Counts source notes that link to each person note
+	 * Uses resolvedLinks from metadata cache to find backlinks
+	 */
+	private countSourceBacklinks(): void {
+		const resolvedLinks = this.app.metadataCache.resolvedLinks;
+
+		// Build a map of person file paths to cr_ids for quick lookup
+		const pathToCrId = new Map<string, string>();
+		for (const [crId, person] of this.personCache.entries()) {
+			pathToCrId.set(person.file.path, crId);
+		}
+
+		// Initialize source counts to 0
+		for (const person of this.personCache.values()) {
+			person.sourceCount = 0;
+		}
+
+		// Iterate through all files that have outgoing links
+		for (const [sourcePath, destinations] of Object.entries(resolvedLinks)) {
+			// Check if this is a source note by examining its frontmatter
+			const sourceFile = this.app.vault.getAbstractFileByPath(sourcePath);
+			if (!(sourceFile instanceof TFile)) continue;
+
+			const sourceCache = this.app.metadataCache.getFileCache(sourceFile);
+			if (!sourceCache?.frontmatter) continue;
+
+			// Only count links from source notes (type: source)
+			if (sourceCache.frontmatter.type !== 'source') continue;
+
+			// Count links to person notes
+			for (const destPath of Object.keys(destinations)) {
+				const crId = pathToCrId.get(destPath);
+				if (crId) {
+					const person = this.personCache.get(crId);
+					if (person) {
+						person.sourceCount = (person.sourceCount || 0) + 1;
+					}
+				}
+			}
 		}
 	}
 

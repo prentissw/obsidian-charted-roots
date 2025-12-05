@@ -147,6 +147,8 @@ export interface CanvasRootsSettings {
 	thumbnailSize: 'small' | 'medium' | 'large';
 	customSourceTypes: SourceTypeDefinition[];
 	showBuiltInSourceTypes: boolean;
+	// Source indicators on tree nodes
+	showSourceIndicators: boolean;
 }
 
 /**
@@ -269,7 +271,9 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	showSourceThumbnails: true,   // Show media previews in gallery
 	thumbnailSize: 'medium',      // Thumbnail size (small/medium/large)
 	customSourceTypes: [],        // User-defined source types (built-ins are always available)
-	showBuiltInSourceTypes: true  // Whether to show built-in source types in UI
+	showBuiltInSourceTypes: true, // Whether to show built-in source types in UI
+	// Source indicators on tree nodes
+	showSourceIndicators: false   // Default OFF - users opt-in to this feature
 };
 
 export class CanvasRootsSettingTab extends PluginSettingTab {
@@ -399,6 +403,17 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.canvasesFolder)
 				.onChange(async (value) => {
 					this.plugin.settings.canvasesFolder = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Sources folder')
+			.setDesc('Folder for source notes (census records, vital records, photos, etc.)')
+			.addText(text => text
+				.setPlaceholder('Canvas Roots/Sources')
+				.setValue(this.plugin.settings.sourcesFolder)
+				.onChange(async (value) => {
+					this.plugin.settings.sourcesFolder = value;
 					await this.plugin.saveSettings();
 				}));
 
@@ -534,6 +549,16 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.nodeColorScheme)
 				.onChange(async (value: ColorScheme) => {
 					this.plugin.settings.nodeColorScheme = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Show source indicators')
+			.setDesc('Display source count badges on person nodes in generated trees (e.g., "📎 3" for 3 linked sources)')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.showSourceIndicators)
+				.onChange(async (value) => {
+					this.plugin.settings.showSourceIndicators = value;
 					await this.plugin.saveSettings();
 				}));
 
