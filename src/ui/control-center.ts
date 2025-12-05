@@ -2177,7 +2177,9 @@ export class ControlCenterModal extends Modal {
 		headerTitle.appendChild(scaleIcon);
 		headerTitle.appendText(`Proof summaries (${proofs.length})`);
 
-		const createBtn = sectionHeader.createEl('button', {
+		const headerActions = sectionHeader.createDiv({ cls: 'crc-proof-section-actions' });
+
+		const createBtn = headerActions.createEl('button', {
 			cls: 'crc-btn crc-btn--small',
 			text: 'New proof'
 		});
@@ -2190,6 +2192,17 @@ export class ControlCenterModal extends Modal {
 					this.showPeopleTab();
 				}
 			}).open();
+		});
+
+		const templateBtn = headerActions.createEl('button', {
+			cls: 'crc-btn crc-btn--small crc-btn--icon',
+			attr: { 'aria-label': 'View proof templates' }
+		});
+		const templateIcon = createLucideIcon('file-code', 14);
+		templateBtn.appendChild(templateIcon);
+		templateBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			new TemplateSnippetsModal(this.app, 'proof').open();
 		});
 
 		// Proof list
@@ -6830,8 +6843,11 @@ export class ControlCenterModal extends Modal {
 				text: 'No proof summaries created yet. Use proof summaries to document your research reasoning and resolve conflicting evidence.'
 			});
 
+			// Buttons container
+			const buttonRow = emptyState.createDiv({ cls: 'crc-empty-state-buttons' });
+
 			// Create proof button
-			const createBtn = emptyState.createEl('button', {
+			const createBtn = buttonRow.createEl('button', {
 				cls: 'crc-btn crc-btn--primary',
 				text: 'Create proof summary'
 			});
@@ -6841,6 +6857,17 @@ export class ControlCenterModal extends Modal {
 						this.showDataQualityTab();
 					}
 				}).open();
+			});
+
+			// View templates button
+			const templateBtn = buttonRow.createEl('button', {
+				cls: 'crc-btn',
+				text: 'View templates'
+			});
+			const templateIcon = createLucideIcon('file-code', 14);
+			templateBtn.insertBefore(templateIcon, templateBtn.firstChild);
+			templateBtn.addEventListener('click', () => {
+				new TemplateSnippetsModal(this.app, 'proof').open();
 			});
 
 			return;

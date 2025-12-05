@@ -18,6 +18,7 @@ import {
 	getSourceTypesByCategory,
 	SOURCE_CATEGORY_NAMES
 } from '../types/source-types';
+import { TemplateSnippetsModal } from '../../ui/template-snippets-modal';
 
 /**
  * Render the Sources tab content
@@ -154,6 +155,13 @@ function renderSourcesListCard(
 	baseBtn.createSpan({ text: 'Create base' });
 	baseBtn.addEventListener('click', () => {
 		plugin.app.commands.executeCommandById('canvas-roots:create-sources-base-template');
+	});
+
+	const templateBtn = toolbar.createEl('button');
+	setIcon(templateBtn.createSpan({ cls: 'crc-button-icon' }), 'file-code');
+	templateBtn.createSpan({ text: 'View templates' });
+	templateBtn.addEventListener('click', () => {
+		new TemplateSnippetsModal(plugin.app, 'source').open();
 	});
 
 	const sources = sourceService.getAllSources();

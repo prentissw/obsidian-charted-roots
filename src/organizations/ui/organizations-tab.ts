@@ -13,6 +13,7 @@ import { MembershipService } from '../services/membership-service';
 import type { OrganizationInfo } from '../types/organization-types';
 import { getOrganizationType, DEFAULT_ORGANIZATION_TYPES } from '../constants/organization-types';
 import { CreateOrganizationModal } from './create-organization-modal';
+import { TemplateSnippetsModal } from '../../ui/template-snippets-modal';
 
 /**
  * Render the Organizations tab content
@@ -66,6 +67,13 @@ function renderOrganizationsListCard(
 		new CreateOrganizationModal(plugin.app, plugin, () => {
 			showTab('organizations');
 		}).open();
+	});
+
+	const templateBtn = toolbar.createEl('button');
+	setIcon(templateBtn.createSpan({ cls: 'crc-button-icon' }), 'file-code');
+	templateBtn.createSpan({ text: 'View templates' });
+	templateBtn.addEventListener('click', () => {
+		new TemplateSnippetsModal(plugin.app, 'organization').open();
 	});
 
 	// Get organizations grouped by type

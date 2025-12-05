@@ -6,7 +6,7 @@
 import { App, Modal, Notice } from 'obsidian';
 import { createLucideIcon } from './lucide-icons';
 
-type TemplateType = 'person' | 'place' | 'source' | 'organization' | 'proof';
+export type TemplateType = 'person' | 'place' | 'source' | 'organization' | 'proof';
 
 interface TemplateSnippet {
 	name: string;
@@ -19,9 +19,14 @@ interface TemplateSnippet {
  */
 export class TemplateSnippetsModal extends Modal {
 	private selectedType: TemplateType = 'person';
+	private initialTab?: TemplateType;
 
-	constructor(app: App) {
+	constructor(app: App, initialTab?: TemplateType) {
 		super(app);
+		this.initialTab = initialTab;
+		if (initialTab) {
+			this.selectedType = initialTab;
+		}
 	}
 
 	onOpen() {
@@ -58,7 +63,7 @@ export class TemplateSnippetsModal extends Modal {
 		for (const tab of tabs) {
 			tab.el = tabContainer.createEl('button', {
 				text: tab.label,
-				cls: `crc-template-tab${tab.type === 'person' ? ' crc-template-tab--active' : ''}`
+				cls: `crc-template-tab${tab.type === this.selectedType ? ' crc-template-tab--active' : ''}`
 			});
 		}
 
