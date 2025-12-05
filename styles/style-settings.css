@@ -1,0 +1,62 @@
+/**
+ * Style Settings Integration
+ * Configuration block for the Style Settings plugin
+ * https://github.com/mgmeyers/obsidian-style-settings
+ */
+
+/* @settings
+
+name: Canvas Roots
+id: canvas-roots
+settings:
+  -
+    id: family-chart-heading
+    title: Family Chart View
+    description: Colors for the interactive family chart
+    type: heading
+    level: 1
+    collapsed: true
+  -
+    id: cr-fcv-female-color
+    title: Female card color
+    type: variable-color
+    format: rgb
+    default: "rgb(196, 138, 146)"
+  -
+    id: cr-fcv-male-color
+    title: Male card color
+    type: variable-color
+    format: rgb
+    default: "rgb(120, 159, 172)"
+  -
+    id: cr-fcv-unknown-color
+    title: Unknown gender card color
+    type: variable-color
+    format: rgb
+    default: "rgb(211, 211, 211)"
+  -
+    id: cr-fcv-background-light
+    title: Chart background (light theme)
+    type: variable-color
+    format: rgb
+    default: "rgb(250, 250, 250)"
+  -
+    id: cr-fcv-background-dark
+    title: Chart background (dark theme)
+    type: variable-color
+    format: rgb
+    default: "rgb(33, 33, 33)"
+  -
+    id: cr-fcv-text-light
+    title: Card text color (light theme)
+    type: variable-color
+    format: hex
+    default: "#333333"
+  -
+    id: cr-fcv-text-dark
+    title: Card text color (dark theme)
+    type: variable-color
+    format: hex
+    default: "#ffffff"
+
+*/

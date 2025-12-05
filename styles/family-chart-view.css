@@ -183,12 +183,12 @@
  * ============================================================ */
 
 .cr-fcv-chart-container.f3 {
-  /* family-chart CSS variables */
-  --female-color: rgb(196, 138, 146);
-  --male-color: rgb(120, 159, 172);
-  --genderless-color: lightgray;
-  --background-color: rgb(33, 33, 33);
-  --text-color: #fff;
+  /* family-chart CSS variables - customizable via Style Settings plugin */
+  --female-color: var(--cr-fcv-female-color, rgb(196, 138, 146));
+  --male-color: var(--cr-fcv-male-color, rgb(120, 159, 172));
+  --genderless-color: var(--cr-fcv-unknown-color, rgb(211, 211, 211));
+  --background-color: var(--cr-fcv-background-dark, rgb(33, 33, 33));
+  --text-color: var(--cr-fcv-text-dark, #fff);
 
   position: relative;
   display: flex;
@@ -599,8 +599,8 @@
  * ============================================================ */
 
 .theme-light .cr-fcv-chart-container.f3 {
-  --background-color: rgb(250, 250, 250);
-  --text-color: #333;
+  --background-color: var(--cr-fcv-background-light, rgb(250, 250, 250));
+  --text-color: var(--cr-fcv-text-light, #333);
 }
 
 .theme-light .cr-fcv-chart-container.f3 .link {

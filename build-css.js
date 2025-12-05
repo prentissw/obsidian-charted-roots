@@ -27,6 +27,7 @@ const CONFIG = {
   // Component order for concatenation (dependency-aware)
   componentOrder: [
     'variables.css',      // CSS custom properties and design tokens
+    'style-settings.css', // Style Settings plugin configuration
     'base.css',          // Base structural elements
     'layout.css',        // Layout utilities
     'canvas.css',        // Canvas-specific styling
