@@ -36,7 +36,7 @@ import { CreatePersonModal } from './src/ui/create-person-modal';
 import { PlaceGraphService } from './src/core/place-graph';
 import { SchemaService, ValidationService } from './src/schemas';
 import { AddRelationshipModal } from './src/ui/add-relationship-modal';
-import { SourcePickerModal, SourceService, CreateSourceModal, CitationGeneratorModal } from './src/sources';
+import { SourcePickerModal, SourceService, CreateSourceModal, CitationGeneratorModal, EvidenceService } from './src/sources';
 
 const logger = getLogger('CanvasRootsPlugin');
 
@@ -56,13 +56,35 @@ export default class CanvasRootsPlugin extends Plugin {
 
 	/**
 	 * Create a FamilyGraphService configured with the folder filter
+	 * and optionally populated with research coverage data when fact tracking is enabled
 	 */
 	createFamilyGraphService(): FamilyGraphService {
 		const graphService = new FamilyGraphService(this.app);
 		if (this.folderFilter) {
 			graphService.setFolderFilter(this.folderFilter);
 		}
+
+		// Populate research coverage when fact-level tracking is enabled
+		if (this.settings.trackFactSourcing) {
+			this.populateResearchCoverage(graphService);
+		}
+
 		return graphService;
+	}
+
+	/**
+	 * Populate research coverage percentages for all people in the graph
+	 */
+	private populateResearchCoverage(graphService: FamilyGraphService): void {
+		const evidenceService = new EvidenceService(this.app, this.settings);
+		const people = graphService.getAllPeople();
+
+		for (const person of people) {
+			const coverage = evidenceService.getFactCoverageForFile(person.file);
+			if (coverage) {
+				graphService.setResearchCoverage(person.crId, coverage.coveragePercent);
+			}
+		}
 	}
 
 	async onload() {
@@ -3556,6 +3578,7 @@ export default class CanvasRootsPlugin extends Plugin {
 				showSpouseEdges: this.settings.showSpouseEdges,
 				spouseEdgeLabelFormat: this.settings.spouseEdgeLabelFormat,
 				showSourceIndicators: this.settings.showSourceIndicators,
+				showResearchCoverage: this.settings.trackFactSourcing,
 				canvasRootsMetadata: {
 					plugin: 'canvas-roots',
 					generation: {
@@ -4475,7 +4498,8 @@ export default class CanvasRootsPlugin extends Plugin {
 				spouseEdgeColor: this.settings.spouseEdgeColor,
 				showSpouseEdges: this.settings.showSpouseEdges,
 				spouseEdgeLabelFormat: this.settings.spouseEdgeLabelFormat,
-				showSourceIndicators: this.settings.showSourceIndicators
+				showSourceIndicators: this.settings.showSourceIndicators,
+				showResearchCoverage: this.settings.trackFactSourcing
 			});
 
 			// Create temporary canvas file

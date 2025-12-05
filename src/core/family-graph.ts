@@ -45,6 +45,9 @@ export interface PersonNode {
 
 	// Source count (number of source notes linking to this person)
 	sourceCount?: number;
+
+	// Research coverage percentage (0-100, only when fact-level tracking enabled)
+	researchCoveragePercent?: number;
 }
 
 /**
@@ -801,6 +804,17 @@ export class FamilyGraphService {
 					}
 				}
 			}
+		}
+	}
+
+	/**
+	 * Set research coverage percentage for a person
+	 * Called externally after building the cache when fact-level tracking is enabled
+	 */
+	setResearchCoverage(crId: string, coveragePercent: number): void {
+		const person = this.personCache.get(crId);
+		if (person) {
+			person.researchCoveragePercent = coveragePercent;
 		}
 	}
 
