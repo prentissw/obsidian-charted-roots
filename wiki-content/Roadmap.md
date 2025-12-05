@@ -55,7 +55,7 @@ The following priority order guides future development:
 
 ### Geographic Features (Phase 4) ✅
 
-> **Complete in v0.6.0.** See [leaflet-maps-plan.md](../docs/planning/leaflet-maps-plan.md) for implementation details.
+> **Complete in v0.6.0.** See [leaflet-maps-plan.md](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/leaflet-maps-plan.md) for implementation details.
 
 **Implemented Features:**
 - Interactive Map View with Leaflet.js and OpenStreetMap tiles
@@ -73,7 +73,7 @@ The following priority order guides future development:
 - Pixel-based coordinates (L.CRS.Simple) for worldbuilders
 - Route/journey visualization (connect all life events chronologically)
 
-**Future Enhancements (v2+):** See [leaflet-maps-plan.md § Design Decisions](../docs/planning/leaflet-maps-plan.md#design-decisions) for detailed rationale.
+**Future Enhancements (v2+):** See [leaflet-maps-plan.md § Design Decisions](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/leaflet-maps-plan.md#design-decisions) for detailed rationale.
 - Offline tile caching for OSM (deferred: complexity, storage constraints, OSM ToS considerations)
 - Tiled image maps (Zoomify/DeepZoom) for massive images (deferred: niche use case, requires external tooling)
 
@@ -81,7 +81,7 @@ The following priority order guides future development:
 
 ### Maps Tab (Control Center) ✅
 
-> **Complete in v0.6.2.** See [maps-tab.md](../docs/planning/maps-tab.md) for implementation details.
+> **Complete in v0.6.2.** See [maps-tab.md](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/maps-tab.md) for implementation details.
 
 **Implemented Features:**
 - Dedicated Maps tab in Control Center with 4 cards
@@ -429,7 +429,7 @@ mentions:
 
 ### Chronological Story Mapping
 
-> See [chronological-story-mapping.md](../docs/planning/chronological-story-mapping.md) for detailed implementation plan.
+> See [chronological-story-mapping.md](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/chronological-story-mapping.md) for detailed implementation plan.
 
 **Summary:** Event-based timeline visualization supporting both genealogists (source-derived events) and worldbuilders (canonical events). Integrates with existing fictional date systems for cross-era sorting.
 
