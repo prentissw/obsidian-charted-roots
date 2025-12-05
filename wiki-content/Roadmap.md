@@ -259,6 +259,13 @@ Features for genealogists managing documentary evidence and oral history.
   - Lightbox viewer with keyboard navigation (arrow keys, Escape)
   - Support for images and document placeholders
 - Sources Bases template with 17 pre-configured views
+- **Citation Generator**: Generate formatted citations in multiple styles
+  - Chicago Manual of Style
+  - Evidence Explained (Elizabeth Shown Mills) - genealogical standard
+  - MLA (Modern Language Association)
+  - Turabian
+  - Copy to clipboard functionality
+  - Missing field warnings
 
 **Source Note Schema:**
 ```yaml
@@ -273,7 +280,6 @@ confidence: high
 ```
 
 **Future Enhancements:**
-- Citation generator (Chicago, Evidence Explained)
 - "Missing sources" report
 
 **Integration Points:**
