@@ -418,6 +418,11 @@ export class CanvasGenerator {
 			this.addSourceIndicatorNodes(canvasNodes, familyTree, nodeMap, opts);
 		}
 
+		// Add conflict indicator nodes when research coverage is enabled
+		if (opts.showSourceIndicators && opts.showResearchCoverage) {
+			this.addConflictIndicatorNodes(canvasNodes, familyTree, nodeMap, opts);
+		}
+
 		return {
 			nodes: canvasNodes,
 			edges: canvasEdges,
@@ -492,6 +497,43 @@ export class CanvasGenerator {
 				width: indicatorWidth,
 				height: indicatorHeight,
 				color
+			});
+		}
+	}
+
+	/**
+	 * Adds small text nodes as conflict indicators near person nodes
+	 * Shows when a person has unresolved source conflicts (only when fact-level tracking is enabled)
+	 */
+	private addConflictIndicatorNodes(
+		canvasNodes: CanvasNode[],
+		familyTree: FamilyTree,
+		nodeMap: Map<string, { x: number; y: number }>,
+		opts: { nodeWidth: number; nodeHeight: number }
+	): void {
+		const indicatorWidth = 36;
+		const indicatorHeight = 24;
+		// Position at top-left (source indicator is at top-right)
+		const offsetX = 4;
+		const offsetY = -indicatorHeight - 2;
+
+		for (const [crId, person] of familyTree.nodes) {
+			const pos = nodeMap.get(crId);
+			if (!pos) continue;
+
+			const conflictCount = person.conflictCount ?? 0;
+			if (conflictCount === 0) continue;
+
+			// Create conflict indicator text node
+			canvasNodes.push({
+				id: this.generateId(),
+				type: 'text',
+				text: `⚠️ ${conflictCount}`,
+				x: pos.x + offsetX,
+				y: pos.y + offsetY,
+				width: indicatorWidth,
+				height: indicatorHeight,
+				color: '1' // Red - conflicts need attention
 			});
 		}
 	}

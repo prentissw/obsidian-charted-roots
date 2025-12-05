@@ -36,7 +36,7 @@ import { CreatePersonModal } from './src/ui/create-person-modal';
 import { PlaceGraphService } from './src/core/place-graph';
 import { SchemaService, ValidationService } from './src/schemas';
 import { AddRelationshipModal } from './src/ui/add-relationship-modal';
-import { SourcePickerModal, SourceService, CreateSourceModal, CitationGeneratorModal, EvidenceService } from './src/sources';
+import { SourcePickerModal, SourceService, CreateSourceModal, CitationGeneratorModal, EvidenceService, ProofSummaryService } from './src/sources';
 
 const logger = getLogger('CanvasRootsPlugin');
 
@@ -56,7 +56,7 @@ export default class CanvasRootsPlugin extends Plugin {
 
 	/**
 	 * Create a FamilyGraphService configured with the folder filter
-	 * and optionally populated with research coverage data when fact tracking is enabled
+	 * and optionally populated with research coverage and conflict data when fact tracking is enabled
 	 */
 	createFamilyGraphService(): FamilyGraphService {
 		const graphService = new FamilyGraphService(this.app);
@@ -64,9 +64,10 @@ export default class CanvasRootsPlugin extends Plugin {
 			graphService.setFolderFilter(this.folderFilter);
 		}
 
-		// Populate research coverage when fact-level tracking is enabled
+		// Populate research coverage and conflict counts when fact-level tracking is enabled
 		if (this.settings.trackFactSourcing) {
 			this.populateResearchCoverage(graphService);
+			this.populateConflictCounts(graphService);
 		}
 
 		return graphService;
@@ -83,6 +84,33 @@ export default class CanvasRootsPlugin extends Plugin {
 			const coverage = evidenceService.getFactCoverageForFile(person.file);
 			if (coverage) {
 				graphService.setResearchCoverage(person.crId, coverage.coveragePercent);
+			}
+		}
+	}
+
+	/**
+	 * Populate conflict counts for all people in the graph
+	 * Counts proof summaries with status 'conflicted' or evidence with 'conflicts' support
+	 */
+	private populateConflictCounts(graphService: FamilyGraphService): void {
+		const proofService = new ProofSummaryService(this.app, this.settings);
+		const people = graphService.getAllPeople();
+
+		for (const person of people) {
+			const proofs = proofService.getProofsForPerson(person.crId);
+
+			// Count conflicts: proofs with status 'conflicted' OR proofs with any conflicting evidence
+			let conflictCount = 0;
+			for (const proof of proofs) {
+				if (proof.status === 'conflicted') {
+					conflictCount++;
+				} else if (proof.evidence.some(e => e.supports === 'conflicts')) {
+					conflictCount++;
+				}
+			}
+
+			if (conflictCount > 0) {
+				graphService.setConflictCount(person.crId, conflictCount);
 			}
 		}
 	}

@@ -48,6 +48,9 @@ export interface PersonNode {
 
 	// Research coverage percentage (0-100, only when fact-level tracking enabled)
 	researchCoveragePercent?: number;
+
+	// Conflict count (number of unresolved source conflicts for this person)
+	conflictCount?: number;
 }
 
 /**
@@ -815,6 +818,17 @@ export class FamilyGraphService {
 		const person = this.personCache.get(crId);
 		if (person) {
 			person.researchCoveragePercent = coveragePercent;
+		}
+	}
+
+	/**
+	 * Set conflict count for a person
+	 * Called externally after building the cache when fact-level tracking is enabled
+	 */
+	setConflictCount(crId: string, conflictCount: number): void {
+		const person = this.personCache.get(crId);
+		if (person) {
+			person.conflictCount = conflictCount;
 		}
 	}
 

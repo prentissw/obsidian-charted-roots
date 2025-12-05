@@ -339,13 +339,18 @@ source_quality: primary  # primary | secondary | derivative
 | Secondary | Created later from memory or hearsay | Family bibles (later entries), obituaries, oral histories |
 | Derivative | Copies, transcriptions, or abstracts | Database transcriptions, published abstracts |
 
-**Future Phases:**
+**Phases:**
 
-| Phase | Scope |
-|-------|-------|
-| 2 | Source quality visualization with color coding |
-| 3 | Proof summary nodes and conflict documentation |
-| 4 | Full canvas evidence visualization with clusters |
+| Phase | Scope | Status |
+|-------|-------|--------|
+| 1 | Fact-level source coverage, Research Gaps Report | ✅ Complete |
+| 2 | Source quality visualization with color coding | ✅ Complete |
+| 3 | Proof summary notes and conflict documentation | ✅ Complete |
+| 4 | Canvas conflict markers | ✅ Complete |
+
+**Deferred to Future Releases:**
+- Source quality borders on media nodes → Style Settings Integration (see below)
+- Evidence clusters grouped by research question → v0.10.0+
 
 **Integration Points:**
 - Extends existing source indicators (v0.8.0)
@@ -616,18 +621,33 @@ confidence: medium
 
 **Summary:** Expose Canvas Roots styling options via the [Style Settings](https://github.com/mgmeyers/obsidian-style-settings) plugin, allowing users to customize colors and dimensions without editing CSS.
 
-**Phase 1: Family Chart Colors (v0.8.0)**
+**Phase 1: Family Chart Colors**
 - Female card color (default: `rgb(196, 138, 146)`)
 - Male card color (default: `rgb(120, 159, 172)`)
 - Unknown gender card color (default: `lightgray`)
 - Chart background color
 - Card text color
 
-**Phase 2: Canvas Node Styling (v0.9.0+)**
+**Phase 2: Canvas Node Styling**
 - Node width and height
 - Border radius
 - Border width
 - Connection line width and color
+
+**Phase 3: Evidence Visualization Styling**
+> Deferred from Evidence Visualization Phase 4 - better fit here for comprehensive canvas theming.
+
+- Source quality colors for canvas indicators:
+  - Primary source indicator color (default: green)
+  - Secondary source indicator color (default: amber/yellow)
+  - Derivative source indicator color (default: red)
+- Research coverage threshold colors:
+  - Well-researched threshold color (≥75%, default: green)
+  - Moderate coverage threshold color (≥50%, default: yellow)
+  - Needs research threshold color (<50%, default: red)
+- Media node quality borders (when sources are linked to media):
+  - Border color based on source quality classification
+  - Border width for quality indicators
 
 **Implementation Notes:**
 - Add `/* @settings */` block to `styles.css` with YAML configuration

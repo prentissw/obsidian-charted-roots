@@ -457,14 +457,31 @@ Users with existing person notes will have no `sourced_facts` property. The syst
 - [x] Delete proof summary with confirmation (trashFile)
 - [x] Edit/delete action buttons on proof cards (hover to reveal)
 
-### Phase 4: Canvas Evidence Visualization
+### Phase 4: Canvas Evidence Visualization ✅ COMPLETE
 
-- [ ] Research progress overlay (% of facts sourced) - extends existing source indicator
-- [ ] Color-coded source quality borders on media nodes
-- [ ] Conflict markers with linked analysis notes
-- [ ] Evidence clusters grouped by research question
+- [x] Research progress overlay (% of facts sourced) - extends existing source indicator
+- [x] Conflict markers on canvas (subtle indicator near person nodes)
+- [ ] ~~Color-coded source quality borders on media nodes~~ → Deferred to Style Settings Integration
+- [ ] ~~Evidence clusters grouped by research question~~ → Deferred to v0.10.0+
 
-**Status: Phase 4 NOT STARTED** - Decision made to include in v0.9.0 release
+**Status: Phase 4 COMPLETE** - Scope reduced for v0.9.0 (as of 2025-12-05)
+
+**Scope Decisions (2025-12-05):**
+
+| Item | Decision | Rationale |
+|------|----------|-----------|
+| Research progress overlay | ✅ Complete | Already implemented in `addSourceIndicatorNodes()` - shows `📎 3 · 75%` with color coding |
+| Conflict markers | ✅ Complete | Subtle indicator at top-left of person nodes, gated behind `trackFactSourcing` |
+| Source quality borders on media | ⏸️ Deferred | Media nodes rendered by Obsidian (limited customization). Better fit for Style Settings Integration feature which will add comprehensive canvas node styling. |
+| Evidence clusters | ⏸️ Deferred | Architecturally complex, unclear ROI. Revisit after user feedback on Phases 1-3. |
+
+**Conflict Marker Implementation:**
+- Small text node (`⚠️ N`) positioned at top-left of person node
+- Source indicator (`📎 N · %`) positioned at top-right
+- Only visible when `trackFactSourcing` is enabled
+- Counts proof summaries with `status: conflicted` OR evidence with `supports: conflicts`
+- Uses red color (canvas color '1') to draw attention
+- Keeps casual users unaffected - they never see this indicator
 
 ---
 
