@@ -281,10 +281,12 @@ export class ValidationService {
 				: `"${condition.property}" is not set`;
 		}
 		if (condition.equals !== undefined) {
-			return `"${condition.property}" equals "${String(condition.equals)}"`;
+			const eqStr = typeof condition.equals === 'object' ? JSON.stringify(condition.equals) : String(condition.equals);
+			return `"${condition.property}" equals "${eqStr}"`;
 		}
 		if (condition.notEquals !== undefined) {
-			return `"${condition.property}" is not "${String(condition.notEquals)}"`;
+			const neqStr = typeof condition.notEquals === 'object' ? JSON.stringify(condition.notEquals) : String(condition.notEquals);
+			return `"${condition.property}" is not "${neqStr}"`;
 		}
 		return 'condition is met';
 	}

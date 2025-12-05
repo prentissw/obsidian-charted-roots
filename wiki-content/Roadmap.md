@@ -291,7 +291,7 @@ confidence: high
 
 #### Evidence Visualization
 
-> See [evidence-visualization-plan.md](../docs/planning/evidence-visualization-plan.md) for detailed implementation plan.
+> See [evidence-visualization-plan.md](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/evidence-visualization-plan.md) for detailed implementation plan.
 
 **Summary:** Visual research methodology tools aligned with the Genealogical Proof Standard (GPS) and professional genealogical practices. Transforms Canvas Roots from a tree builder into a serious research platform.
 

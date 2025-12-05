@@ -1375,8 +1375,8 @@ export default class CanvasRootsPlugin extends Plugin {
 									subItem
 										.setTitle('Add source...')
 										.setIcon('archive')
-										.onClick(async () => {
-											await this.addSourceToPersonNote(file);
+										.onClick(() => {
+											this.addSourceToPersonNote(file);
 										});
 								});
 
@@ -1672,8 +1672,8 @@ export default class CanvasRootsPlugin extends Plugin {
 								item
 									.setTitle('Canvas Roots: Add source...')
 									.setIcon('archive')
-									.onClick(async () => {
-										await this.addSourceToPersonNote(file);
+									.onClick(() => {
+										this.addSourceToPersonNote(file);
 									});
 							});
 
@@ -3143,40 +3143,38 @@ export default class CanvasRootsPlugin extends Plugin {
 	 * Prompt user to select and remove a lineage
 	 */
 	private promptRemoveLineage(): void {
-		void (async () => {
-			try {
-				const service = new LineageTrackingService(this.app);
-				const lineages = service.getAllLineages();
+		try {
+			const service = new LineageTrackingService(this.app);
+			const lineages = service.getAllLineages();
 
-				if (lineages.length === 0) {
-					new Notice('No lineages found in vault');
-					return;
-				}
-
-				const menu = new Menu();
-				for (const lineage of lineages) {
-					menu.addItem((item) => {
-						item
-							.setTitle(`Remove "${lineage}"`)
-							.setIcon('trash-2')
-							.onClick(async () => {
-								try {
-									new Notice(`Removing "${lineage}" lineage...`);
-									const count = await service.removeLineage(lineage);
-									new Notice(`Removed "${lineage}" from ${count} people`);
-								} catch (error) {
-									logger.error('lineage-tracking', 'Failed to remove lineage', error);
-									new Notice(`Failed to remove lineage: ${getErrorMessage(error)}`);
-								}
-							});
-					});
-				}
-				menu.showAtMouseEvent(new MouseEvent('click'));
-			} catch (error) {
-				logger.error('lineage-tracking', 'Failed to get lineages', error);
-				new Notice(`Failed to get lineages: ${getErrorMessage(error)}`);
+			if (lineages.length === 0) {
+				new Notice('No lineages found in vault');
+				return;
 			}
-		})();
+
+			const menu = new Menu();
+			for (const lineage of lineages) {
+				menu.addItem((item) => {
+					item
+						.setTitle(`Remove "${lineage}"`)
+						.setIcon('trash-2')
+						.onClick(async () => {
+							try {
+								new Notice(`Removing "${lineage}" lineage...`);
+								const count = await service.removeLineage(lineage);
+								new Notice(`Removed "${lineage}" from ${count} people`);
+							} catch (error) {
+								logger.error('lineage-tracking', 'Failed to remove lineage', error);
+								new Notice(`Failed to remove lineage: ${getErrorMessage(error)}`);
+							}
+						});
+				});
+			}
+			menu.showAtMouseEvent(new MouseEvent('click'));
+		} catch (error) {
+			logger.error('lineage-tracking', 'Failed to get lineages', error);
+			new Notice(`Failed to get lineages: ${getErrorMessage(error)}`);
+		}
 	}
 
 	/**

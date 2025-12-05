@@ -2086,7 +2086,7 @@ export class ControlCenterModal extends Modal {
 			this.pendingRootPerson = undefined;
 		}
 
-		await this.createRootPersonCard(container, rootPersonField);
+		this.createRootPersonCard(container, rootPersonField);
 
 		// Configuration Card
 		const configCard = container.createDiv({ cls: 'crc-card' });
@@ -6266,10 +6266,10 @@ export class ControlCenterModal extends Modal {
 		this.renderRelationshipTypesCard(container, relationshipService);
 
 		// Relationships Overview card
-		await this.renderRelationshipsOverviewCard(container, relationshipService);
+		this.renderRelationshipsOverviewCard(container, relationshipService);
 
 		// Statistics card
-		await this.renderRelationshipStatsCard(container, relationshipService);
+		this.renderRelationshipStatsCard(container, relationshipService);
 	}
 
 	/**
