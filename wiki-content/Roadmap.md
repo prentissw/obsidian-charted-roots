@@ -22,7 +22,7 @@ This document outlines planned features for Canvas Roots. For release history an
   - [Person Note Templates](#person-note-templates)
   - [Accessibility](#accessibility)
   - [Obsidian Publish Support](#obsidian-publish-support)
-  - [Style Settings Integration](#style-settings-integration)
+  - [Style Settings Integration](#style-settings-integration) ✅
 - [Known Limitations](#known-limitations)
 - [Contributing](#contributing)
 
@@ -43,7 +43,7 @@ The following priority order guides future development:
 | 7 | [Organization Notes](#organization-notes--hierarchy-views) | ✅ Complete (v0.7.0) |
 | 8 | [Source Media Gallery](#source-media-gallery--document-viewer) | ✅ Complete (v0.8.0) |
 | 9 | [Evidence Visualization](#evidence-visualization) | ✅ Complete (v0.9.0) |
-| 10 | [Style Settings Integration](#style-settings-integration) | Planned |
+| 10 | [Style Settings Integration](#style-settings-integration) | ✅ Complete (v0.9.1) |
 | 11 | [Print & PDF Export](#print--pdf-export) | Planned |
 | 12 | [Transcript Nodes & Oral History](#transcript-nodes--quotable-facts) | Planned |
 
@@ -622,49 +622,36 @@ confidence: medium
 
 ---
 
-### Style Settings Integration
+### Style Settings Integration ✅
 
-**Summary:** Expose Canvas Roots styling options via the [Style Settings](https://github.com/mgmeyers/obsidian-style-settings) plugin, allowing users to customize colors and dimensions without editing CSS.
+> **Complete in v0.9.1.** See [Styling & Theming](Styling-And-Theming) wiki page for full documentation.
 
-**Phase 1: Family Chart Colors**
+**Summary:** Canvas Roots styling options exposed via the [Style Settings](https://github.com/mgmeyers/obsidian-style-settings) plugin, allowing users to customize colors without editing CSS.
+
+**Implemented Features:**
+
+**Family Chart View Colors:**
 - Female card color (default: `rgb(196, 138, 146)`)
 - Male card color (default: `rgb(120, 159, 172)`)
-- Unknown gender card color (default: `lightgray`)
-- Chart background color
-- Card text color
+- Unknown gender card color (default: `rgb(211, 211, 211)`)
+- Chart background (light theme): `rgb(250, 250, 250)`
+- Chart background (dark theme): `rgb(33, 33, 33)`
+- Card text color (light theme): `#333333`
+- Card text color (dark theme): `#ffffff`
 
-**Phase 2: Canvas Node Styling**
-- Node width and height
-- Border radius
-- Border width
-- Connection line width and color
+**Evidence Visualization Colors:**
+- Primary source color (default: `#22c55e` green)
+- Secondary source color (default: `#f59e0b` amber)
+- Derivative source color (default: `#ef4444` red)
+- Well-researched coverage color (≥75%, default: green)
+- Moderate coverage color (50-74%, default: amber)
+- Needs research color (<50%, default: red)
 
-**Phase 3: Evidence Visualization Styling**
-> Deferred from Evidence Visualization Phase 4 - better fit here for comprehensive canvas theming.
+**Canvas Node Dimensions:**
+- Info panel directing users to plugin settings (Settings → Canvas Roots → Canvas Output)
+- Node dimensions are not CSS-controlled; they're written directly to canvas JSON
 
-- Source quality colors for canvas indicators:
-  - Primary source indicator color (default: green)
-  - Secondary source indicator color (default: amber/yellow)
-  - Derivative source indicator color (default: red)
-- Research coverage threshold colors:
-  - Well-researched threshold color (≥75%, default: green)
-  - Moderate coverage threshold color (≥50%, default: yellow)
-  - Needs research threshold color (<50%, default: red)
-- Media node quality borders (when sources are linked to media):
-  - Border color based on source quality classification
-  - Border width for quality indicators
-
-**Implementation Notes:**
-- Add `/* @settings */` block to `styles.css` with YAML configuration
-- Call `app.workspace.trigger("parse-style-settings")` on plugin load
-- Use `variable-color` type for colors, `variable-number-slider` for dimensions
-- Scope family-chart variables properly (currently `.cr-fcv-chart-container.f3`)
-
-**Dependencies:**
-- Style Settings plugin must be installed by user (optional dependency)
-- No changes to core functionality; styling-only enhancement
-
-**Not Planned:**
+**Not Implemented:**
 - Spacing variables (internal layout; could break UI)
 - Transition timing (edge case)
 - Map view styling (Leaflet has its own theming)

@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.1] - 2025-12-05
+
+Style Settings integration and code quality improvements.
+
+### Added
+
+- **Style Settings Integration**: Customize Canvas Roots colors via the [Style Settings](https://github.com/mgmeyers/obsidian-style-settings) plugin
+  - **Family Chart View colors**: Female, male, and unknown gender card colors; chart background (light/dark); card text color (light/dark)
+  - **Evidence Visualization colors**: Primary/secondary/derivative source colors; research coverage threshold colors (well-researched/moderate/needs research)
+  - **Canvas Node Dimensions**: Info panel directing users to plugin settings (not CSS-controlled)
+  - Works with Style Settings plugin if installed; no changes required for users without it
+
+### Changed
+
+- Updated wiki documentation for Style Settings feature
+
+### Fixed
+
+- Fixed potential object stringification issues (`[object Object]`) in various services
+- Fixed lexical declaration in switch case block (validation service)
+- Wrapped unhandled promises with `void` operator
+- Removed unnecessary `async` from methods without `await`
+- Removed unused imports and variables
+- Fixed sentence case violations in UI text
+
+---
+
 ## [0.9.0] - 2025-12-05
 
 Evidence Visualization release: GPS-aligned fact tracking, proof summaries, and canvas conflict markers.
