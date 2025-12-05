@@ -159,6 +159,7 @@ Update component CSS to use variables with fallbacks:
 - `styles/modals.css` - Replace evidence indicator colors with variables
 - `main.ts` - Add Style Settings trigger on load
 - New: `styles/style-settings.css` - Style Settings configuration block
+- `wiki-content/Styling-And-Theming.md` - Update "Style Settings Plugin" section from planned to implemented
 
 ## References
 
