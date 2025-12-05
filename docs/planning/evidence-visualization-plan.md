@@ -462,7 +462,7 @@ Users with existing person notes will have no `sourced_facts` property. The syst
 - [x] Research progress overlay (% of facts sourced) - extends existing source indicator
 - [x] Conflict markers on canvas (subtle indicator near person nodes)
 - [ ] ~~Color-coded source quality borders on media nodes~~ → Deferred to Style Settings Integration
-- [ ] ~~Evidence clusters grouped by research question~~ → Deferred to v0.10.0+
+- [ ] ~~Evidence clusters grouped by research question~~ → Dropped (industry research shows this isn't needed)
 
 **Status: Phase 4 COMPLETE** - Scope reduced for v0.9.0 (as of 2025-12-05)
 
@@ -473,7 +473,45 @@ Users with existing person notes will have no `sourced_facts` property. The syst
 | Research progress overlay | ✅ Complete | Already implemented in `addSourceIndicatorNodes()` - shows `📎 3 · 75%` with color coding |
 | Conflict markers | ✅ Complete | Subtle indicator at top-left of person nodes, gated behind `trackFactSourcing` |
 | Source quality borders on media | ⏸️ Deferred | Media nodes rendered by Obsidian (limited customization). Better fit for Style Settings Integration feature which will add comprehensive canvas node styling. |
-| Evidence clusters | ⏸️ Deferred | Architecturally complex, unclear ROI. Revisit after user feedback on Phases 1-3. |
+| Evidence clusters | ⏸️ On Hold | Original spec ambiguous (Canvas vs Family Chart View). See options below. |
+
+**Evidence Clusters - On Hold Pending Clarification (2025-12-05):**
+
+Research into how other tools handle evidence organization revealed a consistent pattern:
+
+- **RootsMagic**: Evidence stays attached to facts, analyzed in detail views and reports
+- **Gramps**: Event-centric model with task management, evidence accessed through person/event views
+- **World Anvil / Kanka**: Relationships tracked but not visually clustered on family trees
+
+**Industry pattern**: No genealogy or worldbuilding software clusters evidence visually on the tree itself. Instead:
+1. Evidence attaches to facts/events (we do this via `sourced_facts`)
+2. Detail views show evidence when needed (Control Center does this)
+3. Separate reports handle complex analysis (Research Gaps Report, Source Conflicts)
+4. Tree visualization stays focused on relationships with lightweight indicators
+
+**Original spec ambiguity**: The phrase "evidence clusters on canvas" could refer to:
+- Obsidian Canvas (limited - we can only add text/file nodes)
+- Family Chart View (full D3 control - much more feasible)
+
+**Options to Consider:**
+
+1. **Transform to Family Chart View feature**: Add evidence visualization to the D3-based Family Chart View instead of Obsidian Canvas. Could include:
+   - Source quality badges on person cards
+   - Research status indicators (color-coded borders)
+   - Expandable evidence panels on person cards
+   - Research question grouping within the chart
+
+2. **Keep dropped for tree views**: The industry research still applies - other tools show evidence in detail views, not on tree visualizations. Family Chart View is still a tree visualization, so the same UX concerns apply.
+
+3. **New "Research View"**: Create a separate evidence-centric D3 visualization (not relationship-centric). A dedicated view focused on:
+   - Evidence chains and reasoning
+   - Source relationships
+   - Conflict visualization
+   - Research question progress
+
+**Open question**: Do genealogists want to see evidence details directly on family chart cards, or is the current approach (click person → see evidence in Control Center) the right UX?
+
+**Current decision**: On hold pending user feedback on Phases 1-3. Add to feedback questions in community outreach.
 
 **Conflict Marker Implementation:**
 - Small text node (`⚠️ N`) positioned at top-left of person node

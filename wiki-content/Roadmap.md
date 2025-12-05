@@ -350,7 +350,12 @@ source_quality: primary  # primary | secondary | derivative
 
 **Deferred to Future Releases:**
 - Source quality borders on media nodes → Style Settings Integration (see below)
-- Evidence clusters grouped by research question → v0.10.0+
+
+**On Hold (Pending User Feedback):**
+- Evidence clusters / Research View - Original spec was ambiguous (Obsidian Canvas vs Family Chart View). Three options under consideration:
+  1. Add evidence visualization to Family Chart View (D3-based, full control)
+  2. Keep current approach (evidence in Control Center detail views)
+  3. Create a new "Research View" - evidence-centric visualization separate from family trees
 
 **Integration Points:**
 - Extends existing source indicators (v0.8.0)
