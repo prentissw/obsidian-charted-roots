@@ -112,24 +112,19 @@ export async function createPlaceNote(
 		frontmatter.parent_place = formatWikilink(place.parentPlace);
 	}
 
-	// Coordinates (only for real/historical/disputed places)
+	// Coordinates (only for real/historical/disputed places) - flat properties
 	if (place.coordinates && isCoordinatesApplicable(place.placeCategory)) {
-		frontmatter.coordinates = {
-			lat: place.coordinates.lat,
-			long: place.coordinates.long
-		};
+		frontmatter.coordinates_lat = place.coordinates.lat;
+		frontmatter.coordinates_long = place.coordinates.long;
 	}
 
-	// Custom coordinates (applicable to all place types)
+	// Custom coordinates (applicable to all place types) - flat properties
 	if (place.customCoordinates) {
-		const customCoords: Record<string, unknown> = {
-			x: place.customCoordinates.x,
-			y: place.customCoordinates.y
-		};
+		frontmatter.custom_coordinates_x = place.customCoordinates.x;
+		frontmatter.custom_coordinates_y = place.customCoordinates.y;
 		if (place.customCoordinates.map) {
-			customCoords.map = place.customCoordinates.map;
+			frontmatter.custom_coordinates_map = place.customCoordinates.map;
 		}
-		frontmatter.custom_coordinates = customCoords;
 	}
 
 	// Historical names
@@ -256,10 +251,34 @@ export async function updatePlaceNote(
 		newFrontmatter.parent_place_id = updates.parentPlaceId;
 	}
 	if (updates.coordinates !== undefined) {
-		newFrontmatter.coordinates = updates.coordinates;
+		// Remove any legacy nested coordinates
+		delete newFrontmatter.coordinates;
+		// Write flat properties
+		if (updates.coordinates) {
+			newFrontmatter.coordinates_lat = updates.coordinates.lat;
+			newFrontmatter.coordinates_long = updates.coordinates.long;
+		} else {
+			delete newFrontmatter.coordinates_lat;
+			delete newFrontmatter.coordinates_long;
+		}
 	}
 	if (updates.customCoordinates !== undefined) {
-		newFrontmatter.custom_coordinates = updates.customCoordinates;
+		// Remove any legacy nested custom_coordinates
+		delete newFrontmatter.custom_coordinates;
+		// Write flat properties
+		if (updates.customCoordinates) {
+			newFrontmatter.custom_coordinates_x = updates.customCoordinates.x;
+			newFrontmatter.custom_coordinates_y = updates.customCoordinates.y;
+			if (updates.customCoordinates.map) {
+				newFrontmatter.custom_coordinates_map = updates.customCoordinates.map;
+			} else {
+				delete newFrontmatter.custom_coordinates_map;
+			}
+		} else {
+			delete newFrontmatter.custom_coordinates_x;
+			delete newFrontmatter.custom_coordinates_y;
+			delete newFrontmatter.custom_coordinates_map;
+		}
 	}
 	if (updates.historicalNames !== undefined) {
 		newFrontmatter.historical_names = updates.historicalNames;

@@ -275,7 +275,8 @@ export class CreatePersonModal extends Modal {
 					.onChange(value => {
 						collectionValue = value || undefined;
 					});
-				text.inputEl.addClass('cr-hidden crc-input--inline');
+				text.inputEl.addClass('cr-hidden');
+				text.inputEl.addClass('crc-input--inline');
 			});
 
 			// Store the value getter for use when creating

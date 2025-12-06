@@ -142,6 +142,8 @@ export interface CanvasRootsSettings {
 	showBuiltInOrganizationTypes: boolean;
 	// Source management settings
 	sourcesFolder: string;
+	// Bases folder
+	basesFolder: string;
 	defaultCitationFormat: CitationFormat;
 	showSourceThumbnails: boolean;
 	thumbnailSize: 'small' | 'medium' | 'large';
@@ -285,6 +287,8 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	showBuiltInOrganizationTypes: true,  // Whether to show built-in organization types in UI
 	// Source management settings
 	sourcesFolder: 'Canvas Roots/Sources',  // Default folder for source notes
+	// Bases folder
+	basesFolder: 'Canvas Roots/Bases',      // Default folder for base files
 	defaultCitationFormat: 'evidence_explained',  // Evidence Explained is the genealogy standard
 	showSourceThumbnails: true,   // Show media previews in gallery
 	thumbnailSize: 'medium',      // Thumbnail size (small/medium/large)
@@ -444,6 +448,17 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.sourcesFolder)
 				.onChange(async (value) => {
 					this.plugin.settings.sourcesFolder = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Bases folder')
+			.setDesc('Folder for Obsidian Bases files (leave empty to create bases in context menu folder)')
+			.addText(text => text
+				.setPlaceholder('Canvas Roots/Bases')
+				.setValue(this.plugin.settings.basesFolder)
+				.onChange(async (value) => {
+					this.plugin.settings.basesFolder = value;
 					await this.plugin.saveSettings();
 				}));
 

@@ -581,7 +581,8 @@ export class CreatePlaceModal extends Modal {
 						// Track for potential auto-creation
 						this.pendingParentPlace = value?.trim() || undefined;
 					});
-				text.inputEl.addClass('cr-hidden crc-input--inline');
+				text.inputEl.addClass('cr-hidden');
+				text.inputEl.addClass('crc-input--inline');
 			});
 		} else {
 			// No existing places, just show text input
@@ -655,7 +656,8 @@ export class CreatePlaceModal extends Modal {
 					.onChange(value => {
 						this.placeData.collection = value || undefined;
 					});
-				text.inputEl.addClass('cr-hidden crc-input--inline');
+				text.inputEl.addClass('cr-hidden');
+				text.inputEl.addClass('crc-input--inline');
 			});
 		} else {
 			// No existing collections, just show text input

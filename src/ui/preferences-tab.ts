@@ -395,6 +395,18 @@ function renderFolderLocationsCard(
 				await plugin.saveSettings();
 			}));
 
+	// Bases folder
+	new Setting(content)
+		.setName('Bases folder')
+		.setDesc('Default folder for Obsidian Bases files')
+		.addText(text => text
+			.setPlaceholder('Canvas Roots/Bases')
+			.setValue(plugin.settings.basesFolder)
+			.onChange(async (value) => {
+				plugin.settings.basesFolder = value;
+				await plugin.saveSettings();
+			}));
+
 	// Schemas folder
 	new Setting(content)
 		.setName('Schemas folder')

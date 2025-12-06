@@ -4598,9 +4598,15 @@ export default class CanvasRootsPlugin extends Plugin {
 				if (!proceed) return;
 			}
 
-			// Determine the target path
-			const folderPath = folder ? folder.path + '/' : '';
+			// Determine the target path - use basesFolder if configured, otherwise use context folder
+			const targetFolder = this.settings.basesFolder || (folder ? folder.path : '');
+			const folderPath = targetFolder ? targetFolder + '/' : '';
 			const defaultPath = folderPath + 'family-members.base';
+
+			// Create the bases folder if it doesn't exist
+			if (this.settings.basesFolder && !this.app.vault.getAbstractFileByPath(this.settings.basesFolder)) {
+				await this.app.vault.createFolder(this.settings.basesFolder);
+			}
 
 			// Check if file already exists
 			const existingFile = this.app.vault.getAbstractFileByPath(defaultPath);
@@ -4611,12 +4617,6 @@ export default class CanvasRootsPlugin extends Plugin {
 					const leaf = this.app.workspace.getLeaf(false);
 					await leaf.openFile(existingFile);
 				}
-				return;
-			}
-
-			// Validate folder exists if specified
-			if (folder && !this.app.vault.getAbstractFileByPath(folder.path)) {
-				new Notice(`Folder not found: ${folder.path}`);
 				return;
 			}
 
@@ -4665,9 +4665,15 @@ export default class CanvasRootsPlugin extends Plugin {
 				if (!proceed) return;
 			}
 
-			// Determine the target path
-			const folderPath = folder ? folder.path + '/' : '';
+			// Determine the target path - use basesFolder if configured, otherwise use context folder
+			const targetFolder = this.settings.basesFolder || (folder ? folder.path : '');
+			const folderPath = targetFolder ? targetFolder + '/' : '';
 			const defaultPath = folderPath + 'places.base';
+
+			// Create the bases folder if it doesn't exist
+			if (this.settings.basesFolder && !this.app.vault.getAbstractFileByPath(this.settings.basesFolder)) {
+				await this.app.vault.createFolder(this.settings.basesFolder);
+			}
 
 			// Check if file already exists
 			const existingFile = this.app.vault.getAbstractFileByPath(defaultPath);
@@ -4678,12 +4684,6 @@ export default class CanvasRootsPlugin extends Plugin {
 					const leaf = this.app.workspace.getLeaf(false);
 					await leaf.openFile(existingFile);
 				}
-				return;
-			}
-
-			// Validate folder exists if specified
-			if (folder && !this.app.vault.getAbstractFileByPath(folder.path)) {
-				new Notice(`Folder not found: ${folder.path}`);
 				return;
 			}
 
@@ -4731,9 +4731,15 @@ export default class CanvasRootsPlugin extends Plugin {
 				if (!proceed) return;
 			}
 
-			// Determine the target path
-			const folderPath = folder ? folder.path + '/' : '';
+			// Determine the target path - use basesFolder if configured, otherwise use context folder
+			const targetFolder = this.settings.basesFolder || (folder ? folder.path : '');
+			const folderPath = targetFolder ? targetFolder + '/' : '';
 			const defaultPath = folderPath + 'organizations.base';
+
+			// Create the bases folder if it doesn't exist
+			if (this.settings.basesFolder && !this.app.vault.getAbstractFileByPath(this.settings.basesFolder)) {
+				await this.app.vault.createFolder(this.settings.basesFolder);
+			}
 
 			// Check if file already exists
 			const existingFile = this.app.vault.getAbstractFileByPath(defaultPath);
@@ -4744,12 +4750,6 @@ export default class CanvasRootsPlugin extends Plugin {
 					const leaf = this.app.workspace.getLeaf(false);
 					await leaf.openFile(existingFile);
 				}
-				return;
-			}
-
-			// Validate folder exists if specified
-			if (folder && !this.app.vault.getAbstractFileByPath(folder.path)) {
-				new Notice(`Folder not found: ${folder.path}`);
 				return;
 			}
 
@@ -4797,9 +4797,15 @@ export default class CanvasRootsPlugin extends Plugin {
 				if (!proceed) return;
 			}
 
-			// Determine the target path
-			const folderPath = folder ? folder.path + '/' : '';
+			// Determine the target path - use basesFolder if configured, otherwise use context folder
+			const targetFolder = this.settings.basesFolder || (folder ? folder.path : '');
+			const folderPath = targetFolder ? targetFolder + '/' : '';
 			const defaultPath = folderPath + 'sources.base';
+
+			// Create the bases folder if it doesn't exist
+			if (this.settings.basesFolder && !this.app.vault.getAbstractFileByPath(this.settings.basesFolder)) {
+				await this.app.vault.createFolder(this.settings.basesFolder);
+			}
 
 			// Check if file already exists
 			const existingFile = this.app.vault.getAbstractFileByPath(defaultPath);
@@ -4810,12 +4816,6 @@ export default class CanvasRootsPlugin extends Plugin {
 					const leaf = this.app.workspace.getLeaf(false);
 					await leaf.openFile(existingFile);
 				}
-				return;
-			}
-
-			// Validate folder exists if specified
-			if (folder && !this.app.vault.getAbstractFileByPath(folder.path)) {
-				new Notice(`Folder not found: ${folder.path}`);
 				return;
 			}
 

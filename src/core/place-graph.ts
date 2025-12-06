@@ -977,9 +977,16 @@ export class PlaceGraphService {
 			}
 		}
 
-		// Extract coordinates
+		// Extract coordinates (flat properties preferred, nested as fallback for backwards compatibility)
 		let coordinates: GeoCoordinates | undefined;
-		if (fm.coordinates && typeof fm.coordinates === 'object') {
+		if (fm.coordinates_lat !== undefined && fm.coordinates_long !== undefined) {
+			// Flat properties (preferred)
+			coordinates = {
+				lat: Number(fm.coordinates_lat),
+				long: Number(fm.coordinates_long)
+			};
+		} else if (fm.coordinates && typeof fm.coordinates === 'object') {
+			// Legacy nested format (backwards compatibility)
 			if (fm.coordinates.lat !== undefined && fm.coordinates.long !== undefined) {
 				coordinates = {
 					lat: Number(fm.coordinates.lat),
@@ -988,9 +995,17 @@ export class PlaceGraphService {
 			}
 		}
 
-		// Extract custom coordinates
+		// Extract custom coordinates (flat properties preferred, nested as fallback)
 		let customCoordinates: CustomCoordinates | undefined;
-		if (fm.custom_coordinates && typeof fm.custom_coordinates === 'object') {
+		if (fm.custom_coordinates_x !== undefined && fm.custom_coordinates_y !== undefined) {
+			// Flat properties (preferred)
+			customCoordinates = {
+				x: Number(fm.custom_coordinates_x),
+				y: Number(fm.custom_coordinates_y),
+				map: fm.custom_coordinates_map
+			};
+		} else if (fm.custom_coordinates && typeof fm.custom_coordinates === 'object') {
+			// Legacy nested format (backwards compatibility)
 			if (fm.custom_coordinates.x !== undefined && fm.custom_coordinates.y !== undefined) {
 				customCoordinates = {
 					x: Number(fm.custom_coordinates.x),
