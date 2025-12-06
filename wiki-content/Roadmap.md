@@ -439,14 +439,22 @@ mentions:
 
 > See [chronological-story-mapping.md](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/chronological-story-mapping.md) for detailed implementation plan.
 
-**Summary:** Event-based timeline visualization supporting both genealogists (source-derived events) and worldbuilders (canonical events). Integrates with existing fictional date systems for cross-era sorting.
+**Summary:** Event-based timeline visualization supporting genealogists (source-derived events), worldbuilders (canonical events), and writers/plotters (narrative timelines). Integrates with existing fictional date systems for cross-era sorting.
 
 **Key Features:**
 - Event notes (`type: event`) as first-class entities
 - Dual-path creation: extract events from sources OR create directly
+- **Relative ordering**: Express "A happened before B" without exact dates
 - Person Timeline, Family Timeline, Place Timeline views
 - Fictional date system integration (`date_system` field, era-based dates)
 - Timeline gap analysis in Data Quality tab
+- **Canvas/Excalidraw export**: Visualize timelines as node graphs
+
+**User Research Highlights (Dec 2025):**
+- Single source of truth: seamless promotion from `born: 1976` to `born: [[1976 Event]]`
+- Flexibility over structure: support incomplete/evolving data
+- Gantt-style visualization with color-coding by period/era
+- Graph-friendly structure that exports to Canvas/Excalidraw
 
 **Event Schema:**
 ```yaml
@@ -463,20 +471,36 @@ sources:
 confidence: high
 ```
 
-**For Worldbuilders:**
+**Relative Ordering (no exact date):**
 ```yaml
 type: event
-title: "Bilbo's Birthday Party"
-event_type: anecdote
-date: "TA 3001"
-date_system: middle_earth
-date_precision: year
-person: "[[Bilbo Baggins]]"
-universe: "Middle-earth"
-is_canonical: true
+title: "Person A moved to the Americas"
+event_type: immigration
+date_precision: unknown
+after:
+  - "[[Marriage of Person A]]"
+before:
+  - "[[Birth of First Child]]"
+person: "[[Person A]]"
 ```
 
-**Event Types:** birth, death, marriage, divorce, residence, occupation, military, immigration, education, anecdote, lore_event
+**For Writers/Plotters:**
+```yaml
+type: event
+title: "The Betrayal"
+event_type: plot_point
+date_precision: unknown
+after:
+  - "[[The Alliance]]"
+before:
+  - "[[The Battle]]"
+timeline: "[[Book 1 Timeline]]"
+```
+
+**Event Types:**
+- Core: birth, death, marriage, divorce
+- Extended: residence, occupation, military, immigration, education
+- Narrative: anecdote, lore_event, plot_point, flashback, backstory, climax, resolution
 
 **Implementation Phases:**
 1. Event notes foundation (types, service, modal, validation)
@@ -485,7 +509,8 @@ is_canonical: true
 4. Timeline Tab in Control Center
 5. Family Timeline view
 6. Place Timeline view
-7. Leaflet Time Animation (advanced)
+7. Canvas/Excalidraw export
+8. Leaflet Time Animation (advanced)
 
 **Integration Points:**
 - Fictional Date Systems (era-based dates, canonical year sorting)
@@ -493,6 +518,9 @@ is_canonical: true
 - Source notes ("Extract events" action)
 - Proof summaries (events as evidence)
 - Maps tab (Place Timeline, animated markers)
+- Canvas/Excalidraw (export timeline as visual graph)
+- Bases (auto-computed `sort_order` for chronological sorting)
+- Value Aliases (map custom event types to canonical values)
 
 ---
 

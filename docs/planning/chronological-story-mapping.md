@@ -2,11 +2,42 @@
 
 > **Status:** Planned
 > **Target Version:** TBD
-> **Last Updated:** 2025-12-05
+> **Last Updated:** 2025-12-06
 
 ## Overview
 
 Chronological Story Mapping introduces event-based timeline visualization to Canvas Roots, enabling users to document and visualize life events in chronological order. The feature supports both genealogists (who derive events from sources) and worldbuilders (who create canonical events directly).
+
+## User Research Insights
+
+Based on user feedback (December 2025), the following priorities emerged:
+
+### Core Requirements
+
+1. **Single Source of Truth**: Events should be promotable from embedded text to standalone notes seamlessly. Users want `born: 1976` convertible to `born: [[1976]]` without friction.
+
+2. **Flexibility Over Structure**: Support for partial/incomplete data that evolves over time. The `date_precision` property is highly valued for handling uncertain dates.
+
+3. **Relative Ordering Without Exact Dates**: Critical requirement - users need to express "Event A happened before B but after C" even without knowing actual dates. This enables meaningful timelines from incomplete research.
+
+4. **Event Relationships**: Support for prev/next relationships between events (like periodic notes chains), and parent/child relationships (events → timelines → eras → calendars).
+
+### Visualization Preferences
+
+- **Gantt-style timeline view** with flexible zoom (eras → days)
+- **Color-coding by period/era** on canvases
+- **Graph-friendly structure** that can export to Canvas/Excalidraw
+- **Custom sort property** based on timeline relationships for Bases sorting
+
+### User Personas Update
+
+The existing genealogist/worldbuilder personas should be supplemented with:
+
+| Persona | Focus | Key Needs |
+|---------|-------|-----------|
+| **Writer/Plotter** | Narrative timeline for storytelling | Rearranging events, narrative event types (`plot_point`, `flashback`), flexible ordering |
+
+Writers particularly value narrative event types and the ability to visualize story structure alongside chronology.
 
 ## Design Principles
 
@@ -32,6 +63,7 @@ Different users have different workflows:
 | Genealogist (power) | "I'm building a timeline to find research gaps" | Timeline → Create event → Attach sources |
 | Worldbuilder (casual) | "This character did something interesting" | Person → Add life event |
 | Worldbuilder (power) | "I need a coherent timeline for my universe" | Timeline → Batch create events |
+| Writer/Plotter | "I need to visualize my story's timeline" | Timeline → Arrange events → Export to Canvas/Excalidraw |
 
 ---
 
@@ -73,6 +105,10 @@ description: "Born at 23 Grafton Street, Dublin"
 | `is_canonical` | boolean | No | For worldbuilders: this is authoritative truth |
 | `universe` | string | No | Fictional universe (for worldbuilding) |
 | `date_system` | string | No | Fictional date system ID (for non-Gregorian dates) |
+| `before` | wikilink[] | No | Events that happen after this one (for relative ordering) |
+| `after` | wikilink[] | No | Events that happen before this one (for relative ordering) |
+| `timeline` | wikilink | No | Parent timeline note this event belongs to |
+| `sort_order` | number | No | Computed sort value for Bases (auto-generated from relationships) |
 
 ### Fictional Date System Integration
 
@@ -119,8 +155,50 @@ type DatePrecision =
   | 'year'       // Known to the year: 1850
   | 'decade'     // Known to the decade: 1850s
   | 'estimated'  // Approximate: "circa 1850"
-  | 'range';     // Between two dates: 1848-1852
+  | 'range'      // Between two dates: 1848-1852
+  | 'unknown';   // Date unknown, use relative ordering
 ```
+
+### Relative Ordering (Dateless Events)
+
+A critical requirement from user research: support meaningful timelines even when exact dates are unknown. Events can specify their position relative to other events using `before` and `after` fields.
+
+**Example: Immigration Timeline with Unknown Date**
+```yaml
+type: event
+title: "Person A moved to the Americas"
+event_type: immigration
+date_precision: unknown
+after:
+  - "[[Marriage of Person A]]"    # We know this happened after marriage
+before:
+  - "[[Birth of First Child]]"    # We know this happened before first child
+person: "[[Person A]]"
+description: "Earlier than X date but later than Y date - actual date unknown"
+```
+
+**Sort Order Computation:**
+
+The `sort_order` property is auto-computed from:
+1. Exact dates (highest priority)
+2. Relative ordering constraints (`before`/`after`)
+3. Timeline membership
+4. Manual override
+
+This enables correct chronological ordering in Bases without requiring additional sorting values:
+
+```typescript
+// Topological sort resolves: Marriage → Immigration → Birth of Child
+// Even though Immigration has no date, it sorts correctly based on constraints
+```
+
+**Graph Visualization:**
+
+The `before`/`after` relationships create a directed graph that can be:
+- Visualized in Obsidian's graph view (as links)
+- Exported to Canvas with positioned nodes
+- Exported to Excalidraw for further editing
+- Displayed in a Gantt-style timeline with relative positioning
 
 ### Event Types
 
@@ -140,6 +218,12 @@ type DatePrecision =
 **Narrative types** (for storytelling):
 - `anecdote` - Family story or personal event
 - `lore_event` - Worldbuilding canonical event
+- `plot_point` - Key story beat or turning point
+- `flashback` - Event referenced in non-chronological narrative
+- `foreshadowing` - Event that sets up future developments
+- `backstory` - Pre-narrative event that informs character/plot
+- `climax` - Peak dramatic moment
+- `resolution` - Story conclusion event
 
 **Custom types**: Users can define additional event types via settings.
 
@@ -245,7 +329,24 @@ type DatePrecision =
 - Useful for tracking family presence in an area
 - Integration with Maps tab
 
-### Phase 7: Leaflet Time Animation (Advanced)
+### Phase 7: Canvas/Excalidraw Export
+
+**Goal:** Export timeline to visual canvas formats for further editing.
+
+**Deliverables:**
+- "Export to Canvas" action from Timeline tab
+- "Export to Excalidraw" action (if Excalidraw plugin installed)
+- Events positioned based on chronological/relative ordering
+- Color-coded nodes by event type or period/era
+- `before`/`after` relationships rendered as edges
+- Gantt-style horizontal layout option
+
+**Use Cases:**
+- Writers visualizing story structure
+- Worldbuilders creating timeline reference canvases
+- Researchers documenting family history for presentation
+
+### Phase 8: Leaflet Time Animation (Advanced)
 
 **Goal:** Animated map showing events over time.
 
@@ -272,6 +373,10 @@ type DatePrecision =
 | Fictional date systems | `date_system` field enables custom calendars; `DateService` parses era-based dates; `canonicalYear` enables cross-era sorting |
 | Maps tab | Place timeline; animated map visualization |
 | Universe filtering | Events inherit universe from linked person; date system auto-selects based on universe |
+| Canvas/Excalidraw | Export timeline graphs; events as nodes with ordering edges |
+| Obsidian Graph | `before`/`after` links visible in graph view; navigate event chains |
+| Bases | `sort_order` property enables automatic chronological sorting |
+| Value Aliases | Custom event type values mapped to canonical types |
 
 ### Calendarium Plugin Integration
 
@@ -428,14 +533,27 @@ src/events/
 ## Open Questions
 
 1. **Event deduplication**: How to handle the same event documented by multiple sources? Should events merge or remain separate?
+   - *Proposed*: Keep events separate but linkable. Multiple source citations on one event; or separate "observation" events that reference the same canonical event.
 
 2. **Multi-person events**: For marriages, do we create one event linked to both people, or two events (one per person)?
+   - *Proposed*: Single event with `persons` array for multi-person events. Appears in both people's timelines.
 
 3. **Event inheritance**: Should children automatically inherit parent marriage events in their timeline?
+   - *Proposed*: No automatic inheritance. Family Timeline view aggregates related events without duplicating data.
 
 4. **Fictional calendar display**: How to sort events across different fictional calendar systems in a global timeline?
+   - *Resolved*: Use `canonicalYear` from `ParsedFictionalDate` for cross-era sorting. Each date system defines epoch offsets.
 
 5. **GEDCOM export**: How should events map to GEDCOM EVEN tags?
+   - *Proposed*: Map event types to GEDCOM tags (BIRT, DEAT, MARR, etc.); custom types become EVEN with TYPE subtag.
+
+6. **Event promotion workflow**: How should users "promote" an embedded date to an event note?
+   - *User feedback*: Critical requirement. Should support seamless transition from `born: 1976` to `born: [[1976 Birth Event]]`.
+   - *Proposed*: "Create event from property" action that generates event note and updates original property to wikilink.
+
+7. **Timeline note type**: Should there be a `type: timeline` note to organize related events?
+   - *User feedback*: Users want dedicated timeline/calendar notes as "single source of truth" for event collections.
+   - *Proposed*: Add `type: timeline` with `events` array linking to event notes; serves as grouping container.
 
 ---
 
@@ -460,6 +578,12 @@ Phase 4 is complete when:
 - [ ] Timeline tab appears in Control Center
 - [ ] Events can be filtered by type, person, date range
 - [ ] Statistics show event distribution
+
+Phase 7 is complete when:
+- [ ] "Export to Canvas" generates positioned event nodes
+- [ ] `before`/`after` relationships render as edges
+- [ ] Excalidraw export available (when plugin installed)
+- [ ] Color-coding by event type or period working
 
 ---
 
