@@ -11,6 +11,8 @@ This document outlines planned features for Canvas Roots. For release history an
   - [Geographic Features (Phase 4)](#geographic-features-phase-4-) ✅
   - [Maps Tab (Control Center)](#maps-tab-control-center-) ✅
   - [Import/Export Enhancements](#importexport-enhancements) ✅
+  - [GEDCOM Import v2](#gedcom-import-v2)
+  - [Data Enhancement Pass](#data-enhancement-pass)
   - [Schema Validation](#schema-validation--consistency-checks-) ✅
   - [Custom Relationship Types](#custom-relationship-types) ✅
   - [Fictional Date Systems](#fictional-date-systems-) ✅
@@ -54,8 +56,10 @@ The following priority order guides future development:
 | 12 | [Property Aliases](#property-aliases-) | ✅ Complete (v0.9.3) |
 | 13 | [Value Aliases](#value-aliases) | ✅ Complete (v0.9.4) |
 | 14 | [Chronological Story Mapping](#chronological-story-mapping) | ✅ Complete (v0.10.0) |
-| 15 | [Print & PDF Export](#print--pdf-export) | Planned |
-| 16 | [Transcript Nodes & Oral History](#transcript-nodes--quotable-facts) | Planned |
+| 15 | [GEDCOM Import v2](#gedcom-import-v2) | Planned |
+| 16 | [Data Enhancement Pass](#data-enhancement-pass) | Planned |
+| 17 | [Print & PDF Export](#print--pdf-export) | Planned |
+| 18 | [Transcript Nodes & Oral History](#transcript-nodes--quotable-facts) | Planned |
 
 ---
 
@@ -554,8 +558,118 @@ person: "[[Person A]]"
 - Privacy-aware exports with redaction options
 - Separate Import and Export cards in Control Center UI
 
-**Future Enhancements:**
-- Additional GEDCOM fields (sources, notes, events)
+---
+
+### GEDCOM Import v2
+
+**Summary:** Enhanced GEDCOM import that creates source notes, event notes, and place notes in addition to person notes. Captures the full richness of GEDCOM data.
+
+**Current Limitations (v0.6.0):**
+- Only creates person notes
+- Birth/death dates stored as flat properties (`birthDate`, `deathDate`)
+- Places stored as strings, not wikilinks to place notes
+- `SOUR` records ignored entirely
+- Extended events (`RESI`, `BURI`, `EDUC`, `IMMI`, `MILI`) ignored
+- Marriage events not created (only date/place captured on family records)
+
+**Planned Features:**
+
+**Source Import:**
+- Parse `SOUR` records and `@S1@`-style source references
+- Create source notes (`type: source`) with available metadata
+- Link source citations to person notes via `sources` array
+- Support for `TITL`, `AUTH`, `PUBL`, `REPO` fields
+- Handle inline source citations on individual facts
+
+**Event Import:**
+- Create event notes (`type: event`) for all supported GEDCOM tags:
+  - Core: `BIRT`, `DEAT`, `MARR`, `DIV`
+  - Extended: `BURI`, `RESI`, `OCCU`, `EDUC`, `MILI`, `IMMI`, `EMIG`, `NATU`
+  - Religious: `BAPM`, `CHR`, `CONF`, `ORDN`
+- Link events to person notes via `person` field
+- Link events to sources via `sources` array
+- Preserve date precision from GEDCOM (`ABT`, `BEF`, `AFT`, `BET`)
+
+**Place Import:**
+- Extract unique places from all events
+- Create place notes (`type: place`) with hierarchical structure
+- Parse GEDCOM place hierarchy (`City, County, State, Country`)
+- Update person/event notes to use wikilinks instead of strings
+- Optional: attempt geocoding for coordinates
+
+**Import Options:**
+- Checkbox: "Create source notes" (default: on)
+- Checkbox: "Create event notes" (default: on)
+- Checkbox: "Create place notes" (default: on)
+- Dropdown: "Place hierarchy style" (flat, nested folders)
+- Checkbox: "Attempt geocoding" (default: off)
+
+**Schema:**
+```
+GEDCOM File
+├── @I1@ INDI → Person note + Event notes (birth, death, etc.)
+├── @F1@ FAM → Marriage event notes
+├── @S1@ SOUR → Source note
+└── Places → Place notes (deduplicated)
+```
+
+**Integration Points:**
+- Staging folder support (import to staging, review, then merge)
+- Duplicate detection for places (avoid creating "Dublin, Ireland" twice)
+- Property aliases (use configured property names)
+- Value aliases (map GEDCOM event types to Canvas Roots types)
+
+---
+
+### Data Enhancement Pass
+
+**Summary:** Upgrade existing vaults by creating missing linked entities from person note data. For users who imported GEDCOM before sources, events, and places were supported.
+
+**Use Cases:**
+1. Imported GEDCOM before v0.10.0 (no event notes)
+2. Imported GEDCOM before v0.9.0 (no source notes)
+3. Have person notes with place strings instead of wikilinks
+4. Want to retroactively create event notes from existing date fields
+
+**Planned Features:**
+
+**Generate Events from Dates:**
+- Scan person notes for `birthDate`/`deathDate` properties
+- Create corresponding event notes (`type: event`)
+- Link events to person notes
+- Handle existing events (skip duplicates)
+- Preview mode: show what would be created before committing
+
+**Generate Place Notes:**
+- Extract unique place strings from `birthPlace`, `deathPlace`, and event `place` fields
+- Create place notes with parsed hierarchy
+- Update person/event notes to use wikilinks
+- Merge with existing place notes (fuzzy matching)
+
+**Re-parse GEDCOM for Sources:**
+- Option to re-import original GEDCOM file
+- Match individuals to existing person notes by name/dates/cr_id
+- Extract `SOUR` records and create source notes
+- Link sources to matched person notes
+- Report unmatched individuals
+
+**UI:**
+- New card in Import/Export tab: "Enhance existing data"
+- Checkboxes for each enhancement type
+- Dry-run preview showing counts and samples
+- Progress indicator during enhancement
+- Summary report with created/skipped/error counts
+
+**Commands:**
+- "Generate event notes from person dates"
+- "Generate place notes from place strings"
+- "Re-parse GEDCOM for sources"
+
+**Safety Features:**
+- Backup reminder before running
+- Dry-run mode (preview only)
+- Skip existing entities (no duplicates)
+- Undo support via file history
 
 ---
 
