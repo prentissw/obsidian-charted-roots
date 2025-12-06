@@ -130,10 +130,10 @@ See [Roadmap](https://github.com/banisterious/obsidian-canvas-roots/wiki/Roadmap
 
 | Feature | Description |
 |---------|-------------|
-| **Value Aliases** | Map custom property values (event types, gender, place categories) to Canvas Roots fields |
-| **Chronological Story Mapping** | Event-based timeline visualization with fictional date system integration |
-| **Print & PDF Export** | Generate print-ready pedigree charts, descendant charts, and family group sheets |
-| **Transcript Nodes & Oral History** | Timestamped transcript citations and interview subject graphs |
+| [**Value Aliases**](https://github.com/banisterious/obsidian-canvas-roots/wiki/Roadmap#value-aliases) | Map custom property values (event types, gender, place categories) to Canvas Roots fields |
+| [**Chronological Story Mapping**](https://github.com/banisterious/obsidian-canvas-roots/wiki/Roadmap#chronological-story-mapping) | Event-based timeline visualization with fictional date system integration |
+| [**Print & PDF Export**](https://github.com/banisterious/obsidian-canvas-roots/wiki/Roadmap#print--pdf-export) | Generate print-ready pedigree charts, descendant charts, and family group sheets |
+| [**Transcript Nodes & Oral History**](https://github.com/banisterious/obsidian-canvas-roots/wiki/Roadmap#transcript-nodes--quotable-facts) | Timestamped transcript citations and interview subject graphs |
 
 ---
 
