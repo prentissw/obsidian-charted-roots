@@ -88,7 +88,7 @@ function renderOrganizationsListCard(
 		emptyState.createEl('p', { text: 'No organizations found.' });
 		emptyState.createEl('p', {
 			cls: 'crc-text-muted',
-			text: 'Create organization notes with type: organization in frontmatter, or use the button above.'
+			text: 'Create organization notes with cr_type: organization in frontmatter, or use the button above.'
 		});
 	} else {
 		// Check if any org has members

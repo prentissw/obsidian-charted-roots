@@ -213,7 +213,7 @@ export class OrganizationService {
 		// Build frontmatter
 		const frontmatterLines = [
 			'---',
-			'type: organization',
+			'cr_type: organization',
 			`cr_id: ${crId}`,
 			`name: "${name}"`,
 			`org_type: ${orgType}`

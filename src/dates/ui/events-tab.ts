@@ -1032,7 +1032,7 @@ function renderStatisticsCard(
 			cls: 'crc-text-muted'
 		});
 		emptyState.createEl('p', {
-			text: 'Create person notes with type: person in frontmatter to see date statistics.',
+			text: 'Create person notes with cr_type: person in frontmatter to see date statistics.',
 			cls: 'crc-text-muted'
 		});
 	}

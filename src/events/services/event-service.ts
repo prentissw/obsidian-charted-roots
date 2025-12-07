@@ -346,7 +346,7 @@ export class EventService {
 		// Build frontmatter
 		const frontmatterLines: string[] = [
 			'---',
-			'type: event',
+			'cr_type: event',
 			`cr_id: ${crId}`,
 			`title: "${data.title.replace(/"/g, '\\"')}"`,
 			`event_type: ${data.eventType}`,
@@ -574,7 +574,7 @@ export class EventService {
 	 * Parse a file into an EventNote object
 	 */
 	parseEventNote(file: TFile, frontmatter: Record<string, unknown>): EventNote | null {
-		// Must have type: event (uses flexible detection)
+		// Must have cr_type: event (uses flexible detection, also supports type: event)
 		const cache = this.app.metadataCache.getFileCache(file);
 		if (!isEventNote(frontmatter, cache, this.settings.noteTypeDetection)) {
 			return null;

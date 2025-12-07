@@ -203,7 +203,7 @@ function loadPlaceStatistics(container: HTMLElement, plugin: CanvasRootsPlugin):
 			cls: 'crc-text--muted'
 		});
 		emptyState.createEl('p', {
-			text: 'Place notes use type: place in their frontmatter. Create place notes to track geographic locations associated with your family tree.',
+			text: 'Place notes use cr_type: place in their frontmatter. Create place notes to track geographic locations associated with your family tree.',
 			cls: 'crc-text--muted crc-text--small'
 		});
 		return;
@@ -327,7 +327,7 @@ function loadPlaceList(
 
 	if (places.length === 0) {
 		container.createEl('p', {
-			text: 'No place notes found. Create place notes with type: place in frontmatter.',
+			text: 'No place notes found. Create place notes with cr_type: place in frontmatter.',
 			cls: 'crc-text--muted'
 		});
 		return;

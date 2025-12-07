@@ -318,7 +318,7 @@ export class SchemaService {
 
 		const fm = cache.frontmatter as Partial<SchemaNoteFrontmatter>;
 
-		// Must have type: schema
+		// Must have cr_type: schema (or type: schema for backwards compatibility)
 		if (fm.type !== 'schema') return null;
 
 		// Must have cr_id and name
@@ -403,7 +403,7 @@ export class SchemaService {
 	private generateSchemaContent(schema: Omit<SchemaNote, 'filePath'>): string {
 		const frontmatter = [
 			'---',
-			'type: schema',
+			'cr_type: schema',
 			`cr_id: ${schema.cr_id}`,
 			`name: "${schema.name.replace(/"/g, '\\"')}"`,
 		];

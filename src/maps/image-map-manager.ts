@@ -185,7 +185,7 @@ export class ImageMapManager {
 		this.mapConfigs.clear();
 		const configs: CustomMapConfig[] = [];
 
-		// Look for map config files (markdown files with type: map in frontmatter)
+		// Look for map config files (markdown files with cr_type: map in frontmatter)
 		const files = this.app.vault.getMarkdownFiles();
 
 		for (const file of files) {
@@ -857,7 +857,7 @@ export class ImageMapManager {
  *
  * ```yaml
  * ---
- * type: map
+ * cr_type: map
  * map_id: middle-earth
  * name: Middle-earth
  * universe: tolkien
@@ -885,7 +885,7 @@ export class ImageMapManager {
  *
  * ```yaml
  * ---
- * type: map
+ * cr_type: map
  * map_id: westeros
  * name: Westeros
  * universe: got
@@ -914,7 +914,7 @@ export class ImageMapManager {
  *
  * ```yaml
  * ---
- * type: place
+ * cr_type: place
  * cr_id: winterfell
  * name: Winterfell
  * universe: got

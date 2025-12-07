@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.10.8] - 2025-12-07
+
+Completes the `cr_type` migration started in v0.10.2.
+
+### Changed
+
+- **cr_type Migration Complete**: All note creation and documentation now uses `cr_type` instead of `type`
+  - Updated Essential properties in Control Center Guide tab
+  - Updated all Templater template snippets
+  - Updated service files that create events, sources, organizations, schemas
+  - Updated GEDCOM importer for events, sources, and places
+  - Updated create-map-modal and image-map-manager
+  - Updated empty state messages in all tabs
+  - Note: `type` property still works for backwards compatibility
+
+---
+
 ## [0.10.7] - 2025-12-07
 
 Settings consolidation and bug fixes.

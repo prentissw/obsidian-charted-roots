@@ -1256,7 +1256,7 @@ export class ControlCenterModal extends Modal {
 		this.createCollapsible(propsContent, 'Place notes', 'map-pin', (body) => {
 			const list = body.createEl('ul', { cls: 'crc-field-list' });
 			[
-				{ name: 'type', desc: 'Must be "place"', req: true },
+				{ name: 'cr_type', desc: 'Must be "place"', req: true },
 				{ name: 'cr_id', desc: 'Unique identifier', req: true },
 				{ name: 'name', desc: 'Place name', req: true },
 				{ name: 'coordinates', desc: 'lat/long for map display', req: false },
@@ -1273,7 +1273,7 @@ export class ControlCenterModal extends Modal {
 		this.createCollapsible(propsContent, 'Custom map notes', 'globe', (body) => {
 			const list = body.createEl('ul', { cls: 'crc-field-list' });
 			[
-				{ name: 'type', desc: 'Must be "map"', req: true },
+				{ name: 'cr_type', desc: 'Must be "map"', req: true },
 				{ name: 'map_id', desc: 'Unique map identifier', req: true },
 				{ name: 'universe', desc: 'Universe for filtering places', req: true },
 				{ name: 'image', desc: 'Path to map image', req: true },
@@ -1290,7 +1290,7 @@ export class ControlCenterModal extends Modal {
 		this.createCollapsible(propsContent, 'Source notes', 'archive', (body) => {
 			const list = body.createEl('ul', { cls: 'crc-field-list' });
 			[
-				{ name: 'type', desc: 'Must be "source"', req: true },
+				{ name: 'cr_type', desc: 'Must be "source"', req: true },
 				{ name: 'cr_id', desc: 'Unique identifier', req: true },
 				{ name: 'title', desc: 'Source title', req: true },
 				{ name: 'source_type', desc: 'Type (census, vital_record, etc.)', req: true },
@@ -1309,7 +1309,7 @@ export class ControlCenterModal extends Modal {
 		this.createCollapsible(propsContent, 'Schema notes', 'clipboard-check', (body) => {
 			const list = body.createEl('ul', { cls: 'crc-field-list' });
 			[
-				{ name: 'type', desc: 'Must be "schema"', req: true },
+				{ name: 'cr_type', desc: 'Must be "schema"', req: true },
 				{ name: 'cr_id', desc: 'Unique schema identifier', req: true },
 				{ name: 'name', desc: 'Display name', req: true },
 				{ name: 'applies_to_type', desc: 'Scope: collection, folder, universe, all', req: true },
@@ -1330,7 +1330,7 @@ export class ControlCenterModal extends Modal {
 		this.createCollapsible(propsContent, 'Event notes', 'calendar', (body) => {
 			const list = body.createEl('ul', { cls: 'crc-field-list' });
 			[
-				{ name: 'type', desc: 'Must be "event"', req: true },
+				{ name: 'cr_type', desc: 'Must be "event"', req: true },
 				{ name: 'cr_id', desc: 'Unique identifier', req: true },
 				{ name: 'title', desc: 'Event title', req: true },
 				{ name: 'event_type', desc: 'Type (birth, death, marriage, etc.)', req: true },
@@ -5208,7 +5208,7 @@ export class ControlCenterModal extends Modal {
 	private loadCustomMapsGrid(container: HTMLElement): void {
 		container.empty();
 
-		// Find all map notes (type: map in frontmatter)
+		// Find all map notes (cr_type: map in frontmatter)
 		const customMaps = this.getCustomMaps();
 
 		if (customMaps.length === 0) {
@@ -5218,7 +5218,7 @@ export class ControlCenterModal extends Modal {
 				cls: 'crc-text--muted'
 			});
 			emptyState.createEl('p', {
-				text: 'Create a note with type: map in frontmatter to define custom image maps for fictional worlds.',
+				text: 'Create a note with cr_type: map in frontmatter to define custom image maps for fictional worlds.',
 				cls: 'crc-text--muted crc-text--small'
 			});
 
@@ -5689,7 +5689,7 @@ export class ControlCenterModal extends Modal {
 				// Build frontmatter
 				const frontmatterLines: string[] = [
 					'---',
-					'type: map',
+					'cr_type: map',
 					`name: ${data.name}`,
 					`map_id: ${mapId}`
 				];

@@ -174,7 +174,7 @@ function renderSourcesListCard(
 		emptyState.createEl('p', { text: 'No sources found.' });
 		emptyState.createEl('p', {
 			cls: 'crc-text-muted',
-			text: 'Create source notes with type: source in frontmatter to document your evidence.'
+			text: 'Create source notes with cr_type: source in frontmatter to document your evidence.'
 		});
 	} else {
 		// Render as table

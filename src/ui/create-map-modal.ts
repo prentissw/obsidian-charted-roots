@@ -582,7 +582,7 @@ export class CreateMapModal extends Modal {
 	 */
 	private generateFrontmatter(): string {
 		const lines: string[] = [
-			'type: map',
+			'cr_type: map',
 			`map_id: ${this.mapData.mapId}`,
 			`name: ${this.mapData.name}`,
 			`universe: ${this.mapData.universe}`,

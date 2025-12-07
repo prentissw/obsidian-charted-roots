@@ -223,7 +223,7 @@ export class SourceService {
 		// Build frontmatter
 		const frontmatterLines: string[] = [
 			'---',
-			'type: source',
+			'cr_type: source',
 			`cr_id: ${crId}`,
 			`title: "${data.title.replace(/"/g, '\\"')}"`,
 			`source_type: ${data.sourceType}`
@@ -409,7 +409,7 @@ export class SourceService {
 	 * Parse a file into a SourceNote object
 	 */
 	parseSourceNote(file: TFile, frontmatter: Record<string, unknown>): SourceNote | null {
-		// Must have type: source (uses flexible detection)
+		// Must have cr_type: source (uses flexible detection, also supports type: source)
 		const cache = this.app.metadataCache.getFileCache(file);
 		if (!isSourceNote(frontmatter, cache, this.settings.noteTypeDetection)) {
 			return null;

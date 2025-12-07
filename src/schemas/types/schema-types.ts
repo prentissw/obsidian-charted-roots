@@ -1,7 +1,7 @@
 /**
  * Schema validation types for Canvas Roots
  *
- * Schemas are stored as markdown notes with `type: schema` frontmatter.
+ * Schemas are stored as markdown notes with `cr_type: schema` frontmatter.
  * The schema definition is stored in a JSON code block in the note body.
  */
 

@@ -677,7 +677,7 @@ export class GedcomImporterV2 {
 	): string[] {
 		const lines: string[] = [
 			'---',
-			'type: event',
+			'cr_type: event',
 			`cr_id: ${crId}`,
 			`title: "${data.title.replace(/"/g, '\\"')}"`,
 			`event_type: ${data.eventType}`,
@@ -739,7 +739,7 @@ export class GedcomImporterV2 {
 		// Build frontmatter
 		const frontmatterLines: string[] = [
 			'---',
-			'type: source',
+			'cr_type: source',
 			`cr_id: ${crId}`,
 			`title: "${(source.title || `Source ${source.id}`).replace(/"/g, '\\"')}"`,
 			`source_type: ${sourceType}`
@@ -1212,7 +1212,7 @@ export class GedcomImporterV2 {
 		// Build frontmatter
 		const frontmatterLines: string[] = [
 			'---',
-			'type: place',
+			'cr_type: place',
 			`cr_id: ${crId}`,
 			`title: "${name.replace(/"/g, '\\"')}"`,
 			`place_type: ${placeType}`
