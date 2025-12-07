@@ -152,6 +152,7 @@ See [Organization Notes](Organization-Notes) for complete documentation.
 
 ## Next Steps
 
+- [Templater Integration](Templater-Integration) - Use templates for consistent note creation
 - [Bases Integration](Bases-Integration) - Spreadsheet-like bulk editing
 - [Frontmatter Reference](Frontmatter-Reference) - Complete property documentation
 - [Import & Export](Import-Export) - Import from GEDCOM or CSV

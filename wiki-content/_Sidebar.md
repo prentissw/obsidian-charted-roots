@@ -5,6 +5,7 @@
 ### Getting Started
 - [Installation & Setup](Getting-Started)
 - [Data Entry](Data-Entry)
+- [Templater Integration](Templater-Integration)
 - [Bases Integration](Bases-Integration)
 
 ### Tree Features

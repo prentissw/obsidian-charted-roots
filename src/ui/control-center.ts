@@ -1436,6 +1436,7 @@ export class ControlCenterModal extends Modal {
 				links: [
 					{ text: 'Getting started', wiki: 'Getting-Started' },
 					{ text: 'Data entry', wiki: 'Data-Entry' },
+					{ text: 'Templater integration', wiki: 'Templater-Integration' },
 					{ text: 'Context menus', wiki: 'Context-Menus' }
 				]
 			},
@@ -1486,20 +1487,27 @@ export class ControlCenterModal extends Modal {
 			});
 		});
 
-		// Templater button
+		// Templater section
 		const templaterSection = learnContent.createDiv();
-		templaterSection.createEl('h4', { text: 'Templates', cls: 'crc-mb-2' });
+		templaterSection.createEl('h4', { text: 'Templater integration', cls: 'crc-mb-2' });
 		templaterSection.createEl('p', {
-			text: 'Ready-to-use Templater snippets for person and place notes.',
+			text: 'Use the Templater plugin to create notes with consistent formatting and unique cr_id values.',
 			cls: 'crc-text-muted crc-mb-2'
 		});
-		const templaterBtn = templaterSection.createEl('button', {
-			text: 'View Templater snippets',
+		const templaterBtnRow = templaterSection.createDiv({ cls: 'crc-btn-row' });
+		const templaterBtn = templaterBtnRow.createEl('button', {
+			text: 'View snippets',
 			cls: 'crc-btn crc-btn--secondary'
 		});
 		templaterBtn.addEventListener('click', () => {
 			new TemplateSnippetsModal(this.app).open();
 		});
+		const templaterDocsLink = templaterBtnRow.createEl('a', {
+			text: 'Full guide →',
+			href: `${WIKI_BASE}/Templater-Integration`,
+			cls: 'crc-link'
+		});
+		templaterDocsLink.setAttr('target', '_blank');
 
 		container.appendChild(learnCard);
 	}

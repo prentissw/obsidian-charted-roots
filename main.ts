@@ -950,6 +950,16 @@ export default class CanvasRootsPlugin extends Plugin {
 											await this.addEssentialMapProperties([file]);
 										});
 								});
+
+								// Add cr_id only
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId([file]);
+										});
+								});
 							});
 						} else {
 							// Mobile: flat menu for map notes
@@ -968,6 +978,15 @@ export default class CanvasRootsPlugin extends Plugin {
 									.setIcon('globe')
 									.onClick(async () => {
 										await this.addEssentialMapProperties([file]);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add cr_id')
+									.setIcon('key')
+									.onClick(async () => {
+										await this.addCrId([file]);
 									});
 							});
 						}
@@ -1049,6 +1068,16 @@ export default class CanvasRootsPlugin extends Plugin {
 											});
 									});
 								});
+
+								// Add cr_id only
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId([file]);
+										});
+								});
 							});
 						} else {
 							// Mobile: flat menu for place notes
@@ -1103,6 +1132,15 @@ export default class CanvasRootsPlugin extends Plugin {
 									.setIcon('archive')
 									.onClick(async () => {
 										await this.addEssentialSourceProperties([file]);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add cr_id')
+									.setIcon('key')
+									.onClick(async () => {
+										await this.addCrId([file]);
 									});
 							});
 						}
@@ -1185,6 +1223,16 @@ export default class CanvasRootsPlugin extends Plugin {
 											});
 									});
 								});
+
+								// Add cr_id only
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId([file]);
+										});
+								});
 							});
 						} else {
 							// Mobile: flat menu for source notes
@@ -1240,6 +1288,15 @@ export default class CanvasRootsPlugin extends Plugin {
 									.setIcon('archive')
 									.onClick(async () => {
 										await this.addEssentialSourceProperties([file]);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add cr_id')
+									.setIcon('key')
+									.onClick(async () => {
+										await this.addCrId([file]);
 									});
 							});
 						}
@@ -1698,6 +1755,16 @@ export default class CanvasRootsPlugin extends Plugin {
 											});
 									});
 								});
+
+								// Add cr_id only
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId([file]);
+										});
+								});
 							});
 						} else {
 							// Mobile: flat menu with prefix
@@ -2011,6 +2078,15 @@ export default class CanvasRootsPlugin extends Plugin {
 										await this.addEssentialSourceProperties([file]);
 									});
 							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add cr_id')
+									.setIcon('key')
+									.onClick(async () => {
+										await this.addCrId([file]);
+									});
+							});
 						}
 					}
 					// Event notes with cr_id get event-specific options
@@ -2053,6 +2129,16 @@ export default class CanvasRootsPlugin extends Plugin {
 										.setIcon('file-plus')
 										.onClick(async () => {
 											await this.addEssentialEventProperties([file]);
+										});
+								});
+
+								// Add cr_id only
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId([file]);
 										});
 								});
 
@@ -2099,6 +2185,15 @@ export default class CanvasRootsPlugin extends Plugin {
 									.setIcon('file-plus')
 									.onClick(async () => {
 										await this.addEssentialEventProperties([file]);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add cr_id')
+									.setIcon('key')
+									.onClick(async () => {
+										await this.addCrId([file]);
 									});
 							});
 
@@ -2171,6 +2266,16 @@ export default class CanvasRootsPlugin extends Plugin {
 											});
 									});
 								});
+
+								// Add cr_id only
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId([file]);
+										});
+								});
 							});
 						} else {
 							// Mobile: flat menu
@@ -2207,6 +2312,15 @@ export default class CanvasRootsPlugin extends Plugin {
 									.setIcon('calendar')
 									.onClick(async () => {
 										await this.addEssentialEventProperties([file]);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add cr_id')
+									.setIcon('key')
+									.onClick(async () => {
+										await this.addCrId([file]);
 									});
 							});
 						}
@@ -2332,6 +2446,18 @@ export default class CanvasRootsPlugin extends Plugin {
 											await this.addEssentialSourceProperties(files);
 										});
 								});
+							});
+
+							// Add cr_id only
+							submenu.addItem((subItem) => {
+								subItem
+									.setTitle('Add cr_id')
+									.setIcon('key')
+									.onClick(async () => {
+										const files = this.app.vault.getMarkdownFiles()
+											.filter(f => f.path.startsWith(file.path + '/'));
+										await this.addCrId(files);
+									});
 							});
 
 							submenu.addSeparator();
@@ -2522,6 +2648,17 @@ export default class CanvasRootsPlugin extends Plugin {
 								});
 						});
 
+						menu.addItem((item) => {
+							item
+								.setTitle('Canvas Roots: Add cr_id')
+								.setIcon('key')
+								.onClick(async () => {
+									const files = this.app.vault.getMarkdownFiles()
+										.filter(f => f.path.startsWith(file.path + '/'));
+									await this.addCrId(files);
+								});
+						});
+
 						// Bases templates (mobile)
 						menu.addItem((item) => {
 							item
@@ -2699,6 +2836,16 @@ export default class CanvasRootsPlugin extends Plugin {
 										});
 									});
 								}
+
+							// Add cr_id option
+							propsSubmenu.addItem((subItem) => {
+								subItem
+									.setTitle('Add cr_id')
+									.setIcon('key')
+									.onClick(async () => {
+										await this.addCrId(markdownFiles);
+									});
+							});
 						});
 					} else {
 						// Mobile: flat menu
@@ -2734,6 +2881,16 @@ export default class CanvasRootsPlugin extends Plugin {
 								});
 							});
 						}
+
+						// Add cr_id option (mobile)
+						menu.addItem((item) => {
+							item
+								.setTitle(`Canvas Roots: Add cr_id (${markdownFiles.length} files)`)
+								.setIcon('key')
+								.onClick(async () => {
+									await this.addCrId(markdownFiles);
+								});
+						});
 					}
 					}
 			})
@@ -4322,106 +4479,69 @@ export default class CanvasRootsPlugin extends Plugin {
 
 			for (const file of files) {
 				try {
-					// Read current file content
-					const content = await this.app.vault.read(file);
-					const cache = this.app.metadataCache.getFileCache(file);
+					let propertiesAdded = false;
 
-					// Check if file already has frontmatter
-					const hasFrontmatter = content.startsWith('---');
-					const existingFrontmatter = cache?.frontmatter || {};
-
-					// Define essential properties
-					const essentialProperties: Record<string, unknown> = {};
-
-					// cr_id: Generate if missing
-					if (!existingFrontmatter.cr_id) {
-						essentialProperties.cr_id = generateCrId();
-					}
-
-					// name: Use filename if missing
-					if (!existingFrontmatter.name) {
-						essentialProperties.name = file.basename;
-					}
-
-					// born: Add as empty if missing
-					if (!existingFrontmatter.born) {
-						essentialProperties.born = '';
-					}
-
-					// died: Add as empty if missing
-					if (!existingFrontmatter.died) {
-						essentialProperties.died = '';
-					}
-
-					// father: Add as empty if missing
-					if (!existingFrontmatter.father) {
-						essentialProperties.father = '';
-					}
-
-					// mother: Add as empty if missing
-					if (!existingFrontmatter.mother) {
-						essentialProperties.mother = '';
-					}
-
-					// spouses: Add as empty array if missing
-					if (!existingFrontmatter.spouses) {
-						essentialProperties.spouses = [];
-					}
-
-					// children: Add as empty array if missing
-					if (!existingFrontmatter.children) {
-						essentialProperties.children = [];
-					}
-
-					// group_name: Add as empty if missing
-					if (!existingFrontmatter.group_name) {
-						essentialProperties.group_name = '';
-					}
-
-					// Skip if no properties to add
-					if (Object.keys(essentialProperties).length === 0) {
-						skippedCount++;
-						continue;
-					}
-
-					// Build new frontmatter
-					const newFrontmatter = { ...existingFrontmatter, ...essentialProperties };
-
-					// Convert frontmatter to YAML string
-					const yamlLines = ['---'];
-					for (const [key, value] of Object.entries(newFrontmatter)) {
-						if (Array.isArray(value)) {
-							if (value.length === 0) {
-								yamlLines.push(`${key}: []`);
-							} else {
-								yamlLines.push(`${key}:`);
-								value.forEach(item => yamlLines.push(`  - ${item}`));
-							}
-						} else if (value === '') {
-							yamlLines.push(`${key}: ""`);
-						} else {
-							yamlLines.push(`${key}: ${value}`);
+					await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+						// cr_id: Generate if missing
+						if (!frontmatter.cr_id) {
+							frontmatter.cr_id = generateCrId();
+							propertiesAdded = true;
 						}
-					}
-					yamlLines.push('---');
 
-					// Get body content (everything after frontmatter)
-					let bodyContent = '';
-					if (hasFrontmatter) {
-						const endOfFrontmatter = content.indexOf('---', 3);
-						if (endOfFrontmatter !== -1) {
-							bodyContent = content.substring(endOfFrontmatter + 3).trim();
+						// name: Use filename if missing
+						if (!frontmatter.name) {
+							frontmatter.name = file.basename;
+							propertiesAdded = true;
 						}
+
+						// born: Add as empty if missing
+						if (!frontmatter.born) {
+							frontmatter.born = '';
+							propertiesAdded = true;
+						}
+
+						// died: Add as empty if missing
+						if (!frontmatter.died) {
+							frontmatter.died = '';
+							propertiesAdded = true;
+						}
+
+						// father: Add as empty if missing
+						if (!frontmatter.father) {
+							frontmatter.father = '';
+							propertiesAdded = true;
+						}
+
+						// mother: Add as empty if missing
+						if (!frontmatter.mother) {
+							frontmatter.mother = '';
+							propertiesAdded = true;
+						}
+
+						// spouses: Add as empty array if missing
+						if (!frontmatter.spouses) {
+							frontmatter.spouses = [];
+							propertiesAdded = true;
+						}
+
+						// children: Add as empty array if missing
+						if (!frontmatter.children) {
+							frontmatter.children = [];
+							propertiesAdded = true;
+						}
+
+						// group_name: Add as empty if missing
+						if (!frontmatter.group_name) {
+							frontmatter.group_name = '';
+							propertiesAdded = true;
+						}
+					});
+
+					if (propertiesAdded) {
+						processedCount++;
 					} else {
-						bodyContent = content.trim();
+						skippedCount++;
 					}
-
-					// Construct new file content
-					const newContent = yamlLines.join('\n') + '\n\n' + bodyContent;
-
-					// Write back to file
-					await this.app.vault.modify(file, newContent);
-					processedCount++;
 
 				} catch (error: unknown) {
 					console.error(`Error processing ${file.path}:`, error);
@@ -4464,122 +4584,45 @@ export default class CanvasRootsPlugin extends Plugin {
 
 			for (const file of files) {
 				try {
-					// Read current file content
-					const content = await this.app.vault.read(file);
-					const cache = this.app.metadataCache.getFileCache(file);
+					let propertiesAdded = false;
 
-					// Check if file already has frontmatter
-					const hasFrontmatter = content.startsWith('---');
-					const existingFrontmatter = cache?.frontmatter || {};
-
-					// Define essential place properties
-					const essentialProperties: Record<string, unknown> = {};
-
-					// type: Must be "place"
-					if (existingFrontmatter.type !== 'place') {
-						essentialProperties.type = 'place';
-					}
-
-					// cr_id: Generate if missing
-					if (!existingFrontmatter.cr_id) {
-						essentialProperties.cr_id = `place_${generateCrId()}`;
-					}
-
-					// name: Use filename if missing
-					if (!existingFrontmatter.name) {
-						essentialProperties.name = file.basename;
-					}
-
-					// place_type: Add as empty if missing
-					if (!existingFrontmatter.place_type) {
-						essentialProperties.place_type = '';
-					}
-
-					// place_category: Default to 'real' if missing
-					if (!existingFrontmatter.place_category) {
-						essentialProperties.place_category = 'real';
-					}
-
-					// Skip if no properties to add
-					if (Object.keys(essentialProperties).length === 0) {
-						skippedCount++;
-						continue;
-					}
-
-					// Build new frontmatter (place type first for clarity)
-					const orderedFrontmatter: Record<string, unknown> = {};
-
-					// Place type identifier first
-					if (essentialProperties.type || existingFrontmatter.type) {
-						orderedFrontmatter.type = essentialProperties.type || existingFrontmatter.type;
-					}
-
-					// Then cr_id
-					if (essentialProperties.cr_id || existingFrontmatter.cr_id) {
-						orderedFrontmatter.cr_id = essentialProperties.cr_id || existingFrontmatter.cr_id;
-					}
-
-					// Then name
-					if (essentialProperties.name || existingFrontmatter.name) {
-						orderedFrontmatter.name = essentialProperties.name || existingFrontmatter.name;
-					}
-
-					// Then classification properties
-					if (essentialProperties.place_type !== undefined || existingFrontmatter.place_type !== undefined) {
-						orderedFrontmatter.place_type = essentialProperties.place_type ?? existingFrontmatter.place_type;
-					}
-					if (essentialProperties.place_category || existingFrontmatter.place_category) {
-						orderedFrontmatter.place_category = essentialProperties.place_category || existingFrontmatter.place_category;
-					}
-
-					// Then remaining existing properties
-					for (const [key, value] of Object.entries(existingFrontmatter)) {
-						if (!(key in orderedFrontmatter)) {
-							orderedFrontmatter[key] = value;
+					await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+						// type: Must be "place"
+						if (frontmatter.type !== 'place') {
+							frontmatter.type = 'place';
+							propertiesAdded = true;
 						}
-					}
 
-					// Convert frontmatter to YAML string
-					const yamlLines = ['---'];
-					for (const [key, value] of Object.entries(orderedFrontmatter)) {
-						if (Array.isArray(value)) {
-							if (value.length === 0) {
-								yamlLines.push(`${key}: []`);
-							} else {
-								yamlLines.push(`${key}:`);
-								value.forEach(item => yamlLines.push(`  - ${String(item)}`));
-							}
-						} else if (typeof value === 'object' && value !== null) {
-							// Handle nested objects like coordinates
-							yamlLines.push(`${key}:`);
-							for (const [subKey, subValue] of Object.entries(value)) {
-								yamlLines.push(`  ${subKey}: ${String(subValue)}`);
-							}
-						} else if (value === '') {
-							yamlLines.push(`${key}: ""`);
-						} else {
-							yamlLines.push(`${key}: ${String(value)}`);
+						// cr_id: Generate if missing
+						if (!frontmatter.cr_id) {
+							frontmatter.cr_id = `place_${generateCrId()}`;
+							propertiesAdded = true;
 						}
-					}
-					yamlLines.push('---');
 
-					// Get body content (everything after frontmatter)
-					let bodyContent = '';
-					if (hasFrontmatter) {
-						const endOfFrontmatter = content.indexOf('---', 3);
-						if (endOfFrontmatter !== -1) {
-							bodyContent = content.substring(endOfFrontmatter + 3).trim();
+						// name: Use filename if missing
+						if (!frontmatter.name) {
+							frontmatter.name = file.basename;
+							propertiesAdded = true;
 						}
+
+						// place_type: Add as empty if missing
+						if (!frontmatter.place_type) {
+							frontmatter.place_type = '';
+							propertiesAdded = true;
+						}
+
+						// place_category: Default to 'real' if missing
+						if (!frontmatter.place_category) {
+							frontmatter.place_category = 'real';
+							propertiesAdded = true;
+						}
+					});
+
+					if (propertiesAdded) {
+						processedCount++;
 					} else {
-						bodyContent = content.trim();
+						skippedCount++;
 					}
-
-					// Construct new file content
-					const newContent = yamlLines.join('\n') + '\n\n' + bodyContent;
-
-					// Write back to file
-					await this.app.vault.modify(file, newContent);
-					processedCount++;
 
 				} catch (error: unknown) {
 					console.error(`Error processing ${file.path}:`, error);
@@ -4618,139 +4661,56 @@ export default class CanvasRootsPlugin extends Plugin {
 
 			for (const file of files) {
 				try {
-					// Read current file content
-					const content = await this.app.vault.read(file);
-					const cache = this.app.metadataCache.getFileCache(file);
+					let propertiesAdded = false;
 
-					// Check if file already has frontmatter
-					const hasFrontmatter = content.startsWith('---');
-					const existingFrontmatter = cache?.frontmatter || {};
-
-					// Define essential map properties
-					const essentialProperties: Record<string, unknown> = {};
-
-					// type: Must be "map"
-					if (existingFrontmatter.type !== 'map') {
-						essentialProperties.type = 'map';
-					}
-
-					// map_id: Generate from filename if missing
-					if (!existingFrontmatter.map_id) {
-						essentialProperties.map_id = file.basename.toLowerCase().replace(/\s+/g, '-');
-					}
-
-					// name: Use filename if missing
-					if (!existingFrontmatter.name) {
-						essentialProperties.name = file.basename;
-					}
-
-					// universe: Add empty if missing
-					if (!existingFrontmatter.universe) {
-						essentialProperties.universe = '';
-					}
-
-					// image: Add empty if missing
-					if (!existingFrontmatter.image) {
-						essentialProperties.image = '';
-					}
-
-					// bounds: Add default structure if missing
-					if (!existingFrontmatter.bounds) {
-						essentialProperties.bounds = {
-							north: 100,
-							south: -100,
-							east: 100,
-							west: -100
-						};
-					}
-
-					// Skip if no properties to add
-					if (Object.keys(essentialProperties).length === 0) {
-						skippedCount++;
-						continue;
-					}
-
-					// Build new frontmatter (map type first for clarity)
-					const orderedFrontmatter: Record<string, unknown> = {};
-
-					// Map type identifier first
-					if (essentialProperties.type || existingFrontmatter.type) {
-						orderedFrontmatter.type = essentialProperties.type || existingFrontmatter.type;
-					}
-
-					// Then map_id
-					if (essentialProperties.map_id || existingFrontmatter.map_id) {
-						orderedFrontmatter.map_id = essentialProperties.map_id || existingFrontmatter.map_id;
-					}
-
-					// Then name
-					if (essentialProperties.name || existingFrontmatter.name) {
-						orderedFrontmatter.name = essentialProperties.name || existingFrontmatter.name;
-					}
-
-					// Then universe
-					if (essentialProperties.universe !== undefined || existingFrontmatter.universe !== undefined) {
-						orderedFrontmatter.universe = essentialProperties.universe ?? existingFrontmatter.universe;
-					}
-
-					// Then image
-					if (essentialProperties.image !== undefined || existingFrontmatter.image !== undefined) {
-						orderedFrontmatter.image = essentialProperties.image ?? existingFrontmatter.image;
-					}
-
-					// Then bounds
-					if (essentialProperties.bounds || existingFrontmatter.bounds) {
-						orderedFrontmatter.bounds = essentialProperties.bounds || existingFrontmatter.bounds;
-					}
-
-					// Then remaining existing properties
-					for (const [key, value] of Object.entries(existingFrontmatter)) {
-						if (!(key in orderedFrontmatter)) {
-							orderedFrontmatter[key] = value;
+					await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+						// type: Must be "map"
+						if (frontmatter.type !== 'map') {
+							frontmatter.type = 'map';
+							propertiesAdded = true;
 						}
-					}
 
-					// Convert frontmatter to YAML string
-					const yamlLines = ['---'];
-					for (const [key, value] of Object.entries(orderedFrontmatter)) {
-						if (Array.isArray(value)) {
-							if (value.length === 0) {
-								yamlLines.push(`${key}: []`);
-							} else {
-								yamlLines.push(`${key}:`);
-								value.forEach(item => yamlLines.push(`  - ${String(item)}`));
-							}
-						} else if (typeof value === 'object' && value !== null) {
-							// Handle nested objects like bounds
-							yamlLines.push(`${key}:`);
-							for (const [subKey, subValue] of Object.entries(value)) {
-								yamlLines.push(`  ${subKey}: ${String(subValue)}`);
-							}
-						} else if (value === '') {
-							yamlLines.push(`${key}: ""`);
-						} else {
-							yamlLines.push(`${key}: ${String(value)}`);
+						// map_id: Generate from filename if missing
+						if (!frontmatter.map_id) {
+							frontmatter.map_id = file.basename.toLowerCase().replace(/\s+/g, '-');
+							propertiesAdded = true;
 						}
-					}
-					yamlLines.push('---');
 
-					// Get body content (everything after frontmatter)
-					let bodyContent = '';
-					if (hasFrontmatter) {
-						const endOfFrontmatter = content.indexOf('---', 3);
-						if (endOfFrontmatter !== -1) {
-							bodyContent = content.substring(endOfFrontmatter + 3).trim();
+						// name: Use filename if missing
+						if (!frontmatter.name) {
+							frontmatter.name = file.basename;
+							propertiesAdded = true;
 						}
+
+						// universe: Add empty if missing
+						if (!frontmatter.universe) {
+							frontmatter.universe = '';
+							propertiesAdded = true;
+						}
+
+						// image: Add empty if missing
+						if (!frontmatter.image) {
+							frontmatter.image = '';
+							propertiesAdded = true;
+						}
+
+						// bounds: Add default structure if missing
+						if (!frontmatter.bounds) {
+							frontmatter.bounds = {
+								north: 100,
+								south: -100,
+								east: 100,
+								west: -100
+							};
+							propertiesAdded = true;
+						}
+					});
+
+					if (propertiesAdded) {
+						processedCount++;
 					} else {
-						bodyContent = content.trim();
+						skippedCount++;
 					}
-
-					// Construct new file content
-					const newContent = yamlLines.join('\n') + '\n\n' + bodyContent;
-
-					// Write back to file
-					await this.app.vault.modify(file, newContent);
-					processedCount++;
 
 				} catch (error: unknown) {
 					console.error(`Error processing ${file.path}:`, error);
@@ -4793,146 +4753,57 @@ export default class CanvasRootsPlugin extends Plugin {
 
 			for (const file of files) {
 				try {
-					// Read current file content
-					const content = await this.app.vault.read(file);
-					const cache = this.app.metadataCache.getFileCache(file);
+					let propertiesAdded = false;
 
-					// Check if file already has frontmatter
-					const hasFrontmatter = content.startsWith('---');
-					const existingFrontmatter = cache?.frontmatter || {};
-
-					// Define essential source properties
-					const essentialProperties: Record<string, unknown> = {};
-
-					// type: Must be "source"
-					if (existingFrontmatter.type !== 'source') {
-						essentialProperties.type = 'source';
-					}
-
-					// cr_id: Generate if missing
-					if (!existingFrontmatter.cr_id) {
-						essentialProperties.cr_id = generateCrId();
-					}
-
-					// title: Use filename if missing
-					if (!existingFrontmatter.title) {
-						essentialProperties.title = file.basename;
-					}
-
-					// source_type: Default to 'other' if missing
-					if (!existingFrontmatter.source_type) {
-						essentialProperties.source_type = 'other';
-					}
-
-					// confidence: Default to 'unknown' if missing
-					if (!existingFrontmatter.confidence) {
-						essentialProperties.confidence = 'unknown';
-					}
-
-					// source_repository: Add empty if missing (check both new and legacy names)
-					if (!existingFrontmatter.source_repository && !existingFrontmatter.repository) {
-						essentialProperties.source_repository = '';
-					}
-
-					// source_date: Add empty if missing (check both new and legacy names)
-					if (!existingFrontmatter.source_date && !existingFrontmatter.date) {
-						essentialProperties.source_date = '';
-					}
-
-					// Skip if no properties to add
-					if (Object.keys(essentialProperties).length === 0) {
-						skippedCount++;
-						continue;
-					}
-
-					// Build new frontmatter with proper ordering
-					const orderedFrontmatter: Record<string, unknown> = {};
-
-					// type first
-					if (essentialProperties.type || existingFrontmatter.type) {
-						orderedFrontmatter.type = essentialProperties.type || existingFrontmatter.type;
-					}
-
-					// Then cr_id
-					if (essentialProperties.cr_id || existingFrontmatter.cr_id) {
-						orderedFrontmatter.cr_id = essentialProperties.cr_id || existingFrontmatter.cr_id;
-					}
-
-					// Then title
-					if (essentialProperties.title || existingFrontmatter.title) {
-						orderedFrontmatter.title = essentialProperties.title || existingFrontmatter.title;
-					}
-
-					// Then source_type
-					if (essentialProperties.source_type || existingFrontmatter.source_type) {
-						orderedFrontmatter.source_type = essentialProperties.source_type || existingFrontmatter.source_type;
-					}
-
-					// Then confidence
-					if (essentialProperties.confidence || existingFrontmatter.confidence) {
-						orderedFrontmatter.confidence = essentialProperties.confidence || existingFrontmatter.confidence;
-					}
-
-					// Then source_repository
-					if (essentialProperties.source_repository !== undefined || existingFrontmatter.source_repository !== undefined) {
-						orderedFrontmatter.source_repository = essentialProperties.source_repository ?? existingFrontmatter.source_repository;
-					}
-
-					// Then source_date
-					if (essentialProperties.source_date !== undefined || existingFrontmatter.source_date !== undefined) {
-						orderedFrontmatter.source_date = essentialProperties.source_date ?? existingFrontmatter.source_date;
-					}
-
-					// Then remaining existing properties
-					for (const [key, value] of Object.entries(existingFrontmatter)) {
-						if (!(key in orderedFrontmatter)) {
-							orderedFrontmatter[key] = value;
+					await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+						// type: Must be "source"
+						if (frontmatter.type !== 'source') {
+							frontmatter.type = 'source';
+							propertiesAdded = true;
 						}
-					}
 
-					// Convert frontmatter to YAML string
-					const yamlLines = ['---'];
-					for (const [key, value] of Object.entries(orderedFrontmatter)) {
-						if (Array.isArray(value)) {
-							if (value.length === 0) {
-								yamlLines.push(`${key}: []`);
-							} else {
-								yamlLines.push(`${key}:`);
-								value.forEach(item => yamlLines.push(`  - ${String(item)}`));
-							}
-						} else if (typeof value === 'object' && value !== null) {
-							// Handle nested objects
-							yamlLines.push(`${key}:`);
-							for (const [subKey, subValue] of Object.entries(value)) {
-								yamlLines.push(`  ${subKey}: ${String(subValue)}`);
-							}
-						} else if (value === '') {
-							yamlLines.push(`${key}: ""`);
-						} else if (typeof value === 'string' && (value.includes(':') || value.includes('"'))) {
-							yamlLines.push(`${key}: "${value.replace(/"/g, '\\"')}"`);
-						} else {
-							yamlLines.push(`${key}: ${String(value)}`);
+						// cr_id: Generate if missing
+						if (!frontmatter.cr_id) {
+							frontmatter.cr_id = generateCrId();
+							propertiesAdded = true;
 						}
-					}
-					yamlLines.push('---');
 
-					// Get body content (everything after frontmatter)
-					let bodyContent = '';
-					if (hasFrontmatter) {
-						const endOfFrontmatter = content.indexOf('---', 3);
-						if (endOfFrontmatter !== -1) {
-							bodyContent = content.substring(endOfFrontmatter + 3).trim();
+						// title: Use filename if missing
+						if (!frontmatter.title) {
+							frontmatter.title = file.basename;
+							propertiesAdded = true;
 						}
+
+						// source_type: Default to 'other' if missing
+						if (!frontmatter.source_type) {
+							frontmatter.source_type = 'other';
+							propertiesAdded = true;
+						}
+
+						// confidence: Default to 'unknown' if missing
+						if (!frontmatter.confidence) {
+							frontmatter.confidence = 'unknown';
+							propertiesAdded = true;
+						}
+
+						// source_repository: Add empty if missing (check both new and legacy names)
+						if (!frontmatter.source_repository && !frontmatter.repository) {
+							frontmatter.source_repository = '';
+							propertiesAdded = true;
+						}
+
+						// source_date: Add empty if missing (check both new and legacy names)
+						if (!frontmatter.source_date && !frontmatter.date) {
+							frontmatter.source_date = '';
+							propertiesAdded = true;
+						}
+					});
+
+					if (propertiesAdded) {
+						processedCount++;
 					} else {
-						bodyContent = content.trim();
+						skippedCount++;
 					}
-
-					// Construct new file content
-					const newContent = yamlLines.join('\n') + '\n\n' + bodyContent;
-
-					// Write back to file
-					await this.app.vault.modify(file, newContent);
-					processedCount++;
 
 				} catch (error: unknown) {
 					console.error(`Error processing ${file.path}:`, error);
@@ -4975,166 +4846,69 @@ export default class CanvasRootsPlugin extends Plugin {
 
 			for (const file of files) {
 				try {
-					// Read current file content
-					const content = await this.app.vault.read(file);
-					const cache = this.app.metadataCache.getFileCache(file);
+					let propertiesAdded = false;
 
-					// Check if file already has frontmatter
-					const hasFrontmatter = content.startsWith('---');
-					const existingFrontmatter = cache?.frontmatter || {};
-
-					// Define essential event properties
-					const essentialProperties: Record<string, unknown> = {};
-
-					// type: Must be "event"
-					if (existingFrontmatter.type !== 'event') {
-						essentialProperties.type = 'event';
-					}
-
-					// cr_id: Generate if missing
-					if (!existingFrontmatter.cr_id) {
-						essentialProperties.cr_id = `event_${generateCrId()}`;
-					}
-
-					// title: Use filename if missing
-					if (!existingFrontmatter.title) {
-						essentialProperties.title = file.basename;
-					}
-
-					// event_type: Default to 'custom' if missing
-					if (!existingFrontmatter.event_type) {
-						essentialProperties.event_type = 'custom';
-					}
-
-					// date: Add empty if missing
-					if (!existingFrontmatter.date) {
-						essentialProperties.date = '';
-					}
-
-					// date_precision: Default to 'unknown' if missing
-					if (!existingFrontmatter.date_precision) {
-						essentialProperties.date_precision = 'unknown';
-					}
-
-					// person: Add empty if missing
-					if (!existingFrontmatter.person) {
-						essentialProperties.person = '';
-					}
-
-					// place: Add empty if missing
-					if (!existingFrontmatter.place) {
-						essentialProperties.place = '';
-					}
-
-					// confidence: Default to 'unknown' if missing
-					if (!existingFrontmatter.confidence) {
-						essentialProperties.confidence = 'unknown';
-					}
-
-					// Skip if no properties to add
-					if (Object.keys(essentialProperties).length === 0) {
-						skippedCount++;
-						continue;
-					}
-
-					// Build new frontmatter with proper ordering
-					const orderedFrontmatter: Record<string, unknown> = {};
-
-					// type first
-					if (essentialProperties.type || existingFrontmatter.type) {
-						orderedFrontmatter.type = essentialProperties.type || existingFrontmatter.type;
-					}
-
-					// Then cr_id
-					if (essentialProperties.cr_id || existingFrontmatter.cr_id) {
-						orderedFrontmatter.cr_id = essentialProperties.cr_id || existingFrontmatter.cr_id;
-					}
-
-					// Then title
-					if (essentialProperties.title || existingFrontmatter.title) {
-						orderedFrontmatter.title = essentialProperties.title || existingFrontmatter.title;
-					}
-
-					// Then event_type
-					if (essentialProperties.event_type || existingFrontmatter.event_type) {
-						orderedFrontmatter.event_type = essentialProperties.event_type || existingFrontmatter.event_type;
-					}
-
-					// Then date
-					if (essentialProperties.date !== undefined || existingFrontmatter.date !== undefined) {
-						orderedFrontmatter.date = essentialProperties.date ?? existingFrontmatter.date;
-					}
-
-					// Then date_precision
-					if (essentialProperties.date_precision || existingFrontmatter.date_precision) {
-						orderedFrontmatter.date_precision = essentialProperties.date_precision || existingFrontmatter.date_precision;
-					}
-
-					// Then person
-					if (essentialProperties.person !== undefined || existingFrontmatter.person !== undefined) {
-						orderedFrontmatter.person = essentialProperties.person ?? existingFrontmatter.person;
-					}
-
-					// Then place
-					if (essentialProperties.place !== undefined || existingFrontmatter.place !== undefined) {
-						orderedFrontmatter.place = essentialProperties.place ?? existingFrontmatter.place;
-					}
-
-					// Then confidence
-					if (essentialProperties.confidence || existingFrontmatter.confidence) {
-						orderedFrontmatter.confidence = essentialProperties.confidence || existingFrontmatter.confidence;
-					}
-
-					// Then remaining existing properties
-					for (const [key, value] of Object.entries(existingFrontmatter)) {
-						if (!(key in orderedFrontmatter)) {
-							orderedFrontmatter[key] = value;
+					await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+						// type: Must be "event"
+						if (frontmatter.type !== 'event') {
+							frontmatter.type = 'event';
+							propertiesAdded = true;
 						}
-					}
 
-					// Convert frontmatter to YAML string
-					const yamlLines = ['---'];
-					for (const [key, value] of Object.entries(orderedFrontmatter)) {
-						if (Array.isArray(value)) {
-							if (value.length === 0) {
-								yamlLines.push(`${key}: []`);
-							} else {
-								yamlLines.push(`${key}:`);
-								value.forEach(item => yamlLines.push(`  - ${String(item)}`));
-							}
-						} else if (typeof value === 'object' && value !== null) {
-							// Handle nested objects
-							yamlLines.push(`${key}:`);
-							for (const [subKey, subValue] of Object.entries(value)) {
-								yamlLines.push(`  ${subKey}: ${String(subValue)}`);
-							}
-						} else if (value === '') {
-							yamlLines.push(`${key}: ""`);
-						} else if (typeof value === 'string' && (value.includes(':') || value.includes('"'))) {
-							yamlLines.push(`${key}: "${value.replace(/"/g, '\\"')}"`);
-						} else {
-							yamlLines.push(`${key}: ${String(value)}`);
+						// cr_id: Generate if missing
+						if (!frontmatter.cr_id) {
+							frontmatter.cr_id = `event_${generateCrId()}`;
+							propertiesAdded = true;
 						}
-					}
-					yamlLines.push('---');
 
-					// Get body content (everything after frontmatter)
-					let bodyContent = '';
-					if (hasFrontmatter) {
-						const endOfFrontmatter = content.indexOf('---', 3);
-						if (endOfFrontmatter !== -1) {
-							bodyContent = content.substring(endOfFrontmatter + 3).trim();
+						// title: Use filename if missing
+						if (!frontmatter.title) {
+							frontmatter.title = file.basename;
+							propertiesAdded = true;
 						}
+
+						// event_type: Default to 'custom' if missing
+						if (!frontmatter.event_type) {
+							frontmatter.event_type = 'custom';
+							propertiesAdded = true;
+						}
+
+						// date: Add empty if missing
+						if (!frontmatter.date) {
+							frontmatter.date = '';
+							propertiesAdded = true;
+						}
+
+						// date_precision: Default to 'unknown' if missing
+						if (!frontmatter.date_precision) {
+							frontmatter.date_precision = 'unknown';
+							propertiesAdded = true;
+						}
+
+						// person: Add empty if missing
+						if (!frontmatter.person) {
+							frontmatter.person = '';
+							propertiesAdded = true;
+						}
+
+						// place: Add empty if missing
+						if (!frontmatter.place) {
+							frontmatter.place = '';
+							propertiesAdded = true;
+						}
+
+						// confidence: Default to 'unknown' if missing
+						if (!frontmatter.confidence) {
+							frontmatter.confidence = 'unknown';
+							propertiesAdded = true;
+						}
+					});
+
+					if (propertiesAdded) {
+						processedCount++;
 					} else {
-						bodyContent = content.trim();
+						skippedCount++;
 					}
-
-					// Construct new file content
-					const newContent = yamlLines.join('\n') + '\n\n' + bodyContent;
-
-					// Write back to file
-					await this.app.vault.modify(file, newContent);
-					processedCount++;
 
 				} catch (error: unknown) {
 					console.error(`Error processing ${file.path}:`, error);
@@ -5162,6 +4936,90 @@ export default class CanvasRootsPlugin extends Plugin {
 		} catch (error: unknown) {
 			console.error('Error adding essential event properties:', error);
 			new Notice('Failed to add essential event properties');
+		}
+	}
+
+	/**
+	 * Add cr_id to note(s) if missing
+	 * Detects note type from frontmatter and uses appropriate prefix
+	 * Supports batch operations on multiple files
+	 */
+	private async addCrId(files: TFile[]) {
+		try {
+			let processedCount = 0;
+			let skippedCount = 0;
+			let errorCount = 0;
+
+			for (const file of files) {
+				try {
+					let idAdded = false;
+
+					await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+						// Skip if cr_id already exists
+						if (frontmatter.cr_id) {
+							return;
+						}
+
+						// Detect note type and generate appropriate ID
+						const noteType = frontmatter.type || frontmatter.cr_type;
+						let newId: string;
+
+						switch (noteType) {
+							case 'place':
+								newId = `place_${generateCrId()}`;
+								break;
+							case 'event':
+								newId = `event_${generateCrId()}`;
+								break;
+							case 'source':
+							case 'map':
+							case 'schema':
+							case 'organization':
+								// These types use plain cr_id format
+								newId = generateCrId();
+								break;
+							default:
+								// Person notes and unknown types use plain format
+								newId = generateCrId();
+								break;
+						}
+
+						frontmatter.cr_id = newId;
+						idAdded = true;
+					});
+
+					if (idAdded) {
+						processedCount++;
+					} else {
+						skippedCount++;
+					}
+
+				} catch (error: unknown) {
+					console.error(`Error processing ${file.path}:`, error);
+					errorCount++;
+				}
+			}
+
+			// Show summary
+			if (files.length === 1) {
+				if (processedCount === 1) {
+					new Notice('Added cr_id');
+				} else if (skippedCount === 1) {
+					new Notice('File already has cr_id');
+				} else {
+					new Notice('Failed to add cr_id');
+				}
+			} else {
+				const parts = [];
+				if (processedCount > 0) parts.push(`${processedCount} updated`);
+				if (skippedCount > 0) parts.push(`${skippedCount} already have cr_id`);
+				if (errorCount > 0) parts.push(`${errorCount} errors`);
+				new Notice(`Add cr_id: ${parts.join(', ')}`);
+			}
+
+		} catch (error: unknown) {
+			console.error('Error adding cr_id:', error);
+			new Notice('Failed to add cr_id');
 		}
 	}
 

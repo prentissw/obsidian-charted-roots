@@ -1,5 +1,9 @@
 import { App, TFile, Notice } from 'obsidian';
 import { RelationshipHistoryService, RelationshipChangeType } from './relationship-history';
+import { getLogger } from './logging';
+import { getErrorMessage } from './error-utils';
+
+const logger = getLogger('RelationshipManager');
 
 /**
  * Callback for recording relationship changes to history
@@ -53,11 +57,11 @@ export class RelationshipManager {
 		parentType: 'father' | 'mother'
 	): Promise<void> {
 		// Extract cr_ids from both notes
-		const childCrId = await this.extractCrId(childFile);
-		const parentCrId = await this.extractCrId(parentFile);
-		const parentSex = await this.extractSex(parentFile);
-		const childName = await this.extractName(childFile);
-		const parentName = await this.extractName(parentFile);
+		const childCrId = this.extractCrId(childFile);
+		const parentCrId = this.extractCrId(parentFile);
+		const parentSex = this.extractSex(parentFile);
+		const childName = this.extractName(childFile);
+		const parentName = this.extractName(parentFile);
 
 		if (!childCrId || !parentCrId) {
 			new Notice('Error: could not find cr_id in one or both notes');
@@ -98,10 +102,10 @@ export class RelationshipManager {
 	 * Updates both notes' spouse_id arrays (bidirectional)
 	 */
 	async addSpouseRelationship(person1File: TFile, person2File: TFile): Promise<void> {
-		const person1CrId = await this.extractCrId(person1File);
-		const person2CrId = await this.extractCrId(person2File);
-		const person1Name = await this.extractName(person1File);
-		const person2Name = await this.extractName(person2File);
+		const person1CrId = this.extractCrId(person1File);
+		const person2CrId = this.extractCrId(person2File);
+		const person1Name = this.extractName(person1File);
+		const person2Name = this.extractName(person2File);
 
 		if (!person1CrId || !person2CrId) {
 			new Notice('Error: could not find cr_id in one or both notes');
@@ -133,11 +137,11 @@ export class RelationshipManager {
 		parentFile: TFile,
 		childFile: TFile
 	): Promise<void> {
-		const parentCrId = await this.extractCrId(parentFile);
-		const childCrId = await this.extractCrId(childFile);
-		const parentSex = await this.extractSex(parentFile);
-		const parentName = await this.extractName(parentFile);
-		const childName = await this.extractName(childFile);
+		const parentCrId = this.extractCrId(parentFile);
+		const childCrId = this.extractCrId(childFile);
+		const parentSex = this.extractSex(parentFile);
+		const parentName = this.extractName(parentFile);
+		const childName = this.extractName(childFile);
 
 		if (!childCrId || !parentCrId) {
 			new Notice('Error: could not find cr_id in one or both notes');
@@ -169,168 +173,116 @@ export class RelationshipManager {
 	/**
 	 * Extract cr_id from note frontmatter
 	 */
-	private async extractCrId(file: TFile): Promise<string | null> {
-		const content = await this.app.vault.read(file);
-		const match = content.match(/^cr_id:\s*(.+)$/m);
-		return match ? match[1].trim() : null;
+	private extractCrId(file: TFile): string | null {
+		const cache = this.app.metadataCache.getFileCache(file);
+		return cache?.frontmatter?.cr_id ?? null;
 	}
 
 	/**
 	 * Extract sex from note frontmatter
 	 */
-	private async extractSex(file: TFile): Promise<string | null> {
-		const content = await this.app.vault.read(file);
-		const match = content.match(/^sex:\s*(.+)$/m);
-		return match ? match[1].trim() : null;
+	private extractSex(file: TFile): string | null {
+		const cache = this.app.metadataCache.getFileCache(file);
+		return cache?.frontmatter?.sex ?? null;
 	}
 
 	/**
 	 * Extract name from note frontmatter, falling back to filename
 	 */
-	private async extractName(file: TFile): Promise<string> {
-		const content = await this.app.vault.read(file);
-		const match = content.match(/^name:\s*(.+)$/m);
-		return match ? match[1].trim() : file.basename;
+	private extractName(file: TFile): string {
+		const cache = this.app.metadataCache.getFileCache(file);
+		return cache?.frontmatter?.name ?? file.basename;
 	}
 
 	/**
 	 * Update father_id or mother_id field in child's frontmatter
+	 * Uses processFrontMatter to safely modify without corrupting other fields
 	 */
 	private async updateParentField(
 		childFile: TFile,
 		parentCrId: string,
 		parentType: 'father' | 'mother'
 	): Promise<void> {
-		const content = await this.app.vault.read(childFile);
 		const fieldName = parentType === 'father' ? 'father_id' : 'mother_id';
 
-		// Check if field already exists
-		const existingMatch = content.match(new RegExp(`^${fieldName}:\\s*(.+)$`, 'm'));
-
-		if (existingMatch) {
-			// Field exists, check if it's empty or already has a value
-			const existingValue = existingMatch[1].trim();
-			if (existingValue && existingValue !== '""' && existingValue !== "''") {
-				new Notice(`Warning: ${fieldName} already set to ${existingValue}, replacing with ${parentCrId}`);
-			}
-
-			// Replace existing field
-			const updatedContent = content.replace(
-				new RegExp(`^${fieldName}:\\s*.*$`, 'm'),
-				`${fieldName}: ${parentCrId}`
-			);
-			await this.app.vault.modify(childFile, updatedContent);
-		} else {
-			// Field doesn't exist, add it after cr_id
-			const updatedContent = content.replace(
-				/^(cr_id:\s*.+)$/m,
-				`$1\n${fieldName}: ${parentCrId}`
-			);
-			await this.app.vault.modify(childFile, updatedContent);
+		try {
+			await this.app.fileManager.processFrontMatter(childFile, (frontmatter) => {
+				const existingValue = frontmatter[fieldName];
+				if (existingValue && existingValue !== '' && existingValue !== parentCrId) {
+					new Notice(`Warning: ${fieldName} already set to ${existingValue}, replacing with ${parentCrId}`);
+				}
+				frontmatter[fieldName] = parentCrId;
+			});
+		} catch (error) {
+			logger.error('relationship-manager', 'Failed to update parent field', {
+				file: childFile.path,
+				fieldName,
+				error: getErrorMessage(error)
+			});
 		}
 	}
 
 	/**
 	 * Add cr_id to parent's children_id array
+	 * Uses processFrontMatter to safely modify without corrupting other fields
 	 */
 	private async addToChildrenArray(parentFile: TFile, childCrId: string): Promise<void> {
-		const content = await this.app.vault.read(parentFile);
+		try {
+			await this.app.fileManager.processFrontMatter(parentFile, (frontmatter) => {
+				const existing = frontmatter.children_id;
 
-		// Check if child already in children_id
-		const childrenMatch = content.match(/^children_id:\s*$/m);
-		if (childrenMatch) {
-			// Array format exists, check if child already listed
-			const arrayMatch = content.match(/^children_id:\s*\n((?: {2}- .+\n)*)/m);
-			if (arrayMatch) {
-				const arrayContent = arrayMatch[1];
-				if (arrayContent.includes(childCrId)) {
-					// Already listed
-					return;
+				if (!existing) {
+					// Field doesn't exist, create as array with single value
+					frontmatter.children_id = [childCrId];
+				} else if (Array.isArray(existing)) {
+					// Already an array, add if not present
+					if (!existing.includes(childCrId)) {
+						existing.push(childCrId);
+					}
+				} else {
+					// Single value, convert to array if different
+					if (existing !== childCrId) {
+						frontmatter.children_id = [existing, childCrId];
+					}
 				}
-				// Add to existing array
-				const updatedContent = content.replace(
-					/^(children_id:\s*\n(?: {2}- .+\n)*)/m,
-					`$1  - ${childCrId}\n`
-				);
-				await this.app.vault.modify(parentFile, updatedContent);
-				return;
-			}
+			});
+		} catch (error) {
+			logger.error('relationship-manager', 'Failed to add to children array', {
+				file: parentFile.path,
+				error: getErrorMessage(error)
+			});
 		}
-
-		// Check if single value format exists
-		const singleMatch = content.match(/^children_id:\s*(.+)$/m);
-		if (singleMatch) {
-			const existingValue = singleMatch[1].trim();
-			if (existingValue === childCrId) {
-				// Already set
-				return;
-			}
-			// Convert to array format
-			const updatedContent = content.replace(
-				/^children_id:\s*.+$/m,
-				`children_id:\n  - ${existingValue}\n  - ${childCrId}`
-			);
-			await this.app.vault.modify(parentFile, updatedContent);
-			return;
-		}
-
-		// Field doesn't exist, create it
-		const updatedContent = content.replace(
-			/^(cr_id:\s*.+)$/m,
-			`$1\nchildren_id:\n  - ${childCrId}`
-		);
-		await this.app.vault.modify(parentFile, updatedContent);
 	}
 
 	/**
 	 * Add cr_id to person's spouse_id array
+	 * Uses processFrontMatter to safely modify without corrupting other fields
 	 */
 	private async addToSpouseArray(personFile: TFile, spouseCrId: string): Promise<void> {
-		const content = await this.app.vault.read(personFile);
+		try {
+			await this.app.fileManager.processFrontMatter(personFile, (frontmatter) => {
+				const existing = frontmatter.spouse_id;
 
-		// Check if spouse already in spouse_id
-		const spouseMatch = content.match(/^spouse_id:\s*$/m);
-		if (spouseMatch) {
-			// Array format exists, check if spouse already listed
-			const arrayMatch = content.match(/^spouse_id:\s*\n((?: {2}- .+\n)*)/m);
-			if (arrayMatch) {
-				const arrayContent = arrayMatch[1];
-				if (arrayContent.includes(spouseCrId)) {
-					// Already listed
-					return;
+				if (!existing) {
+					// Field doesn't exist, create as array with single value
+					frontmatter.spouse_id = [spouseCrId];
+				} else if (Array.isArray(existing)) {
+					// Already an array, add if not present
+					if (!existing.includes(spouseCrId)) {
+						existing.push(spouseCrId);
+					}
+				} else {
+					// Single value, convert to array if different
+					if (existing !== spouseCrId) {
+						frontmatter.spouse_id = [existing, spouseCrId];
+					}
 				}
-				// Add to existing array
-				const updatedContent = content.replace(
-					/^(spouse_id:\s*\n(?: {2}- .+\n)*)/m,
-					`$1  - ${spouseCrId}\n`
-				);
-				await this.app.vault.modify(personFile, updatedContent);
-				return;
-			}
+			});
+		} catch (error) {
+			logger.error('relationship-manager', 'Failed to add to spouse array', {
+				file: personFile.path,
+				error: getErrorMessage(error)
+			});
 		}
-
-		// Check if single value format exists
-		const singleMatch = content.match(/^spouse_id:\s*(.+)$/m);
-		if (singleMatch) {
-			const existingValue = singleMatch[1].trim();
-			if (existingValue === spouseCrId) {
-				// Already set
-				return;
-			}
-			// Convert to array format
-			const updatedContent = content.replace(
-				/^spouse_id:\s*.+$/m,
-				`spouse_id:\n  - ${existingValue}\n  - ${spouseCrId}`
-			);
-			await this.app.vault.modify(personFile, updatedContent);
-			return;
-		}
-
-		// Field doesn't exist, create it
-		const updatedContent = content.replace(
-			/^(cr_id:\s*.+)$/m,
-			`$1\nspouse_id:\n  - ${spouseCrId}`
-		);
-		await this.app.vault.modify(personFile, updatedContent);
 	}
 }

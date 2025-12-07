@@ -632,283 +632,130 @@ export class BidirectionalLinker {
 
 	/**
 	 * Add a value to an array field in frontmatter
+	 * Uses processFrontMatter to safely modify without corrupting other fields
 	 */
 	private async addToArrayField(
 		file: TFile,
 		fieldName: string,
 		value: string
 	): Promise<void> {
-		const content = await this.app.vault.read(file);
-		const lines = content.split('\n');
+		try {
+			await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+				const existing = frontmatter[fieldName];
 
-		// Find frontmatter boundaries
-		let frontmatterStart = -1;
-		let frontmatterEnd = -1;
-
-		for (let i = 0; i < lines.length; i++) {
-			if (lines[i].trim() === '---') {
-				if (frontmatterStart === -1) {
-					frontmatterStart = i;
+				if (!existing) {
+					// Field doesn't exist, create as array with single value
+					frontmatter[fieldName] = [value];
+				} else if (Array.isArray(existing)) {
+					// Already an array, add to it
+					if (!existing.includes(value)) {
+						existing.push(value);
+					}
 				} else {
-					frontmatterEnd = i;
-					break;
+					// Single value, convert to array
+					if (existing !== value) {
+						frontmatter[fieldName] = [existing, value];
+					}
 				}
-			}
-		}
-
-		if (frontmatterStart === -1 || frontmatterEnd === -1) {
-			logger.error('bidirectional-linking', 'Could not find frontmatter', {
-				file: file.path
 			});
-			return;
+		} catch (error) {
+			logger.error('bidirectional-linking', 'Failed to add to array field', {
+				file: file.path,
+				fieldName,
+				error: getErrorMessage(error)
+			});
 		}
-
-		// Find the field or insert it
-		let fieldLineIndex = -1;
-		let isArrayField = false;
-
-		for (let i = frontmatterStart + 1; i < frontmatterEnd; i++) {
-			const line = lines[i];
-			if (line.startsWith(`${fieldName}:`)) {
-				fieldLineIndex = i;
-				// Check if it's already an array
-				isArrayField = line.trim().endsWith(':') || line.includes('[');
-				break;
-			}
-		}
-
-		if (fieldLineIndex === -1) {
-			// Field doesn't exist, create it as array with single value
-			lines.splice(frontmatterEnd, 0, `${fieldName}:`, `  - ${value}`);
-		} else if (!isArrayField) {
-			// Field exists as single value, convert to array
-			const existingValue = lines[fieldLineIndex].split(':')[1].trim();
-			lines[fieldLineIndex] = `${fieldName}:`;
-			lines.splice(fieldLineIndex + 1, 0, `  - ${existingValue}`, `  - ${value}`);
-		} else {
-			// Field exists as array, add to end
-			// Find the last array item
-			let lastArrayLine = fieldLineIndex;
-			for (let i = fieldLineIndex + 1; i < frontmatterEnd; i++) {
-				if (lines[i].trim().startsWith('- ')) {
-					lastArrayLine = i;
-				} else if (!lines[i].trim().startsWith('#')) {
-					// Not a comment, must be next field
-					break;
-				}
-			}
-			lines.splice(lastArrayLine + 1, 0, `  - ${value}`);
-		}
-
-		// Write back
-		await this.app.vault.modify(file, lines.join('\n'));
 	}
 
 	/**
 	 * Set a field value in frontmatter (replacing existing value)
+	 * Uses processFrontMatter to safely modify without corrupting other fields
 	 */
 	private async setField(
 		file: TFile,
 		fieldName: string,
 		value: string | string[]
 	): Promise<void> {
-		const content = await this.app.vault.read(file);
-		const lines = content.split('\n');
-
-		// Find frontmatter boundaries
-		let frontmatterStart = -1;
-		let frontmatterEnd = -1;
-
-		for (let i = 0; i < lines.length; i++) {
-			if (lines[i].trim() === '---') {
-				if (frontmatterStart === -1) {
-					frontmatterStart = i;
-				} else {
-					frontmatterEnd = i;
-					break;
-				}
-			}
-		}
-
-		if (frontmatterStart === -1 || frontmatterEnd === -1) {
-			logger.error('bidirectional-linking', 'Could not find frontmatter', {
-				file: file.path
+		try {
+			await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+				frontmatter[fieldName] = value;
 			});
-			return;
+		} catch (error) {
+			logger.error('bidirectional-linking', 'Failed to set field', {
+				file: file.path,
+				fieldName,
+				error: getErrorMessage(error)
+			});
 		}
-
-		// Find and remove existing field
-		for (let i = frontmatterStart + 1; i < frontmatterEnd; i++) {
-			if (lines[i].startsWith(`${fieldName}:`)) {
-				// Remove field and its array items if any
-				let j = i + 1;
-				while (j < frontmatterEnd && lines[j].trim().startsWith('- ')) {
-					j++;
-				}
-				lines.splice(i, j - i);
-				frontmatterEnd -= (j - i);
-				break;
-			}
-		}
-
-		// Add new field value
-		if (Array.isArray(value)) {
-			const newLines = [`${fieldName}:`];
-			value.forEach(v => newLines.push(`  - ${v}`));
-			lines.splice(frontmatterEnd, 0, ...newLines);
-		} else {
-			lines.splice(frontmatterEnd, 0, `${fieldName}: ${value}`);
-		}
-
-		// Write back
-		await this.app.vault.modify(file, lines.join('\n'));
 	}
 
 	/**
 	 * Remove a value from an array field in frontmatter
+	 * Uses processFrontMatter to safely modify without corrupting other fields
 	 */
 	private async removeFromArrayField(
 		file: TFile,
 		fieldName: string,
 		value: string
 	): Promise<void> {
-		const content = await this.app.vault.read(file);
-		const lines = content.split('\n');
+		try {
+			await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+				const existing = frontmatter[fieldName];
 
-		// Find frontmatter boundaries
-		let frontmatterStart = -1;
-		let frontmatterEnd = -1;
-
-		for (let i = 0; i < lines.length; i++) {
-			if (lines[i].trim() === '---') {
-				if (frontmatterStart === -1) {
-					frontmatterStart = i;
-				} else {
-					frontmatterEnd = i;
-					break;
+				if (!existing) {
+					// Field doesn't exist, nothing to remove
+					return;
 				}
-			}
-		}
 
-		if (frontmatterStart === -1 || frontmatterEnd === -1) {
-			logger.error('bidirectional-linking', 'Could not find frontmatter for removal', {
-				file: file.path
-			});
-			return;
-		}
+				if (Array.isArray(existing)) {
+					// Filter out the value (check for exact match and partial match for wikilinks)
+					const filtered = existing.filter(item => {
+						if (item === value) return false;
+						// Also check if item contains the value (for wikilink matching)
+						if (typeof item === 'string' && item.includes(value.replace(/\[\[|\]\]/g, ''))) {
+							return false;
+						}
+						return true;
+					});
 
-		// Find the field
-		let fieldLineIndex = -1;
-		for (let i = frontmatterStart + 1; i < frontmatterEnd; i++) {
-			if (lines[i].startsWith(`${fieldName}:`)) {
-				fieldLineIndex = i;
-				break;
-			}
-		}
-
-		if (fieldLineIndex === -1) {
-			// Field doesn't exist, nothing to remove
-			return;
-		}
-
-		// Check if it's an array field
-		const fieldLine = lines[fieldLineIndex];
-		const isArrayField = fieldLine.trim().endsWith(':') || fieldLine.includes('[');
-
-		if (isArrayField) {
-			// Remove the specific value from array
-			const linesToRemove: number[] = [];
-
-			for (let i = fieldLineIndex + 1; i < frontmatterEnd; i++) {
-				const line = lines[i].trim();
-				if (line.startsWith('- ')) {
-					// Check if this line contains the value to remove
-					if (line.includes(value)) {
-						linesToRemove.push(i);
+					if (filtered.length === 0) {
+						// Array is now empty, remove the field entirely
+						delete frontmatter[fieldName];
+					} else if (filtered.length !== existing.length) {
+						frontmatter[fieldName] = filtered;
 					}
-				} else if (!line.startsWith('#')) {
-					// Not a comment, must be next field
-					break;
+				} else if (existing === value || (typeof existing === 'string' && existing.includes(value.replace(/\[\[|\]\]/g, '')))) {
+					// Single value matches, remove the field
+					delete frontmatter[fieldName];
 				}
-			}
-
-			// Remove lines in reverse order to maintain indices
-			for (let i = linesToRemove.length - 1; i >= 0; i--) {
-				lines.splice(linesToRemove[i], 1);
-			}
-
-			// Check if array is now empty and remove field entirely if so
-			const remainingItems = [];
-			for (let i = fieldLineIndex + 1; i < lines.length; i++) {
-				if (lines[i].trim().startsWith('- ')) {
-					remainingItems.push(i);
-				} else if (!lines[i].trim().startsWith('#') && lines[i].trim() !== '---') {
-					break;
-				}
-			}
-
-			if (remainingItems.length === 0) {
-				// Array is empty, remove the field entirely
-				lines.splice(fieldLineIndex, 1);
-			}
-		} else {
-			// Single value field - check if it matches and remove if so
-			const fieldValue = fieldLine.split(':')[1]?.trim();
-			if (fieldValue === value) {
-				lines.splice(fieldLineIndex, 1);
-			}
+			});
+		} catch (error) {
+			logger.error('bidirectional-linking', 'Failed to remove from array field', {
+				file: file.path,
+				fieldName,
+				error: getErrorMessage(error)
+			});
 		}
-
-		// Write back
-		await this.app.vault.modify(file, lines.join('\n'));
 	}
 
 	/**
 	 * Remove a field entirely from frontmatter
+	 * Uses processFrontMatter to safely modify without corrupting other fields
 	 */
 	private async removeField(
 		file: TFile,
 		fieldName: string
 	): Promise<void> {
-		const content = await this.app.vault.read(file);
-		const lines = content.split('\n');
-
-		// Find frontmatter boundaries
-		let frontmatterStart = -1;
-		let frontmatterEnd = -1;
-
-		for (let i = 0; i < lines.length; i++) {
-			if (lines[i].trim() === '---') {
-				if (frontmatterStart === -1) {
-					frontmatterStart = i;
-				} else {
-					frontmatterEnd = i;
-					break;
-				}
-			}
-		}
-
-		if (frontmatterStart === -1 || frontmatterEnd === -1) {
-			logger.error('bidirectional-linking', 'Could not find frontmatter for field removal', {
-				file: file.path
+		try {
+			await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+				delete frontmatter[fieldName];
 			});
-			return;
+		} catch (error) {
+			logger.error('bidirectional-linking', 'Failed to remove field', {
+				file: file.path,
+				fieldName,
+				error: getErrorMessage(error)
+			});
 		}
-
-		// Find and remove the field and its array items if any
-		for (let i = frontmatterStart + 1; i < frontmatterEnd; i++) {
-			if (lines[i].startsWith(`${fieldName}:`)) {
-				// Found the field, remove it and any array items
-				let j = i + 1;
-				while (j < frontmatterEnd && lines[j].trim().startsWith('- ')) {
-					j++;
-				}
-				lines.splice(i, j - i);
-				break;
-			}
-		}
-
-		// Write back
-		await this.app.vault.modify(file, lines.join('\n'));
 	}
 }

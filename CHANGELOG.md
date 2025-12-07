@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.10.6] - 2025-12-07
+
+Bug fix release: Fixed wikilink corruption in frontmatter operations. Added "Add cr_id" context menu action.
+
+### Added
+
+- **Add cr_id Context Menu Action**: Quick way to add just a cr_id to notes
+  - Appears alongside "Add essential properties" in all context menus
+  - Available for single files, multi-file selection, and folders
+  - Detects note type and uses appropriate prefix (`place_`, `event_`, or none for persons)
+  - Skips notes that already have a cr_id
+
+### Fixed
+
+- **Wikilink Corruption Bug**: Fixed issue where wikilinks like `[[Person]]` became `[[[Person]]]`
+  - Affected "Add essential properties" context menu action
+  - Affected bidirectional relationship sync (adding parents, spouses, children)
+  - Root cause: Manual YAML manipulation with regex didn't handle wikilinks in arrays properly
+  - Solution: Converted all frontmatter operations to use Obsidian's `processFrontMatter` API
+
+---
+
+## [0.10.5] - 2025-12-07
+
+Bug fix release with Templater documentation.
+
+### Added
+
+- **Templater Integration Guide**: Comprehensive wiki documentation for using Templater with Canvas Roots
+  - Explains `cr_id` format (`abc-123-def-456`)
+  - Provides inline template snippets and reusable user script approaches
+  - Complete example templates for Person, Place, Event, and Source notes
+  - Tips for folder-specific template automation
+  - Guide tab in Control Center now links to this documentation
+
+### Fixed
+
+- **"Add essential properties" Frontmatter Corruption**: Fixed bug where existing list properties containing wikilinks were corrupted
+  - `[[Gaeleri]]` would incorrectly become `[[[Gaeleri]]]`
+  - Now uses Obsidian's `processFrontMatter` API to safely modify only specified properties
+
+---
+
+## [0.10.4] - 2025-12-06
+
+Bug fix release: Fixed Preferences tab crash when valueAliases was undefined.
+
+### Fixed
+
+- **Preferences Tab Crash**: Fixed error when opening Preferences tab
+  - Crash occurred when `valueAliases` setting was undefined (new installs or after settings reset)
+  - Added null check before accessing `valueAliases` properties
+
+---
+
 ## [0.10.3] - 2025-12-06
 
 Type Customization: Full type manager for Events, Sources, Organizations, Relationships, and Places. Create, edit, hide, and customize types and categories with user-defined names.
