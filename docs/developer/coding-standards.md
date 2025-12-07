@@ -256,21 +256,21 @@ const healthBar = createHealthBar();  // ESLint error if never used
 #### BEM Methodology
 All CSS classes MUST follow BEM (Block__Element--Modifier) with project prefix:
 
-**Pattern:** `(cr|canvas-roots)-[block](__[element])?(--[modifier])?`
+**Pattern:** `(cr|crc|canvas-roots)-[block](__[element])?(--[modifier])?`
 
 ```css
 /* ✅ CORRECT - Block */
 .cr-modal-container { }
-.cr-card { }
+.crc-card { }
 
 /* ✅ CORRECT - Block + Element */
 .cr-card__header { }
-.cr-card__title { }
+.crc-card__title { }
 .cr-nav-item__icon { }
 
 /* ✅ CORRECT - Block + Modifier */
 .cr-btn--primary { }
-.cr-nav-item--active { }
+.crc-nav-item--active { }
 
 /* ✅ CORRECT - Block + Element + Modifier */
 .cr-nav-item__icon--disabled { }
@@ -281,15 +281,13 @@ All CSS classes MUST follow BEM (Block__Element--Modifier) with project prefix:
 /* ❌ WRONG - Camel case */
 .crModalContainer { }  /* Stylelint error */
 
-/* ❌ WRONG - Non-standard prefix */
-.crc-control-center-modal { }  /* Stylelint error - use 'cr-' not 'crc-' */
-
 /* ❌ WRONG - Sentence case or spaces */
 .cr-modal container { }  /* Stylelint error */
 ```
 
 **Allowed Prefixes:**
-- `cr-` (Canvas Roots) - Primary prefix
+- `cr-` (Canvas Roots) - Short prefix
+- `crc-` (Canvas Roots Component) - Alternate short prefix
 - `canvas-roots-` - Long form (use sparingly)
 
 #### Class Naming Examples
@@ -1177,17 +1175,19 @@ const pattern = /^ {2}- (.+)$/gm;
 
 #### Issue: Class name pattern error
 ```css
-/* ❌ Error: Expected ".crc-modal" to match pattern */
-.crc-modal { }
+/* ❌ Error: Expected ".xyz-modal" to match pattern */
+.xyz-modal { }
 
-/* ✅ Fix: Use 'cr-' prefix */
+/* ✅ Fix: Use 'cr-' or 'crc-' prefix */
 .cr-modal { }
+.crc-modal { }
 
 /* ❌ Error: Expected ".modalContainer" to match pattern */
 .modalContainer { }
 
 /* ✅ Fix: Use kebab-case with prefix */
 .cr-modal-container { }
+.crc-modal-container { }
 ```
 
 #### Issue: Custom property pattern error

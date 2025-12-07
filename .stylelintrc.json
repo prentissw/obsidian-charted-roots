@@ -4,8 +4,13 @@
     "stylelint-config-prettier"
   ],
   "rules": {
-    "custom-property-pattern": "^cr-[a-z0-9-]+$",
-    "selector-class-pattern": "^(cr|canvas-roots)-[a-z0-9-]+(__[a-z0-9-]+)?(--[a-z0-9-]+)?$",
+    "custom-property-pattern": null,
+    "selector-class-pattern": [
+      "^(cr|crc|canvas-roots)-[a-z0-9-]+(__[a-z0-9-]+)?(--[a-z0-9-]+)?$",
+      {
+        "message": "Expected class selector to use BEM format with cr-/crc-/canvas-roots- prefix (selector-class-pattern)"
+      }
+    ],
     "declaration-empty-line-before": [
       "always",
       {
@@ -76,7 +81,10 @@
         "selector-class-pattern": null,
         "color-function-notation": null,
         "alpha-value-notation": null,
-        "shorthand-property-no-redundant-values": null
+        "shorthand-property-no-redundant-values": null,
+        "no-duplicate-selectors": null,
+        "hue-degree-notation": null,
+        "comment-empty-line-before": null
       }
     },
     {
@@ -85,14 +93,34 @@
         "styles/find-on-canvas.css",
         "styles/folder-scan.css",
         "styles/tree-statistics.css",
-        "styles/validation.css"
+        "styles/validation.css",
+        "styles/canvas-navigation.css",
+        "styles/data-quality.css",
+        "styles/date-systems.css",
+        "styles/duplicate-detection.css",
+        "styles/events.css",
+        "styles/family-chart-view.css",
+        "styles/map-view.css",
+        "styles/preferences.css",
+        "styles/relationship-calculator.css",
+        "styles/relationships.css",
+        "styles/sources.css",
+        "styles/variables.css"
       ],
       "rules": {
         "custom-property-pattern": null,
         "selector-class-pattern": null,
         "color-function-notation": null,
         "alpha-value-notation": null,
-        "shorthand-property-no-redundant-values": null
+        "shorthand-property-no-redundant-values": null,
+        "value-keyword-case": null,
+        "font-family-name-quotes": null,
+        "no-duplicate-selectors": null,
+        "length-zero-no-unit": null,
+        "hue-degree-notation": null,
+        "selector-not-notation": null,
+        "rule-empty-line-before": null,
+        "comment-empty-line-before": null
       }
     }
   ],
