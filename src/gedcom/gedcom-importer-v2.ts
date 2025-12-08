@@ -23,6 +23,14 @@ import { getErrorMessage } from '../core/error-utils';
 import type { CreateEventData, DatePrecision, EventConfidence } from '../events/types/event-types';
 
 /**
+ * Information about a created place note
+ */
+interface PlaceNoteInfo {
+	path: string;
+	crId: string;
+}
+
+/**
  * Enhanced GEDCOM Importer (v2)
  *
  * Creates:
@@ -223,7 +231,7 @@ export class GedcomImporterV2 {
 			const gedcomToCrId = new Map<string, string>();
 			const gedcomToNotePath = new Map<string, string>();
 			const sourceIdToNotePath = new Map<string, string>();
-			let placeToNotePath = new Map<string, string>();
+			let placeToNoteInfo = new Map<string, PlaceNoteInfo>();
 
 			// Phase 0: Create place notes (if enabled) - do this first for wikilinks
 			if (options.createPlaceNotes) {
@@ -231,7 +239,7 @@ export class GedcomImporterV2 {
 				if (allPlaces.size > 0) {
 					reportProgress({ phase: 'places', current: 0, total: allPlaces.size, message: 'Creating place notes…' });
 					const placeResult = await this.createPlaceNotes(allPlaces, options, reportProgress);
-					placeToNotePath = placeResult.placeToNotePath;
+					placeToNoteInfo = placeResult.placeToNoteInfo;
 					result.placesCreated = placeResult.created;
 					result.placesUpdated = placeResult.updated;
 				}
@@ -317,7 +325,7 @@ export class GedcomImporterV2 {
 								gedcomData,
 								gedcomToNotePath,
 								sourceIdToNotePath,
-								placeToNotePath,
+								placeToNoteInfo,
 								options
 							);
 							result.eventsCreated++;
@@ -342,7 +350,7 @@ export class GedcomImporterV2 {
 								gedcomData,
 								gedcomToNotePath,
 								sourceIdToNotePath,
-								placeToNotePath,
+								placeToNoteInfo,
 								options
 							);
 							result.eventsCreated++;
@@ -554,7 +562,7 @@ export class GedcomImporterV2 {
 		gedcomData: GedcomDataV2,
 		gedcomToNotePath: Map<string, string>,
 		sourceIdToNotePath: Map<string, string>,
-		placeToNotePath: Map<string, string>,
+		placeToNoteInfo: Map<string, PlaceNoteInfo>,
 		options: GedcomImportOptionsV2
 	): Promise<TFile> {
 		// Build event title
@@ -620,14 +628,16 @@ export class GedcomImporterV2 {
 		let placeValue: string | undefined;
 		let placeWikilink: string | undefined;
 		if (event.place) {
-			const placePath = placeToNotePath.get(event.place);
-			if (placePath) {
+			// Normalize the place string to match the key used in placeToNoteInfo
+			const normalizedPlace = this.normalizePlaceString(event.place);
+			const placeInfo = placeToNoteInfo.get(normalizedPlace);
+			if (placeInfo) {
 				// Use wikilink to place note
-				const placeBaseName = placePath.replace(/\.md$/, '').split('/').pop() || '';
+				const placeBaseName = placeInfo.path.replace(/\.md$/, '').split('/').pop() || '';
 				placeWikilink = placeBaseName;
 			} else {
-				// Use plain text
-				placeValue = event.place;
+				// Use plain text (normalized)
+				placeValue = normalizedPlace || event.place;
 			}
 		}
 
@@ -885,6 +895,30 @@ export class GedcomImporterV2 {
 	 * GEDCOM places are typically: "Locality, County, State, Country"
 	 * Returns array from most specific to most general.
 	 */
+	/**
+	 * Normalize a place string to handle inconsistent GEDCOM data.
+	 * - Strips leading/trailing commas and whitespace
+	 * - Collapses multiple spaces into single space
+	 * - Removes empty parts between commas
+	 * - Normalizes comma spacing
+	 *
+	 * Examples:
+	 * - ", Scotland, Missouri, USA" → "Scotland, Missouri, USA"
+	 * - ", Scotland , Missouri, USA" → "Scotland, Missouri, USA"
+	 * - "Springfield,  Sangamon,, Illinois" → "Springfield, Sangamon, Illinois"
+	 */
+	private normalizePlaceString(placeString: string): string {
+		if (!placeString) return '';
+
+		// Split by comma, trim each part, filter empty parts, rejoin
+		const parts = placeString
+			.split(',')
+			.map(p => p.trim().replace(/\s+/g, ' ')) // Collapse multiple spaces
+			.filter(p => p.length > 0);
+
+		return parts.join(', ');
+	}
+
 	private parsePlaceHierarchy(placeString: string): string[] {
 		if (!placeString) return [];
 
@@ -913,13 +947,17 @@ export class GedcomImporterV2 {
 	private collectAllPlaces(gedcomData: GedcomDataV2): Map<string, string[]> {
 		const places = new Map<string, string[]>();
 
-		const addPlace = (placeString: string) => {
+		const addPlace = (rawPlaceString: string) => {
+			if (!rawPlaceString) return;
+
+			// Normalize the place string to handle inconsistent GEDCOM data
+			const placeString = this.normalizePlaceString(rawPlaceString);
 			if (!placeString) return;
 
 			const parts = this.parsePlaceHierarchy(placeString);
 			if (parts.length === 0) return;
 
-			// Add the full place
+			// Add the full place (using normalized string as key)
 			places.set(placeString, parts);
 
 			// Add all parent levels too
@@ -966,8 +1004,8 @@ export class GedcomImporterV2 {
 		places: Map<string, string[]>,
 		options: GedcomImportOptionsV2,
 		reportProgress: (progress: { phase: 'places'; current: number; total: number; message?: string }) => void
-	): Promise<{ placeToNotePath: Map<string, string>; created: number; updated: number }> {
-		const placeToNotePath = new Map<string, string>();
+	): Promise<{ placeToNoteInfo: Map<string, PlaceNoteInfo>; created: number; updated: number }> {
+		const placeToNoteInfo = new Map<string, PlaceNoteInfo>();
 		let created = 0;
 		let updated = 0;
 
@@ -988,11 +1026,11 @@ export class GedcomImporterV2 {
 				const result = await this.createOrUpdatePlaceNote(
 					placeString,
 					parts,
-					placeToNotePath,
+					placeToNoteInfo,
 					existingPlaces,
 					options
 				);
-				placeToNotePath.set(placeString, result.path);
+				placeToNoteInfo.set(placeString, { path: result.path, crId: result.crId });
 				if (result.wasUpdated) {
 					updated++;
 				} else {
@@ -1005,7 +1043,7 @@ export class GedcomImporterV2 {
 			placeIndex++;
 		}
 
-		return { placeToNotePath, created, updated };
+		return { placeToNoteInfo, created, updated };
 	}
 
 	/**
@@ -1025,17 +1063,24 @@ export class GedcomImporterV2 {
 		for (const file of files) {
 			const fileCache = this.app.metadataCache.getFileCache(file);
 			if (!fileCache?.frontmatter) continue;
-			if (fileCache.frontmatter.type !== 'place') continue;
 
-			// Index by full_name (case-insensitive)
+			// Check for place notes using both 'type' and 'cr_type' properties
+			const noteType = fileCache.frontmatter.type || fileCache.frontmatter.cr_type;
+			if (noteType !== 'place') continue;
+
+			// Index by full_name (normalized and case-insensitive)
 			if (fileCache.frontmatter.full_name) {
-				const fullName = String(fileCache.frontmatter.full_name).toLowerCase();
-				byFullName.set(fullName, file);
+				// Normalize the full_name to match against normalized place strings
+				const normalizedFullName = this.normalizePlaceString(String(fileCache.frontmatter.full_name)).toLowerCase();
+				if (normalizedFullName) {
+					byFullName.set(normalizedFullName, file);
+				}
 			}
 
 			// Index by title + parent for fallback matching
+			// Support both old 'parent' and new 'parent_place' properties
 			const title = fileCache.frontmatter.title;
-			const parent = fileCache.frontmatter.parent;
+			const parent = fileCache.frontmatter.parent_place || fileCache.frontmatter.parent;
 			if (title) {
 				// Extract parent name from wikilink if present
 				const parentName = parent
@@ -1058,7 +1103,7 @@ export class GedcomImporterV2 {
 	private findExistingPlace(
 		placeString: string,
 		parts: string[],
-		placeToNotePath: Map<string, string>,
+		placeToNoteInfo: Map<string, PlaceNoteInfo>,
 		cache: { byFullName: Map<string, TFile>; byTitleAndParent: Map<string, TFile> }
 	): TFile | null {
 		// Strategy 1: Match by full_name (case-insensitive)
@@ -1072,9 +1117,9 @@ export class GedcomImporterV2 {
 		let parentBaseName = '';
 		if (parts.length > 1) {
 			const parentPlaceString = this.getPlaceAtLevel(parts, 1);
-			const parentPath = placeToNotePath.get(parentPlaceString);
-			if (parentPath) {
-				parentBaseName = (parentPath.replace(/\.md$/, '').split('/').pop() || '').toLowerCase();
+			const parentInfo = placeToNoteInfo.get(parentPlaceString);
+			if (parentInfo) {
+				parentBaseName = (parentInfo.path.replace(/\.md$/, '').split('/').pop() || '').toLowerCase();
 			}
 		}
 		const titleParentKey = `${name.toLowerCase()}|${parentBaseName}`;
@@ -1093,47 +1138,63 @@ export class GedcomImporterV2 {
 	private async createOrUpdatePlaceNote(
 		placeString: string,
 		parts: string[],
-		placeToNotePath: Map<string, string>,
+		placeToNoteInfo: Map<string, PlaceNoteInfo>,
 		existingPlaces: { byFullName: Map<string, TFile>; byTitleAndParent: Map<string, TFile> },
 		options: GedcomImportOptionsV2
-	): Promise<{ path: string; wasUpdated: boolean }> {
+	): Promise<{ path: string; crId: string; wasUpdated: boolean }> {
 		// Check if place already exists using multiple strategies
-		const existingFile = this.findExistingPlace(placeString, parts, placeToNotePath, existingPlaces);
+		const existingFile = this.findExistingPlace(placeString, parts, placeToNoteInfo, existingPlaces);
 
 		if (existingFile) {
+			// Get or generate cr_id for existing place
+			const fileCache = this.app.metadataCache.getFileCache(existingFile);
+			let crId = fileCache?.frontmatter?.cr_id;
+
 			// Update existing place note if parent wikilink needs to be added/updated
 			const wasUpdated = await this.updateExistingPlaceNote(
 				existingFile,
 				parts,
-				placeToNotePath,
+				placeToNoteInfo,
 				placeString
 			);
-			return { path: existingFile.path, wasUpdated };
+
+			// If no cr_id exists, add one
+			if (!crId) {
+				crId = generateCrId();
+				await this.app.fileManager.processFrontMatter(existingFile, (frontmatter) => {
+					frontmatter.cr_id = crId;
+				});
+			}
+
+			return { path: existingFile.path, crId, wasUpdated: wasUpdated || !fileCache?.frontmatter?.cr_id };
 		}
 
 		// Create new place note
-		const path = await this.createPlaceNote(placeString, parts, placeToNotePath, options);
-		return { path, wasUpdated: false };
+		const result = await this.createPlaceNote(placeString, parts, placeToNoteInfo, options);
+		return { path: result.path, crId: result.crId, wasUpdated: false };
 	}
 
 	/**
-	 * Update an existing place note's parent wikilink and full_name if needed.
+	 * Update an existing place note's parent references and full_name if needed.
 	 * Returns true if the note was modified, false otherwise.
 	 */
 	private async updateExistingPlaceNote(
 		file: TFile,
 		parts: string[],
-		placeToNotePath: Map<string, string>,
+		placeToNoteInfo: Map<string, PlaceNoteInfo>,
 		placeString: string
 	): Promise<boolean> {
 		// Check current frontmatter
 		const fileCache = this.app.metadataCache.getFileCache(file);
 		const currentFullName = fileCache?.frontmatter?.full_name;
-		const currentParent = fileCache?.frontmatter?.parent;
+		// Support both old 'parent' and new 'parent_place' properties
+		const currentParentPlace = fileCache?.frontmatter?.parent_place || fileCache?.frontmatter?.parent;
+		const currentParentPlaceId = fileCache?.frontmatter?.parent_place_id;
 
 		// Determine what needs updating
 		let needsUpdate = false;
 		let newParentWikilink: string | undefined;
+		let newParentCrId: string | undefined;
 		let newFullName: string | undefined;
 
 		// Check if full_name needs to be added/updated
@@ -1145,12 +1206,17 @@ export class GedcomImporterV2 {
 		// Check if parent needs updating
 		if (parts.length > 1) {
 			const parentPlaceString = this.getPlaceAtLevel(parts, 1);
-			const parentPath = placeToNotePath.get(parentPlaceString);
-			if (parentPath) {
-				const parentBaseName = parentPath.replace(/\.md$/, '').split('/').pop() || '';
-				// If parent is not set or doesn't match
-				if (!currentParent || !String(currentParent).includes(parentBaseName)) {
+			const parentInfo = placeToNoteInfo.get(parentPlaceString);
+			if (parentInfo) {
+				const parentBaseName = parentInfo.path.replace(/\.md$/, '').split('/').pop() || '';
+				// If parent_place is not set or doesn't match
+				if (!currentParentPlace || !String(currentParentPlace).includes(parentBaseName)) {
 					newParentWikilink = parentBaseName;
+					needsUpdate = true;
+				}
+				// If parent_place_id is not set or doesn't match
+				if (!currentParentPlaceId || currentParentPlaceId !== parentInfo.crId) {
+					newParentCrId = parentInfo.crId;
 					needsUpdate = true;
 				}
 			}
@@ -1163,7 +1229,14 @@ export class GedcomImporterV2 {
 		// Update the frontmatter
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			if (newParentWikilink) {
-				frontmatter.parent = `[[${newParentWikilink}]]`;
+				frontmatter.parent_place = `[[${newParentWikilink}]]`;
+				// Remove old 'parent' property if it exists
+				if (frontmatter.parent) {
+					delete frontmatter.parent;
+				}
+			}
+			if (newParentCrId) {
+				frontmatter.parent_place_id = newParentCrId;
 			}
 			if (newFullName) {
 				frontmatter.full_name = newFullName;
@@ -1174,38 +1247,32 @@ export class GedcomImporterV2 {
 	}
 
 	/**
-	 * Create a single place note with parent wikilink.
+	 * Create a single place note with parent references.
 	 */
 	private async createPlaceNote(
 		placeString: string,
 		parts: string[],
-		placeToNotePath: Map<string, string>,
+		placeToNoteInfo: Map<string, PlaceNoteInfo>,
 		options: GedcomImportOptionsV2
-	): Promise<string> {
+	): Promise<{ path: string; crId: string }> {
 		const crId = generateCrId();
 
 		// The "name" is the most specific part (first in the array)
 		const name = parts[0];
 
-		// Determine place type based on position in hierarchy
-		// parts.length: 1=country, 2=state, 3=county, 4+=locality
-		let placeType = 'locality';
-		if (parts.length === 1) {
-			placeType = 'country';
-		} else if (parts.length === 2) {
-			placeType = 'state';
-		} else if (parts.length === 3) {
-			placeType = 'county';
-		}
+		// Determine place type using heuristics
+		const placeType = this.inferPlaceType(name, parts);
 
-		// Get parent place string for wikilink (if any)
+		// Get parent place info for references (if any)
 		let parentWikilink: string | undefined;
+		let parentCrId: string | undefined;
 		if (parts.length > 1) {
 			const parentPlaceString = this.getPlaceAtLevel(parts, 1);
-			const parentPath = placeToNotePath.get(parentPlaceString);
-			if (parentPath) {
-				const parentBaseName = parentPath.replace(/\.md$/, '').split('/').pop() || '';
+			const parentInfo = placeToNoteInfo.get(parentPlaceString);
+			if (parentInfo) {
+				const parentBaseName = parentInfo.path.replace(/\.md$/, '').split('/').pop() || '';
 				parentWikilink = parentBaseName;
+				parentCrId = parentInfo.crId;
 			}
 		}
 
@@ -1218,9 +1285,12 @@ export class GedcomImporterV2 {
 			`place_type: ${placeType}`
 		];
 
-		// Add parent reference
+		// Add parent references (using correct property names per Place model)
 		if (parentWikilink) {
-			frontmatterLines.push(`parent: "[[${parentWikilink}]]"`);
+			frontmatterLines.push(`parent_place: "[[${parentWikilink}]]"`);
+		}
+		if (parentCrId) {
+			frontmatterLines.push(`parent_place_id: ${parentCrId}`);
 		}
 
 		// Add full place string for reference/search
@@ -1267,6 +1337,96 @@ export class GedcomImporterV2 {
 		}
 
 		await this.app.vault.create(finalPath, content);
-		return finalPath;
+		return { path: finalPath, crId };
+	}
+
+	/**
+	 * Infer place type using multiple heuristics.
+	 * Checks name patterns, suffixes, and hierarchy position.
+	 */
+	private inferPlaceType(name: string, parts: string[]): string {
+		const nameLower = name.toLowerCase().trim();
+
+		// Check for explicit type indicators in the name
+		// Counties
+		if (nameLower.includes(' county') ||
+			nameLower.includes(' co.') ||
+			nameLower.includes(' co,') ||
+			nameLower.endsWith(' co')) {
+			return 'county';
+		}
+
+		// States/Provinces - check common abbreviations and patterns
+		const stateAbbreviations = ['al', 'ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga',
+			'hi', 'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 'ma', 'mi', 'mn', 'ms',
+			'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 'nm', 'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa',
+			'ri', 'sc', 'sd', 'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy', 'dc'];
+
+		// If it's a 2-letter code and matches US state abbreviation pattern
+		if (nameLower.length === 2 && stateAbbreviations.includes(nameLower)) {
+			return 'state';
+		}
+
+		// Check for parish (Louisiana), borough (Alaska)
+		if (nameLower.includes(' parish') || nameLower.includes(' borough')) {
+			return 'county';
+		}
+
+		// Check for townships, villages, cities, towns
+		if (nameLower.includes(' township') || nameLower.includes(' twp')) {
+			return 'township';
+		}
+		if (nameLower.includes(' village') || nameLower.includes(' vlg')) {
+			return 'village';
+		}
+		if (nameLower.includes(' city')) {
+			return 'city';
+		}
+		if (nameLower.includes(' town')) {
+			return 'town';
+		}
+
+		// International indicators
+		if (nameLower.includes(' province') || nameLower.includes(' provincia')) {
+			return 'province';
+		}
+		if (nameLower.includes(' region') || nameLower.includes(' région')) {
+			return 'region';
+		}
+		if (nameLower.includes(' department') || nameLower.includes(' département')) {
+			return 'department';
+		}
+		if (nameLower.includes(' district')) {
+			return 'district';
+		}
+		if (nameLower.includes(' canton')) {
+			return 'canton';
+		}
+
+		// Fall back to hierarchy-based inference
+		// But with smarter defaults
+		if (parts.length === 1) {
+			// Single part - could be country or a well-known place
+			// Check if it looks like a country name
+			const countries = ['usa', 'uk', 'england', 'scotland', 'wales', 'ireland',
+				'france', 'germany', 'italy', 'spain', 'canada', 'australia', 'mexico',
+				'netherlands', 'belgium', 'switzerland', 'austria', 'poland', 'sweden',
+				'norway', 'denmark', 'finland'];
+			if (countries.includes(nameLower)) {
+				return 'country';
+			}
+			// If single part but not a known country, it might be a region
+			return 'region';
+		} else if (parts.length === 2) {
+			// Two parts - likely state/province level
+			return 'state';
+		} else if (parts.length === 3) {
+			// Three parts - could be county or city depending on context
+			// For now, default to county, but this could be refined
+			return 'county';
+		} else {
+			// Four or more parts - locality (city, town, village, etc.)
+			return 'locality';
+		}
 	}
 }

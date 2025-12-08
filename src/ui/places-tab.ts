@@ -17,6 +17,7 @@ import { BuildPlaceHierarchyModal } from './build-place-hierarchy-modal';
 import { StandardizePlacesModal, findPlaceNameVariations } from './standardize-places-modal';
 import { TemplateSnippetsModal } from './template-snippets-modal';
 import { renderPlaceTypeManagerCard } from '../places/ui/place-type-manager-card';
+import { BulkGeocodeModal } from '../maps/ui/bulk-geocode-modal';
 
 /**
  * Render the Places tab content
@@ -172,6 +173,24 @@ function renderActionsCard(
 			}));
 
 	new Setting(actionsContent)
+		.setName('Bulk geocode places')
+		.setDesc('Look up coordinates for places without them (uses OpenStreetMap)')
+		.addButton(button => button
+			.setButtonText('Geocode')
+			.onClick(() => {
+				const placeGraph = new PlaceGraphService(plugin.app);
+				placeGraph.setValueAliases(plugin.settings.valueAliases);
+				placeGraph.reloadCache();
+
+				new BulkGeocodeModal(plugin.app, placeGraph, {
+					onComplete: () => {
+						// Refresh the Places tab
+						showTab('places');
+					}
+				}).open();
+			}));
+
+	new Setting(actionsContent)
 		.setName('Templater templates')
 		.setDesc('Copy ready-to-use templates for Templater integration')
 		.addButton(button => button
@@ -307,6 +326,13 @@ function loadPlaceStatistics(container: HTMLElement, plugin: CanvasRootsPlugin):
 			item.createEl('span', { text: ` (${pattern.count})`, cls: 'crc-text--muted' });
 		}
 	}
+
+	// Helpful note pointing to actions
+	const noteSection = container.createDiv({ cls: 'crc-mt-4' });
+	noteSection.createEl('p', {
+		text: 'Use the Actions card above to create missing places, build hierarchy, standardize names, or bulk geocode coordinates.',
+		cls: 'crc-text--muted crc-text--small'
+	});
 }
 
 /**

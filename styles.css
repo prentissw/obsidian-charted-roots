@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-08 01:06:26 UTC
+ * - Generated: 2025-12-08 03:07:55 UTC
  * - Components: 29 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -338,7 +338,7 @@ settings:
    COMPONENT: MODALS.CSS
    ========================================================================== */
 
-/* Component Size: 4488 lines, 82.04 KB */
+/* Component Size: 4597 lines, 83.89 KB */
 
 /* ==========================================================================
    Canvas Roots Control Center - Styling
@@ -4826,6 +4826,115 @@ settings:
 
 .cr-icon--error {
   color: var(--color-red);
+}
+
+/* ==========================================================================
+   BULK GEOCODE MODAL
+   ========================================================================== */
+
+.cr-bulk-geocode-modal {
+  width: 550px;
+  max-width: 90vw;
+}
+
+.cr-bulk-geocode-modal .modal-content {
+  padding: 20px;
+}
+
+.cr-bulk-geocode-description {
+  margin-bottom: 16px;
+}
+
+.cr-bulk-geocode-description p {
+  margin: 0 0 8px 0;
+}
+
+.cr-bulk-geocode-progress {
+  margin: 16px 0;
+}
+
+.cr-bulk-geocode-progress.cr-hidden {
+  display: none;
+}
+
+.cr-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.cr-progress-bar-container {
+  height: 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.cr-progress-bar {
+  height: 100%;
+  background: var(--interactive-accent);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.cr-geocode-results-list {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--background-secondary);
+  font-size: 12px;
+}
+
+.cr-geocode-result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.cr-geocode-result-item:last-child {
+  border-bottom: none;
+}
+
+.cr-geocode-result-icon {
+  flex-shrink: 0;
+  width: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cr-geocode-result-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-geocode-result-coords {
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.cr-geocode-result-error {
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.cr-bulk-geocode-buttons {
+  margin-top: 16px;
+}
+
+.cr-bulk-geocode-buttons .setting-item {
+  border-top: none;
+  padding-top: 0;
 }
 
 
@@ -14069,11 +14178,11 @@ input[type="text"]::-webkit-input-placeholder {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-08 01:06:26 UTC
+ * Build completed: 2025-12-08 03:07:55 UTC
  * Components processed: 29
- * Total lines: 13785
- * Total size: 267.14 KB
- * Build duration: 0.03 seconds
+ * Total lines: 13894
+ * Total size: 269 KB
+ * Build duration: 0.04 seconds
  *
  * Component breakdown:
  * - variables.css: 48 lines, 1.33 KB
@@ -14084,7 +14193,7 @@ input[type="text"]::-webkit-input-placeholder {
  * - nodes.css: 12 lines, 0.3 KB
  * - edges.css: 4 lines, 0.07 KB
  * - settings.css: 4 lines, 0.07 KB
- * - modals.css: 4488 lines, 82.04 KB
+ * - modals.css: 4597 lines, 83.89 KB
  * - duplicate-detection.css: 163 lines, 2.82 KB
  * - tree-statistics.css: 41 lines, 0.6 KB
  * - validation.css: 84 lines, 1.47 KB

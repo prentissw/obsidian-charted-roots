@@ -40,6 +40,8 @@ import { AddRelationshipModal } from './src/ui/add-relationship-modal';
 import { SourcePickerModal, SourceService, CreateSourceModal, CitationGeneratorModal, EvidenceService, ProofSummaryService } from './src/sources';
 import { EventService } from './src/events/services/event-service';
 import { CreateEventModal } from './src/events/ui/create-event-modal';
+import { isPlaceNote, isSourceNote, isEventNote, isMapNote, isSchemaNote } from './src/utils/note-type-detection';
+import { GeocodingService } from './src/maps/services/geocoding-service';
 
 const logger = getLogger('CanvasRootsPlugin');
 
@@ -835,18 +837,22 @@ export default class CanvasRootsPlugin extends Plugin {
 				// Markdown files: Person notes, Place notes, Source notes, Map notes, Schema notes, or plain notes
 				if (file instanceof TFile && file.extension === 'md') {
 					const cache = this.app.metadataCache.getFileCache(file);
-					const hasCrId = !!cache?.frontmatter?.cr_id;
-					const isPlaceNote = cache?.frontmatter?.type === 'place';
-					const isSourceNote = cache?.frontmatter?.type === 'source';
-					const isMapNote = cache?.frontmatter?.type === 'map';
-					const isSchemaNote = cache?.frontmatter?.type === 'schema';
-					const isEventNote = cache?.frontmatter?.type === 'event';
+					const fm = cache?.frontmatter;
+					const hasCrId = !!fm?.cr_id;
+
+					// Use centralized note type detection (supports cr_type, type, and tags)
+					const detectionSettings = this.settings.noteTypeDetection;
+					const isPlace = isPlaceNote(fm, cache, detectionSettings);
+					const isSource = isSourceNote(fm, cache, detectionSettings);
+					const isMap = isMapNote(fm, cache, detectionSettings);
+					const isSchema = isSchemaNote(fm, cache, detectionSettings);
+					const isEvent = isEventNote(fm, cache, detectionSettings);
 
 					// Schema notes get schema-specific options
-					if (isSchemaNote) {
+					if (isSchema) {
 						menu.addSeparator();
 
-						const schemaName = cache?.frontmatter?.name || file.basename;
+						const schemaName = fm?.name || file.basename;
 
 						if (useSubmenu) {
 							menu.addItem((item) => {
@@ -918,11 +924,11 @@ export default class CanvasRootsPlugin extends Plugin {
 						}
 					}
 					// Map notes get map-specific options (open map view with this map selected)
-					else if (isMapNote) {
+					else if (isMap) {
 						menu.addSeparator();
 
-						const mapId = cache?.frontmatter?.map_id;
-						const mapName = cache?.frontmatter?.name || file.basename;
+						const mapId = fm?.map_id;
+						const mapName = fm?.name || file.basename;
 
 						if (useSubmenu) {
 							menu.addItem((item) => {
@@ -992,7 +998,7 @@ export default class CanvasRootsPlugin extends Plugin {
 						}
 					}
 					// Place notes with cr_id get place-specific options
-					else if (hasCrId && isPlaceNote) {
+					else if (hasCrId && isPlace) {
 						menu.addSeparator();
 
 						if (useSubmenu) {
@@ -1029,6 +1035,16 @@ export default class CanvasRootsPlugin extends Plugin {
 										.setIcon('edit')
 										.onClick(() => {
 											this.openEditPlaceModal(file);
+										});
+								});
+
+								// Geocode place
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Geocode place')
+										.setIcon('map-pin')
+										.onClick(async () => {
+											await this.geocodeSinglePlace(file);
 										});
 								});
 
@@ -1110,6 +1126,15 @@ export default class CanvasRootsPlugin extends Plugin {
 
 							menu.addItem((item) => {
 								item
+									.setTitle('Canvas Roots: Geocode place')
+									.setIcon('map-pin')
+									.onClick(async () => {
+										await this.geocodeSinglePlace(file);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
 									.setTitle('Canvas Roots: Add essential person properties')
 									.setIcon('user')
 									.onClick(async () => {
@@ -1146,7 +1171,7 @@ export default class CanvasRootsPlugin extends Plugin {
 						}
 					}
 					// Source notes with cr_id get source-specific options
-					else if (hasCrId && isSourceNote) {
+					else if (hasCrId && isSource) {
 						menu.addSeparator();
 
 						if (useSubmenu) {
@@ -1302,7 +1327,7 @@ export default class CanvasRootsPlugin extends Plugin {
 						}
 					}
 					// Person notes with cr_id get full person options
-					else if (hasCrId && !isPlaceNote && !isSourceNote && !isEventNote) {
+					else if (hasCrId && !isPlace && !isSource && !isEvent) {
 						menu.addSeparator();
 
 						if (useSubmenu) {
@@ -2090,7 +2115,7 @@ export default class CanvasRootsPlugin extends Plugin {
 						}
 					}
 					// Event notes with cr_id get event-specific options
-					else if (hasCrId && isEventNote) {
+					else if (hasCrId && isEvent) {
 						menu.addSeparator();
 
 						if (useSubmenu) {
@@ -3413,6 +3438,55 @@ export default class CanvasRootsPlugin extends Plugin {
 			placeGraph,
 			settings: this.settings
 		}).open();
+	}
+
+	/**
+	 * Geocode a single place note using Nominatim
+	 */
+	private async geocodeSinglePlace(file: TFile): Promise<void> {
+		const cache = this.app.metadataCache.getFileCache(file);
+		const fm = cache?.frontmatter;
+
+		if (!fm) {
+			new Notice('Could not read place frontmatter');
+			return;
+		}
+
+		// Check if already has coordinates
+		if (fm.latitude && fm.longitude) {
+			new Notice('Place already has coordinates');
+			return;
+		}
+
+		// Get the place name - prefer full_name, fall back to title or name
+		const placeName = fm.full_name || fm.title || fm.name || file.basename;
+
+		if (!placeName) {
+			new Notice('Could not determine place name for geocoding');
+			return;
+		}
+
+		// Get parent place name if available
+		let parentName: string | undefined;
+		if (fm.parent) {
+			const placeGraph = this.createPlaceGraphService();
+			placeGraph.reloadCache();
+			const parentPlace = placeGraph.getPlaceByCrId(fm.parent);
+			parentName = parentPlace?.name;
+		}
+
+		new Notice(`Geocoding "${placeName}"...`);
+
+		const geocodingService = new GeocodingService(this.app);
+		const result = await geocodingService.geocodeSingle(placeName, parentName);
+
+		if (result.success && result.coordinates) {
+			// Update the file with coordinates
+			await geocodingService.updatePlaceCoordinates(file, result.coordinates);
+			new Notice(`Found coordinates: ${result.coordinates.lat.toFixed(4)}, ${result.coordinates.long.toFixed(4)}`);
+		} else {
+			new Notice(result.error || 'Could not find coordinates for this place');
+		}
 	}
 
 	/**

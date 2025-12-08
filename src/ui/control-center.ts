@@ -38,6 +38,7 @@ import { TemplateSnippetsModal } from './template-snippets-modal';
 import { CreatePersonModal } from './create-person-modal';
 import { CreateMapModal } from './create-map-modal';
 import { renderWorldMapPreview } from '../maps/ui/world-map-preview';
+import { BulkGeocodeModal } from '../maps/ui/bulk-geocode-modal';
 import { CreateSchemaModal } from './create-schema-modal';
 import { SchemaService, ValidationService } from '../schemas';
 import type { SchemaNote, ValidationResult, ValidationSummary } from '../schemas';
@@ -4389,7 +4390,7 @@ export class ControlCenterModal extends Modal {
 				text: `✓ ${analysis.familyCount} families found`
 			});
 
-			// Extended stats from v2 (events, sources)
+			// Extended stats from v2 (events, sources, places)
 			if (analysis.eventCount > 0) {
 				results.createEl('p', {
 					text: `✓ ${analysis.eventCount} events found`
@@ -4398,6 +4399,11 @@ export class ControlCenterModal extends Modal {
 			if (analysis.sourceCount > 0) {
 				results.createEl('p', {
 					text: `✓ ${analysis.sourceCount} sources found`
+				});
+			}
+			if (analysis.uniquePlaces > 0) {
+				results.createEl('p', {
+					text: `✓ ${analysis.uniquePlaces} places found`
 				});
 			}
 
@@ -5252,6 +5258,27 @@ export class ControlCenterModal extends Modal {
 					this.app.commands.executeCommandById('canvas-roots:open-new-map-view');
 					this.close();
 				}));
+
+		// Bulk geocode places without coordinates
+		const placesWithoutCoords = places.filter(p =>
+			!p.coordinates && ['real', 'historical', 'disputed'].includes(p.category)
+		);
+
+		if (placesWithoutCoords.length > 0) {
+			new Setting(mapViewContent)
+				.setName('Bulk geocode places')
+				.setDesc(`${placesWithoutCoords.length} place${placesWithoutCoords.length !== 1 ? 's' : ''} without coordinates. Look up using OpenStreetMap.`)
+				.addButton(button => button
+					.setButtonText('Geocode')
+					.onClick(() => {
+						new BulkGeocodeModal(this.app, placeService, {
+							onComplete: () => {
+								// Refresh the Maps tab
+								this.showTab('maps');
+							}
+						}).open();
+					}));
+		}
 
 		container.appendChild(mapViewCard);
 

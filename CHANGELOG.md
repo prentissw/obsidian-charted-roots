@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.10.11] - 2025-12-07
+
+GEDCOM import improvements and enhanced place variation detection.
+
+### Added
+
+- **Geocode Place Context Menu Action**: Right-click any place note to look up coordinates via OpenStreetMap
+  - Uses note title and parent place for accurate geocoding
+  - Updates frontmatter with lat/long coordinates
+  - Works with both `cr_type: place` and `type: place` notes
+
+- **Enhanced Place Variation Detection**: "Find variations" now detects places with same name but different hierarchy
+  - Detects variations like "Greene County, Tennessee, USA" vs "Greene County Tennessee"
+  - Parses both comma-separated and space-separated place formats
+  - Recognizes US states and common countries in space-separated strings
+  - Matches places sharing base locality with common hierarchy elements
+
+### Fixed
+
+- **GEDCOM Importer Property Alignment**: Fixed place properties to match Place model
+  - Changed `parent` to `parent_place` for wikilink references
+  - Added `parent_place_id` with cr_id reference for reliable linking
+  - Fixed dedup cache to recognize both `type` and `cr_type` properties
+
+- **Place String Normalization**: GEDCOM importer now normalizes place strings before processing
+  - Handles leading commas, extra spaces, and empty hierarchy parts
+  - Applied during collection, event creation, and cache building
+  - Reduces duplicate place creation from inconsistent GEDCOM data
+
+- **Place Type Detection**: Added heuristics for inferring place types from names
+  - Detects counties, states, countries, cities, etc. from naming patterns
+  - Falls back gracefully when patterns don't match
+
+---
+
 ## [0.10.10] - 2025-12-07
 
 ### Fixed

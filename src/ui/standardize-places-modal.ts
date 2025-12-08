@@ -402,7 +402,8 @@ function findSimilarNames(
 			normalized === otherNormalized ||
 			isSubstringMatch(normalized, otherNormalized) ||
 			isAbbreviationMatch(name, place.name) ||
-			isPunctuationVariation(name, place.name)
+			isPunctuationVariation(name, place.name) ||
+			isHierarchyVariation(name, place.name)
 		) {
 			similar.push(place);
 		}
@@ -489,4 +490,106 @@ function isPunctuationVariation(a: string, b: string): boolean {
 	const bNoPunct = b.replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 
 	return aNoPunct === bNoPunct && a !== b;
+}
+
+/**
+ * Parse a place string into hierarchy parts
+ * Handles both comma-separated and space-separated formats
+ */
+function parsePlaceHierarchy(name: string): string[] {
+	// First try splitting by comma
+	let parts = name.split(',').map(p => p.trim()).filter(p => p.length > 0);
+
+	// If only one part and it has spaces, try to detect embedded hierarchy
+	// e.g., "Greene County Tennessee" -> ["Greene County", "Tennessee"]
+	if (parts.length === 1) {
+		const words = name.split(/\s+/);
+
+		// Look for state/country names at the end
+		const statePatterns = [
+			/^(alabama|alaska|arizona|arkansas|california|colorado|connecticut|delaware|florida|georgia|hawaii|idaho|illinois|indiana|iowa|kansas|kentucky|louisiana|maine|maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|nevada|new\s*hampshire|new\s*jersey|new\s*mexico|new\s*york|north\s*carolina|north\s*dakota|ohio|oklahoma|oregon|pennsylvania|rhode\s*island|south\s*carolina|south\s*dakota|tennessee|texas|utah|vermont|virginia|washington|west\s*virginia|wisconsin|wyoming)$/i,
+			/^(usa?|united\s*states|america|uk|england|scotland|wales|ireland|canada|australia|germany|france|italy|spain)$/i
+		];
+
+		// Try to find where the hierarchy split might be
+		for (let i = words.length - 1; i >= 1; i--) {
+			const potentialState = words.slice(i).join(' ');
+			for (const pattern of statePatterns) {
+				if (pattern.test(potentialState)) {
+					const locality = words.slice(0, i).join(' ');
+					if (locality.length > 0) {
+						parts = [locality, potentialState];
+						break;
+					}
+				}
+			}
+			if (parts.length > 1) break;
+		}
+	}
+
+	return parts.map(p => p.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim());
+}
+
+/**
+ * Extract the base locality name from a place hierarchy
+ * e.g., "Greene County" -> "greene county", "Greene" -> "greene"
+ */
+function extractBaseLocality(parts: string[]): string {
+	if (parts.length === 0) return '';
+	return parts[0];
+}
+
+/**
+ * Check if two places share the same base locality with different hierarchy depth
+ *
+ * Detects cases like:
+ * - "Greene County, Tennessee, USA" vs "Greene County Tennessee"
+ * - "Greene County, Tennessee" vs "Greene, Tennessee, USA"
+ * - "Scotland County, North Carolina" vs "Scotland County North Carolina USA"
+ */
+function isHierarchyVariation(a: string, b: string): boolean {
+	// Don't match identical strings
+	if (a === b) return false;
+
+	const partsA = parsePlaceHierarchy(a);
+	const partsB = parsePlaceHierarchy(b);
+
+	// Need at least one part each
+	if (partsA.length === 0 || partsB.length === 0) return false;
+
+	const baseA = extractBaseLocality(partsA);
+	const baseB = extractBaseLocality(partsB);
+
+	// Check if base localities match or one contains the other
+	// This handles "Greene County" matching "Greene"
+	const baseMatch = baseA === baseB ||
+		(baseA.includes(baseB) && baseB.length >= 4) ||
+		(baseB.includes(baseA) && baseA.length >= 4);
+
+	if (!baseMatch) return false;
+
+	// Check if they share at least one common hierarchy element (state/country)
+	// Skip the first element (base locality) and compare the rest
+	const hierarchyA = partsA.slice(1);
+	const hierarchyB = partsB.slice(1);
+
+	// If either has no hierarchy beyond base, require base to match exactly
+	if (hierarchyA.length === 0 || hierarchyB.length === 0) {
+		return baseA === baseB;
+	}
+
+	// Check for shared hierarchy elements
+	for (const elemA of hierarchyA) {
+		for (const elemB of hierarchyB) {
+			// Match if elements are equal or one contains the other
+			// This handles "USA" matching "United States" after normalization
+			if (elemA === elemB ||
+				(elemA.includes(elemB) && elemB.length >= 2) ||
+				(elemB.includes(elemA) && elemA.length >= 2)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }

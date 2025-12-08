@@ -3,13 +3,14 @@
  * Simple modal for creating new place notes
  */
 
-import { App, Modal, Setting, TFile, Notice, normalizePath, requestUrl } from 'obsidian';
+import { App, Modal, Setting, TFile, Notice, normalizePath } from 'obsidian';
 import { createPlaceNote, updatePlaceNote, PlaceData } from '../core/place-note-writer';
 import { PlaceCategory, PlaceType, PlaceNode, KNOWN_PLACE_TYPES } from '../models/place';
 import { createLucideIcon } from './lucide-icons';
 import { FamilyGraphService } from '../core/family-graph';
 import { PlaceGraphService } from '../core/place-graph';
 import { getDefaultPlaceCategory, CanvasRootsSettings } from '../settings';
+import { GeocodingService } from '../maps/services/geocoding-service';
 
 /**
  * Parent place option for dropdown
@@ -966,55 +967,26 @@ export class CreatePlaceModal extends Modal {
 			return;
 		}
 
-		// Build search query including parent place for better accuracy
-		let searchQuery = placeName;
-		if (this.placeData.parentPlace) {
-			// Strip wikilinks if present
-			const parentName = this.placeData.parentPlace.replace(/\[\[|\]\]/g, '');
-			searchQuery = `${placeName}, ${parentName}`;
-		}
+		new Notice(`Looking up coordinates for "${placeName}"...`);
 
-		new Notice(`Looking up coordinates for "${searchQuery}"...`);
+		const geocodingService = new GeocodingService(this.app);
+		const result = await geocodingService.geocodeSingle(placeName, this.placeData.parentPlace);
 
-		try {
-			// Use Nominatim API (free, but rate-limited to 1 request/second)
-			const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`;
-
-			const response = await requestUrl({
-				url,
-				headers: {
-					// Nominatim requires a User-Agent header
-					'User-Agent': 'CanvasRoots/0.7.0 (Obsidian Plugin)'
-				}
-			});
-
-			const results = response.json as unknown[];
-
-			if (!results || results.length === 0) {
-				new Notice(`No coordinates found for "${searchQuery}". Try a more specific name.`);
-				return;
-			}
-
-			const result = results[0] as { lat: string; lon: string; display_name: string };
-			const lat = parseFloat(result.lat);
-			const long = parseFloat(result.lon);
-
+		if (result.success && result.coordinates) {
 			// Update the data model
-			this.placeData.coordinates = { lat, long };
+			this.placeData.coordinates = result.coordinates;
 
 			// Update the input fields
 			if (this.latInputEl) {
-				this.latInputEl.value = lat.toFixed(6);
+				this.latInputEl.value = result.coordinates.lat.toFixed(6);
 			}
 			if (this.longInputEl) {
-				this.longInputEl.value = long.toFixed(6);
+				this.longInputEl.value = result.coordinates.long.toFixed(6);
 			}
 
-			new Notice(`Found: ${result.display_name}\nCoordinates: ${lat.toFixed(4)}, ${long.toFixed(4)}`);
-
-		} catch (error) {
-			console.error('Geocoding lookup failed:', error);
-			new Notice(`Failed to look up coordinates: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			new Notice(`Found: ${result.displayName}\nCoordinates: ${result.coordinates.lat.toFixed(4)}, ${result.coordinates.long.toFixed(4)}`);
+		} else {
+			new Notice(`No coordinates found for "${placeName}". ${result.error || 'Try a more specific name.'}`);
 		}
 	}
 
