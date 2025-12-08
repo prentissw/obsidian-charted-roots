@@ -62,7 +62,7 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Priority:** 📋 Medium — Unified timeline experience for fictional worldbuilders
 
-**Summary:** Deep integration with the [Calendarium](https://plugins.javalent.com/calendarium) plugin to enable shared calendar definitions, bidirectional event sync, and cross-calendar date translation. Particularly valuable for worldbuilders using fictional date systems.
+**Summary:** Integration with the [Calendarium](https://plugins.javalent.com/calendarium) plugin to share calendar definitions, eliminating duplicate configuration for worldbuilders. Designed to be invisible to users who don't need it—settings default to off, and no UI changes appear unless Calendarium is installed.
 
 **Integration Modes:**
 
@@ -72,11 +72,11 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 | Calendarium Primary | Canvas Roots reads Calendarium calendars | Existing Calendarium users |
 | Bidirectional | Full sync between both plugins | Power users wanting unified experience |
 
-**Planned Features:**
-- **Calendar Sharing:** Import calendar definitions from Calendarium, eliminating duplicate configuration
-- **Event Sync:** Display Calendarium events on Canvas Roots timelines
-- **Bidirectional Sync:** Create events in either plugin, sync to the other
-- **Cross-Calendar Translation:** Convert dates between different calendar systems (e.g., Third Age to real-world dates)
+**Phased Approach:**
+- **Phase 1 (recommended):** Import calendar definitions from Calendarium—delivers ~80% of value
+- **Phase 2:** Display Calendarium events on Canvas Roots timelines
+- **Phase 3:** Bidirectional sync between plugins
+- **Phase 4:** Cross-calendar date translation
 
 **Data Mapping:**
 

@@ -4,7 +4,39 @@
 
 This document outlines the integration between Canvas Roots and the [Calendarium](https://github.com/javalent/calendarium) plugin, enabling shared calendar definitions, bidirectional event sync, and cross-calendar date translation.
 
-**Target Users:** Worldbuilders using fictional date systems who want a unified timeline experience across both plugins.
+---
+
+## What is Calendarium?
+
+Calendarium is "the ultimate Obsidian plugin for crafting mind-bending fantasy and sci-fi calendars." It allows users to define custom calendars with:
+
+- **Custom months** - any number, any length, any names
+- **Custom weeks/weekdays**
+- **Leap days** with complex interval rules
+- **Multiple eras** (e.g., "Third Age", "Fourth Age")
+- **Named years**
+- **Seasons** with configurable dates
+- **Moons** with phase calculations
+
+Events are tracked via frontmatter fields (`fc-date`, `fc-calendar`, `fc-category`, etc.) or inline HTML spans.
+
+---
+
+## Why Integrate?
+
+**The problem:** Worldbuilders using Canvas Roots for fictional genealogies often also use Calendarium for their world's calendar. Currently, they must configure their calendar system in both plugins separately.
+
+**The solution:** Let Canvas Roots read Calendarium's calendar definitions, eliminating duplicate configuration.
+
+**Practical example:** A Middle-earth genealogist using both plugins could:
+- Define the Shire Reckoning calendar once in Calendarium
+- Have Canvas Roots automatically recognize that calendar for date entry
+- Optionally see Calendarium events on Canvas Roots timelines
+- Get proper date sorting even with complex fictional calendars
+
+**Target Users:** Worldbuilders using fictional date systems who want a unified timeline experience across both plugins. This integration adds little value for standard Gregorian genealogy users.
+
+**Design Principle:** The integration is designed to be invisible to users who don't need it. Settings default to off, no UI changes appear unless Calendarium is installed AND enabled, and existing fictional date systems continue to work independently.
 
 **Dependencies:**
 - Calendarium plugin (optional - graceful fallback when not installed)
@@ -105,6 +137,7 @@ interface CalDate {
 | `description` | `fc-description` | Event description |
 | `event_type` | `fc-category` | Mapped to Calendarium category ID |
 | `calendar_system` | `fc-calendar` | Which calendar this event uses |
+| (image path) | `fc-img` | Event image |
 
 ### Fictional Date Systems ↔ Calendarium Calendars
 
@@ -205,14 +238,59 @@ Add to Settings → Integrations section:
 
 ---
 
+## Effort Assessment
+
+### Phase 1 delivers 80% of the value
+
+**Phase 1 (Read-only calendar import)** eliminates the main pain point: duplicate calendar configuration. Users define their calendar once in Calendarium and Canvas Roots reads it. This is low-medium effort and should be implemented first.
+
+Phases 2-4 add incremental value but with increasing complexity. Consider shipping Phase 1, gathering user feedback, then deciding if deeper integration is warranted.
+
+### Effort Estimates
+
+| Phase | Effort | Value | Notes |
+|-------|--------|-------|-------|
+| Phase 1 | 1-2 days | High | Calendar import eliminates duplicate config |
+| Phase 2 | 2-3 days | Medium | Event display on timelines |
+| Phase 3 | 3-5 days | Low-Medium | Bidirectional sync, conflict handling |
+| Phase 4 | 1 day | Low | Leverages Calendarium's translate() API |
+
+### Third-Party Dependency Risk
+
+Calendarium is actively developed by a third party (javalent). While the plugin is mature and the API appears stable, breaking changes could affect integration. Mitigation:
+- Graceful fallback if API changes
+- Version checking if needed
+- Minimal coupling (read calendar definitions, don't depend on internal structures)
+
+---
+
+## Calendarium Date Model Complexity
+
+Calendarium's date model is significantly richer than Canvas Roots needs:
+
+| Calendarium Feature | Example | Canvas Roots Need? |
+|---------------------|---------|-------------------|
+| One-time dates | `TA 3001-3-15` | **Yes** - core use case |
+| Named months | `144-Ches-15` | **Yes** - for fictional calendars |
+| Eras | `TA`, `FA`, `SA` | **Yes** - already supported |
+| Date ranges | `fc-start` + `fc-end` | **Maybe** - for residences, occupations |
+| Recurring events | `*-*-15` (15th of every month) | **No** - genealogy events are one-time |
+| Wildcards | `*-March-*` (any day in March) | **No** |
+| Leap day logic | Complex interval rules | **No** - overkill for genealogy |
+
+**Recommendation:** Subset the model. Read Calendarium's calendar *definitions* (month names, eras) but only support one-time dates for events. Recurring events and complex leap day logic aren't relevant to genealogy use cases.
+
+---
+
 ## Planned Features
 
-### Phase 1: Calendar Import (Read-only)
+### Phase 1: Calendar Import (Read-only) — Recommended Starting Point
 
 - [ ] Detect Calendarium installation
 - [ ] Import calendar definitions (names, eras, months)
 - [ ] Display imported calendars in date system dropdown
 - [ ] Graceful fallback when Calendarium not installed
+- [ ] Hide integration settings entirely if Calendarium not installed
 
 ### Phase 2: Event Display
 
@@ -227,6 +305,8 @@ Add to Settings → Integrations section:
 - [ ] Map Canvas Roots event types to Calendarium categories
 - [ ] Handle conflicts (both plugins modify same event)
 - [ ] Sync status indicator in event notes
+
+**Complexity note:** Calendarium uses a Web Worker for file watching. Timing issues could arise when both plugins modify the same note. Thorough testing required.
 
 ### Phase 4: Cross-Calendar Features
 
