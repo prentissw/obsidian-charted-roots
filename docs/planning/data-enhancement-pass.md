@@ -446,9 +446,9 @@ Enhancement operations modify multiple files. We recommend:
 
 ## Implementation Status
 
-### Generate Place Notes - ✅ Complete
+### Generate Place Notes - ✅ Complete (v0.10.17)
 
-**Implemented in feature/data-enhancement-pass branch**
+**Merged to main in v0.10.17**
 
 Files created:
 - `src/enhancement/services/place-generator.ts` - PlaceGeneratorService with hierarchy parsing
@@ -469,6 +469,9 @@ Features:
 - Updates references to use wikilinks
 - Preview mode shows what will be created/modified
 - Matches existing place notes to avoid duplicates
+- Progress indicator during bulk generation with cancel support
+- Paginated results table with search/sort after completion
+- Edit button on each result to open Edit Place modal
 
 ### Generate Events from Dates - 📋 Planned
 

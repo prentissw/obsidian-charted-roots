@@ -1,6 +1,6 @@
 # Canvas Roots: Genealogical Family Tree Plugin for Obsidian
 
-[![Version](https://img.shields.io/badge/version-0.10.3-blue.svg)](https://github.com/banisterious/obsidian-canvas-roots/releases) [![Status](https://img.shields.io/badge/status-stable-green.svg)](docs/roadmap.md)
+[![Version](https://img.shields.io/badge/version-0.10.17-blue.svg)](https://github.com/banisterious/obsidian-canvas-roots/releases) [![Status](https://img.shields.io/badge/status-stable-green.svg)](docs/roadmap.md)
 
 **Canvas Roots** transforms structured genealogical data in your Markdown notes into beautifully laid-out family trees on the Obsidian Canvas. Designed for genealogists, historians, writers, and world-builders.
 
@@ -58,6 +58,7 @@
 | **Staging Workflow** | Isolated staging folder for safe import processing |
 | **Data Quality Tools** | Quality scores, 15+ issue types, batch normalization |
 | **Schema Validation** | User-defined schemas with required properties, type validation, enum constraints, and custom rules |
+| **Generate Place Notes** | Batch create place notes from references in person/event notes with hierarchy linking |
 
 ### Geographic Features
 

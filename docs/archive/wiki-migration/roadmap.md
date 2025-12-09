@@ -1,7 +1,7 @@
 # Canvas Roots: Development Roadmap
 
-> **Last Updated:** 2025-12-02
-> **Current Version:** v0.6.0
+> **Last Updated:** 2025-12-09
+> **Current Version:** v0.10.17
 
 This document outlines planned features for Canvas Roots. For release history and completed features, see [CHANGELOG.md](../CHANGELOG.md).
 
