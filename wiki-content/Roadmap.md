@@ -8,9 +8,10 @@ This document outlines planned features for Canvas Roots. For completed features
 
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
-  - [Calendarium Integration](#calendarium-integration) 📋 Medium
+  - [Sex/Gender Identity Expansion](#sexgender-identity-expansion) ⚡ High
   - [Export v2: Full Entity Export](#export-v2-full-entity-export) ⚡ High
   - [Data Enhancement Pass](#data-enhancement-pass) ⚡ High
+  - [Calendarium Integration](#calendarium-integration) 📋 Medium
   - [Print & PDF Export](#print--pdf-export) 📋 Medium
   - [Research & Analysis Tools](#research--analysis-tools) 📋 Medium
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
@@ -55,6 +56,36 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 | ⚡ High | Core workflow | Completes essential data portability |
 | 📋 Medium | User value | Highly requested sharing/output features |
 | 💡 Low | Specialized | Advanced use cases, niche workflows |
+
+---
+
+### Sex/Gender Identity Expansion
+
+**Priority:** ⚡ High — Inclusive handling for writers and worldbuilders
+
+**Summary:** More inclusive handling of sex and gender for writers and worldbuilders, while maintaining GEDCOM compatibility for genealogists. Leverages the existing Schema system for custom value definitions.
+
+**Current state:** The `sex` field follows GEDCOM standards (M/F) for historical record compatibility. The "Normalize sex values" batch operation standardizes variations to M/F.
+
+**Phased Approach:**
+
+| Phase | Feature | Complexity | Description |
+|-------|---------|------------|-------------|
+| 1 | Separate `gender_identity` field | Low | Optional field for gender identity, distinct from biological sex |
+| 2 | Schema-based sex/gender definitions | Done | Use existing Schema system to define allowed values per universe/collection |
+| 3 | Value Aliases for sex field | Low-Medium | Expand existing Value Aliases to support custom sex field mappings |
+| 4 | Configurable normalization | Medium | Option to skip sex normalization or use custom rules |
+
+**User personas:**
+- **Genealogist:** Uses `sex` field with GEDCOM M/F values; optionally `gender_identity` for living relatives or LGBTQ+ research
+- **Fiction writer / Worldbuilder:** Custom sex values via Schema, `gender_identity` field, flexible normalization
+
+**Implementation notes:**
+- Phase 2 already works—the [Schema system](Release-History#schema-validation-v063) supports `enum` types with custom `values` arrays, scoped by collection/universe
+- Value Aliases ([v0.9.4](Release-History#value-aliases-v094)) would need extension to cover the `sex` field
+- Export formats would need mapping for non-standard values
+
+See [Sex/Gender Identity Expansion Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/sex-gender-expansion.md) for implementation details.
 
 ---
 
