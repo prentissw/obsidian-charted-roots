@@ -958,6 +958,11 @@ export class CreatePlaceModal extends Modal {
 	/**
 	 * Look up coordinates using geocoding service (Nominatim)
 	 * Uses OpenStreetMap's Nominatim API for free geocoding
+	 *
+	 * For hierarchical place names (e.g., "Newport, Orleans, Vermont, USA"),
+	 * tries multiple search strategies:
+	 * 1. Full hierarchical string as-is
+	 * 2. First component with remaining parts as context
 	 */
 	private async lookupCoordinates(): Promise<void> {
 		const placeName = this.placeData.name?.trim();
@@ -967,10 +972,26 @@ export class CreatePlaceModal extends Modal {
 			return;
 		}
 
+		const geocodingService = new GeocodingService(this.app);
+		const isHierarchicalName = placeName.includes(',');
+
 		new Notice(`Looking up coordinates for "${placeName}"...`);
 
-		const geocodingService = new GeocodingService(this.app);
-		const result = await geocodingService.geocodeSingle(placeName, this.placeData.parentPlace);
+		// Strategy 1: Try the full name as-is (works well for simple names or well-formatted hierarchical names)
+		let result = await geocodingService.geocodeSingle(
+			placeName,
+			isHierarchicalName ? undefined : this.placeData.parentPlace
+		);
+
+		// Strategy 2: For hierarchical names, if Strategy 1 failed, try first component + rest as context
+		if (!result.success && isHierarchicalName) {
+			const parts = placeName.split(',').map(p => p.trim());
+			if (parts.length >= 2) {
+				const firstPart = parts[0];
+				const contextParts = parts.slice(1).join(', ');
+				result = await geocodingService.geocodeSingle(firstPart, contextParts);
+			}
+		}
 
 		if (result.success && result.coordinates) {
 			// Update the data model
