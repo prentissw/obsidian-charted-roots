@@ -19,7 +19,7 @@ interface DuplicatePlaceGroup {
 	/** Suggested canonical place (most complete data) */
 	suggestedCanonical: PlaceNode;
 	/** Reason these were grouped as duplicates */
-	matchReason: 'exact_name' | 'similar_name' | 'same_parent_and_name' | 'similar_full_name' | 'same_parent_shared_base';
+	matchReason: 'exact_name' | 'similar_name' | 'same_parent_and_name' | 'similar_full_name' | 'same_parent_shared_base' | 'state_abbreviation_variant';
 }
 
 interface MergeDuplicatePlacesOptions {
@@ -683,7 +683,7 @@ export class MergeDuplicatePlacesModal extends Modal {
 	/**
 	 * Get human-readable match reason text
 	 */
-	private getMatchReasonText(reason: 'exact_name' | 'similar_name' | 'same_parent_and_name' | 'similar_full_name' | 'same_parent_shared_base'): string {
+	private getMatchReasonText(reason: 'exact_name' | 'similar_name' | 'same_parent_and_name' | 'similar_full_name' | 'same_parent_shared_base' | 'state_abbreviation_variant'): string {
 		switch (reason) {
 			case 'exact_name':
 				return 'exact name match';
@@ -695,6 +695,8 @@ export class MergeDuplicatePlacesModal extends Modal {
 				return 'similar full name';
 			case 'same_parent_shared_base':
 				return 'same parent, shared base name';
+			case 'state_abbreviation_variant':
+				return 'state abbreviation variant';
 			default:
 				return 'potential duplicate';
 		}
@@ -1563,10 +1565,129 @@ export function findDuplicatePlaceNotes(app: App, options: FindDuplicatesOptions
 		}
 	}
 
+	// === Pass 5: Group places with state abbreviation variants ===
+	// This detects places like "Abbeville SC" and "Abbeville South Carolina"
+	// that differ only in state name format (abbreviated vs full)
+	//
+	// Strategy: Extract "base name + normalized state" from places that have a state component,
+	// then group by this normalized key. This catches:
+	// - "Abbeville SC" → key: "abbeville|south carolina"
+	// - "Abbeville South Carolina" → key: "abbeville|south carolina"
+	// - "Abbeville" (plain) → no state component, won't match
+	const stateNormalizedGroups = new Map<string, PlaceNode[]>();
+
+	for (const place of allPlaces) {
+		if (groupedPlaceIds.has(place.id)) continue;
+
+		// Extract base name and state component (if any)
+		// Try the place name first, then fall back to filename (basename without extension)
+		// This handles cases where title: "Abbeville" but filename is "Abbeville South Carolina.md"
+		let stateKey = extractBaseNameAndState(place.name);
+		if (!stateKey) {
+			// Extract filename from path (without .md extension)
+			const filename = place.filePath.split('/').pop()?.replace(/\.md$/, '') || '';
+			stateKey = extractBaseNameAndState(filename);
+		}
+
+		// Only group places that have a recognizable state component
+		if (!stateKey) continue;
+
+		if (!stateNormalizedGroups.has(stateKey)) {
+			stateNormalizedGroups.set(stateKey, []);
+		}
+		stateNormalizedGroups.get(stateKey)!.push(place);
+	}
+
+	// Create duplicate groups for places with the same base name + state
+	for (const [, placesWithSameKey] of stateNormalizedGroups) {
+		if (placesWithSameKey.length < 2) continue;
+
+		const suggestedCanonical = selectBestCanonical(placesWithSameKey, placeService);
+
+		groups.push({
+			places: placesWithSameKey,
+			suggestedCanonical,
+			matchReason: 'state_abbreviation_variant'
+		});
+
+		for (const place of placesWithSameKey) {
+			groupedPlaceIds.add(place.id);
+		}
+	}
+
 	// Sort groups by number of duplicates (most first)
 	groups.sort((a, b) => b.places.length - a.places.length);
 
 	return groups;
+}
+
+/**
+ * US State abbreviation to full name mapping
+ */
+const US_STATE_ABBREVIATIONS: Record<string, string> = {
+	'al': 'alabama', 'ak': 'alaska', 'az': 'arizona', 'ar': 'arkansas',
+	'ca': 'california', 'co': 'colorado', 'ct': 'connecticut', 'de': 'delaware',
+	'fl': 'florida', 'ga': 'georgia', 'hi': 'hawaii', 'id': 'idaho',
+	'il': 'illinois', 'in': 'indiana', 'ia': 'iowa', 'ks': 'kansas',
+	'ky': 'kentucky', 'la': 'louisiana', 'me': 'maine', 'md': 'maryland',
+	'ma': 'massachusetts', 'mi': 'michigan', 'mn': 'minnesota', 'ms': 'mississippi',
+	'mo': 'missouri', 'mt': 'montana', 'ne': 'nebraska', 'nv': 'nevada',
+	'nh': 'new hampshire', 'nj': 'new jersey', 'nm': 'new mexico', 'ny': 'new york',
+	'nc': 'north carolina', 'nd': 'north dakota', 'oh': 'ohio', 'ok': 'oklahoma',
+	'or': 'oregon', 'pa': 'pennsylvania', 'ri': 'rhode island', 'sc': 'south carolina',
+	'sd': 'south dakota', 'tn': 'tennessee', 'tx': 'texas', 'ut': 'utah',
+	'vt': 'vermont', 'va': 'virginia', 'wa': 'washington', 'wv': 'west virginia',
+	'wi': 'wisconsin', 'wy': 'wyoming', 'dc': 'district of columbia'
+};
+
+/**
+ * Full state name to normalized form mapping (for matching "South Carolina" to "south carolina")
+ */
+const US_STATE_FULL_NAMES: Set<string> = new Set(Object.values(US_STATE_ABBREVIATIONS));
+
+/**
+ * Extract base name and normalized state from a place name
+ * Returns a key like "abbeville|south carolina" or null if no state component found
+ *
+ * Handles patterns like:
+ * - "Abbeville SC" → "abbeville|south carolina"
+ * - "Abbeville South Carolina" → "abbeville|south carolina"
+ * - "Abbeville, SC" → "abbeville|south carolina"
+ * - "abbeville-south-carolina" → "abbeville|south carolina" (kebab-case)
+ * - "abbeville_south_carolina" → "abbeville|south carolina" (snake_case)
+ * - "Abbeville" → null (no state)
+ */
+function extractBaseNameAndState(name: string): string | null {
+	// Normalize: lowercase, replace hyphens/underscores with spaces, split on whitespace/comma
+	const normalized = name.toLowerCase().trim().replace(/[-_]/g, ' ');
+	const parts = normalized.split(/[\s,]+/).filter(p => p.length > 0);
+
+	if (parts.length < 2) return null;
+
+	// Check if the last part is a state abbreviation
+	const lastPart = parts[parts.length - 1];
+	if (US_STATE_ABBREVIATIONS[lastPart]) {
+		const baseName = parts.slice(0, -1).join(' ');
+		const stateName = US_STATE_ABBREVIATIONS[lastPart];
+		return `${baseName}|${stateName}`;
+	}
+
+	// Check if the last two parts form a two-word state name
+	if (parts.length >= 3) {
+		const lastTwoParts = `${parts[parts.length - 2]} ${parts[parts.length - 1]}`;
+		if (US_STATE_FULL_NAMES.has(lastTwoParts)) {
+			const baseName = parts.slice(0, -2).join(' ');
+			return `${baseName}|${lastTwoParts}`;
+		}
+	}
+
+	// Check if the last part is a single-word state name
+	if (US_STATE_FULL_NAMES.has(lastPart)) {
+		const baseName = parts.slice(0, -1).join(' ');
+		return `${baseName}|${lastPart}`;
+	}
+
+	return null;
 }
 
 /**
