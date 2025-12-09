@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-09 20:43:57 UTC
+ * - Generated: 2025-12-09 20:47:13 UTC
  * - Components: 30 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -7103,7 +7103,7 @@ settings:
    COMPONENT: DATA-QUALITY.CSS
    ========================================================================== */
 
-/* Component Size: 1064 lines, 20.71 KB */
+/* Component Size: 1086 lines, 21.27 KB */
 
 /**
  * Data Quality Tab Styles
@@ -8167,6 +8167,28 @@ settings:
 
 .cr-place-generator-row--error .cr-place-generator-create-btn {
   background-color: var(--color-red);
+}
+
+/* ==========================================================================
+   Warning Callout
+   ========================================================================== */
+
+.crc-warning-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--size-4-2);
+  padding: var(--size-4-3);
+  margin: var(--size-4-3) 0;
+  background-color: var(--background-modifier-warning);
+  border-radius: var(--radius-m);
+  color: var(--text-warning);
+  font-size: var(--font-ui-small);
+  line-height: 1.4;
+}
+
+.crc-warning-callout svg {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 
@@ -15711,11 +15733,11 @@ body.wide-timeline .view-content {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-09 20:43:57 UTC
+ * Build completed: 2025-12-09 20:47:13 UTC
  * Components processed: 30
- * Total lines: 15418
- * Total size: 302.62 KB
- * Build duration: 0.03 seconds
+ * Total lines: 15440
+ * Total size: 303.18 KB
+ * Build duration: 0.02 seconds
  *
  * Component breakdown:
  * - variables.css: 48 lines, 1.33 KB
@@ -15734,7 +15756,7 @@ body.wide-timeline .view-content {
  * - folder-scan.css: 155 lines, 2.56 KB
  * - relationship-calculator.css: 302 lines, 5.21 KB
  * - family-chart-view.css: 629 lines, 14.76 KB
- * - data-quality.css: 1064 lines, 20.71 KB
+ * - data-quality.css: 1086 lines, 21.27 KB
  * - relationships.css: 517 lines, 9.76 KB
  * - canvas-navigation.css: 683 lines, 14.64 KB
  * - map-view.css: 1904 lines, 38.98 KB
