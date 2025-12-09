@@ -11,7 +11,7 @@ This document outlines planned features for Canvas Roots. For completed features
   - [Sex/Gender Identity Expansion](#sexgender-identity-expansion) ⚡ High
   - [Export v2: Full Entity Export](#export-v2-full-entity-export) ⚡ High
   - [Calendarium Integration](#calendarium-integration) 📋 Medium
-  - [Print & PDF Export](#print--pdf-export) 📋 Medium
+  - [Reports & Print Export](#reports--print-export) 📋 Medium
   - [Research & Analysis Tools](#research--analysis-tools) 📋 Medium
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
 - [Future Considerations](#future-considerations)
@@ -170,23 +170,107 @@ See [Export v2 Planning Document](https://github.com/banisterious/obsidian-canva
 
 ---
 
-### Print & PDF Export
+### Reports & Print Export
 
-**Priority:** 📋 Medium — Tangible output for sharing with family members
+**Priority:** 📋 Medium — Tangible output for sharing and research documentation
 
-**Summary:** Generate print-ready and PDF outputs of family trees and reports.
+**Summary:** Generate structured reports and print-ready outputs for genealogists, writers, worldbuilders, and historians. Reports are saved as Markdown notes with wikilinks for seamless integration with Obsidian's linking and search.
 
-**Export Types:**
-- Pedigree Chart (ancestor-focused, 4-5 generations per page)
-- Descendant Chart
-- Family Group Sheet (single family with sources)
-- Full Tree Poster (large format)
+**User Personas:**
+- **Genealogists:** Family Group Sheets, Ahnentafel reports, source bibliographies
+- **Writers & Worldbuilders:** Character sheets, cast lists, faction rosters, age audits
+- **Historians:** Prosopography reports, cohort analysis, evidence matrices
 
-**Features:**
-- Page size presets (Letter, A4, custom, poster)
-- Multi-page output with page breaks
-- Privacy filter (exclude/anonymize living persons)
-- SVG and high-resolution PNG export
+---
+
+#### Report Types
+
+**Genealogy Reports (v1 Priority):**
+
+| Report | Description |
+|--------|-------------|
+| **Family Group Sheet** | Single family unit: couple + children with dates, places, sources |
+| **Individual Summary** | All known facts for one person with source citations |
+| **Ahnentafel Report** | Numbered ancestor list (1=subject, 2=father, 3=mother, etc.) |
+| **Register Report** | Descendants with genealogical numbering (NGSQ style) |
+| **Pedigree Chart** | Ancestor tree, 4-5 generations per page |
+| **Descendant Chart** | All descendants of an ancestor |
+
+**Worldbuilding Reports:**
+
+| Report | Description |
+|--------|-------------|
+| **Character Sheet** | Single character with relationships, events, affiliations |
+| **Cast List** | All characters filtered by universe/collection/faction |
+| **Organization Roster** | Members of a faction/guild/house with roles and dates |
+| **Faction Timeline** | Events filtered by group tag |
+| **Age Audit** | Characters' ages at key story dates (catch anachronisms) |
+| **Lifespan Overlap** | Which characters could have met? Matrix of overlapping lifetimes |
+
+**Historian Reports:**
+
+| Report | Description |
+|--------|-------------|
+| **Source Bibliography** | All sources with full citations, grouped by type |
+| **Evidence Matrix** | Facts vs. sources grid showing which sources support which claims |
+| **Cohort Analysis** | People sharing characteristics (occupation, location, time period) |
+| **Prosopography** | Collective biography of a defined group |
+
+---
+
+#### Output Formats
+
+| Format | Description | Use Case |
+|--------|-------------|----------|
+| **Markdown** | Note with wikilinks, embeddable | Primary format, Obsidian-native |
+| **PDF** | Print-ready via browser print | Sharing with family, archival |
+| **Dataview Query** | Live query instead of static snapshot | Dynamic reports that auto-update |
+
+**PDF Approach:** Reports generate Markdown with print-optimized CSS. Users print via browser (Ctrl/Cmd+P) for PDF. Power users can use Pandoc for advanced formatting.
+
+---
+
+#### UI & Workflow
+
+**Reports Tab:** New Control Center tab for report generation.
+
+**Report Modal:**
+1. Select report type
+2. Configure scope (person, collection, date range, place filter)
+3. Preview report
+4. Generate as Markdown note or copy to clipboard
+
+**Scope & Filtering:**
+- Filter by person (ancestors/descendants of X)
+- Filter by collection or universe
+- Filter by date range
+- Filter by place (events at location)
+- Privacy toggle (anonymize living persons)
+
+---
+
+#### v1 Priorities
+
+The first implementation will focus on:
+1. **Family Group Sheet** — Most requested, good template for other reports
+2. **Individual Summary** — Useful for all personas
+3. **Ahnentafel Report** — Standard genealogy output
+
+---
+
+#### Future Report Types
+
+These reports are under consideration for later phases:
+
+| Report | Description |
+|--------|-------------|
+| **Hourglass Chart** | Ancestors + descendants from a focal person |
+| **Fan Chart** | Circular ancestor display |
+| **Surname Report** | All people sharing a surname |
+| **Place Report** | All events/people at a location |
+| **Research Log** | Sources consulted, findings, next steps |
+| **Conflicting Evidence** | Facts with contradictory sources |
+| **Gaps Report** | Missing vital records by generation |
 
 ---
 
