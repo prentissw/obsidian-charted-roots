@@ -11,6 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.11.0] - 2025-12-10
+
+Export v2: Complete overhaul of export functionality with full entity support and round-trip fidelity.
+
+### Added
+
+- **Export v2: Full Entity Export** - Major upgrade to all export formats with complete data fidelity
+  - **Event export**: All life events (birth, death, marriage, residence, education, military, etc.) now export to GEDCOM, GEDCOM X, Gramps, and CSV formats
+  - **Source export**: Source notes with citations, repositories, and confidence levels
+  - **Place export**: Place hierarchy, coordinates, and categories preserved across all formats
+  - **Property alias integration**: Exporters now respect user-configured property names and values
+  - **Gender identity field**: New `gender_identity` field exported appropriately for each format
+  - **Custom relationships**: Export custom relationships (godparent, witness, guardian, legal, professional, social, feudal) as GEDCOM ASSO records with RELA descriptors, date ranges, and notes
+
+- **Enhanced Export UI** - Complete redesign of export interface with real-time feedback
+  - **Export statistics preview**: Real-time count of people, events, sources, places to be exported
+  - **Format version selector**: Choose GEDCOM 5.5.1 (legacy compatibility) or 7.0 (future-ready)
+  - **Entity inclusion toggles**: Granular control over which entity types to include
+  - **Output location options**: Download to system or save to vault folder
+  - **Export progress modal**: Full-screen progress tracking with detailed phase information
+  - **Last export info**: Display information about previous exports from vault
+  - **Consolidated UI components**: Shared ExportOptionsBuilder reduces code duplication across formats
+
+- **Round-trip fidelity**: Exports now preserve all data imported via GEDCOM Import v2
+  - Event dates with precision modifiers (exact, estimated, before, after, range)
+  - Source citations linked to events with page numbers and confidence levels
+  - Place hierarchy with coordinates
+  - Privacy protection with configurable display formats
+
+---
+
 ## [0.10.20] - 2025-12-10
 
 Phase 1 of Sex/Gender Identity Expansion: distinct gender identity field support.

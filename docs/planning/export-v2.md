@@ -1619,30 +1619,29 @@ const SENSITIVE_FIELDS: SensitiveFieldConfig[] = [
 ### v1.1 Extended Features (Phases 7-8)
 
 **Nice-to-have, can be deferred:**
-- ⚠️ Phase 7: Organization & Custom Relationship Export
-  - Decision: **Defer organizations to v1.1** (genealogists rarely need this)
-  - Decision: **Include custom relationships in v1** via ASSO records (low complexity)
+- ✅ Phase 7: Custom Relationship Export **COMPLETE**
+  - ✅ Custom relationships exported via GEDCOM ASSO records
+  - ✅ Toggle option in GEDCOM export settings (enabled by default)
+  - ✅ Includes all relationship categories (family, legal, religious, professional, social, feudal)
+  - ✅ Date ranges exported in NOTE subrecords
+  - ✅ Only defined relationships exported (not inferred bidirectional ones)
+  - ⚠️ Organization export: **Defer to v1.1** (genealogists rarely need this)
 - ⚠️ Phase 8: Fictional Calendar System Support
   - Decision: **Defer to v1.1** (Calendarium integration not yet complete)
   - Workaround: Export fictional dates as-is in NOTE fields for now
 
 ### Critical Path for v1
 
-1. Implement PropertyAliasService integration (Phase 5) - **BLOCKING**
-2. Implement ValueAliasService integration (Phase 5) - **BLOCKING**
-3. Implement core entity export (Phases 1-3) - uses alias services
-4. Implement UI enhancements (Phase 4)
-5. Add gender_identity export (Phase 6) - simple addition
-6. Add custom relationships via ASSO (Phase 7 partial)
+1. ✅ Implement PropertyAliasService integration (Phase 5) - **COMPLETE**
+2. ✅ Implement ValueAliasService integration (Phase 5) - **COMPLETE**
+3. ✅ Implement core entity export (Phases 1-3) - **COMPLETE**
+4. ✅ Implement UI enhancements (Phase 4) - **COMPLETE**
+5. ✅ Add gender_identity export (Phase 6) - **COMPLETE**
+6. ✅ Add custom relationships via ASSO (Phase 7 partial) - **COMPLETE**
 
-**Estimated complexity:**
-- Phase 5 (Alias integration): 2-3 days (must update all 5 exporters)
-- Phases 1-3 (Entities): Already planned, ~5-7 days
-- Phase 4 (UI): Already planned, ~3-4 days
-- Phase 6 (Gender identity): 1 day (straightforward)
-- Phase 7 (Custom relationships): 1-2 days (ASSO records only)
+**Status: Export v2 COMPLETE**
 
-**Total: ~12-17 days for v1**
+All core phases (1-6) and custom relationships (Phase 7 partial) are now complete. Organizations and fictional calendar system support deferred to v1.1.
 
 ## Migration Path
 
