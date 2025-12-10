@@ -11,6 +11,8 @@ import { FolderFilterService } from '../core/folder-filter';
 import { getLogger } from '../core/logging';
 import { getErrorMessage } from '../core/error-utils';
 import { PrivacyService, type PrivacySettings } from '../core/privacy-service';
+import { PropertyAliasService } from '../core/property-alias-service';
+import { ValueAliasService } from '../core/value-alias-service';
 import {
 	type GedcomXDocument,
 	type GedcomXPerson,
@@ -78,6 +80,8 @@ export interface GedcomXExportResult {
 export class GedcomXExporter {
 	private app: App;
 	private graphService: FamilyGraphService;
+	private propertyAliasService: PropertyAliasService | null = null;
+	private valueAliasService: ValueAliasService | null = null;
 
 	constructor(app: App, folderFilter?: FolderFilterService) {
 		this.app = app;
@@ -85,6 +89,20 @@ export class GedcomXExporter {
 		if (folderFilter) {
 			this.graphService.setFolderFilter(folderFilter);
 		}
+	}
+
+	/**
+	 * Set property alias service for resolving custom property names
+	 */
+	setPropertyAliasService(service: PropertyAliasService): void {
+		this.propertyAliasService = service;
+	}
+
+	/**
+	 * Set value alias service for resolving custom property values
+	 */
+	setValueAliasService(service: ValueAliasService): void {
+		this.valueAliasService = service;
 	}
 
 	/**
@@ -350,8 +368,9 @@ export class GedcomXExporter {
 			});
 		}
 
-		// Build gender
-		const gender = this.convertGender(person.sex);
+		// Build gender (resolve using alias services)
+		const sexValue = this.resolveSexValue(person);
+		const gender = this.convertGender(sexValue);
 
 		// Build the person record
 		const gedcomXPerson: GedcomXPerson = {
@@ -514,17 +533,47 @@ export class GedcomXExporter {
 	}
 
 	/**
+	 * Resolve sex value using property and value alias services
+	 * Returns canonical sex value
+	 */
+	private resolveSexValue(person: PersonNode): string | undefined {
+		// Try to resolve sex from frontmatter using property aliases
+		let sexValue: string | undefined = person.sex;
+
+		// If property alias service is available, try to resolve from raw frontmatter
+		if (this.propertyAliasService) {
+			const cache = this.app.metadataCache.getFileCache(person.file);
+			if (cache?.frontmatter) {
+				const resolved = this.propertyAliasService.resolve(cache.frontmatter, 'sex');
+				if (resolved && typeof resolved === 'string') {
+					sexValue = resolved;
+				}
+			}
+		}
+
+		// If we have a sex value, resolve it using value alias service
+		if (sexValue && this.valueAliasService) {
+			return this.valueAliasService.resolve('sex', sexValue);
+		}
+
+		return sexValue;
+	}
+
+	/**
 	 * Convert internal sex format to GEDCOM X gender type
 	 */
 	private convertGender(sex?: string): string | null {
 		if (!sex) return null;
 
-		const normalized = sex.toUpperCase();
-		if (normalized === 'M' || normalized === 'MALE') {
+		const normalized = sex.toLowerCase();
+		if (normalized === 'm' || normalized === 'male') {
 			return GEDCOMX_TYPES.MALE;
 		}
-		if (normalized === 'F' || normalized === 'FEMALE') {
+		if (normalized === 'f' || normalized === 'female') {
 			return GEDCOMX_TYPES.FEMALE;
+		}
+		if (normalized === 'nonbinary') {
+			return GEDCOMX_TYPES.UNKNOWN; // GEDCOM X doesn't have nonbinary, use unknown
 		}
 
 		return GEDCOMX_TYPES.UNKNOWN;

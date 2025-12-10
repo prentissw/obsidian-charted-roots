@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-10 17:40:06 UTC
+ * - Generated: 2025-12-10 18:06:04 UTC
  * - Components: 30 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -15766,7 +15766,7 @@ body.wide-timeline .view-content {
    COMPONENT: PREFERENCES.CSS
    ========================================================================== */
 
-/* Component Size: 184 lines, 3.85 KB */
+/* Component Size: 189 lines, 4.02 KB */
 
 /* ==========================================================================
    Preferences Tab Styles
@@ -15939,6 +15939,11 @@ body.wide-timeline .view-content {
   padding: 0;
 }
 
+/* Add extra left padding to setting items in property sections */
+.cr-property-section-content .setting-item {
+  padding-left: calc(var(--size-4-6) + var(--cr-spacing-md));
+}
+
 /* Remove top border from first setting in section */
 .cr-property-section-content .setting-item:first-child {
   border-top: none;
@@ -16023,11 +16028,11 @@ body.wide-timeline .view-content {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-10 17:40:06 UTC
+ * Build completed: 2025-12-10 18:06:04 UTC
  * Components processed: 30
- * Total lines: 15730
- * Total size: 309.26 KB
- * Build duration: 0.03 seconds
+ * Total lines: 15735
+ * Total size: 309.43 KB
+ * Build duration: 0.02 seconds
  *
  * Component breakdown:
  * - variables.css: 48 lines, 1.33 KB
@@ -16056,7 +16061,7 @@ body.wide-timeline .view-content {
  * - timeline-callouts.css: 307 lines, 9.73 KB
  * - organizations.css: 245 lines, 4.36 KB
  * - sources.css: 1613 lines, 31.53 KB
- * - preferences.css: 184 lines, 3.85 KB
+ * - preferences.css: 189 lines, 4.02 KB
  * - animations.css: 16 lines, 0.18 KB
  * - responsive.css: 9 lines, 0.13 KB
  * - theme.css: 11 lines, 0.19 KB

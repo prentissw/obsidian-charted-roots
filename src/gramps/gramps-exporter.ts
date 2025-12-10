@@ -11,6 +11,8 @@ import { FolderFilterService } from '../core/folder-filter';
 import { getLogger } from '../core/logging';
 import { getErrorMessage } from '../core/error-utils';
 import { PrivacyService, type PrivacySettings } from '../core/privacy-service';
+import { PropertyAliasService } from '../core/property-alias-service';
+import { ValueAliasService } from '../core/value-alias-service';
 
 const logger = getLogger('GrampsExporter');
 
@@ -80,6 +82,8 @@ interface GrampsExportContext {
 export class GrampsExporter {
 	private app: App;
 	private graphService: FamilyGraphService;
+	private propertyAliasService: PropertyAliasService | null = null;
+	private valueAliasService: ValueAliasService | null = null;
 
 	constructor(app: App, folderFilter?: FolderFilterService) {
 		this.app = app;
@@ -87,6 +91,20 @@ export class GrampsExporter {
 		if (folderFilter) {
 			this.graphService.setFolderFilter(folderFilter);
 		}
+	}
+
+	/**
+	 * Set property alias service for resolving custom property names
+	 */
+	setPropertyAliasService(service: PropertyAliasService): void {
+		this.propertyAliasService = service;
+	}
+
+	/**
+	 * Set value alias service for resolving custom property values
+	 */
+	setValueAliasService(service: ValueAliasService): void {
+		this.valueAliasService = service;
 	}
 
 	/**
@@ -417,8 +435,9 @@ ${families.xml}
 
 			personLines.push(`    <person handle="${handle}" id="I${personCounter++}">`);
 
-			// Gender
-			const gender = this.convertGender(person.sex);
+			// Gender (resolve using alias services)
+			const sexValue = this.resolveSexValue(person);
+			const gender = this.convertGender(sexValue);
 			personLines.push(`      <gender>${gender}</gender>`);
 
 			// Name
@@ -612,14 +631,42 @@ ${families.xml}
 	}
 
 	/**
+	 * Resolve sex value using property and value alias services
+	 * Returns canonical sex value
+	 */
+	private resolveSexValue(person: PersonNode): string | undefined {
+		// Try to resolve sex from frontmatter using property aliases
+		let sexValue: string | undefined = person.sex;
+
+		// If property alias service is available, try to resolve from raw frontmatter
+		if (this.propertyAliasService) {
+			const cache = this.app.metadataCache.getFileCache(person.file);
+			if (cache?.frontmatter) {
+				const resolved = this.propertyAliasService.resolve(cache.frontmatter, 'sex');
+				if (resolved && typeof resolved === 'string') {
+					sexValue = resolved;
+				}
+			}
+		}
+
+		// If we have a sex value, resolve it using value alias service
+		if (sexValue && this.valueAliasService) {
+			return this.valueAliasService.resolve('sex', sexValue);
+		}
+
+		return sexValue;
+	}
+
+	/**
 	 * Convert internal sex format to Gramps gender
 	 */
 	private convertGender(sex?: string): string {
 		if (!sex) return 'U';
 
-		const normalized = sex.toUpperCase();
-		if (normalized === 'M' || normalized === 'MALE') return 'M';
-		if (normalized === 'F' || normalized === 'FEMALE') return 'F';
+		const normalized = sex.toLowerCase();
+		if (normalized === 'm' || normalized === 'male') return 'M';
+		if (normalized === 'f' || normalized === 'female') return 'F';
+		if (normalized === 'nonbinary' || normalized === 'unknown') return 'U';
 		return 'U';
 	}
 
