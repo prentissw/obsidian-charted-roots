@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Unified Property Configuration UI**: Complete redesign of property alias configuration in Preferences tab
+  - Shows all 55 aliasable properties (27 Person, 20 Event, 8 Place) in one unified interface
+  - Collapsible sections by entity type with lazy rendering for performance
+  - Search/filter functionality across property names, descriptions, and common aliases
+  - Inline Obsidian Setting components with auto-save on blur
+  - Replaced modal-based workflow with native Obsidian UI patterns
+
+### Fixed
+
+- **Property alias validation blocking partial input**: Fixed validation triggering on every keystroke, preventing users from typing values that start with existing property names (e.g., "sex2")
+  - Validation now only occurs when field loses focus (blur event)
+  - Invalid input restores previous valid value instead of blocking typing
+
+---
+
 ## [0.10.18] - 2025-12-09
 
 Property alias support across all note creation and comprehensive bug fixes.
