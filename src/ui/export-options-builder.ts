@@ -36,6 +36,10 @@ export interface ExportOptions {
 		sources: boolean;
 		places: boolean;
 	};
+	/** Output destination */
+	outputDestination: 'download' | 'vault';
+	/** Output folder path (when saving to vault) */
+	outputFolder: string;
 }
 
 /**
@@ -69,7 +73,9 @@ export class ExportOptionsBuilder {
 				events: true,
 				sources: true,
 				places: true
-			}
+			},
+			outputDestination: 'download',
+			outputFolder: ''
 		};
 	}
 
@@ -491,6 +497,69 @@ export class ExportOptionsBuilder {
 		placesSetting.settingEl.addClass('crc-entity-inclusion__item');
 
 		return entitySection;
+	}
+
+	/**
+	 * Build output location selector
+	 */
+	public buildOutputLocation(container: HTMLElement): HTMLElement {
+		const locationSection = container.createDiv({ cls: 'crc-output-location crc-mb-4' });
+
+		locationSection.createEl('div', {
+			cls: 'crc-output-location__title',
+			text: 'Output location'
+		});
+
+		// Radio buttons for destination
+		const destinationContainer = locationSection.createDiv({ cls: 'crc-output-location__destinations' });
+
+		const downloadOption = destinationContainer.createDiv({
+			cls: 'crc-output-option crc-output-option--selected'
+		});
+		downloadOption.createEl('div', { cls: 'crc-output-option__radio' });
+		const downloadContent = downloadOption.createDiv({ cls: 'crc-output-option__content' });
+		downloadContent.createEl('div', { cls: 'crc-output-option__title', text: 'Download file' });
+		downloadContent.createEl('div', { cls: 'crc-output-option__desc', text: 'Save to your downloads folder' });
+
+		const vaultOption = destinationContainer.createDiv({ cls: 'crc-output-option' });
+		vaultOption.createEl('div', { cls: 'crc-output-option__radio' });
+		const vaultContent = vaultOption.createDiv({ cls: 'crc-output-option__content' });
+		vaultContent.createEl('div', { cls: 'crc-output-option__title', text: 'Save to vault' });
+		vaultContent.createEl('div', { cls: 'crc-output-option__desc', text: 'Save to a folder in your vault' });
+
+		// Folder path input (hidden initially)
+		const folderPathContainer = locationSection.createDiv({ cls: 'crc-output-location__folder-path cr-hidden' });
+		const folderSetting = new Setting(folderPathContainer)
+			.setName('Vault folder')
+			.setDesc('Path to folder in vault (leave empty for vault root)')
+			.addText(text => text
+				.setPlaceholder('exports')
+				.setValue(this.options.outputFolder)
+				.onChange(value => {
+					this.options.outputFolder = value;
+					this.notifyChange();
+				})
+			);
+
+		// Download click handler
+		downloadOption.addEventListener('click', () => {
+			this.options.outputDestination = 'download';
+			downloadOption.addClass('crc-output-option--selected');
+			vaultOption.removeClass('crc-output-option--selected');
+			folderPathContainer.addClass('cr-hidden');
+			this.notifyChange();
+		});
+
+		// Vault click handler
+		vaultOption.addEventListener('click', () => {
+			this.options.outputDestination = 'vault';
+			vaultOption.addClass('crc-output-option--selected');
+			downloadOption.removeClass('crc-output-option--selected');
+			folderPathContainer.removeClass('cr-hidden');
+			this.notifyChange();
+		});
+
+		return locationSection;
 	}
 
 	/**

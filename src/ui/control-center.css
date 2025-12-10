@@ -630,3 +630,99 @@
   font-size: 12px;
   color: var(--text-muted);
 }
+
+/* Output Location Selector */
+.crc-output-location {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.crc-output-location__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 12px;
+}
+
+.crc-output-location__destinations {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crc-output-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.crc-output-option:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
+.crc-output-option--selected {
+  background: var(--background-primary-alt);
+  border-color: var(--interactive-accent);
+  border-width: 2px;
+}
+
+.crc-output-option__radio {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--text-muted);
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.15s ease;
+}
+
+.crc-output-option--selected .crc-output-option__radio {
+  border-color: var(--interactive-accent);
+}
+
+.crc-output-option--selected .crc-output-option__radio::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: var(--interactive-accent);
+  border-radius: 50%;
+}
+
+.crc-output-option__content {
+  flex: 1;
+}
+
+.crc-output-option__title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-normal);
+  margin-bottom: 2px;
+}
+
+.crc-output-option__desc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.crc-output-location__folder-path {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.crc-output-location__folder-path .setting-item {
+  border: none;
+  padding: 4px 0;
+}
