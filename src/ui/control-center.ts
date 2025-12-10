@@ -7995,6 +7995,7 @@ export class ControlCenterModal extends Modal {
 		optionsBuilder.buildBranchFilter(content);
 		optionsBuilder.buildIncludeCollectionCodes(content);
 		optionsBuilder.buildPrivacyOverride(content);
+		optionsBuilder.buildEntityInclusion(content);
 		optionsBuilder.buildStatsPreview(content);
 
 		// Export file name
@@ -8290,6 +8291,7 @@ export class ControlCenterModal extends Modal {
 		optionsBuilder.buildCollectionFilter(content);
 		optionsBuilder.buildBranchFilter(content);
 		optionsBuilder.buildPrivacyOverride(content);
+		optionsBuilder.buildEntityInclusion(content);
 		optionsBuilder.buildStatsPreview(content);
 		optionsBuilder.buildFileNameInput(content, 'family-tree', '.json');
 
@@ -8658,6 +8660,7 @@ export class ControlCenterModal extends Modal {
 		optionsBuilder.buildCollectionFilter(content);
 		optionsBuilder.buildBranchFilter(content);
 		optionsBuilder.buildPrivacyOverride(content);
+		optionsBuilder.buildEntityInclusion(content);
 		optionsBuilder.buildStatsPreview(content);
 
 		// Export file name
@@ -8896,6 +8899,7 @@ export class ControlCenterModal extends Modal {
 		optionsBuilder.buildCollectionFilter(content);
 		optionsBuilder.buildBranchFilter(content);
 		optionsBuilder.buildPrivacyOverride(content);
+		optionsBuilder.buildEntityInclusion(content);
 		optionsBuilder.buildStatsPreview(content);
 
 		// Export file name

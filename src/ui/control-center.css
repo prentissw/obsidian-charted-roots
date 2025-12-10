@@ -587,3 +587,46 @@
   color: var(--text-muted);
   line-height: 1.4;
 }
+
+/* ==========================================================================
+   ENTITY INCLUSION CHECKBOXES
+   ========================================================================== */
+
+.crc-entity-inclusion {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.crc-entity-inclusion__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 12px;
+}
+
+.crc-entity-inclusion__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.crc-entity-inclusion__item {
+  padding: 4px 0;
+  border: none;
+}
+
+.crc-entity-inclusion__item .setting-item-info {
+  flex: 1;
+}
+
+.crc-entity-inclusion__item .setting-item-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.crc-entity-inclusion__item .setting-item-description {
+  font-size: 12px;
+  color: var(--text-muted);
+}

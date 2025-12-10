@@ -29,6 +29,13 @@ export interface ExportOptions {
 	gedcomVersion?: '5.5.1' | '7.0';
 	/** Include collection codes (for GEDCOM exports) */
 	includeCollectionCodes?: boolean;
+	/** Entity inclusion options */
+	includeEntities: {
+		people: boolean;
+		events: boolean;
+		sources: boolean;
+		places: boolean;
+	};
 }
 
 /**
@@ -56,7 +63,13 @@ export class ExportOptionsBuilder {
 			privacyOverrideEnabled: false,
 			privacyOverrideProtection: plugin.settings.enablePrivacyProtection,
 			privacyOverrideFormat: plugin.settings.privacyDisplayFormat,
-			exportFileName: 'family-tree'
+			exportFileName: 'family-tree',
+			includeEntities: {
+				people: true,
+				events: true,
+				sources: true,
+				places: true
+			}
 		};
 	}
 
@@ -410,6 +423,74 @@ export class ExportOptionsBuilder {
 			);
 
 		return setting;
+	}
+
+	/**
+	 * Build entity inclusion checkboxes
+	 */
+	public buildEntityInclusion(container: HTMLElement): HTMLElement {
+		const entitySection = container.createDiv({ cls: 'crc-entity-inclusion crc-mb-4' });
+
+		entitySection.createEl('div', {
+			cls: 'crc-entity-inclusion__title',
+			text: 'Include in export'
+		});
+
+		const entityList = entitySection.createDiv({ cls: 'crc-entity-inclusion__list' });
+
+		// People checkbox
+		const peopleSetting = new Setting(entityList)
+			.setName('People')
+			.setDesc('Include person records')
+			.addToggle(toggle => toggle
+				.setValue(this.options.includeEntities.people)
+				.onChange(value => {
+					this.options.includeEntities.people = value;
+					this.notifyChange();
+				})
+			);
+		peopleSetting.settingEl.addClass('crc-entity-inclusion__item');
+
+		// Events checkbox
+		const eventsSetting = new Setting(entityList)
+			.setName('Events')
+			.setDesc('Include event records')
+			.addToggle(toggle => toggle
+				.setValue(this.options.includeEntities.events)
+				.onChange(value => {
+					this.options.includeEntities.events = value;
+					this.notifyChange();
+				})
+			);
+		eventsSetting.settingEl.addClass('crc-entity-inclusion__item');
+
+		// Sources checkbox
+		const sourcesSetting = new Setting(entityList)
+			.setName('Sources')
+			.setDesc('Include source records')
+			.addToggle(toggle => toggle
+				.setValue(this.options.includeEntities.sources)
+				.onChange(value => {
+					this.options.includeEntities.sources = value;
+					this.notifyChange();
+				})
+			);
+		sourcesSetting.settingEl.addClass('crc-entity-inclusion__item');
+
+		// Places checkbox
+		const placesSetting = new Setting(entityList)
+			.setName('Places')
+			.setDesc('Include place records')
+			.addToggle(toggle => toggle
+				.setValue(this.options.includeEntities.places)
+				.onChange(value => {
+					this.options.includeEntities.places = value;
+					this.notifyChange();
+				})
+			);
+		placesSetting.settingEl.addClass('crc-entity-inclusion__item');
+
+		return entitySection;
 	}
 
 	/**
