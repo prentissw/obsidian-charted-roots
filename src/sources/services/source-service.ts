@@ -30,6 +30,19 @@ function fmToString(value: unknown): string {
 }
 
 /**
+ * Get the property name to write, respecting aliases
+ * If user has an alias for this canonical property, return the user's property name
+ */
+function getWriteProperty(canonical: string, aliases: Record<string, string>): string {
+	for (const [userProp, canonicalProp] of Object.entries(aliases)) {
+		if (canonicalProp === canonical) {
+			return userProp;
+		}
+	}
+	return canonical;
+}
+
+/**
  * Service for managing source notes
  */
 export class SourceService {
@@ -220,12 +233,16 @@ export class SourceService {
 		// Generate cr_id
 		const crId = generateCrId();
 
+		// Helper to get aliased property name
+		const aliases = this.settings.propertyAliases || {};
+		const prop = (canonical: string) => getWriteProperty(canonical, aliases);
+
 		// Build frontmatter
 		const frontmatterLines: string[] = [
 			'---',
-			'cr_type: source',
-			`cr_id: ${crId}`,
-			`title: "${data.title.replace(/"/g, '\\"')}"`,
+			`${prop('cr_type')}: source`,
+			`${prop('cr_id')}: ${crId}`,
+			`${prop('title')}: "${data.title.replace(/"/g, '\\"')}"`,
 			`source_type: ${data.sourceType}`
 		];
 
@@ -242,7 +259,7 @@ export class SourceService {
 			frontmatterLines.push(`source_repository_url: "${data.repositoryUrl}"`);
 		}
 		if (data.collection) {
-			frontmatterLines.push(`collection: "${data.collection.replace(/"/g, '\\"')}"`);
+			frontmatterLines.push(`${prop('collection')}: "${data.collection.replace(/"/g, '\\"')}"`);
 		}
 		if (data.location) {
 			frontmatterLines.push(`location: "${data.location.replace(/"/g, '\\"')}"`);
@@ -254,7 +271,7 @@ export class SourceService {
 			}
 		}
 		if (data.confidence) {
-			frontmatterLines.push(`confidence: ${data.confidence}`);
+			frontmatterLines.push(`${prop('confidence')}: ${data.confidence}`);
 		}
 		if (data.sourceQuality) {
 			frontmatterLines.push(`source_quality: ${data.sourceQuality}`);

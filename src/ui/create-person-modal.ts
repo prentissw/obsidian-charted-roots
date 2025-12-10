@@ -36,6 +36,7 @@ export class CreatePersonModal extends Modal {
 	// Edit mode properties
 	private editMode: boolean = false;
 	private editingFile?: TFile;
+	private propertyAliases: Record<string, string> = {};
 
 	constructor(
 		app: App,
@@ -45,6 +46,7 @@ export class CreatePersonModal extends Modal {
 			onCreated?: (file: TFile) => void;
 			onUpdated?: (file: TFile) => void;
 			familyGraph?: FamilyGraphService;
+			propertyAliases?: Record<string, string>;
 			// Edit mode options
 			editFile?: TFile;
 			editPersonData?: {
@@ -72,6 +74,7 @@ export class CreatePersonModal extends Modal {
 		this.onCreated = options?.onCreated;
 		this.onUpdated = options?.onUpdated;
 		this.familyGraph = options?.familyGraph;
+		this.propertyAliases = options?.propertyAliases || {};
 
 		// Check for edit mode
 		if (options?.editFile && options?.editPersonData) {
@@ -454,7 +457,8 @@ export class CreatePersonModal extends Modal {
 
 			const file = await createPersonNote(this.app, data, {
 				directory: this.directory,
-				openAfterCreate: true
+				openAfterCreate: true,
+				propertyAliases: this.propertyAliases
 			});
 
 			new Notice(`Created person note: ${file.basename}`);

@@ -1691,6 +1691,7 @@ export class ControlCenterModal extends Modal {
 					new CreatePersonModal(this.app, {
 						directory: this.plugin.settings.peopleFolder || '',
 						familyGraph: this.plugin.createFamilyGraphService(),
+						propertyAliases: this.plugin.settings.propertyAliases,
 						onCreated: () => {
 							// Refresh the People tab
 							this.showTab('people');
@@ -2206,6 +2207,7 @@ export class ControlCenterModal extends Modal {
 					collection: fm.collection
 				},
 				familyGraph: this.plugin.createFamilyGraphService(),
+				propertyAliases: this.plugin.settings.propertyAliases,
 				onUpdated: () => {
 					// Refresh the People tab
 					this.showTab('people');
@@ -5389,6 +5391,7 @@ export class ControlCenterModal extends Modal {
 				.onClick(() => {
 					new CreateMapModal(this.app, {
 						directory: this.plugin.settings.mapsFolder,
+						propertyAliases: this.plugin.settings.propertyAliases,
 						onCreated: () => {
 							// Refresh the maps grid after creation
 							void this.loadCustomMapsGrid(mapsGridContainer);
@@ -5577,6 +5580,7 @@ export class ControlCenterModal extends Modal {
 					new CreateMapModal(this.app, {
 						editFile: file,
 						editFrontmatter: frontmatter,
+						propertyAliases: this.plugin.settings.propertyAliases,
 						onCreated: () => {
 							// Refresh the maps grid after editing
 							void this.loadCustomMapsGrid(container);
@@ -5640,6 +5644,7 @@ export class ControlCenterModal extends Modal {
 						new CreateMapModal(this.app, {
 							editFile: file,
 							editFrontmatter: frontmatter,
+							propertyAliases: this.plugin.settings.propertyAliases,
 							onCreated: () => {
 								// Refresh the maps grid after editing
 								void this.loadCustomMapsGrid(gridContainer);
@@ -5827,6 +5832,7 @@ export class ControlCenterModal extends Modal {
 			new CreateMapModal(this.app, {
 				editFile: newFile,
 				editFrontmatter: newCache?.frontmatter,
+				propertyAliases: this.plugin.settings.propertyAliases,
 				onCreated: () => {
 					void this.loadCustomMapsGrid(gridContainer);
 				}

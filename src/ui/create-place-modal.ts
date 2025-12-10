@@ -1033,7 +1033,8 @@ export class CreatePlaceModal extends Modal {
 
 			const file = await createPlaceNote(this.app, this.placeData, {
 				directory: this.directory,
-				openAfterCreate: true
+				openAfterCreate: true,
+				propertyAliases: this.settings?.propertyAliases || {}
 			});
 
 			new Notice(`Created place note: ${file.basename}`);

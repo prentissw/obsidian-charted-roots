@@ -20,6 +20,19 @@ import { isOrganizationNote } from '../../utils/note-type-detection';
 const logger = getLogger('OrganizationService');
 
 /**
+ * Get the property name to write, respecting aliases
+ * If user has an alias for this canonical property, return the user's property name
+ */
+function getWriteProperty(canonical: string, aliases: Record<string, string>): string {
+	for (const [userProp, canonicalProp] of Object.entries(aliases)) {
+		if (canonicalProp === canonical) {
+			return userProp;
+		}
+	}
+	return canonical;
+}
+
+/**
  * Service for managing organization notes
  */
 export class OrganizationService {
@@ -207,15 +220,19 @@ export class OrganizationService {
 	): Promise<TFile> {
 		const folder = options?.folder || this.plugin.settings.organizationsFolder;
 
+		// Helper to get aliased property name
+		const aliases = this.plugin.settings.propertyAliases || {};
+		const prop = (canonical: string) => getWriteProperty(canonical, aliases);
+
 		// Generate cr_id
 		const crId = `org-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString(36)}`;
 
 		// Build frontmatter
 		const frontmatterLines = [
 			'---',
-			'cr_type: organization',
-			`cr_id: ${crId}`,
-			`name: "${name}"`,
+			`${prop('cr_type')}: organization`,
+			`${prop('cr_id')}: ${crId}`,
+			`${prop('name')}: "${name}"`,
 			`org_type: ${orgType}`
 		];
 
@@ -223,7 +240,7 @@ export class OrganizationService {
 			frontmatterLines.push(`parent_org: "${options.parentOrg}"`);
 		}
 		if (options?.universe) {
-			frontmatterLines.push(`universe: ${options.universe}`);
+			frontmatterLines.push(`${prop('universe')}: ${options.universe}`);
 		}
 		if (options?.founded) {
 			frontmatterLines.push(`founded: "${options.founded}"`);

@@ -19,6 +19,19 @@ import { isPlaceNote } from '../utils/note-type-detection';
 const logger = getLogger('PlaceNoteWriter');
 
 /**
+ * Get the property name to write, respecting aliases
+ * If user has an alias for this canonical property, return the user's property name
+ */
+function getWriteProperty(canonical: string, aliases: Record<string, string>): string {
+	for (const [userProp, canonicalProp] of Object.entries(aliases)) {
+		if (canonicalProp === canonical) {
+			return userProp;
+		}
+	}
+	return canonical;
+}
+
+/**
  * Place data for note creation
  */
 export interface PlaceData {
@@ -44,6 +57,8 @@ export interface CreatePlaceNoteOptions {
 	directory?: string;
 	/** Whether to open the note after creation (default: false) */
 	openAfterCreate?: boolean;
+	/** Property aliases for writing custom property names (user property → canonical) */
+	propertyAliases?: Record<string, string>;
 }
 
 /**
@@ -71,16 +86,19 @@ export async function createPlaceNote(
 	place: PlaceData,
 	options: CreatePlaceNoteOptions = {}
 ): Promise<TFile> {
-	const { directory = '', openAfterCreate = false } = options;
+	const { directory = '', openAfterCreate = false, propertyAliases = {} } = options;
+
+	// Helper to get aliased property name
+	const prop = (canonical: string) => getWriteProperty(canonical, propertyAliases);
 
 	// Generate cr_id if not provided
 	const crId = place.crId || generateCrId();
 
-	// Build frontmatter
+	// Build frontmatter with aliased property names
 	const frontmatter: Record<string, unknown> = {
-		cr_type: 'place',
-		cr_id: crId,
-		name: place.name || ''
+		[prop('cr_type')]: 'place',
+		[prop('cr_id')]: crId,
+		[prop('name')]: place.name || ''
 	};
 
 	// Aliases
@@ -90,27 +108,27 @@ export async function createPlaceNote(
 
 	// Category (only include if not default)
 	if (place.placeCategory && place.placeCategory !== DEFAULT_PLACE_CATEGORY) {
-		frontmatter.place_category = place.placeCategory;
+		frontmatter[prop('place_category')] = place.placeCategory;
 	}
 
 	// Place type
 	if (place.placeType) {
-		frontmatter.place_type = place.placeType;
+		frontmatter[prop('place_type')] = place.placeType;
 	}
 
 	// Universe (only for fictional/mythological/legendary places)
 	if (place.universe && isUniverseApplicable(place.placeCategory)) {
-		frontmatter.universe = place.universe;
+		frontmatter[prop('universe')] = place.universe;
 	}
 
 	// Parent place (dual storage)
 	if (place.parentPlaceId && place.parentPlace) {
-		frontmatter.parent_place = formatWikilink(place.parentPlace);
+		frontmatter[prop('parent_place')] = formatWikilink(place.parentPlace);
 		frontmatter.parent_place_id = place.parentPlaceId;
 	} else if (place.parentPlaceId) {
 		frontmatter.parent_place_id = place.parentPlaceId;
 	} else if (place.parentPlace) {
-		frontmatter.parent_place = formatWikilink(place.parentPlace);
+		frontmatter[prop('parent_place')] = formatWikilink(place.parentPlace);
 	}
 
 	// Coordinates (only for real/historical/disputed places) - flat properties
@@ -141,7 +159,7 @@ export async function createPlaceNote(
 
 	// Collection (user-defined grouping)
 	if (place.collection) {
-		frontmatter.collection = place.collection;
+		frontmatter[prop('collection')] = place.collection;
 	}
 
 	logger.debug('frontmatter', `Final: ${JSON.stringify(frontmatter)}`);

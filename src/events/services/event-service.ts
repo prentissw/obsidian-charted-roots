@@ -54,6 +54,19 @@ function resolveProperty(
 }
 
 /**
+ * Get the property name to write, respecting aliases
+ * If user has an alias for this canonical property, return the user's property name
+ */
+function getWriteProperty(canonical: string, aliases: Record<string, string>): string {
+	for (const [userProp, canonicalProp] of Object.entries(aliases)) {
+		if (canonicalProp === canonical) {
+			return userProp;
+		}
+	}
+	return canonical;
+}
+
+/**
  * Safely convert frontmatter value to string array
  */
 function fmToStringArray(value: unknown): string[] {
@@ -367,76 +380,80 @@ export class EventService {
 		// Generate cr_id
 		const crId = generateCrId();
 
+		// Helper to get aliased property name
+		const aliases = this.settings.propertyAliases || {};
+		const prop = (canonical: string) => getWriteProperty(canonical, aliases);
+
 		// Build frontmatter
 		const frontmatterLines: string[] = [
 			'---',
-			'cr_type: event',
-			`cr_id: ${crId}`,
-			`title: "${data.title.replace(/"/g, '\\"')}"`,
-			`event_type: ${data.eventType}`,
-			`date_precision: ${data.datePrecision}`
+			`${prop('cr_type')}: event`,
+			`${prop('cr_id')}: ${crId}`,
+			`${prop('title')}: "${data.title.replace(/"/g, '\\"')}"`,
+			`${prop('event_type')}: ${data.eventType}`,
+			`${prop('date_precision')}: ${data.datePrecision}`
 		];
 
 		if (data.date) {
-			frontmatterLines.push(`date: ${data.date}`);
+			frontmatterLines.push(`${prop('date')}: ${data.date}`);
 		}
 		if (data.dateEnd) {
-			frontmatterLines.push(`date_end: ${data.dateEnd}`);
+			frontmatterLines.push(`${prop('date_end')}: ${data.dateEnd}`);
 		}
 		if (data.person) {
-			frontmatterLines.push(`person: "${formatWikilink(data.person)}"`);
+			frontmatterLines.push(`${prop('person')}: "${formatWikilink(data.person)}"`);
 		}
 		if (data.persons && data.persons.length > 0) {
 			const formattedPersons = data.persons.map(p => formatWikilink(p));
-			frontmatterLines.push(`persons:`);
+			frontmatterLines.push(`${prop('persons')}:`);
 			for (const p of formattedPersons) {
 				frontmatterLines.push(`  - "${p}"`);
 			}
 		}
 		if (data.place) {
-			frontmatterLines.push(`place: "${formatWikilink(data.place)}"`);
+			frontmatterLines.push(`${prop('place')}: "${formatWikilink(data.place)}"`);
 		}
 		if (data.sources && data.sources.length > 0) {
 			const formattedSources = data.sources.map(s => formatWikilink(s));
-			frontmatterLines.push(`sources:`);
+			frontmatterLines.push(`${prop('sources')}:`);
 			for (const s of formattedSources) {
 				frontmatterLines.push(`  - "${s}"`);
 			}
 		}
 		if (data.confidence) {
-			frontmatterLines.push(`confidence: ${data.confidence}`);
+			frontmatterLines.push(`${prop('confidence')}: ${data.confidence}`);
 		}
 		if (data.description) {
-			frontmatterLines.push(`description: "${data.description.replace(/"/g, '\\"')}"`);
+			frontmatterLines.push(`${prop('description')}: "${data.description.replace(/"/g, '\\"')}"`);
 		}
 		if (data.isCanonical) {
-			frontmatterLines.push(`is_canonical: true`);
+			frontmatterLines.push(`${prop('is_canonical')}: true`);
 		}
 		if (data.universe) {
-			frontmatterLines.push(`universe: "${data.universe.replace(/"/g, '\\"')}"`);
+			frontmatterLines.push(`${prop('universe')}: "${data.universe.replace(/"/g, '\\"')}"`);
 		}
 		if (data.dateSystem) {
-			frontmatterLines.push(`date_system: ${data.dateSystem}`);
+			frontmatterLines.push(`${prop('date_system')}: ${data.dateSystem}`);
 		}
 		if (data.before && data.before.length > 0) {
 			const formattedBefore = data.before.map(b => formatWikilink(b));
-			frontmatterLines.push(`before:`);
+			frontmatterLines.push(`${prop('before')}:`);
 			for (const b of formattedBefore) {
 				frontmatterLines.push(`  - "${b}"`);
 			}
 		}
 		if (data.after && data.after.length > 0) {
 			const formattedAfter = data.after.map(a => formatWikilink(a));
-			frontmatterLines.push(`after:`);
+			frontmatterLines.push(`${prop('after')}:`);
 			for (const a of formattedAfter) {
 				frontmatterLines.push(`  - "${a}"`);
 			}
 		}
 		if (data.timeline) {
-			frontmatterLines.push(`timeline: "${formatWikilink(data.timeline)}"`);
+			frontmatterLines.push(`${prop('timeline')}: "${formatWikilink(data.timeline)}"`);
 		}
 		if (data.groups && data.groups.length > 0) {
-			frontmatterLines.push(`groups:`);
+			frontmatterLines.push(`${prop('groups')}:`);
 			for (const g of data.groups) {
 				frontmatterLines.push(`  - "${g.replace(/"/g, '\\"')}"`);
 			}

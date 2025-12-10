@@ -1009,7 +1009,8 @@ export default class CanvasRootsPlugin extends Plugin {
 											const { CreateMapModal } = await import('./src/ui/create-map-modal');
 											new CreateMapModal(this.app, {
 												editFile: file,
-												editFrontmatter: fm || {}
+												editFrontmatter: fm || {},
+												propertyAliases: this.settings.propertyAliases
 											}).open();
 										});
 								});
@@ -1054,7 +1055,8 @@ export default class CanvasRootsPlugin extends Plugin {
 										const { CreateMapModal } = await import('./src/ui/create-map-modal');
 										new CreateMapModal(this.app, {
 											editFile: file,
-											editFrontmatter: fm || {}
+											editFrontmatter: fm || {},
+											propertyAliases: this.settings.propertyAliases
 										}).open();
 									});
 							});
@@ -3799,7 +3801,8 @@ export default class CanvasRootsPlugin extends Plugin {
 				spouseNames: spouseNames.length > 0 ? spouseNames : undefined,
 				collection: fm.collection
 			},
-			familyGraph
+			familyGraph,
+			propertyAliases: this.settings.propertyAliases
 		}).open();
 	}
 

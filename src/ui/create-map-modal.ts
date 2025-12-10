@@ -17,6 +17,19 @@ function fmToString(value: unknown, fallback = ''): string {
 }
 
 /**
+ * Get the property name to write, respecting aliases
+ * If user has an alias for this canonical property, return the user's property name
+ */
+function getWriteProperty(canonical: string, aliases: Record<string, string>): string {
+	for (const [userProp, canonicalProp] of Object.entries(aliases)) {
+		if (canonicalProp === canonical) {
+			return userProp;
+		}
+	}
+	return canonical;
+}
+
+/**
  * Data structure for map note frontmatter
  */
 interface MapData {
@@ -100,6 +113,7 @@ export class CreateMapModal extends Modal {
 	private directory: string;
 	private onCreated?: (file: TFile) => void;
 	private onUpdated?: (file: TFile) => void;
+	private propertyAliases: Record<string, string>;
 
 	// Edit mode properties
 	private editMode: boolean = false;
@@ -118,6 +132,7 @@ export class CreateMapModal extends Modal {
 			directory?: string;
 			onCreated?: (file: TFile) => void;
 			onUpdated?: (file: TFile) => void;
+			propertyAliases?: Record<string, string>;
 			// Edit mode options
 			editFile?: TFile;
 			editFrontmatter?: Record<string, unknown>;
@@ -127,6 +142,7 @@ export class CreateMapModal extends Modal {
 		this.directory = options?.directory || '';
 		this.onCreated = options?.onCreated;
 		this.onUpdated = options?.onUpdated;
+		this.propertyAliases = options?.propertyAliases || {};
 
 		// Check for edit mode
 		if (options?.editFile && options?.editFrontmatter) {
@@ -581,11 +597,14 @@ export class CreateMapModal extends Modal {
 	 * Generate YAML frontmatter for the map note
 	 */
 	private generateFrontmatter(): string {
+		// Helper to get aliased property name
+		const prop = (canonical: string) => getWriteProperty(canonical, this.propertyAliases);
+
 		const lines: string[] = [
-			'cr_type: map',
+			`${prop('cr_type')}: map`,
 			`map_id: ${this.mapData.mapId}`,
-			`name: ${this.mapData.name}`,
-			`universe: ${this.mapData.universe}`,
+			`${prop('name')}: ${this.mapData.name}`,
+			`${prop('universe')}: ${this.mapData.universe}`,
 			`image: ${this.mapData.imagePath}`,
 			`coordinate_system: ${this.mapData.coordinateSystem}`
 		];
