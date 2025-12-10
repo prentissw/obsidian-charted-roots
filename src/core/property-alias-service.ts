@@ -46,9 +46,71 @@ export const CANONICAL_PERSON_PROPERTIES = [
 export type CanonicalPersonProperty = typeof CANONICAL_PERSON_PROPERTIES[number];
 
 /**
+ * Canonical event note properties that can be aliased
+ */
+export const CANONICAL_EVENT_PROPERTIES = [
+	// Core
+	'cr_id',
+	'cr_type',
+	'title',
+	'event_type',
+	// Dates
+	'date',
+	'date_end',
+	'date_precision',
+	'date_system',
+	// People
+	'person',      // Primary person involved
+	'persons',     // Multiple people involved (alias: participants)
+	// Location
+	'place',
+	// Sources and confidence
+	'sources',
+	'confidence',
+	// Description and metadata
+	'description',
+	'is_canonical',
+	'universe',
+	// Ordering
+	'before',
+	'after',
+	'timeline',
+	// Groups/factions
+	'groups'
+] as const;
+
+export type CanonicalEventProperty = typeof CANONICAL_EVENT_PROPERTIES[number];
+
+/**
+ * Canonical place note properties that can be aliased
+ */
+export const CANONICAL_PLACE_PROPERTIES = [
+	'cr_id',
+	'cr_type',
+	'name',
+	'place_type',
+	'parent_place',
+	'coordinates',
+	'universe',
+	'collection'
+] as const;
+
+export type CanonicalPlaceProperty = typeof CANONICAL_PLACE_PROPERTIES[number];
+
+/**
+ * All canonical properties across all note types
+ */
+export const ALL_CANONICAL_PROPERTIES = [
+	...CANONICAL_PERSON_PROPERTIES,
+	...CANONICAL_EVENT_PROPERTIES,
+	...CANONICAL_PLACE_PROPERTIES
+] as const;
+
+/**
  * Human-readable labels for canonical properties (for UI display)
  */
-export const CANONICAL_PROPERTY_LABELS: Record<CanonicalPersonProperty, string> = {
+export const CANONICAL_PROPERTY_LABELS: Record<string, string> = {
+	// Person properties
 	name: 'Name',
 	cr_id: 'CR ID',
 	type: 'Type',
@@ -72,7 +134,31 @@ export const CANONICAL_PROPERTY_LABELS: Record<CanonicalPersonProperty, string> 
 	universe: 'Universe',
 	image: 'Image',
 	sourced_facts: 'Sourced facts',
-	relationships: 'Relationships'
+	relationships: 'Relationships',
+	// Event properties
+	cr_type: 'CR type',
+	title: 'Title',
+	event_type: 'Event type',
+	date: 'Date',
+	date_end: 'End date',
+	date_precision: 'Date precision',
+	date_system: 'Date system',
+	person: 'Person',
+	persons: 'Persons/Participants',
+	place: 'Place',
+	sources: 'Sources',
+	confidence: 'Confidence',
+	description: 'Description',
+	is_canonical: 'Is canonical',
+	before: 'Before',
+	after: 'After',
+	timeline: 'Timeline',
+	groups: 'Groups',
+	// Place properties
+	place_type: 'Place type',
+	parent_place: 'Parent place',
+	coordinates: 'Coordinates',
+	collection: 'Collection'
 };
 
 /**

@@ -30,6 +30,30 @@ function fmToString(value: unknown): string {
 }
 
 /**
+ * Resolve a property from frontmatter using alias mapping
+ * Checks canonical property first, then falls back to aliases
+ */
+function resolveProperty(
+	frontmatter: Record<string, unknown>,
+	canonicalProperty: string,
+	aliases: Record<string, string>
+): unknown {
+	// Canonical property takes precedence
+	if (frontmatter[canonicalProperty] !== undefined) {
+		return frontmatter[canonicalProperty];
+	}
+
+	// Check aliases - find user property that maps to this canonical property
+	for (const [userProp, mappedCanonical] of Object.entries(aliases)) {
+		if (mappedCanonical === canonicalProperty && frontmatter[userProp] !== undefined) {
+			return frontmatter[userProp];
+		}
+	}
+
+	return undefined;
+}
+
+/**
  * Safely convert frontmatter value to string array
  */
 function fmToStringArray(value: unknown): string[] {
@@ -580,6 +604,9 @@ export class EventService {
 			return null;
 		}
 
+		// Get property aliases for resolving aliased property names
+		const aliases = this.settings.propertyAliases || {};
+
 		// Must have required fields
 		const crId = frontmatter.cr_id as string;
 		const title = frontmatter.title as string;
@@ -591,8 +618,9 @@ export class EventService {
 
 		// Parse date precision
 		let datePrecision: DatePrecision = 'unknown';
-		if (frontmatter.date_precision) {
-			const precision = fmToString(frontmatter.date_precision).toLowerCase();
+		const datePrecisionValue = resolveProperty(frontmatter, 'date_precision', aliases);
+		if (datePrecisionValue) {
+			const precision = fmToString(datePrecisionValue).toLowerCase();
 			if (['exact', 'month', 'year', 'decade', 'estimated', 'range', 'unknown'].includes(precision)) {
 				datePrecision = precision as DatePrecision;
 			}
@@ -600,12 +628,29 @@ export class EventService {
 
 		// Parse confidence
 		let confidence: EventConfidence = 'medium';
-		if (frontmatter.confidence) {
-			const conf = fmToString(frontmatter.confidence).toLowerCase();
+		const confidenceValue = resolveProperty(frontmatter, 'confidence', aliases);
+		if (confidenceValue) {
+			const conf = fmToString(confidenceValue).toLowerCase();
 			if (['high', 'medium', 'low', 'unknown'].includes(conf)) {
 				confidence = conf as EventConfidence;
 			}
 		}
+
+		// Resolve aliasable properties
+		const dateValue = resolveProperty(frontmatter, 'date', aliases);
+		const dateEndValue = resolveProperty(frontmatter, 'date_end', aliases);
+		const personValue = resolveProperty(frontmatter, 'person', aliases);
+		const personsValue = resolveProperty(frontmatter, 'persons', aliases);
+		const placeValue = resolveProperty(frontmatter, 'place', aliases);
+		const sourcesValue = resolveProperty(frontmatter, 'sources', aliases);
+		const descriptionValue = resolveProperty(frontmatter, 'description', aliases);
+		const isCanonicalValue = resolveProperty(frontmatter, 'is_canonical', aliases);
+		const universeValue = resolveProperty(frontmatter, 'universe', aliases);
+		const dateSystemValue = resolveProperty(frontmatter, 'date_system', aliases);
+		const beforeValue = resolveProperty(frontmatter, 'before', aliases);
+		const afterValue = resolveProperty(frontmatter, 'after', aliases);
+		const timelineValue = resolveProperty(frontmatter, 'timeline', aliases);
+		const groupsValue = resolveProperty(frontmatter, 'groups', aliases);
 
 		return {
 			file,
@@ -613,23 +658,23 @@ export class EventService {
 			crId,
 			title,
 			eventType,
-			date: frontmatter.date ? fmToString(frontmatter.date) : undefined,
-			dateEnd: frontmatter.date_end ? fmToString(frontmatter.date_end) : undefined,
+			date: dateValue ? fmToString(dateValue) : undefined,
+			dateEnd: dateEndValue ? fmToString(dateEndValue) : undefined,
 			datePrecision,
-			person: frontmatter.person ? fmToString(frontmatter.person) : undefined,
-			persons: fmToStringArray(frontmatter.persons),
-			place: frontmatter.place ? fmToString(frontmatter.place) : undefined,
-			sources: fmToStringArray(frontmatter.sources),
+			person: personValue ? fmToString(personValue) : undefined,
+			persons: fmToStringArray(personsValue),
+			place: placeValue ? fmToString(placeValue) : undefined,
+			sources: fmToStringArray(sourcesValue),
 			confidence,
-			description: frontmatter.description ? fmToString(frontmatter.description) : undefined,
-			isCanonical: frontmatter.is_canonical === true,
-			universe: frontmatter.universe ? fmToString(frontmatter.universe) : undefined,
-			dateSystem: frontmatter.date_system ? fmToString(frontmatter.date_system) : undefined,
-			before: fmToStringArray(frontmatter.before),
-			after: fmToStringArray(frontmatter.after),
-			timeline: frontmatter.timeline ? fmToString(frontmatter.timeline) : undefined,
+			description: descriptionValue ? fmToString(descriptionValue) : undefined,
+			isCanonical: isCanonicalValue === true,
+			universe: universeValue ? fmToString(universeValue) : undefined,
+			dateSystem: dateSystemValue ? fmToString(dateSystemValue) : undefined,
+			before: fmToStringArray(beforeValue),
+			after: fmToStringArray(afterValue),
+			timeline: timelineValue ? fmToString(timelineValue) : undefined,
 			sortOrder: typeof frontmatter.sort_order === 'number' ? frontmatter.sort_order : undefined,
-			groups: fmToStringArray(frontmatter.groups)
+			groups: fmToStringArray(groupsValue)
 		};
 	}
 
