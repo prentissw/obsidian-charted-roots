@@ -247,7 +247,7 @@ function renderAliasesCard(
 		PERSON_PROPERTY_METADATA,
 		propertyAliasService,
 		showTab,
-		true // open by default
+		false // closed by default
 	);
 
 	// Event properties section
