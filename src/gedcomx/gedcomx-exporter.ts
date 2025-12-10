@@ -13,6 +13,9 @@ import { getErrorMessage } from '../core/error-utils';
 import { PrivacyService, type PrivacySettings } from '../core/privacy-service';
 import { PropertyAliasService } from '../core/property-alias-service';
 import { ValueAliasService } from '../core/value-alias-service';
+import { EventService } from '../events/services/event-service';
+import type { EventNote } from '../events/types/event-types';
+import type { CanvasRootsSettings } from '../settings';
 import {
 	type GedcomXDocument,
 	type GedcomXPerson,
@@ -80,6 +83,7 @@ export interface GedcomXExportResult {
 export class GedcomXExporter {
 	private app: App;
 	private graphService: FamilyGraphService;
+	private eventService: EventService | null = null;
 	private propertyAliasService: PropertyAliasService | null = null;
 	private valueAliasService: ValueAliasService | null = null;
 
@@ -89,6 +93,13 @@ export class GedcomXExporter {
 		if (folderFilter) {
 			this.graphService.setFolderFilter(folderFilter);
 		}
+	}
+
+	/**
+	 * Set event service for loading event notes
+	 */
+	setEventService(settings: CanvasRootsSettings): void {
+		this.eventService = new EventService(this.app, settings);
 	}
 
 	/**
@@ -198,10 +209,19 @@ export class GedcomXExporter {
 				}
 			}
 
+			// Load events if event service is available
+			let allEvents: EventNote[] = [];
+			if (this.eventService) {
+				new Notice('Loading event notes...');
+				allEvents = this.eventService.getAllEvents();
+				logger.info('export', `Loaded ${allEvents.length} events`);
+			}
+
 			// Build GEDCOM X document
 			new Notice('Generating GEDCOM X data...');
 			const document = this.buildGedcomXDocument(
 				filteredPeople,
+				allEvents,
 				options,
 				privacyService
 			);
@@ -229,6 +249,7 @@ export class GedcomXExporter {
 	 */
 	private buildGedcomXDocument(
 		people: PersonNode[],
+		events: EventNote[],
 		options: GedcomXExportOptions,
 		privacyService: PrivacyService | null
 	): GedcomXDocument {
@@ -240,7 +261,7 @@ export class GedcomXExporter {
 
 		// Build persons
 		const persons: GedcomXPerson[] = people.map(person => {
-			return this.buildPerson(person, crIdToGedcomXId, privacyService);
+			return this.buildPerson(person, crIdToGedcomXId, events, privacyService);
 		});
 
 		// Build relationships
@@ -282,6 +303,7 @@ export class GedcomXExporter {
 	private buildPerson(
 		person: PersonNode,
 		crIdToGedcomXId: Map<string, string>,
+		events: EventNote[],
 		privacyService: PrivacyService | null
 	): GedcomXPerson {
 		const gedcomXId = crIdToGedcomXId.get(person.crId) || person.crId;
@@ -366,6 +388,12 @@ export class GedcomXExporter {
 				type: GEDCOMX_TYPES.OCCUPATION,
 				value: person.occupation
 			});
+		}
+
+		// Add event facts linked to this person
+		if (events.length > 0) {
+			const eventFacts = this.buildEventFacts(person, events);
+			facts.push(...eventFacts);
 		}
 
 		// Build gender (resolve using alias services)
@@ -606,5 +634,141 @@ export class GedcomXExporter {
 
 		// Return just the year
 		return `+${year}`;
+	}
+
+	/**
+	 * Map Canvas Roots event type to GEDCOM X fact type URI
+	 */
+	private eventTypeToGedcomXType(eventType: string): string | null {
+		const mapping: Record<string, string> = {
+			'birth': GEDCOMX_TYPES.BIRTH,
+			'death': GEDCOMX_TYPES.DEATH,
+			'marriage': GEDCOMX_TYPES.MARRIAGE,
+			'divorce': 'http://gedcomx.org/Divorce',
+			'burial': GEDCOMX_TYPES.BURIAL,
+			'cremation': 'http://gedcomx.org/Cremation',
+			'adoption': 'http://gedcomx.org/Adoption',
+			'baptism': GEDCOMX_TYPES.BAPTISM,
+			'christening': GEDCOMX_TYPES.CHRISTENING,
+			'confirmation': 'http://gedcomx.org/Confirmation',
+			'ordination': 'http://gedcomx.org/Ordination',
+			'graduation': 'http://gedcomx.org/Graduation',
+			'retirement': 'http://gedcomx.org/Retirement',
+			'residence': GEDCOMX_TYPES.RESIDENCE,
+			'occupation': GEDCOMX_TYPES.OCCUPATION,
+			'education': 'http://gedcomx.org/Education',
+			'military': 'http://gedcomx.org/MilitaryService',
+			'immigration': 'http://gedcomx.org/Immigration',
+			'emigration': 'http://gedcomx.org/Emigration',
+			'naturalization': 'http://gedcomx.org/Naturalization',
+			'census': 'http://gedcomx.org/Census',
+			'probate': 'http://gedcomx.org/Probate',
+			'will': 'http://gedcomx.org/Will',
+			'engagement': 'http://gedcomx.org/Engagement',
+			'annulment': 'http://gedcomx.org/Annulment'
+		};
+
+		return mapping[eventType] || null;
+	}
+
+	/**
+	 * Build event facts for a person
+	 * Returns GEDCOM X facts array for events linked to this person
+	 */
+	private buildEventFacts(person: PersonNode, events: EventNote[]): GedcomXFact[] {
+		const facts: GedcomXFact[] = [];
+
+		// Filter events that reference this person
+		const personEvents = events.filter(event => {
+			// Check if person is referenced in event.person field
+			if (event.person) {
+				const personLink = event.person.replace(/^\[\[/, '').replace(/\]\]$/, '').trim();
+				if (personLink === person.name || personLink === person.file.basename) {
+					return true;
+				}
+			}
+
+			// Check if person is in event.persons array
+			if (event.persons) {
+				for (const p of event.persons) {
+					const personLink = p.replace(/^\[\[/, '').replace(/\]\]$/, '').trim();
+					if (personLink === person.name || personLink === person.file.basename) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		});
+
+		// Build GEDCOM X facts for each event
+		for (const event of personEvents) {
+			const gedcomXType = this.eventTypeToGedcomXType(event.eventType);
+
+			if (gedcomXType) {
+				// Standard GEDCOM X event type
+				const fact: GedcomXFact = {
+					type: gedcomXType
+				};
+
+				// Add date if present
+				if (event.date) {
+					fact.date = {
+						original: event.date,
+						formal: this.formatFormalDate(event.date)
+					};
+				}
+
+				// Add place if present
+				if (event.place) {
+					const placeName = event.place.replace(/^\[\[/, '').replace(/\]\]$/, '').trim();
+					fact.place = {
+						original: placeName
+					};
+				}
+
+				// Add description as value if present
+				if (event.description || event.title) {
+					fact.value = event.description || event.title;
+				}
+
+				facts.push(fact);
+			} else if (event.eventType === 'custom' || event.eventType) {
+				// Custom event type - use generic fact type
+				const fact: GedcomXFact = {
+					type: 'http://gedcomx.org/Fact',
+					value: event.title || event.eventType
+				};
+
+				// Add date if present
+				if (event.date) {
+					fact.date = {
+						original: event.date,
+						formal: this.formatFormalDate(event.date)
+					};
+				}
+
+				// Add place if present
+				if (event.place) {
+					const placeName = event.place.replace(/^\[\[/, '').replace(/\]\]$/, '').trim();
+					fact.place = {
+						original: placeName
+					};
+				}
+
+				// Add description if present
+				if (event.description) {
+					if (fact.value) {
+						fact.value = `${fact.value}: ${event.description}`;
+					} else {
+						fact.value = event.description;
+					}
+				}
+
+				facts.push(fact);
+			}
+		}
+
+		return facts;
 	}
 }

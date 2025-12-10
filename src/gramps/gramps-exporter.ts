@@ -13,6 +13,9 @@ import { getErrorMessage } from '../core/error-utils';
 import { PrivacyService, type PrivacySettings } from '../core/privacy-service';
 import { PropertyAliasService } from '../core/property-alias-service';
 import { ValueAliasService } from '../core/value-alias-service';
+import { EventService } from '../events/services/event-service';
+import type { EventNote } from '../events/types/event-types';
+import type { CanvasRootsSettings } from '../settings';
 
 const logger = getLogger('GrampsExporter');
 
@@ -82,6 +85,7 @@ interface GrampsExportContext {
 export class GrampsExporter {
 	private app: App;
 	private graphService: FamilyGraphService;
+	private eventService: EventService | null = null;
 	private propertyAliasService: PropertyAliasService | null = null;
 	private valueAliasService: ValueAliasService | null = null;
 
@@ -91,6 +95,13 @@ export class GrampsExporter {
 		if (folderFilter) {
 			this.graphService.setFolderFilter(folderFilter);
 		}
+	}
+
+	/**
+	 * Set event service for loading event notes
+	 */
+	setEventService(settings: CanvasRootsSettings): void {
+		this.eventService = new EventService(this.app, settings);
 	}
 
 	/**
@@ -201,10 +212,19 @@ export class GrampsExporter {
 				}
 			}
 
+			// Load events if event service is available
+			let allEvents: EventNote[] = [];
+			if (this.eventService) {
+				new Notice('Loading event notes...');
+				allEvents = this.eventService.getAllEvents();
+				logger.info('export', `Loaded ${allEvents.length} events`);
+			}
+
 			// Build Gramps XML document
 			new Notice('Generating Gramps XML data...');
 			const xmlContent = this.buildGrampsXml(
 				filteredPeople,
+				allEvents,
 				options,
 				privacyService
 			);
@@ -232,6 +252,7 @@ export class GrampsExporter {
 	 */
 	private buildGrampsXml(
 		people: PersonNode[],
+		events: EventNote[],
 		options: GrampsExportOptions,
 		privacyService: PrivacyService | null
 	): { xml: string; familyCount: number; eventCount: number } {
@@ -250,9 +271,9 @@ export class GrampsExporter {
 		});
 
 		// Build XML sections
-		const events = this.buildEvents(people, context, privacyService);
+		const eventsXml = this.buildEvents(people, events, context, privacyService);
 		const places = this.buildPlaces(people, context);
-		const persons = this.buildPersons(people, context, privacyService);
+		const persons = this.buildPersons(people, events, context, privacyService);
 		const families = this.buildFamilies(people, context);
 
 		// Get current date
@@ -270,7 +291,7 @@ export class GrampsExporter {
       <resname>${this.escapeXml(options.sourceApp || 'Canvas Roots')}</resname>
     </researcher>
   </header>
-${events.xml}
+${eventsXml.xml}
 ${places.xml}
 ${persons.xml}
 ${families.xml}
@@ -280,7 +301,7 @@ ${families.xml}
 		return {
 			xml,
 			familyCount: families.count,
-			eventCount: events.count
+			eventCount: eventsXml.count
 		};
 	}
 
@@ -289,6 +310,7 @@ ${families.xml}
 	 */
 	private buildEvents(
 		people: PersonNode[],
+		events: EventNote[],
 		context: GrampsExportContext,
 		privacyService: PrivacyService | null
 	): { xml: string; count: number } {
@@ -370,6 +392,39 @@ ${families.xml}
 			}
 		}
 
+		// Add events from EventNote records
+		for (const event of events) {
+			const eventHandle = `_e${this.generateHandle(context)}`;
+			const eventKey = `event:${event.crId}`;
+			context.eventHandles.set(eventKey, eventHandle);
+
+			eventLines.push(`    <event handle="${eventHandle}" id="E${eventCounter++}">`);
+
+			// Map event type to Gramps event type
+			const grampsType = this.eventTypeToGrampsType(event.eventType);
+			eventLines.push(`      <type>${this.escapeXml(grampsType)}</type>`);
+
+			// Add date if present
+			if (event.date) {
+				eventLines.push(`      <dateval val="${this.escapeXml(this.formatDateForGramps(event.date))}"/>`);
+			}
+
+			// Add place if present
+			if (event.place) {
+				const placeName = event.place.replace(/^\[\[/, '').replace(/\]\]$/, '').trim();
+				const placeHandle = this.getOrCreatePlace(placeName, context);
+				eventLines.push(`      <place hlink="${placeHandle}"/>`);
+			}
+
+			// Add description if present
+			if (event.description || event.title) {
+				const description = event.description || event.title;
+				eventLines.push(`      <description>${this.escapeXml(description)}</description>`);
+			}
+
+			eventLines.push('    </event>');
+		}
+
 		if (eventLines.length === 0) {
 			return { xml: '  <events/>', count: 0 };
 		}
@@ -412,6 +467,7 @@ ${families.xml}
 	 */
 	private buildPersons(
 		people: PersonNode[],
+		events: EventNote[],
 		context: GrampsExportContext,
 		privacyService: PrivacyService | null
 	): { xml: string } {
@@ -475,6 +531,39 @@ ${families.xml}
 				const eventHandle = context.eventHandles.get(`occupation:${person.crId}`);
 				if (eventHandle) {
 					personLines.push(`      <eventref hlink="${eventHandle}" role="Primary"/>`);
+				}
+			}
+
+			// Add event references from EventNote records linked to this person
+			for (const event of events) {
+				// Check if this event is linked to this person
+				let isLinked = false;
+
+				// Check if person is referenced in event.person field
+				if (event.person) {
+					const personLink = event.person.replace(/^\[\[/, '').replace(/\]\]$/, '').trim();
+					if (personLink === person.name || personLink === person.file.basename) {
+						isLinked = true;
+					}
+				}
+
+				// Check if person is in event.persons array
+				if (!isLinked && event.persons) {
+					for (const p of event.persons) {
+						const personLink = p.replace(/^\[\[/, '').replace(/\]\]$/, '').trim();
+						if (personLink === person.name || personLink === person.file.basename) {
+							isLinked = true;
+							break;
+						}
+					}
+				}
+
+				// If linked, add event reference
+				if (isLinked) {
+					const eventHandle = context.eventHandles.get(`event:${event.crId}`);
+					if (eventHandle) {
+						personLines.push(`      <eventref hlink="${eventHandle}" role="Primary"/>`);
+					}
 				}
 			}
 
@@ -721,5 +810,45 @@ ${families.xml}
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
 			.replace(/'/g, '&apos;');
+	}
+
+	/**
+	 * Map Canvas Roots event type to Gramps event type
+	 */
+	private eventTypeToGrampsType(eventType: string): string {
+		const mapping: Record<string, string> = {
+			'birth': 'Birth',
+			'death': 'Death',
+			'marriage': 'Marriage',
+			'divorce': 'Divorce',
+			'burial': 'Burial',
+			'cremation': 'Cremation',
+			'adoption': 'Adoption',
+			'baptism': 'Baptism',
+			'christening': 'Baptism',
+			'confirmation': 'Confirmation',
+			'ordination': 'Ordination',
+			'graduation': 'Graduation',
+			'retirement': 'Retirement',
+			'residence': 'Residence',
+			'occupation': 'Occupation',
+			'education': 'Education',
+			'military': 'Military Service',
+			'immigration': 'Immigration',
+			'emigration': 'Emigration',
+			'naturalization': 'Naturalization',
+			'census': 'Census',
+			'probate': 'Probate',
+			'will': 'Will',
+			'engagement': 'Engagement',
+			'annulment': 'Annulment',
+			'bar_mitzvah': 'Bar Mitzvah',
+			'bas_mitzvah': 'Bas Mitzvah',
+			'blessing': 'Blessing',
+			'first_communion': 'First Communion'
+		};
+
+		// Return mapped type, or use the original event type if not mapped
+		return mapping[eventType] || eventType.charAt(0).toUpperCase() + eventType.slice(1);
 	}
 }
