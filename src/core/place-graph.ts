@@ -1016,13 +1016,16 @@ export class PlaceGraphService {
 	 * Creates a place reference from frontmatter values
 	 */
 	private createPlaceReference(
-		rawValue: string,
+		rawValue: unknown,
 		placeId: string | undefined,
 		personId: string,
 		referenceType: PlaceReferenceType
 	): PlaceReference {
+		// Normalize rawValue to string - frontmatter can contain arrays, objects, etc.
+		const normalizedValue = this.extractStringValue(rawValue);
+
 		// Check if it's a wikilink
-		const wikilinkMatch = rawValue.match(/\[\[([^\]]+)\]\]/);
+		const wikilinkMatch = normalizedValue.match(/\[\[([^\]]+)\]\]/);
 		let resolvedPlaceId = placeId;
 		let isLinked = false;
 
@@ -1040,7 +1043,7 @@ export class PlaceGraphService {
 		} else {
 			// Plain text reference (no wikilink, no ID) - try to match by name
 			// This handles GEDCOM imports which store places as plain text
-			const place = this.getPlaceByName(rawValue);
+			const place = this.getPlaceByName(normalizedValue);
 			if (place) {
 				resolvedPlaceId = place.id;
 				isLinked = true;
@@ -1049,7 +1052,7 @@ export class PlaceGraphService {
 
 		return {
 			placeId: resolvedPlaceId,
-			rawValue,
+			rawValue: normalizedValue,
 			isLinked,
 			referenceType,
 			personId

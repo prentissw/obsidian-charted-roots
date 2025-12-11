@@ -43,6 +43,8 @@ Data Quality: Parent conflict resolution, settings UX overhaul, and bidirectiona
   - Chart now properly shows descendants, siblings, and in-laws
   - Root cause: missing bidirectional children relationships in data transformation
 
+- **Places tab crash with non-string place values** - Fixed TypeError when place properties contain arrays or objects instead of strings
+
 - **Bidirectional relationship validation** - Fixed false positives and persistence issues
   - Now validates parent sex matches expected parent type (male → father, female → mother)
   - Prevents incorrect fixes like setting female as father_id or male as mother_id
