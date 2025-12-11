@@ -1299,18 +1299,13 @@ export class DataQualityService {
 					const parentField = shouldBeMother ? 'mother_id' : 'father_id';
 					const parentWikilinkField = shouldBeMother ? 'mother' : 'father';
 
-					// Check if the parent field has a different value (needs correction)
-					const childCache = this.app.metadataCache.getFileCache(issue.relatedPerson.file);
-					const existingParent = childCache?.frontmatter?.[parentField];
-
-					if (!existingParent || existingParent !== issue.person.crId) {
-						// Add or update parent in child
-						await this.updatePersonFrontmatter(issue.relatedPerson.file, {
-							[parentField]: issue.person.crId,
-							[parentWikilinkField]: `[[${issue.person.name || issue.person.file.basename}]]`
-						});
-						results.modified++;
-					}
+					// Apply the fix (detection phase already validated this)
+					// Don't check cache here - it may be stale from previous fixes in this batch
+					await this.updatePersonFrontmatter(issue.relatedPerson.file, {
+						[parentField]: issue.person.crId,
+						[parentWikilinkField]: `[[${issue.person.name || issue.person.file.basename}]]`
+					});
+					results.modified++;
 				} else if (issue.type === 'missing-spouse-in-spouse') {
 					// Add person to spouse's spouse_id array
 					await this.addToArrayField(issue.relatedPerson.file, 'spouse_id', issue.person.crId);
