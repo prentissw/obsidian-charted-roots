@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Batch Operations for Data Cleanup** - New batch operations in People tab for post-import data quality improvements
+  - **Remove duplicate relationships**: Detects and removes duplicate entries in spouse, spouse_id, children, and children_id arrays
+    - Preview modal with search, field filtering, and sorting
+    - Shows affected files and counts before applying
+    - Async operation with progress notices
+  - **Remove empty/placeholder values**: Cleans up common placeholder values from GEDCOM imports and data entry
+    - Removes 15+ placeholder patterns: (unknown), Unknown, N/A, ???, Empty, None, etc.
+    - Fixes malformed wikilinks with mismatched brackets: `[[unknown) ]]`
+    - Cleans leading commas in place values: `, , , Canada` → `Canada`
+    - Removes empty parent/spouse fields
+    - Preview modal with use case descriptions, search, filtering, and sorting
+    - Backup warning before applying changes
+
 ---
 
 ## [0.11.0] - 2025-12-10
