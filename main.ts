@@ -49,7 +49,7 @@ const logger = getLogger('CanvasRootsPlugin');
 export default class CanvasRootsPlugin extends Plugin {
 	settings: CanvasRootsSettings;
 	private fileModifyEventRef: EventRef | null = null;
-	private bidirectionalLinker: BidirectionalLinker | null = null;
+	public bidirectionalLinker: BidirectionalLinker | null = null;
 	private relationshipHistory: RelationshipHistoryService | null = null;
 	private folderFilter: FolderFilterService | null = null;
 	private eventService: EventService | null = null;

@@ -11,10 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Bidirectional relationship validation** - Fixed false positives when person has wrong sex value
+- **Bidirectional relationship validation** - Fixed false positives and persistence issues
   - Now validates parent sex matches expected parent type (male → father, female → mother)
   - Prevents incorrect fixes like setting female as father_id or male as mother_id
   - Resolves issue where spouses with children in their children_id array were incorrectly flagged
+  - Fixed issue where automatic bidirectional linker was reverting batch fix changes
+  - Batch fix operation now suspends automatic linking during updates to prevent interference
 
 ---
 

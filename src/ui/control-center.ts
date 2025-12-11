@@ -12821,17 +12821,26 @@ export class ControlCenterModal extends Modal {
 
 		new Notice('Fixing bidirectional relationship inconsistencies...');
 
-		const result = await dataQuality2.fixBidirectionalInconsistencies(inconsistencies);
+		// Suspend automatic bidirectional linking during batch operation
+		// to prevent interference with our updates
+		this.plugin.bidirectionalLinker?.suspend();
 
-		if (result.modified > 0) {
-			new Notice(`✓ Fixed ${result.modified} of ${result.processed} inconsistenc${result.processed === 1 ? 'y' : 'ies'}`);
-		} else {
-			new Notice('No inconsistencies were fixed');
-		}
+		try {
+			const result = await dataQuality2.fixBidirectionalInconsistencies(inconsistencies);
 
-		if (result.errors.length > 0) {
-			new Notice(`⚠ ${result.errors.length} errors occurred. Check console for details.`);
-			console.error('Fix bidirectional relationships errors:', result.errors);
+			if (result.modified > 0) {
+				new Notice(`✓ Fixed ${result.modified} of ${result.processed} inconsistenc${result.processed === 1 ? 'y' : 'ies'}`);
+			} else {
+				new Notice('No inconsistencies were fixed');
+			}
+
+			if (result.errors.length > 0) {
+				new Notice(`⚠ ${result.errors.length} errors occurred. Check console for details.`);
+				console.error('Fix bidirectional relationships errors:', result.errors);
+			}
+		} finally {
+			// Always resume bidirectional linking, even if errors occurred
+			this.plugin.bidirectionalLinker?.resume();
 		}
 
 		// Refresh the family graph cache

@@ -37,6 +37,7 @@ export class BidirectionalLinker {
 	// Map of file path → relationship snapshot
 	private relationshipSnapshots: Map<string, RelationshipSnapshot> = new Map();
 	private folderFilter: FolderFilterService | null = null;
+	private suspended = false;
 
 	constructor(private app: App) {}
 
@@ -45,6 +46,23 @@ export class BidirectionalLinker {
 	 */
 	setFolderFilter(folderFilter: FolderFilterService): void {
 		this.folderFilter = folderFilter;
+	}
+
+	/**
+	 * Temporarily suspend automatic bidirectional linking
+	 * Use this during batch operations to prevent interference
+	 */
+	suspend(): void {
+		this.suspended = true;
+		logger.info('bidirectional-linking', 'Bidirectional linker suspended');
+	}
+
+	/**
+	 * Resume automatic bidirectional linking after suspension
+	 */
+	resume(): void {
+		this.suspended = false;
+		logger.info('bidirectional-linking', 'Bidirectional linker resumed');
 	}
 
 	/**
@@ -88,6 +106,14 @@ export class BidirectionalLinker {
 	 * @param personFile The person note file that was created/updated
 	 */
 	async syncRelationships(personFile: TFile): Promise<void> {
+		// Skip if suspended (during batch operations)
+		if (this.suspended) {
+			logger.debug('bidirectional-linking', 'Skipping sync - linker suspended', {
+				file: personFile.path
+			});
+			return;
+		}
+
 		logger.info('bidirectional-linking', 'Starting relationship sync', {
 			file: personFile.path
 		});
