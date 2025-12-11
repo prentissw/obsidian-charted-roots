@@ -104,6 +104,7 @@ export async function createPersonNote(
 	// Property names respect user-configured aliases
 	const frontmatter: Record<string, string | string[]> = {
 		[prop('cr_id')]: crId,
+		[prop('cr_type')]: 'person',
 		[prop('name')]: person.name || '',
 		[prop('born')]: person.birthDate || '',
 		[prop('died')]: person.deathDate || ''

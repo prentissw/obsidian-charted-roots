@@ -33,6 +33,8 @@ Data Quality: Parent conflict resolution, settings UX overhaul, and bidirectiona
   - **Reduced duplication**: Canvas layout and folder settings consolidated in Preferences only
   - **Default change**: `primaryTypeProperty` now defaults to `cr_type` (avoids conflicts with other plugins)
 
+- **GEDCOM import now adds `cr_type: person`** to imported person notes for consistent note type detection
+
 ### Fixed
 
 - **Bidirectional relationship validation** - Fixed false positives and persistence issues
