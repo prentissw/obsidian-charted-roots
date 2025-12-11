@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-11 01:53:36 UTC
+ * - Generated: 2025-12-11 16:04:24 UTC
  * - Components: 30 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -7296,7 +7296,7 @@ settings:
    COMPONENT: DATA-QUALITY.CSS
    ========================================================================== */
 
-/* Component Size: 1209 lines, 23.78 KB */
+/* Component Size: 1286 lines, 25.4 KB */
 
 /**
  * Data Quality Tab Styles
@@ -8505,6 +8505,83 @@ settings:
 .crc-warning-callout svg {
   flex-shrink: 0;
   margin-top: 2px;
+}
+
+/* ==========================================================================
+   CONFLICTS SECTION
+   ========================================================================== */
+
+.crc-conflicts-section {
+  margin: var(--size-4-4) 0;
+  padding: var(--size-4-3);
+  background-color: var(--background-modifier-error-rgb, rgba(255, 0, 0, 0.1));
+  border: 1px solid var(--background-modifier-error);
+  border-radius: var(--radius-s);
+  overflow-x: auto;
+}
+
+.crc-conflicts-header {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-2);
+  font-weight: var(--font-semibold);
+  color: var(--text-error);
+}
+
+.crc-conflicts-header svg {
+  flex-shrink: 0;
+  color: var(--text-error);
+}
+
+.crc-conflicts-title {
+  font-size: var(--font-ui-medium);
+}
+
+.crc-conflicts-description {
+  margin: var(--size-4-2) 0;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.crc-conflicts-table {
+  margin-top: var(--size-4-2);
+  table-layout: fixed;
+  width: 100%;
+}
+
+.crc-conflicts-table th,
+.crc-conflicts-table td {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.crc-conflict-resolution {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.crc-btn-small {
+  padding: var(--size-2-2) var(--size-4-2);
+  font-size: var(--font-ui-smaller);
+  background-color: var(--interactive-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+
+.crc-btn-small:hover {
+  background-color: var(--interactive-hover);
+}
+
+.crc-person-link {
+  color: var(--link-color);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.crc-person-link:hover {
+  text-decoration: underline;
 }
 
 
@@ -16144,10 +16221,10 @@ body.wide-timeline .view-content {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-11 01:53:36 UTC
+ * Build completed: 2025-12-11 16:04:24 UTC
  * Components processed: 30
- * Total lines: 15851
- * Total size: 311.5 KB
+ * Total lines: 15928
+ * Total size: 313.12 KB
  * Build duration: 0.03 seconds
  *
  * Component breakdown:
@@ -16167,7 +16244,7 @@ body.wide-timeline .view-content {
  * - folder-scan.css: 155 lines, 2.56 KB
  * - relationship-calculator.css: 302 lines, 5.21 KB
  * - family-chart-view.css: 694 lines, 16.14 KB
- * - data-quality.css: 1209 lines, 23.78 KB
+ * - data-quality.css: 1286 lines, 25.4 KB
  * - relationships.css: 517 lines, 9.76 KB
  * - canvas-navigation.css: 683 lines, 14.64 KB
  * - map-view.css: 1904 lines, 38.98 KB

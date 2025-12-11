@@ -1139,14 +1139,17 @@ export class DataQualityService {
 			crIdMap.set(person.crId, person);
 		}
 
+		// Track conflicts we've already recorded to avoid duplicates
+		// Key format: "father:childCrId" or "mother:childCrId"
+		const seenConflicts = new Set<string>();
+
 		for (const person of people) {
 			// Check if father lists this person as child
 			if (person.fatherCrId) {
 				const father = crIdMap.get(person.fatherCrId);
 				if (father) {
-					const fatherCache = this.app.metadataCache.getFileCache(father.file);
-					const fatherChildrenIds = this.extractArrayField(fatherCache?.frontmatter, 'children_id');
-					if (!fatherChildrenIds.includes(person.crId)) {
+					// Use PersonNode data instead of reading from metadata cache
+					if (!father.childrenCrIds.includes(person.crId)) {
 						inconsistencies.push({
 							type: 'missing-child-in-parent',
 							person,
@@ -1162,9 +1165,8 @@ export class DataQualityService {
 			if (person.motherCrId) {
 				const mother = crIdMap.get(person.motherCrId);
 				if (mother) {
-					const motherCache = this.app.metadataCache.getFileCache(mother.file);
-					const motherChildrenIds = this.extractArrayField(motherCache?.frontmatter, 'children_id');
-					if (!motherChildrenIds.includes(person.crId)) {
+					// Use PersonNode data instead of reading from metadata cache
+					if (!mother.childrenCrIds.includes(person.crId)) {
 						inconsistencies.push({
 							type: 'missing-child-in-parent',
 							person,
@@ -1181,9 +1183,10 @@ export class DataQualityService {
 				for (const childCrId of person.childrenCrIds) {
 					const child = crIdMap.get(childCrId);
 					if (child) {
-						const childCache = this.app.metadataCache.getFileCache(child.file);
-						const childFatherId = childCache?.frontmatter?.father_id;
-						const childMotherId = childCache?.frontmatter?.mother_id;
+						// Use PersonNode data instead of reading from metadata cache
+						// This ensures we're checking against current in-memory data, not stale cache
+						const childFatherId = child.fatherCrId;
+						const childMotherId = child.motherCrId;
 
 						if (childFatherId !== person.crId && childMotherId !== person.crId) {
 							// Determine which parent field this person should occupy based on their sex
@@ -1195,20 +1198,64 @@ export class DataQualityService {
 							// 1. Person's sex indicates they should be father, but child doesn't list them as father
 							// 2. Person's sex indicates they should be mother, but child doesn't list them as mother
 							// Skip if sex is unknown or if child already has correct parent type filled
+							//
+							// IMPORTANT: Also skip if the child's current parent ALSO claims this child
+							// This prevents flip-flopping when two people both claim the same child
 							let shouldCreateInconsistency = false;
 							let targetField = '';
-							let currentValue = '';
+							let currentValue: string | undefined = undefined;
 
 							if (shouldBeFather && childFatherId !== person.crId) {
-								// Person is male, should be father, but child doesn't list them (or lists someone else)
-								shouldCreateInconsistency = true;
-								targetField = 'father_id';
-								currentValue = childFatherId;
+								// Check if current father also claims this child - if so, it's a conflict
+								const currentFather = childFatherId ? crIdMap.get(childFatherId) : undefined;
+								const currentFatherClaimsChild = currentFather?.childrenCrIds.includes(child.crId);
+								if (currentFatherClaimsChild && currentFather && currentFather.crId !== person.crId) {
+									// Both people claim this child - record as conflict for manual resolution
+									// Only record once per child - use a consistent key to deduplicate
+									const conflictKey = `father:${child.crId}`;
+									if (!seenConflicts.has(conflictKey)) {
+										seenConflicts.add(conflictKey);
+										inconsistencies.push({
+											type: 'conflicting-parent-claim',
+											person: currentFather,  // Current father (listed in child's father_id)
+											relatedPerson: child,
+											field: 'father_id',
+											description: `${child.name || child.file.basename} has conflicting father claims: ${currentFather.name} (in father_id) vs ${person.name} (in children_id)`,
+											conflictingPerson: person,  // The other claimant
+											conflictType: 'father'
+										});
+									}
+								} else if (!currentFatherClaimsChild) {
+									// Person is male, should be father, but child doesn't list them (or lists someone else who doesn't claim them)
+									shouldCreateInconsistency = true;
+									targetField = 'father_id';
+									currentValue = childFatherId;
+								}
 							} else if (shouldBeMother && childMotherId !== person.crId) {
-								// Person is female, should be mother, but child doesn't list them (or lists someone else)
-								shouldCreateInconsistency = true;
-								targetField = 'mother_id';
-								currentValue = childMotherId;
+								// Check if current mother also claims this child - if so, it's a conflict
+								const currentMother = childMotherId ? crIdMap.get(childMotherId) : undefined;
+								const currentMotherClaimsChild = currentMother?.childrenCrIds.includes(child.crId);
+								if (currentMotherClaimsChild && currentMother && currentMother.crId !== person.crId) {
+									// Both people claim this child - record as conflict for manual resolution
+									const conflictKey = `mother:${child.crId}`;
+									if (!seenConflicts.has(conflictKey)) {
+										seenConflicts.add(conflictKey);
+										inconsistencies.push({
+											type: 'conflicting-parent-claim',
+											person: currentMother,  // Current mother (listed in child's mother_id)
+											relatedPerson: child,
+											field: 'mother_id',
+											description: `${child.name || child.file.basename} has conflicting mother claims: ${currentMother.name} (in mother_id) vs ${person.name} (in children_id)`,
+											conflictingPerson: person,  // The other claimant
+											conflictType: 'mother'
+										});
+									}
+								} else if (!currentMotherClaimsChild) {
+									// Person is female, should be mother, but child doesn't list them (or lists someone else who doesn't claim them)
+									shouldCreateInconsistency = true;
+									targetField = 'mother_id';
+									currentValue = childMotherId;
+								}
 							}
 
 							if (shouldCreateInconsistency) {
@@ -1234,22 +1281,11 @@ export class DataQualityService {
 				for (const spouseCrId of person.spouseCrIds) {
 					const spouse = crIdMap.get(spouseCrId);
 					if (spouse) {
-						const spouseCache = this.app.metadataCache.getFileCache(spouse.file);
-						const spouseSpouseIds = this.extractArrayField(spouseCache?.frontmatter, 'spouse_id');
+						// Use PersonNode data instead of reading from metadata cache
+						// PersonNode.spouseCrIds includes all spouses (from spouse_id array and indexed spouse1_id, spouse2_id, etc.)
+						const spouseListsThisPerson = spouse.spouseCrIds.includes(person.crId);
 
-						// Also check indexed spouse properties
-						let hasIndexedSpouse = false;
-						if (spouseCache?.frontmatter) {
-							for (let i = 1; i <= 10; i++) {
-								const indexedId = spouseCache.frontmatter[`spouse${i}_id`];
-								if (indexedId === person.crId) {
-									hasIndexedSpouse = true;
-									break;
-								}
-							}
-						}
-
-						if (!spouseSpouseIds.includes(person.crId) && !hasIndexedSpouse) {
+						if (!spouseListsThisPerson) {
 							inconsistencies.push({
 								type: 'missing-spouse-in-spouse',
 								person,
@@ -1294,13 +1330,11 @@ export class DataQualityService {
 				} else if (issue.type === 'missing-parent-in-child') {
 					// Determine if this person should be father or mother based on sex
 					const sex = issue.person.sex;
-					const shouldBeFather = sex === 'male' || sex === 'M';
 					const shouldBeMother = sex === 'female' || sex === 'F';
 					const parentField = shouldBeMother ? 'mother_id' : 'father_id';
 					const parentWikilinkField = shouldBeMother ? 'mother' : 'father';
 
 					// Apply the fix (detection phase already validated this)
-					// Don't check cache here - it may be stale from previous fixes in this batch
 					await this.updatePersonFrontmatter(issue.relatedPerson.file, {
 						[parentField]: issue.person.crId,
 						[parentWikilinkField]: `[[${issue.person.name || issue.person.file.basename}]]`
@@ -1854,7 +1888,8 @@ export interface NormalizationChange {
 export type BidirectionalInconsistencyType =
 	| 'missing-child-in-parent'
 	| 'missing-parent-in-child'
-	| 'missing-spouse-in-spouse';
+	| 'missing-spouse-in-spouse'
+	| 'conflicting-parent-claim';
 
 /**
  * A bidirectional relationship inconsistency
@@ -1865,6 +1900,10 @@ export interface BidirectionalInconsistency {
 	relatedPerson: PersonNode;
 	field: string;
 	description: string;
+	/** For conflicts: the other person also claiming the relationship */
+	conflictingPerson?: PersonNode;
+	/** For conflicts: whether this is a father or mother conflict */
+	conflictType?: 'father' | 'mother';
 }
 
 /**

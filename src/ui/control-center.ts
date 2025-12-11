@@ -4,7 +4,7 @@ import { TAB_CONFIGS, createLucideIcon, setLucideIcon, LucideIconName } from './
 import { createPersonNote, PersonData } from '../core/person-note-writer';
 import { PersonPickerModal, PersonInfo, PlaceInfo, extractPlaceInfo } from './person-picker';
 import { VaultStatsService, FullVaultStats } from '../core/vault-stats';
-import { FamilyGraphService, TreeOptions } from '../core/family-graph';
+import { FamilyGraphService, TreeOptions, PersonNode } from '../core/family-graph';
 import { CanvasGenerator, CanvasData, CanvasGenerationOptions } from '../core/canvas-generator';
 import { getLogger } from '../core/logging';
 import { getErrorMessage } from '../core/error-utils';
@@ -1844,6 +1844,22 @@ export class ControlCenterModal extends Modal {
 
 		container.appendChild(batchCard);
 
+		// Parent Claim Conflicts Card
+		const conflictsCard = this.createCard({
+			title: 'Parent claim conflicts',
+			icon: 'alert-triangle',
+			subtitle: 'Children claimed by multiple parents'
+		});
+		const conflictsContent = conflictsCard.querySelector('.crc-card__content') as HTMLElement;
+		conflictsContent.createEl('p', {
+			text: 'Scanning for conflicts...',
+			cls: 'crc-text--muted'
+		});
+		container.appendChild(conflictsCard);
+
+		// Load conflicts asynchronously
+		void this.loadParentClaimConflicts(conflictsContent);
+
 		// Statistics Card
 		const statsCard = this.createCard({
 			title: 'Person statistics',
@@ -1949,6 +1965,231 @@ export class ControlCenterModal extends Modal {
 
 		// Total relationships
 		this.createStatItem(relGrid, 'Total relationships', stats.relationships.totalRelationships.toString());
+	}
+
+	/**
+	 * Load parent claim conflicts into container
+	 */
+	private async loadParentClaimConflicts(container: HTMLElement): Promise<void> {
+		container.empty();
+
+		// Create services
+		const folderFilter = new FolderFilterService(this.plugin.settings);
+		const familyGraph = this.plugin.createFamilyGraphService();
+		familyGraph.ensureCacheLoaded();
+
+		const dataQuality = new DataQualityService(
+			this.app,
+			this.plugin.settings,
+			familyGraph,
+			folderFilter
+		);
+
+		// Detect conflicts
+		const inconsistencies = await dataQuality.detectBidirectionalInconsistencies();
+		const conflicts = inconsistencies.filter(i => i.type === 'conflicting-parent-claim');
+
+		if (conflicts.length === 0) {
+			const emptyState = container.createDiv({ cls: 'crc-empty-state' });
+			emptyState.createEl('p', {
+				text: 'No parent claim conflicts found.',
+				cls: 'crc-text--muted'
+			});
+			emptyState.createEl('p', {
+				text: 'Conflicts occur when multiple people list the same child in their children_id field.',
+				cls: 'crc-text--muted crc-text--small'
+			});
+			return;
+		}
+
+		// Explanation
+		const explanation = container.createDiv({ cls: 'crc-info-callout crc-mb-3' });
+		explanation.createEl('p', {
+			text: `Found ${conflicts.length} conflict${conflicts.length === 1 ? '' : 's'} where multiple people claim the same child. Review each and choose which parent is correct.`,
+			cls: 'crc-text--small'
+		});
+
+		// Create table
+		const tableContainer = container.createDiv({ cls: 'crc-batch-table-container' });
+		const table = tableContainer.createEl('table', { cls: 'crc-batch-preview-table crc-conflicts-table' });
+
+		const thead = table.createEl('thead');
+		const headerRow = thead.createEl('tr');
+		headerRow.createEl('th', { text: 'Child' });
+		headerRow.createEl('th', { text: 'Type' });
+		headerRow.createEl('th', { text: 'Claimant 1' });
+		headerRow.createEl('th', { text: 'Claimant 2' });
+		headerRow.createEl('th', { text: 'Actions' });
+
+		const tbody = table.createEl('tbody');
+
+		for (const conflict of conflicts) {
+			const child = conflict.relatedPerson;
+			const claimant1 = conflict.person;  // Current parent in child's father_id/mother_id
+			const claimant2 = conflict.conflictingPerson;  // Other claimant
+
+			if (!claimant2) continue;
+
+			const row = tbody.createEl('tr');
+
+			// Child cell (clickable)
+			const childCell = row.createEl('td');
+			const childLink = childCell.createEl('a', {
+				text: child.name || child.file.basename,
+				cls: 'crc-person-link'
+			});
+			childLink.addEventListener('click', (e) => {
+				e.preventDefault();
+				this.app.workspace.openLinkText(child.file.path, '', false);
+			});
+
+			// Conflict type
+			row.createEl('td', { text: conflict.conflictType === 'father' ? 'Father' : 'Mother' });
+
+			// Claimant 1 cell - show name and cr_id for disambiguation
+			const claimant1Cell = row.createEl('td');
+			const claimant1Link = claimant1Cell.createEl('a', {
+				text: claimant1.name || claimant1.file.basename,
+				cls: 'crc-person-link'
+			});
+			claimant1Link.addEventListener('click', (e) => {
+				e.preventDefault();
+				this.app.workspace.openLinkText(claimant1.file.path, '', false);
+			});
+			claimant1Cell.createEl('span', {
+				text: ` (${claimant1.crId})`,
+				cls: 'crc-text--muted crc-text--small'
+			});
+
+			// Claimant 2 cell - show name and cr_id for disambiguation
+			const claimant2Cell = row.createEl('td');
+			const claimant2Link = claimant2Cell.createEl('a', {
+				text: claimant2.name || claimant2.file.basename,
+				cls: 'crc-person-link'
+			});
+			claimant2Link.addEventListener('click', (e) => {
+				e.preventDefault();
+				this.app.workspace.openLinkText(claimant2.file.path, '', false);
+			});
+			claimant2Cell.createEl('span', {
+				text: ` (${claimant2.crId})`,
+				cls: 'crc-text--muted crc-text--small'
+			});
+
+			// Actions cell
+			const actionsCell = row.createEl('td', { cls: 'crc-conflict-actions' });
+
+			// Keep Claimant 1 button
+			const keepBtn1 = actionsCell.createEl('button', {
+				text: 'Keep 1',
+				cls: 'crc-btn-small',
+				attr: { title: `Keep ${claimant1.name || claimant1.file.basename} as ${conflict.conflictType}` }
+			});
+			keepBtn1.addEventListener('click', async () => {
+				await this.resolveParentConflict(child, claimant1, claimant2, conflict.conflictType!, 'keep1');
+				row.remove();
+				this.updateConflictCardCount(container, tbody);
+			});
+
+			// Keep Claimant 2 button
+			const keepBtn2 = actionsCell.createEl('button', {
+				text: 'Keep 2',
+				cls: 'crc-btn-small',
+				attr: { title: `Keep ${claimant2.name || claimant2.file.basename} as ${conflict.conflictType}` }
+			});
+			keepBtn2.addEventListener('click', async () => {
+				await this.resolveParentConflict(child, claimant1, claimant2, conflict.conflictType!, 'keep2');
+				row.remove();
+				this.updateConflictCardCount(container, tbody);
+			});
+		}
+
+		// Count display
+		const countDiv = container.createDiv({ cls: 'crc-conflicts-count crc-mt-2' });
+		countDiv.createSpan({
+			text: `${conflicts.length} conflict${conflicts.length === 1 ? '' : 's'} to resolve`,
+			cls: 'crc-text--muted'
+		});
+	}
+
+	/**
+	 * Resolve a parent claim conflict
+	 */
+	private async resolveParentConflict(
+		child: PersonNode,
+		claimant1: PersonNode,
+		claimant2: PersonNode,
+		conflictType: 'father' | 'mother',
+		resolution: 'keep1' | 'keep2'
+	): Promise<void> {
+		const parentField = conflictType === 'father' ? 'father_id' : 'mother_id';
+		const parentWikilinkField = conflictType === 'father' ? 'father' : 'mother';
+
+		// Suspend linker during changes
+		this.plugin.bidirectionalLinker?.suspend();
+
+		try {
+			if (resolution === 'keep1') {
+				// Keep claimant1: remove child from claimant2's children_id
+				await this.removeChildFromParent(claimant2.file, child.crId);
+				new Notice(`Removed ${child.name || child.file.basename} from ${claimant2.name || claimant2.file.basename}'s children`);
+			} else {
+				// Keep claimant2: update child's parent field and remove from claimant1's children_id
+				await this.app.fileManager.processFrontMatter(child.file, (fm) => {
+					fm[parentField] = claimant2.crId;
+					fm[parentWikilinkField] = `[[${claimant2.name || claimant2.file.basename}]]`;
+				});
+				await this.removeChildFromParent(claimant1.file, child.crId);
+				new Notice(`Changed ${child.name || child.file.basename}'s ${conflictType} to ${claimant2.name || claimant2.file.basename}`);
+			}
+
+			// Reload cache
+			const familyGraph = this.plugin.createFamilyGraphService();
+			familyGraph.reloadCache();
+		} finally {
+			// Resume linker after a short delay
+			setTimeout(() => {
+				this.plugin.bidirectionalLinker?.resume();
+			}, 500);
+		}
+	}
+
+	/**
+	 * Remove a child from a parent's children_id array
+	 */
+	private async removeChildFromParent(parentFile: TFile, childCrId: string): Promise<void> {
+		await this.app.fileManager.processFrontMatter(parentFile, (fm) => {
+			if (fm.children_id) {
+				if (Array.isArray(fm.children_id)) {
+					fm.children_id = fm.children_id.filter((id: string) => id !== childCrId);
+					if (fm.children_id.length === 0) {
+						delete fm.children_id;
+					}
+				} else if (fm.children_id === childCrId) {
+					delete fm.children_id;
+				}
+			}
+		});
+	}
+
+	/**
+	 * Update conflict card count after resolving one
+	 */
+	private updateConflictCardCount(container: HTMLElement, tbody: HTMLElement): void {
+		const remainingRows = tbody.querySelectorAll('tr').length;
+		const countEl = container.querySelector('.crc-conflicts-count span');
+
+		if (remainingRows === 0) {
+			// All conflicts resolved - show empty state
+			container.empty();
+			const emptyState = container.createDiv({ cls: 'crc-empty-state' });
+			emptyState.createEl('p', {
+				text: 'All parent claim conflicts have been resolved!',
+				cls: 'crc-text--muted'
+			});
+		} else if (countEl) {
+			countEl.textContent = `${remainingRows} conflict${remainingRows === 1 ? '' : 's'} to resolve`;
+		}
 	}
 
 	/**
@@ -12748,7 +12989,8 @@ export class ControlCenterModal extends Modal {
 		// Create folder filter and family graph service
 		const folderFilter1 = new FolderFilterService(this.plugin.settings);
 		const familyGraph1 = this.plugin.createFamilyGraphService();
-		familyGraph1.ensureCacheLoaded();
+		// Force reload to ensure we have fresh data (cache may be stale after previous fixes)
+		await familyGraph1.reloadCache();
 		familyGraph1.setFolderFilter(folderFilter1);
 		familyGraph1.setPropertyAliases(this.plugin.settings.propertyAliases);
 		familyGraph1.setValueAliases(this.plugin.settings.valueAliases);
@@ -12769,8 +13011,24 @@ export class ControlCenterModal extends Modal {
 			return;
 		}
 
-		// Transform inconsistencies to modal format
-		const changes = inconsistencies.map((issue: BidirectionalInconsistency) => ({
+		// Separate fixable inconsistencies from conflicts
+		const fixableInconsistencies = inconsistencies.filter(i => i.type !== 'conflicting-parent-claim');
+		const conflictCount = inconsistencies.filter(i => i.type === 'conflicting-parent-claim').length;
+
+		// Notify about conflicts (handled separately in People tab)
+		if (conflictCount > 0) {
+			new Notice(`Found ${conflictCount} parent claim conflict${conflictCount === 1 ? '' : 's'}. See the "Parent claim conflicts" card in the People tab to resolve.`, 8000);
+		}
+
+		if (fixableInconsistencies.length === 0) {
+			if (conflictCount > 0) {
+				new Notice('No auto-fixable inconsistencies found. Only conflicts requiring manual resolution.');
+			}
+			return;
+		}
+
+		// Transform fixable inconsistencies to modal format
+		const changes = fixableInconsistencies.map((issue: BidirectionalInconsistency) => ({
 			person: {
 				name: issue.person.name || issue.person.file.basename,
 				file: issue.person.file
@@ -12798,7 +13056,8 @@ export class ControlCenterModal extends Modal {
 		// Create folder filter and family graph service
 		const folderFilter2 = new FolderFilterService(this.plugin.settings);
 		const familyGraph2 = this.plugin.createFamilyGraphService();
-		familyGraph2.ensureCacheLoaded();
+		// Force reload to ensure we have fresh data before fixing
+		await familyGraph2.reloadCache();
 		familyGraph2.setFolderFilter(folderFilter2);
 		familyGraph2.setPropertyAliases(this.plugin.settings.propertyAliases);
 		familyGraph2.setValueAliases(this.plugin.settings.valueAliases);
@@ -12829,7 +13088,7 @@ export class ControlCenterModal extends Modal {
 			const result = await dataQuality2.fixBidirectionalInconsistencies(inconsistencies);
 
 			if (result.modified > 0) {
-				new Notice(`✓ Fixed ${result.modified} of ${result.processed} inconsistenc${result.processed === 1 ? 'y' : 'ies'}`);
+				new Notice(`✓ Fixed ${result.modified} of ${result.processed} inconsistenc${result.processed === 1 ? 'y' : 'ies'}. Wait a moment before re-checking.`, 5000);
 			} else {
 				new Notice('No inconsistencies were fixed');
 			}
@@ -12838,13 +13097,14 @@ export class ControlCenterModal extends Modal {
 				new Notice(`⚠ ${result.errors.length} errors occurred. Check console for details.`);
 				console.error('Fix bidirectional relationships errors:', result.errors);
 			}
+
+			// Wait for all pending file watcher events to process before resuming linker
+			// This prevents the bidirectional linker from reverting our fixes
+			await new Promise(resolve => setTimeout(resolve, 500));
 		} finally {
 			// Always resume bidirectional linking, even if errors occurred
 			this.plugin.bidirectionalLinker?.resume();
 		}
-
-		// Refresh the family graph cache
-		familyGraph2.reloadCache();
 
 		// Refresh the People tab
 		this.showTab('people');

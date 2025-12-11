@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Parent claim conflicts card** (People tab) - New dedicated card for resolving conflicting parent claims
+  - Automatically detects children claimed by multiple parents on tab load
+  - Table shows child, conflict type, both claimants with cr_id for disambiguation
+  - Per-row "Keep 1" / "Keep 2" buttons for quick resolution
+  - Clicking names opens the corresponding note
+  - Conflicts removed from bidirectional fix modal (now handled separately)
+
 ### Fixed
 
 - **Bidirectional relationship validation** - Fixed false positives and persistence issues

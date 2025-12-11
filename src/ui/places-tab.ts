@@ -5,7 +5,7 @@
  * place statistics, lists, references, and data quality issues.
  */
 
-import { TFile } from 'obsidian';
+import { Setting, TFile } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
 import type { LucideIconName } from './lucide-icons';
 import { createLucideIcon, setLucideIcon } from './lucide-icons';
@@ -122,28 +122,20 @@ export function renderPlacesTab(
 	});
 
 	// Normalize place name formatting
-	const normalizeContainer = batchContent.createDiv({ cls: 'crc-setting-item' });
-	const normalizeInfo = normalizeContainer.createDiv({ cls: 'crc-setting-item-info' });
-	normalizeInfo.createDiv({ text: 'Normalize place name formatting', cls: 'crc-setting-item-name' });
-	normalizeInfo.createDiv({
-		text: 'Standardize capitalization: "NEW YORK" → "New York", handle prefixes like van, de',
-		cls: 'crc-setting-item-description'
-	});
-	const normalizeControls = normalizeContainer.createDiv({ cls: 'crc-setting-item-control' });
-	const previewBtn = normalizeControls.createEl('button', {
-		text: 'Preview',
-		cls: 'crc-btn-secondary'
-	});
-	previewBtn.addEventListener('click', () => {
-		showNormalizePlaceNamesPreview(plugin, showTab);
-	});
-	const applyBtn = normalizeControls.createEl('button', {
-		text: 'Apply',
-		cls: 'mod-cta'
-	});
-	applyBtn.addEventListener('click', () => {
-		showNormalizePlaceNamesApply(plugin, showTab);
-	});
+	new Setting(batchContent)
+		.setName('Normalize place name formatting')
+		.setDesc('Standardize capitalization: "NEW YORK" → "New York", handle prefixes like van, de')
+		.addButton(button => button
+			.setButtonText('Preview')
+			.onClick(() => {
+				showNormalizePlaceNamesPreview(plugin, showTab);
+			}))
+		.addButton(button => button
+			.setButtonText('Apply')
+			.setCta()
+			.onClick(() => {
+				showNormalizePlaceNamesApply(plugin, showTab);
+			}));
 
 	container.appendChild(batchCard);
 }
@@ -157,6 +149,22 @@ function loadDataQualityCard(
 	showTab: (tabId: string) => void
 ): void {
 	container.empty();
+
+	// Navigation guidance
+	const navInfo = container.createEl('p', {
+		cls: 'crc-text-muted',
+		text: 'These data quality checks are specific to place notes. For comprehensive data quality analysis across all entities, see the '
+	});
+	const dataQualityLink = navInfo.createEl('a', {
+		text: 'Data Quality tab',
+		href: '#',
+		cls: 'crc-text-link'
+	});
+	dataQualityLink.addEventListener('click', (e) => {
+		e.preventDefault();
+		showTab('data-quality');
+	});
+	navInfo.appendText('.');
 
 	const placeService = new PlaceGraphService(plugin.app);
 	placeService.setSettings(plugin.settings);

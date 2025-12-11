@@ -249,7 +249,14 @@ export class FamilyGraphService {
 	 * Force reload the person cache
 	 * Use when you know data has changed and need fresh data
 	 */
-	reloadCache(): void {
+	async reloadCache(): Promise<void> {
+		this.personCache.clear();
+
+		// Wait for Obsidian's metadata cache to finish processing file changes
+		// After batch operations, files are modified but Obsidian's file watcher
+		// needs time to detect changes and update the metadata cache
+		await new Promise(resolve => setTimeout(resolve, 2000));
+
 		this.loadPersonCache();
 	}
 
@@ -803,18 +810,55 @@ export class FamilyGraphService {
 		this.personCache.clear();
 
 		const files = this.app.vault.getMarkdownFiles();
+		let folderFilterExcluded = 0;
+		let noCrId = 0;
+		let isOtherType = 0;
+		let noCacheOrFrontmatter = 0;
+		let detectedAsSource = 0;
+		let detectedAsEvent = 0;
+		let detectedAsPlace = 0;
+
+		console.log(`[DEBUG] loadPersonCache: Starting with ${files.length} total markdown files`);
 
 		for (const file of files) {
 			// Apply folder filter if configured
 			if (this.folderFilter && !this.folderFilter.shouldIncludeFile(file)) {
+				folderFilterExcluded++;
 				continue;
 			}
 
 			const personNode = this.extractPersonNode(file);
-			if (personNode) {
+			if (personNode && 'crId' in personNode) {
 				this.personCache.set(personNode.crId, personNode);
+			} else if (personNode) {
+				// It's a typed response indicating what type it is
+				if ('isSource' in personNode) {
+					detectedAsSource++;
+				} else if ('isEvent' in personNode) {
+					detectedAsEvent++;
+				} else if ('isPlace' in personNode) {
+					detectedAsPlace++;
+				}
+				isOtherType++;
+			} else {
+				// Debug why this file wasn't included
+				const cache = this.app.metadataCache.getFileCache(file);
+				if (!cache || !cache.frontmatter) {
+					noCacheOrFrontmatter++;
+				} else if (!cache.frontmatter.cr_id) {
+					noCrId++;
+				}
 			}
 		}
+
+		console.log(`[DEBUG] loadPersonCache: Found ${this.personCache.size} person notes`);
+		console.log(`[DEBUG] loadPersonCache: Excluded by folder filter: ${folderFilterExcluded}`);
+		console.log(`[DEBUG] loadPersonCache: No cache/frontmatter: ${noCacheOrFrontmatter}`);
+		console.log(`[DEBUG] loadPersonCache: No cr_id: ${noCrId}`);
+		console.log(`[DEBUG] loadPersonCache: Other note type (event/place/source): ${isOtherType}`);
+		console.log(`[DEBUG] loadPersonCache:   - Detected as source: ${detectedAsSource}`);
+		console.log(`[DEBUG] loadPersonCache:   - Detected as event: ${detectedAsEvent}`);
+		console.log(`[DEBUG] loadPersonCache:   - Detected as place: ${detectedAsPlace}`);
 
 		// Second pass: build child relationships (merge explicit and inferred)
 		for (const [crId, person] of this.personCache.entries()) {
@@ -911,7 +955,7 @@ export class FamilyGraphService {
 	/**
 	 * Extracts person node data from a file
 	 */
-	private extractPersonNode(file: TFile): PersonNode | null {
+	private extractPersonNode(file: TFile): PersonNode | { isSource?: boolean; isEvent?: boolean; isPlace?: boolean } | null {
 		const cache = this.app.metadataCache.getFileCache(file);
 		if (!cache || !cache.frontmatter) {
 			return null;
@@ -928,13 +972,28 @@ export class FamilyGraphService {
 		// Skip non-person notes that also have cr_id (sources, events, places, etc.)
 		const noteTypeSettings = this.settings?.noteTypeDetection;
 		if (isSourceNote(fm, cache, noteTypeSettings)) {
-			return null;
+			// Sample one to see why it's detected as source
+			if (Math.random() < 0.01) {
+				console.log(`[DEBUG] Sample file detected as source:`, file.path);
+				console.log(`  - cr_type:`, fm.cr_type, `type:`, fm.type, `tags:`, cache.tags?.map(t => t.tag));
+			}
+			return { isSource: true };
 		}
 		if (isEventNote(fm, cache, noteTypeSettings)) {
-			return null;
+			// Sample one to see why it's detected as event
+			if (Math.random() < 0.01) {
+				console.log(`[DEBUG] Sample file detected as event:`, file.path);
+				console.log(`  - cr_type:`, fm.cr_type, `type:`, fm.type, `tags:`, cache.tags?.map(t => t.tag));
+			}
+			return { isEvent: true };
 		}
 		if (isPlaceNote(fm, cache, noteTypeSettings)) {
-			return null;
+			// Sample one to see why it's detected as place
+			if (Math.random() < 0.01) {
+				console.log(`[DEBUG] Sample file detected as place:`, file.path);
+				console.log(`  - cr_type:`, fm.cr_type, `type:`, fm.type, `tags:`, cache.tags?.map(t => t.tag));
+			}
+			return { isPlace: true };
 		}
 
 		// Extract name (from frontmatter or filename) with alias support
