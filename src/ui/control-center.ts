@@ -11524,7 +11524,7 @@ export class ControlCenterModal extends Modal {
 			this.app,
 			operation,
 			preview,
-			() => void this.runBatchOperation(operation, scope, folderPath)
+			async () => await this.runBatchOperation(operation, scope, folderPath)
 		);
 		modal.open();
 	}
@@ -11674,7 +11674,7 @@ export class ControlCenterModal extends Modal {
 		const modal = new DuplicateRelationshipsPreviewModal(
 			this.app,
 			changes,
-			() => void this.removeDuplicateRelationships()
+			async () => await this.removeDuplicateRelationships()
 		);
 		modal.open();
 	}
@@ -11936,7 +11936,7 @@ export class ControlCenterModal extends Modal {
 		const modal = new PlaceholderRemovalPreviewModal(
 			this.app,
 			changes,
-			() => void this.removePlaceholders()
+			async () => await this.removePlaceholders()
 		);
 		modal.open();
 	}
@@ -12216,7 +12216,7 @@ export class ControlCenterModal extends Modal {
 		const modal = new NameNormalizationPreviewModal(
 			this.app,
 			changes,
-			() => void this.normalizeNames()
+			async () => await this.normalizeNames()
 		);
 		modal.open();
 	}
@@ -12473,7 +12473,7 @@ export class ControlCenterModal extends Modal {
 		const modal = new OrphanedRefsPreviewModal(
 			this.app,
 			changes,
-			() => void this.removeOrphanedRefs()
+			async () => await this.removeOrphanedRefs()
 		);
 		modal.open();
 	}
@@ -12669,7 +12669,7 @@ export class ControlCenterModal extends Modal {
 		const modal = new BidirectionalInconsistencyPreviewModal(
 			this.app,
 			changes,
-			() => void this.fixBidirectionalRelationships()
+			async () => await this.fixBidirectionalRelationships()
 		);
 		modal.open();
 	}
@@ -12967,7 +12967,7 @@ class DuplicateRelationshipsPreviewModal extends Modal {
 	private allChanges: Array<{ person: { name: string }; field: string; oldValue: string; newValue: string }>;
 	// Filtered/sorted changes for display
 	private filteredChanges: Array<{ person: { name: string }; field: string; oldValue: string; newValue: string }> = [];
-	private onApply: () => void;
+	private onApply: () => Promise<void>;
 
 	// Filter state
 	private searchQuery = '';
@@ -12981,7 +12981,7 @@ class DuplicateRelationshipsPreviewModal extends Modal {
 	constructor(
 		app: App,
 		changes: Array<{ person: { name: string }; field: string; oldValue: string; newValue: string }>,
-		onApply: () => void
+		onApply: () => Promise<void>
 	) {
 		super(app);
 		this.allChanges = changes;
@@ -13178,7 +13178,7 @@ class PlaceholderRemovalPreviewModal extends Modal {
 	private allChanges: Array<{ person: { name: string }; field: string; oldValue: string; newValue: string; file: TFile }>;
 	// Filtered/sorted changes for display
 	private filteredChanges: Array<{ person: { name: string }; field: string; oldValue: string; newValue: string; file: TFile }> = [];
-	private onApply: () => void;
+	private onApply: () => Promise<void>;
 
 	// Filter state
 	private searchQuery = '';
@@ -13192,7 +13192,7 @@ class PlaceholderRemovalPreviewModal extends Modal {
 	constructor(
 		app: App,
 		changes: Array<{ person: { name: string }; field: string; oldValue: string; newValue: string; file: TFile }>,
-		onApply: () => void
+		onApply: () => Promise<void>
 	) {
 		super(app);
 		this.allChanges = changes;
@@ -13426,7 +13426,7 @@ class NameNormalizationPreviewModal extends Modal {
 	private allChanges: Array<{ person: { name: string }; field: string; oldValue: string; newValue: string; file: TFile }>;
 	// Filtered/sorted changes for display
 	private filteredChanges: Array<{ person: { name: string }; field: string; oldValue: string; newValue: string; file: TFile }> = [];
-	private onApply: () => void;
+	private onApply: () => Promise<void>;
 
 	// Filter state
 	private searchQuery = '';
@@ -13439,7 +13439,7 @@ class NameNormalizationPreviewModal extends Modal {
 	constructor(
 		app: App,
 		changes: Array<{ person: { name: string }; field: string; oldValue: string; newValue: string; file: TFile }>,
-		onApply: () => void
+		onApply: () => Promise<void>
 	) {
 		super(app);
 		this.allChanges = changes;
@@ -13652,7 +13652,7 @@ class NameNormalizationPreviewModal extends Modal {
 class OrphanedRefsPreviewModal extends Modal {
 	private allChanges: Array<{ person: { name: string; file: TFile }; field: string; orphanedId: string }>;
 	private filteredChanges: Array<{ person: { name: string; file: TFile }; field: string; orphanedId: string }> = [];
-	private onApply: () => void;
+	private onApply: () => Promise<void>;
 
 	// Filter state
 	private searchQuery = '';
@@ -13666,7 +13666,7 @@ class OrphanedRefsPreviewModal extends Modal {
 	constructor(
 		app: App,
 		changes: Array<{ person: { name: string; file: TFile }; field: string; orphanedId: string }>,
-		onApply: () => void
+		onApply: () => Promise<void>
 	) {
 		super(app);
 		this.allChanges = changes;
@@ -13907,7 +13907,7 @@ class BidirectionalInconsistencyPreviewModal extends Modal {
 		type: string;
 		description: string;
 	}> = [];
-	private onApply: () => void;
+	private onApply: () => Promise<void>;
 
 	// Filter state
 	private searchQuery = '';
@@ -13926,7 +13926,7 @@ class BidirectionalInconsistencyPreviewModal extends Modal {
 			type: string;
 			description: string;
 		}>,
-		onApply: () => void
+		onApply: () => Promise<void>
 	) {
 		super(app);
 		this.allChanges = changes;
@@ -14448,7 +14448,7 @@ class ImpossibleDatesPreviewModal extends Modal {
 class BatchPreviewModal extends Modal {
 	private operation: 'dates' | 'sex' | 'orphans' | 'legacy_type';
 	private preview: NormalizationPreview;
-	private onApply: () => void;
+	private onApply: () => Promise<void>;
 
 	// All changes for this operation
 	private allChanges: Array<{ person: { name: string }; field: string; oldValue: string; newValue: string }> = [];
@@ -14468,7 +14468,7 @@ class BatchPreviewModal extends Modal {
 		app: App,
 		operation: 'dates' | 'sex' | 'orphans' | 'legacy_type',
 		preview: NormalizationPreview,
-		onApply: () => void
+		onApply: () => Promise<void>
 	) {
 		super(app);
 		this.operation = operation;
