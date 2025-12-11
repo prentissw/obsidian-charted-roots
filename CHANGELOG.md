@@ -9,6 +9,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.11.1] - 2025-12-10
+
+Data Quality: Enhanced batch operations with relationship validation, value normalization, and improved organization.
+
+### Added
+
+- **Bidirectional relationship validation** (People tab) - Detect and fix one-way relationship inconsistencies
+  - Finds missing reciprocal links: parent lists child but child doesn't list parent, spouse A lists B but B doesn't list A
+  - Supports both simple (spouse, children) and indexed (spouse1, spouse2) properties
+  - Preview modal with search, type filtering, and sorting
+  - Apply button to automatically fix inconsistencies
+  - Validates parent fields aren't already occupied before adding
+
+- **Impossible dates detection** (People tab) - Preview-only validation to find logical date errors
+  - Birth after death
+  - Unrealistic lifespans (>120 years)
+  - Parent born after child
+  - Parent too young at child's birth (<10 years)
+  - Posthumous births (>12 months for father, any for mother)
+  - Handles various date formats: ISO (YYYY-MM-DD), partial dates (YYYY-MM, YYYY), circa dates, date ranges
+  - Preview modal with search, type filtering, and sorting
+  - Manual correction workflow to prevent data corruption
+
+### Improved
+
+- **Sex value normalization** - Now uses value alias system instead of hardcoded M/F logic
+  - Respects user-configured value aliases (Control Center > Schemas > Value aliases)
+  - Supports worldbuilders with custom sex values (e.g., "H" → "hermaphrodite")
+  - Only normalizes values that have configured mappings
+  - Skips values already in canonical form
+
+- **Data quality organization** - Reorganized tools for better discoverability
+  - **Quick Start card** (Data Quality tab): Navigation links to People, Places, and Schemas tabs with clear guidance
+  - **Navigation guidance** (People tab, Places tab): Clickable links to Data Quality tab
+  - **Section restructuring** (Data Quality tab): "Vault-wide analysis" and "Cross-domain batch operations" for clarity
+  - **Removed duplication**: Removed duplicate "Remove orphaned cr_id references" operation from People tab
+  - Domain-specific tools (People, Places) kept in respective tabs for convenience
+
+- **Places tab batch operations** - Updated button alignment to match Obsidian settings pattern
+  - Converted to Obsidian's `Setting` component for proper right-alignment
+  - Consistent with People tab styling
+
+- **Batch operation modals** - Improved user feedback during and after applying changes
+  - Modals now stay open while operation runs
+  - Shows "Applying changes..." message during execution
+  - After completion: success message, green checkmark, and enabled Close button
+  - Users can review results before closing
+  - Applies to: Remove duplicates, Remove placeholders, Normalize names, Remove orphaned references, and Bidirectional validation
+
+---
+
+## [0.11.0] - 2025-12-10
+
+Export v2: Complete overhaul of export functionality with full entity support and round-trip fidelity.
+
 ### Added
 
 - **Batch Operations for Data Cleanup** - New batch operations in People and Places tabs for post-import data quality improvements

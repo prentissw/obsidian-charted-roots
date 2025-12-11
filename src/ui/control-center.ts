@@ -26,7 +26,7 @@ import { FolderFilterService } from '../core/folder-filter';
 import { StagingService, StagingSubfolderInfo } from '../core/staging-service';
 import { CrossImportDetectionService, CrossImportMatch } from '../core/cross-import-detection';
 import { MergeWizardModal } from './merge-wizard-modal';
-import { DataQualityService, DataQualityReport, DataQualityIssue, IssueSeverity, IssueCategory, NormalizationPreview, BatchOperationResult } from '../core/data-quality';
+import { DataQualityService, DataQualityReport, DataQualityIssue, IssueSeverity, IssueCategory, NormalizationPreview, BatchOperationResult, BidirectionalInconsistency, ImpossibleDateIssue } from '../core/data-quality';
 import { PlaceGraphService } from '../core/place-graph';
 import { PlaceCategory, PlaceIssue } from '../models/place';
 import { CreatePlaceModal } from './create-place-modal';
@@ -1722,6 +1722,22 @@ export class ControlCenterModal extends Modal {
 
 		const batchContent = batchCard.querySelector('.crc-card__content') as HTMLElement;
 
+		// Navigation guidance
+		const navInfo = batchContent.createEl('p', {
+			cls: 'crc-text-muted',
+			text: 'These operations work on all person notes in your vault. For comprehensive data quality analysis across all entities, see the '
+		});
+		const dataQualityLink = navInfo.createEl('a', {
+			text: 'Data Quality tab',
+			href: '#',
+			cls: 'crc-text-link'
+		});
+		dataQualityLink.addEventListener('click', (e) => {
+			e.preventDefault();
+			this.showTab('data-quality');
+		});
+		navInfo.appendText('.');
+
 		new Setting(batchContent)
 			.setName('Remove duplicate relationships')
 			.setDesc('Clean up duplicate entries in spouse and children arrays')
@@ -1768,20 +1784,20 @@ export class ControlCenterModal extends Modal {
 					void this.normalizeNames();
 				}));
 
-		// Fourth operation: Remove orphaned cr_id references
+		// Fourth operation: Fix bidirectional relationship inconsistencies
 		new Setting(batchContent)
-			.setName('Remove orphaned cr_id references')
-			.setDesc('Clean up broken relationship references (father_id, mother_id, spouse_id, children_id) pointing to deleted persons')
+			.setName('Fix bidirectional relationship inconsistencies')
+			.setDesc('Add missing reciprocal relationship links (parent↔child, spouse↔spouse)')
 			.addButton(button => button
 				.setButtonText('Preview')
 				.onClick(() => {
-					void this.previewRemoveOrphanedRefs();
+					void this.previewFixBidirectionalRelationships();
 				}))
 			.addButton(button => button
 				.setButtonText('Apply')
 				.setCta()
 				.onClick(() => {
-					void this.removeOrphanedRefs();
+					void this.fixBidirectionalRelationships();
 				}));
 
 		// Fifth operation: Validate date formats
@@ -1798,6 +1814,16 @@ export class ControlCenterModal extends Modal {
 				.setCta()
 				.onClick(() => {
 					void this.validateDates();
+				}));
+
+		// Sixth operation: Detect impossible dates
+		new Setting(batchContent)
+			.setName('Detect impossible dates')
+			.setDesc('Find logical date errors (birth after death, unrealistic lifespans, parent-child date conflicts)')
+			.addButton(button => button
+				.setButtonText('Preview')
+				.onClick(() => {
+					void this.previewDetectImpossibleDates();
 				}));
 
 		container.appendChild(batchCard);
@@ -10903,6 +10929,60 @@ export class ControlCenterModal extends Modal {
 		const container = this.contentContainer;
 		container.empty();
 
+		// Quick Start Guidance Card
+		const quickStartCard = this.createCard({
+			title: 'Quick start',
+			icon: 'info',
+			subtitle: 'Where to find data quality tools'
+		});
+		const quickStartContent = quickStartCard.querySelector('.crc-card__content') as HTMLElement;
+
+		const guidanceText = quickStartContent.createEl('p', {
+			cls: 'crc-text-muted'
+		});
+		guidanceText.appendText('Data quality tools are organized by entity type for convenience. This tab provides vault-wide analysis and cross-domain operations.');
+
+		// Domain-specific links
+		const linksList = quickStartContent.createEl('ul', { cls: 'crc-text-muted' });
+
+		const peopleItem = linksList.createEl('li');
+		peopleItem.appendText('For person-specific batch operations, see the ');
+		const peopleLink = peopleItem.createEl('a', {
+			text: 'People tab',
+			href: '#',
+			cls: 'crc-text-link'
+		});
+		peopleLink.addEventListener('click', (e) => {
+			e.preventDefault();
+			this.showTab('people');
+		});
+
+		const placesItem = linksList.createEl('li');
+		placesItem.appendText('For place-specific data quality, see the ');
+		const placesLink = placesItem.createEl('a', {
+			text: 'Places tab',
+			href: '#',
+			cls: 'crc-text-link'
+		});
+		placesLink.addEventListener('click', (e) => {
+			e.preventDefault();
+			this.showTab('places');
+		});
+
+		const schemasItem = linksList.createEl('li');
+		schemasItem.appendText('For schema validation, see the ');
+		const schemasLink = schemasItem.createEl('a', {
+			text: 'Schemas tab',
+			href: '#',
+			cls: 'crc-text-link'
+		});
+		schemasLink.addEventListener('click', (e) => {
+			e.preventDefault();
+			this.showTab('schemas');
+		});
+
+		container.appendChild(quickStartCard);
+
 		// Research Gaps Section (only when fact-level tracking is enabled)
 		if (this.plugin.settings.trackFactSourcing) {
 			this.renderResearchGapsSection(container);
@@ -10911,11 +10991,11 @@ export class ControlCenterModal extends Modal {
 			this.renderSourceConflictsSection(container);
 		}
 
-		// Analysis card
+		// === VAULT-WIDE ANALYSIS ===
 		const analysisCard = this.createCard({
-			title: 'Data analysis',
+			title: 'Vault-wide analysis',
 			icon: 'search',
-			subtitle: 'Find inconsistencies and missing information'
+			subtitle: 'Comprehensive data quality report across all entities'
 		});
 		const analysisContent = analysisCard.querySelector('.crc-card__content') as HTMLElement;
 
@@ -10958,18 +11038,18 @@ export class ControlCenterModal extends Modal {
 
 		container.appendChild(analysisCard);
 
-		// Batch Operations card
+		// === CROSS-DOMAIN BATCH OPERATIONS ===
 		const batchCard = this.createCard({
-			title: 'Batch operations',
+			title: 'Cross-domain batch operations',
 			icon: 'zap',
-			subtitle: 'Fix common data issues across all records'
+			subtitle: 'Standardization operations across all entity types'
 		});
 		const batchContent = batchCard.querySelector('.crc-card__content') as HTMLElement;
 
 		// Explanation
 		const batchExplanation = batchContent.createDiv({ cls: 'crc-info-callout crc-mb-3' });
 		batchExplanation.createEl('p', {
-			text: 'Apply bulk fixes to standardize your data. Use Preview to see what will change before applying.',
+			text: 'These operations work across people, places, events, and sources. Use Preview to see what will change before applying. For entity-specific operations, see the domain tabs (People, Places, etc.).',
 			cls: 'crc-text--small'
 		});
 
@@ -11048,6 +11128,7 @@ export class ControlCenterModal extends Modal {
 
 		container.appendChild(batchCard);
 
+		// === DATA ENHANCEMENT ===
 		// Data Enhancement card
 		const enhancementCard = this.createCard({
 			title: 'Data enhancement',
@@ -12544,6 +12625,147 @@ export class ControlCenterModal extends Modal {
 	}
 
 	/**
+	 * Preview fixing bidirectional relationship inconsistencies
+	 */
+	private async previewFixBidirectionalRelationships(): Promise<void> {
+		// Create folder filter and family graph service
+		const folderFilter1 = new FolderFilterService(this.plugin.settings);
+		const familyGraph1 = this.plugin.createFamilyGraphService();
+		familyGraph1.ensureCacheLoaded();
+		familyGraph1.setFolderFilter(folderFilter1);
+		familyGraph1.setPropertyAliases(this.plugin.settings.propertyAliases);
+		familyGraph1.setValueAliases(this.plugin.settings.valueAliases);
+
+		const dataQuality1 = new DataQualityService(
+			this.app,
+			this.plugin.settings,
+			familyGraph1,
+			folderFilter1
+		);
+
+		new Notice('Detecting bidirectional relationship inconsistencies...');
+
+		const inconsistencies = await dataQuality1.detectBidirectionalInconsistencies();
+
+		if (inconsistencies.length === 0) {
+			new Notice('No bidirectional relationship inconsistencies found');
+			return;
+		}
+
+		// Transform inconsistencies to modal format
+		const changes = inconsistencies.map((issue: BidirectionalInconsistency) => ({
+			person: {
+				name: issue.person.name || issue.person.file.basename,
+				file: issue.person.file
+			},
+			relatedPerson: {
+				name: issue.relatedPerson.name || issue.relatedPerson.file.basename,
+				file: issue.relatedPerson.file
+			},
+			type: issue.type,
+			description: issue.description
+		}));
+
+		const modal = new BidirectionalInconsistencyPreviewModal(
+			this.app,
+			changes,
+			() => void this.fixBidirectionalRelationships()
+		);
+		modal.open();
+	}
+
+	/**
+	 * Fix bidirectional relationship inconsistencies
+	 */
+	private async fixBidirectionalRelationships(): Promise<void> {
+		// Create folder filter and family graph service
+		const folderFilter2 = new FolderFilterService(this.plugin.settings);
+		const familyGraph2 = this.plugin.createFamilyGraphService();
+		familyGraph2.ensureCacheLoaded();
+		familyGraph2.setFolderFilter(folderFilter2);
+		familyGraph2.setPropertyAliases(this.plugin.settings.propertyAliases);
+		familyGraph2.setValueAliases(this.plugin.settings.valueAliases);
+
+		const dataQuality2 = new DataQualityService(
+			this.app,
+			this.plugin.settings,
+			familyGraph2,
+			folderFilter2
+		);
+
+		new Notice('Detecting inconsistencies...');
+
+		const inconsistencies = await dataQuality2.detectBidirectionalInconsistencies();
+
+		if (inconsistencies.length === 0) {
+			new Notice('No bidirectional relationship inconsistencies found');
+			return;
+		}
+
+		new Notice('Fixing bidirectional relationship inconsistencies...');
+
+		const result = await dataQuality2.fixBidirectionalInconsistencies(inconsistencies);
+
+		if (result.modified > 0) {
+			new Notice(`✓ Fixed ${result.modified} of ${result.processed} inconsistenc${result.processed === 1 ? 'y' : 'ies'}`);
+		} else {
+			new Notice('No inconsistencies were fixed');
+		}
+
+		if (result.errors.length > 0) {
+			new Notice(`⚠ ${result.errors.length} errors occurred. Check console for details.`);
+			console.error('Fix bidirectional relationships errors:', result.errors);
+		}
+
+		// Refresh the family graph cache
+		familyGraph2.reloadCache();
+
+		// Refresh the People tab
+		this.showTab('people');
+	}
+
+	/**
+	 * Preview impossible dates detection
+	 */
+	private async previewDetectImpossibleDates(): Promise<void> {
+		const folderFilter3 = new FolderFilterService(this.plugin.settings);
+		const familyGraph3 = this.plugin.createFamilyGraphService();
+		familyGraph3.ensureCacheLoaded();
+		familyGraph3.setFolderFilter(folderFilter3);
+		familyGraph3.setPropertyAliases(this.plugin.settings.propertyAliases);
+		familyGraph3.setValueAliases(this.plugin.settings.valueAliases);
+
+		const dataQuality3 = new DataQualityService(
+			this.app,
+			this.plugin.settings,
+			familyGraph3,
+			folderFilter3
+		);
+
+		const issues = await dataQuality3.detectImpossibleDates();
+
+		// Transform to modal format
+		const previewItems = issues.map((issue: ImpossibleDateIssue) => ({
+			person: {
+				name: issue.person.name || issue.person.file.basename,
+				file: issue.person.file
+			},
+			relatedPerson: issue.relatedPerson ? {
+				name: issue.relatedPerson.name || issue.relatedPerson.file.basename,
+				file: issue.relatedPerson.file
+			} : undefined,
+			type: issue.type,
+			description: issue.description,
+			personDate: issue.personDate,
+			relatedDate: issue.relatedDate
+		}));
+
+		// Open modal
+		const modal = new ImpossibleDatesPreviewModal(this.app, previewItems);
+		modal.open();
+	}
+
+	/**
 	 * Preview date format validation
 	 */
 	private async previewValidateDates(): Promise<void> {
@@ -12866,8 +13088,16 @@ class DuplicateRelationshipsPreviewModal extends Modal {
 			// Run the operation
 			await this.onApply();
 
-			// Close modal after completion
-			this.close();
+			// Show completion and enable close
+			applyButton.textContent = '✓ Changes applied';
+			applyButton.addClass('crc-btn-success');
+			cancelButton.textContent = 'Close';
+			cancelButton.disabled = false;
+
+			// Update count to show completion
+			if (this.countEl) {
+				this.countEl.textContent = `✓ Successfully applied ${this.allChanges.length} change${this.allChanges.length === 1 ? '' : 's'}`;
+			}
 		});
 	}
 
@@ -13081,8 +13311,16 @@ class PlaceholderRemovalPreviewModal extends Modal {
 			// Run the operation
 			await this.onApply();
 
-			// Close modal after completion
-			this.close();
+			// Show completion and enable close
+			applyButton.textContent = '✓ Changes applied';
+			applyButton.addClass('crc-btn-success');
+			cancelButton.textContent = 'Close';
+			cancelButton.disabled = false;
+
+			// Update count to show completion
+			if (this.countEl) {
+				this.countEl.textContent = `✓ Successfully applied ${this.allChanges.length} change${this.allChanges.length === 1 ? '' : 's'}`;
+			}
 		});
 	}
 
@@ -13306,8 +13544,16 @@ class NameNormalizationPreviewModal extends Modal {
 			// Run the operation
 			await this.onApply();
 
-			// Close modal after completion
-			this.close();
+			// Show completion and enable close
+			applyButton.textContent = '✓ Changes applied';
+			applyButton.addClass('crc-btn-success');
+			cancelButton.textContent = 'Close';
+			cancelButton.disabled = false;
+
+			// Update count to show completion
+			if (this.countEl) {
+				this.countEl.textContent = `✓ Successfully applied ${this.allChanges.length} change${this.allChanges.length === 1 ? '' : 's'}`;
+			}
 		});
 	}
 
@@ -13539,8 +13785,19 @@ class OrphanedRefsPreviewModal extends Modal {
 			cancelButton.disabled = true;
 			applyButton.textContent = 'Applying changes...';
 
-			this.close();
-			this.onApply();
+			// Run the operation
+			await this.onApply();
+
+			// Show completion and enable close
+			applyButton.textContent = '✓ Changes applied';
+			applyButton.addClass('crc-btn-success');
+			cancelButton.textContent = 'Close';
+			cancelButton.disabled = false;
+
+			// Update count to show completion
+			if (this.countEl) {
+				this.countEl.textContent = `✓ Successfully applied ${this.allChanges.length} change${this.allChanges.length === 1 ? '' : 's'}`;
+			}
 		});
 	}
 
@@ -13625,6 +13882,557 @@ class OrphanedRefsPreviewModal extends Modal {
 				cls: 'crc-text--muted'
 			});
 			cell.colSpan = 4;
+		}
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}
+
+/**
+ * Modal for previewing bidirectional relationship inconsistencies
+ */
+class BidirectionalInconsistencyPreviewModal extends Modal {
+	private allChanges: Array<{
+		person: { name: string; file: TFile };
+		relatedPerson: { name: string; file: TFile };
+		type: string;
+		description: string;
+	}>;
+	private filteredChanges: Array<{
+		person: { name: string; file: TFile };
+		relatedPerson: { name: string; file: TFile };
+		type: string;
+		description: string;
+	}> = [];
+	private onApply: () => void;
+
+	// Filter state
+	private searchQuery = '';
+	private selectedType = 'all';
+	private sortAscending = true;
+
+	// UI elements
+	private tbody: HTMLTableSectionElement | null = null;
+	private countEl: HTMLElement | null = null;
+
+	constructor(
+		app: App,
+		changes: Array<{
+			person: { name: string; file: TFile };
+			relatedPerson: { name: string; file: TFile };
+			type: string;
+			description: string;
+		}>,
+		onApply: () => void
+	) {
+		super(app);
+		this.allChanges = changes;
+		this.onApply = onApply;
+	}
+
+	onOpen(): void {
+		const { contentEl, titleEl } = this;
+
+		// Add modal class for sizing
+		this.modalEl.addClass('crc-batch-preview-modal');
+
+		titleEl.setText('Preview: Fix bidirectional relationship inconsistencies');
+
+		// Description
+		const description = contentEl.createDiv({ cls: 'crc-batch-description' });
+		description.createEl('p', {
+			text: 'This operation fixes one-way relationships by adding the missing reciprocal links:'
+		});
+		const useCases = description.createEl('ul');
+		useCases.createEl('li', { text: 'Parent lists child, but child doesn\'t list parent' });
+		useCases.createEl('li', { text: 'Child lists parent, but parent doesn\'t list child' });
+		useCases.createEl('li', { text: 'Person A lists Person B as spouse, but B doesn\'t list A' });
+
+		// Count display
+		this.countEl = contentEl.createEl('p', { cls: 'crc-batch-count' });
+
+		// Controls row: search + filter + sort
+		const controlsRow = contentEl.createDiv({ cls: 'crc-batch-controls' });
+
+		// Search input
+		const searchContainer = controlsRow.createDiv({ cls: 'crc-batch-search' });
+		const searchInput = searchContainer.createEl('input', {
+			type: 'text',
+			placeholder: 'Search by name...',
+			cls: 'crc-batch-search-input'
+		});
+		searchInput.addEventListener('input', () => {
+			this.searchQuery = searchInput.value.toLowerCase();
+			this.applyFiltersAndSort();
+		});
+
+		// Type filter dropdown
+		const uniqueTypes = [...new Set(this.allChanges.map(c => c.type))];
+		if (uniqueTypes.length > 1) {
+			const filterContainer = controlsRow.createDiv({ cls: 'crc-batch-filter' });
+			const filterSelect = filterContainer.createEl('select', { cls: 'crc-batch-filter-select' });
+			filterSelect.createEl('option', { text: 'All types', value: 'all' });
+			for (const type of uniqueTypes.sort()) {
+				const displayText = type
+					.replace('missing-child-in-parent', 'Missing child in parent')
+					.replace('missing-parent-in-child', 'Missing parent in child')
+					.replace('missing-spouse-in-spouse', 'Missing spouse link');
+				filterSelect.createEl('option', { text: displayText, value: type });
+			}
+			filterSelect.addEventListener('change', () => {
+				this.selectedType = filterSelect.value;
+				this.applyFiltersAndSort();
+			});
+		}
+
+		// Sort toggle
+		const sortContainer = controlsRow.createDiv({ cls: 'crc-batch-sort' });
+		const sortBtn = sortContainer.createEl('button', {
+			text: 'A→Z',
+			cls: 'crc-batch-sort-btn'
+		});
+		sortBtn.addEventListener('click', () => {
+			this.sortAscending = !this.sortAscending;
+			sortBtn.textContent = this.sortAscending ? 'A→Z' : 'Z→A';
+			this.applyFiltersAndSort();
+		});
+
+		// Scrollable table container
+		const tableContainer = contentEl.createDiv({ cls: 'crc-batch-table-container' });
+		const table = tableContainer.createEl('table', { cls: 'crc-batch-preview-table' });
+
+		// Header
+		const thead = table.createEl('thead');
+		const headerRow = thead.createEl('tr');
+		headerRow.createEl('th', { text: 'Person' });
+		headerRow.createEl('th', { text: 'Related person' });
+		headerRow.createEl('th', { text: 'Issue' });
+		headerRow.createEl('th', { text: 'Actions' });
+
+		this.tbody = table.createEl('tbody');
+
+		// Initial render
+		this.applyFiltersAndSort();
+
+		// Backup warning
+		const warning = contentEl.createDiv({ cls: 'crc-warning-callout' });
+		const warningIcon = createLucideIcon('alert-triangle', 16);
+		warning.appendChild(warningIcon);
+		warning.createSpan({
+			text: ' Backup your vault before proceeding. This operation will add missing relationship links to notes.'
+		});
+
+		// Buttons
+		const buttonContainer = contentEl.createDiv({ cls: 'crc-confirmation-buttons' });
+
+		const cancelButton = buttonContainer.createEl('button', {
+			text: 'Cancel',
+			cls: 'crc-btn-secondary'
+		});
+		cancelButton.addEventListener('click', () => this.close());
+
+		const applyButton = buttonContainer.createEl('button', {
+			text: `Fix ${this.allChanges.length} inconsistenc${this.allChanges.length === 1 ? 'y' : 'ies'}`,
+			cls: 'mod-cta'
+		});
+		applyButton.addEventListener('click', async () => {
+			// Disable buttons during operation
+			applyButton.disabled = true;
+			cancelButton.disabled = true;
+			applyButton.textContent = 'Fixing inconsistencies...';
+
+			// Run the operation
+			await this.onApply();
+
+			// Close modal after completion
+			this.close();
+		});
+	}
+
+	/**
+	 * Apply filters and sorting, then re-render the table
+	 */
+	private applyFiltersAndSort(): void {
+		// Filter
+		this.filteredChanges = this.allChanges.filter(change => {
+			// Search filter
+			if (this.searchQuery) {
+				const personMatch = change.person.name.toLowerCase().includes(this.searchQuery);
+				const relatedMatch = change.relatedPerson.name.toLowerCase().includes(this.searchQuery);
+				if (!personMatch && !relatedMatch) {
+					return false;
+				}
+			}
+			// Type filter
+			if (this.selectedType !== 'all' && change.type !== this.selectedType) {
+				return false;
+			}
+			return true;
+		});
+
+		// Sort by person name
+		this.filteredChanges.sort((a, b) => {
+			const cmp = a.person.name.localeCompare(b.person.name);
+			return this.sortAscending ? cmp : -cmp;
+		});
+
+		// Update count
+		if (this.countEl) {
+			const peopleCount = new Set(this.allChanges.map(c => c.person.name)).size;
+			if (this.filteredChanges.length === this.allChanges.length) {
+				this.countEl.textContent = `Found ${this.allChanges.length} inconsistenc${this.allChanges.length === 1 ? 'y' : 'ies'} across ${peopleCount} ${peopleCount === 1 ? 'person' : 'people'}:`;
+			} else {
+				this.countEl.textContent = `Showing ${this.filteredChanges.length} of ${this.allChanges.length} inconsistencies:`;
+			}
+		}
+
+		// Re-render table
+		this.renderTable();
+	}
+
+	/**
+	 * Render the filtered/sorted changes to the table body
+	 */
+	private renderTable(): void {
+		if (!this.tbody) return;
+
+		this.tbody.empty();
+
+		for (const change of this.filteredChanges) {
+			const row = this.tbody.createEl('tr');
+			row.createEl('td', { text: change.person.name });
+			row.createEl('td', { text: change.relatedPerson.name });
+			row.createEl('td', { text: change.description });
+
+			// Action buttons cell
+			const actionCell = row.createEl('td', { cls: 'crc-batch-actions' });
+
+			// Open person in tab
+			const openPersonTabBtn = actionCell.createEl('button', {
+				cls: 'crc-batch-action-btn clickable-icon',
+				attr: { 'aria-label': `Open ${change.person.name} in tab` }
+			});
+			const fileIcon1 = createLucideIcon('file-text', 14);
+			openPersonTabBtn.appendChild(fileIcon1);
+			openPersonTabBtn.addEventListener('click', () => {
+				this.app.workspace.getLeaf().openFile(change.person.file);
+			});
+
+			// Open person in new window
+			const openPersonWindowBtn = actionCell.createEl('button', {
+				cls: 'crc-batch-action-btn clickable-icon',
+				attr: { 'aria-label': `Open ${change.person.name} in new window` }
+			});
+			const windowIcon1 = createLucideIcon('external-link', 14);
+			openPersonWindowBtn.appendChild(windowIcon1);
+			openPersonWindowBtn.addEventListener('click', () => {
+				this.app.workspace.getLeaf('window').openFile(change.person.file);
+			});
+
+			// Separator
+			actionCell.createSpan({ text: ' ', cls: 'crc-batch-actions-separator' });
+
+			// Open related person in tab
+			const openRelatedTabBtn = actionCell.createEl('button', {
+				cls: 'crc-batch-action-btn clickable-icon',
+				attr: { 'aria-label': `Open ${change.relatedPerson.name} in tab` }
+			});
+			const fileIcon2 = createLucideIcon('file-text', 14);
+			openRelatedTabBtn.appendChild(fileIcon2);
+			openRelatedTabBtn.addEventListener('click', () => {
+				this.app.workspace.getLeaf().openFile(change.relatedPerson.file);
+			});
+
+			// Open related person in new window
+			const openRelatedWindowBtn = actionCell.createEl('button', {
+				cls: 'crc-batch-action-btn clickable-icon',
+				attr: { 'aria-label': `Open ${change.relatedPerson.name} in new window` }
+			});
+			const windowIcon2 = createLucideIcon('external-link', 14);
+			openRelatedWindowBtn.appendChild(windowIcon2);
+			openRelatedWindowBtn.addEventListener('click', () => {
+				this.app.workspace.getLeaf('window').openFile(change.relatedPerson.file);
+			});
+		}
+
+		if (this.filteredChanges.length === 0 && this.allChanges.length > 0) {
+			const row = this.tbody.createEl('tr');
+			const cell = row.createEl('td', {
+				text: 'No matches found',
+				cls: 'crc-text-muted'
+			});
+			cell.setAttribute('colspan', '4');
+		}
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}
+
+/**
+ * Modal for previewing impossible date issues
+ */
+class ImpossibleDatesPreviewModal extends Modal {
+	private allChanges: Array<{
+		person: { name: string; file: TFile };
+		relatedPerson?: { name: string; file: TFile };
+		type: string;
+		description: string;
+	}>;
+	private filteredChanges: Array<{
+		person: { name: string; file: TFile };
+		relatedPerson?: { name: string; file: TFile };
+		type: string;
+		description: string;
+	}> = [];
+
+	// Filter state
+	private searchQuery = '';
+	private selectedType = 'all';
+	private sortAscending = true;
+
+	// UI elements
+	private tbody: HTMLTableSectionElement | null = null;
+	private countEl: HTMLElement | null = null;
+
+	constructor(
+		app: App,
+		changes: Array<{
+			person: { name: string; file: TFile };
+			relatedPerson?: { name: string; file: TFile };
+			type: string;
+			description: string;
+		}>
+	) {
+		super(app);
+		this.allChanges = changes;
+	}
+
+	onOpen(): void {
+		const { contentEl, titleEl } = this;
+
+		// Add modal class for sizing
+		this.modalEl.addClass('crc-batch-preview-modal');
+
+		titleEl.setText('Preview: Impossible date issues');
+
+		// Description
+		const description = contentEl.createDiv({ cls: 'crc-batch-description' });
+		description.createEl('p', {
+			text: 'This preview shows logical date errors that need manual review and correction:'
+		});
+		const useCases = description.createEl('ul');
+		useCases.createEl('li', { text: 'Birth after death or death before birth' });
+		useCases.createEl('li', { text: 'Unrealistic lifespans (>120 years)' });
+		useCases.createEl('li', { text: 'Parents born after children or children born after parent death' });
+		useCases.createEl('li', { text: 'Parents too young at child\'s birth (<10 years)' });
+
+		const warningNote = contentEl.createDiv({ cls: 'crc-warning-callout' });
+		const warningIcon = createLucideIcon('alert-triangle', 16);
+		warningNote.appendChild(warningIcon);
+		warningNote.createSpan({
+			text: ' This is a preview-only tool. Review the issues and manually correct the dates in the affected notes.'
+		});
+
+		// Count display
+		this.countEl = contentEl.createEl('p', { cls: 'crc-batch-count' });
+
+		// Controls row: search + filter + sort
+		const controlsRow = contentEl.createDiv({ cls: 'crc-batch-controls' });
+
+		// Search input
+		const searchContainer = controlsRow.createDiv({ cls: 'crc-batch-search' });
+		const searchInput = searchContainer.createEl('input', {
+			type: 'text',
+			placeholder: 'Search by name...',
+			cls: 'crc-batch-search-input'
+		});
+		searchInput.addEventListener('input', () => {
+			this.searchQuery = searchInput.value.toLowerCase();
+			this.applyFiltersAndSort();
+		});
+
+		// Type filter dropdown
+		const uniqueTypes = [...new Set(this.allChanges.map(c => c.type))];
+		if (uniqueTypes.length > 1) {
+			const filterContainer = controlsRow.createDiv({ cls: 'crc-batch-filter' });
+			const filterSelect = filterContainer.createEl('select', { cls: 'crc-batch-filter-select' });
+			filterSelect.createEl('option', { text: 'All types', value: 'all' });
+			for (const type of uniqueTypes.sort()) {
+				const displayText = type
+					.replace('birth-after-death', 'Birth after death')
+					.replace('unrealistic-lifespan', 'Unrealistic lifespan')
+					.replace('parent-born-after-child', 'Parent born after child')
+					.replace('parent-died-before-child', 'Parent died before child')
+					.replace('parent-too-young', 'Parent too young')
+					.replace('child-born-after-parent-death', 'Child born after parent death');
+				filterSelect.createEl('option', { text: displayText, value: type });
+			}
+			filterSelect.addEventListener('change', () => {
+				this.selectedType = filterSelect.value;
+				this.applyFiltersAndSort();
+			});
+		}
+
+		// Sort toggle
+		const sortContainer = controlsRow.createDiv({ cls: 'crc-batch-sort' });
+		const sortBtn = sortContainer.createEl('button', {
+			text: 'A→Z',
+			cls: 'crc-batch-sort-btn'
+		});
+		sortBtn.addEventListener('click', () => {
+			this.sortAscending = !this.sortAscending;
+			sortBtn.textContent = this.sortAscending ? 'A→Z' : 'Z→A';
+			this.applyFiltersAndSort();
+		});
+
+		// Scrollable table container
+		const tableContainer = contentEl.createDiv({ cls: 'crc-batch-table-container' });
+		const table = tableContainer.createEl('table', { cls: 'crc-batch-preview-table' });
+
+		// Header
+		const thead = table.createEl('thead');
+		const headerRow = thead.createEl('tr');
+		headerRow.createEl('th', { text: 'Person' });
+		headerRow.createEl('th', { text: 'Related person' });
+		headerRow.createEl('th', { text: 'Issue' });
+		headerRow.createEl('th', { text: 'Actions' });
+
+		this.tbody = table.createEl('tbody');
+
+		// Initial render
+		this.applyFiltersAndSort();
+
+		// Close button
+		const buttonContainer = contentEl.createDiv({ cls: 'crc-confirmation-buttons' });
+		const closeButton = buttonContainer.createEl('button', {
+			text: 'Close',
+			cls: 'mod-cta'
+		});
+		closeButton.addEventListener('click', () => this.close());
+	}
+
+	/**
+	 * Apply filters and sorting, then re-render the table
+	 */
+	private applyFiltersAndSort(): void {
+		// Filter
+		this.filteredChanges = this.allChanges.filter(change => {
+			// Search filter
+			if (this.searchQuery) {
+				const personMatch = change.person.name.toLowerCase().includes(this.searchQuery);
+				const relatedMatch = change.relatedPerson?.name.toLowerCase().includes(this.searchQuery);
+				if (!personMatch && !relatedMatch) {
+					return false;
+				}
+			}
+			// Type filter
+			if (this.selectedType !== 'all' && change.type !== this.selectedType) {
+				return false;
+			}
+			return true;
+		});
+
+		// Sort by person name
+		this.filteredChanges.sort((a, b) => {
+			const cmp = a.person.name.localeCompare(b.person.name);
+			return this.sortAscending ? cmp : -cmp;
+		});
+
+		// Update count
+		if (this.countEl) {
+			const peopleCount = new Set(this.allChanges.map(c => c.person.name)).size;
+			if (this.filteredChanges.length === this.allChanges.length) {
+				this.countEl.textContent = `Found ${this.allChanges.length} issue${this.allChanges.length === 1 ? '' : 's'} across ${peopleCount} ${peopleCount === 1 ? 'person' : 'people'}:`;
+			} else {
+				this.countEl.textContent = `Showing ${this.filteredChanges.length} of ${this.allChanges.length} issues:`;
+			}
+		}
+
+		// Re-render table
+		this.renderTable();
+	}
+
+	/**
+	 * Render the filtered/sorted changes to the table body
+	 */
+	private renderTable(): void {
+		if (!this.tbody) return;
+
+		this.tbody.empty();
+
+		for (const change of this.filteredChanges) {
+			const row = this.tbody.createEl('tr');
+			row.createEl('td', { text: change.person.name });
+			row.createEl('td', { text: change.relatedPerson?.name || '—' });
+			row.createEl('td', { text: change.description });
+
+			// Action buttons cell
+			const actionCell = row.createEl('td', { cls: 'crc-batch-actions' });
+
+			// Open person in tab
+			const openPersonTabBtn = actionCell.createEl('button', {
+				cls: 'crc-batch-action-btn clickable-icon',
+				attr: { 'aria-label': `Open ${change.person.name} in tab` }
+			});
+			const fileIcon1 = createLucideIcon('file-text', 14);
+			openPersonTabBtn.appendChild(fileIcon1);
+			openPersonTabBtn.addEventListener('click', () => {
+				this.app.workspace.getLeaf().openFile(change.person.file);
+			});
+
+			// Open person in new window
+			const openPersonWindowBtn = actionCell.createEl('button', {
+				cls: 'crc-batch-action-btn clickable-icon',
+				attr: { 'aria-label': `Open ${change.person.name} in new window` }
+			});
+			const windowIcon1 = createLucideIcon('external-link', 14);
+			openPersonWindowBtn.appendChild(windowIcon1);
+			openPersonWindowBtn.addEventListener('click', () => {
+				this.app.workspace.getLeaf('window').openFile(change.person.file);
+			});
+
+			// If there's a related person, add buttons for them too
+			if (change.relatedPerson) {
+				// Separator
+				actionCell.createSpan({ text: ' ', cls: 'crc-batch-actions-separator' });
+
+				// Open related person in tab
+				const openRelatedTabBtn = actionCell.createEl('button', {
+					cls: 'crc-batch-action-btn clickable-icon',
+					attr: { 'aria-label': `Open ${change.relatedPerson.name} in tab` }
+				});
+				const fileIcon2 = createLucideIcon('file-text', 14);
+				openRelatedTabBtn.appendChild(fileIcon2);
+				openRelatedTabBtn.addEventListener('click', () => {
+					this.app.workspace.getLeaf().openFile(change.relatedPerson!.file);
+				});
+
+				// Open related person in new window
+				const openRelatedWindowBtn = actionCell.createEl('button', {
+					cls: 'crc-batch-action-btn clickable-icon',
+					attr: { 'aria-label': `Open ${change.relatedPerson.name} in new window` }
+				});
+				const windowIcon2 = createLucideIcon('external-link', 14);
+				openRelatedWindowBtn.appendChild(windowIcon2);
+				openRelatedWindowBtn.addEventListener('click', () => {
+					this.app.workspace.getLeaf('window').openFile(change.relatedPerson!.file);
+				});
+			}
+		}
+
+		if (this.filteredChanges.length === 0 && this.allChanges.length > 0) {
+			const row = this.tbody.createEl('tr');
+			const cell = row.createEl('td', {
+				text: 'No matches found',
+				cls: 'crc-text-muted'
+			});
+			cell.setAttribute('colspan', '4');
 		}
 	}
 
@@ -13802,9 +14610,25 @@ class BatchPreviewModal extends Modal {
 				text: `Apply ${actualChanges.length} change${actualChanges.length === 1 ? '' : 's'}`,
 				cls: 'mod-cta'
 			});
-			applyBtn.addEventListener('click', () => {
-				this.close();
-				this.onApply();
+			applyBtn.addEventListener('click', async () => {
+				// Disable buttons during operation
+				applyBtn.disabled = true;
+				cancelBtn.disabled = true;
+				applyBtn.textContent = 'Applying changes...';
+
+				// Run the operation
+				await this.onApply();
+
+				// Show completion and enable close
+				applyBtn.textContent = '✓ Changes applied';
+				applyBtn.addClass('crc-btn-success');
+				cancelBtn.textContent = 'Close';
+				cancelBtn.disabled = false;
+
+				// Update count to show completion
+				if (this.countEl) {
+					this.countEl.textContent = `✓ Successfully applied ${actualChanges.length} change${actualChanges.length === 1 ? '' : 's'}`;
+				}
 			});
 		} else if (this.allChanges.length > 0) {
 			// Only unrecognized values, no actual changes to apply
