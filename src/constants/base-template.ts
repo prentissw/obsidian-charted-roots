@@ -59,10 +59,13 @@ export function generatePeopleBaseTemplate(aliases: PropertyAliases = {}): strin
 summaries:
   generation_span: if(values.length > 0, values.max().year() - values.min().year(), 0)
 filters:
-  or:
-    - file.hasTag("person")
+  and:
     - file.hasProperty("${cr_id}")
-    - note.${cr_type} = "person"
+    - note.${cr_type} != "place"
+    - note.${cr_type} != "event"
+    - note.${cr_type} != "source"
+    - note.${cr_type} != "organization"
+    - note.${cr_type} != "map"
 formulas:
   display_name: ${name} || file.name
   full_lifespan: if(${born} && ${died}, ${died}.year() - ${born}.year() + " years", "")
@@ -343,10 +346,13 @@ export const BASE_TEMPLATE = `visibleProperties:
 summaries:
   generation_span: if(values.length > 0, values.max().year() - values.min().year(), 0)
 filters:
-  or:
-    - file.hasTag("person")
+  and:
     - file.hasProperty("cr_id")
-    - note.cr_type = "person"
+    - note.cr_type != "place"
+    - note.cr_type != "event"
+    - note.cr_type != "source"
+    - note.cr_type != "organization"
+    - note.cr_type != "map"
 formulas:
   display_name: name || file.name
   full_lifespan: if(born && died, died.year() - born.year() + " years", "")

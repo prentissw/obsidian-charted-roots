@@ -24,6 +24,8 @@ Obsidian plugin review fixes (Round 11) and bug fixes.
 
 - **Timeline callout vertical line alignment** - Fixed the vertical line in markdown timeline exports not aligning with the dot markers
 
+- **People base showing non-person notes** - Fixed the "Create People base" template including place, event, and source notes in the family members view
+
 ---
 
 ## [0.11.3] - 2025-12-12
