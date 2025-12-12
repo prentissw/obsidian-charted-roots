@@ -13787,7 +13787,7 @@ class PlaceholderRemovalPreviewModal extends Modal {
 			row.createEl('td', { text: change.newValue, cls: 'crc-batch-new-value' });
 
 			// Action buttons
-			const actionCell = row.createEl('td', { cls: 'crc-batch-actions' });
+			const actionCell = row.createEl('td', { cls: 'crc-batch-actions crc-batch-actions--inline' });
 
 			// Open in new tab button
 			const openTabBtn = actionCell.createEl('button', {
@@ -14008,7 +14008,7 @@ class NameNormalizationPreviewModal extends Modal {
 			row.createEl('td', { text: change.newValue, cls: 'crc-batch-new-value' });
 
 			// Action buttons
-			const actionCell = row.createEl('td', { cls: 'crc-batch-actions' });
+			const actionCell = row.createEl('td', { cls: 'crc-batch-actions crc-batch-actions--inline' });
 
 			// Open in new tab button
 			const openTabBtn = actionCell.createEl('button', {
@@ -14243,7 +14243,7 @@ class OrphanedRefsPreviewModal extends Modal {
 			row.createEl('td', { text: change.orphanedId, cls: 'crc-monospace' });
 
 			// Action buttons
-			const actionCell = row.createEl('td', { cls: 'crc-batch-actions' });
+			const actionCell = row.createEl('td', { cls: 'crc-batch-actions crc-batch-actions--inline' });
 
 			// Open in tab button
 			const openTabBtn = actionCell.createEl('button', {
@@ -14504,7 +14504,7 @@ class BidirectionalInconsistencyPreviewModal extends Modal {
 			row.createEl('td', { text: change.description });
 
 			// Action buttons cell
-			const actionCell = row.createEl('td', { cls: 'crc-batch-actions' });
+			const actionCell = row.createEl('td', { cls: 'crc-batch-actions crc-batch-actions--inline' });
 
 			// Open person in tab
 			const openPersonTabBtn = actionCell.createEl('button', {
@@ -14769,7 +14769,7 @@ class ImpossibleDatesPreviewModal extends Modal {
 			row.createEl('td', { text: change.description });
 
 			// Action buttons cell
-			const actionCell = row.createEl('td', { cls: 'crc-batch-actions' });
+			const actionCell = row.createEl('td', { cls: 'crc-batch-actions crc-batch-actions--inline' });
 
 			// Open person in tab
 			const openPersonTabBtn = actionCell.createEl('button', {
