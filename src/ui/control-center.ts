@@ -5326,6 +5326,10 @@ export class ControlCenterModal extends Modal {
 		filenameFormats?: FilenameFormatOptions,
 		fileName?: string
 	): Promise<void> {
+		// Suspend bidirectional linker during import to prevent race conditions
+		// The linker would otherwise try to sync relationships before Phase 2 replaces GEDCOM IDs with cr_ids
+		this.plugin.bidirectionalLinker?.suspend();
+
 		// Show progress modal
 		const progressModal = new GedcomImportProgressModal(this.app);
 		progressModal.open();
@@ -5433,6 +5437,9 @@ export class ControlCenterModal extends Modal {
 			const errorMsg = getErrorMessage(error);
 			logger.error('gedcom', `GEDCOM v2 import failed: ${errorMsg}`);
 			new Notice(`Failed to import GEDCOM: ${errorMsg}`);
+		} finally {
+			// Resume bidirectional linker after import completes (success or failure)
+			this.plugin.bidirectionalLinker?.resume();
 		}
 	}
 

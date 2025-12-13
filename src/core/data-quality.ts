@@ -630,7 +630,18 @@ export class DataQualityService {
 	}
 
 	/**
+	 * Check if a cr_id has a valid format (xxx-123-xxx-123)
+	 * Valid format: 3 letters - 3 digits - 3 letters - 3 digits
+	 */
+	private isValidCrIdFormat(crId: string): boolean {
+		if (!crId) return false;
+		const pattern = /^[a-z]{3}-\d{3}-[a-z]{3}-\d{3}$/;
+		return pattern.test(crId);
+	}
+
+	/**
 	 * Check for orphan references (links to non-existent people)
+	 * Also checks for corrupt cr_id formats
 	 */
 	private checkOrphanReferences(
 		person: PersonNode,
@@ -638,33 +649,64 @@ export class DataQualityService {
 	): DataQualityIssue[] {
 		const issues: DataQualityIssue[] = [];
 
-		// Father reference doesn't exist
-		if (person.fatherCrId && !peopleMap.has(person.fatherCrId)) {
-			issues.push({
-				code: 'ORPHAN_FATHER_REF',
-				message: `Father reference (${person.fatherCrId}) points to non-existent person`,
-				severity: 'warning',
-				category: 'orphan_reference',
-				person,
-				details: { missingCrId: person.fatherCrId, relationship: 'father' },
-			});
+		// Father reference
+		if (person.fatherCrId) {
+			if (!this.isValidCrIdFormat(person.fatherCrId)) {
+				issues.push({
+					code: 'CORRUPT_CRID_FORMAT',
+					message: `Father reference has invalid cr_id format: ${person.fatherCrId}`,
+					severity: 'error',
+					category: 'orphan_reference',
+					person,
+					details: { corruptCrId: person.fatherCrId, relationship: 'father' },
+				});
+			} else if (!peopleMap.has(person.fatherCrId)) {
+				issues.push({
+					code: 'ORPHAN_FATHER_REF',
+					message: `Father reference (${person.fatherCrId}) points to non-existent person`,
+					severity: 'warning',
+					category: 'orphan_reference',
+					person,
+					details: { missingCrId: person.fatherCrId, relationship: 'father' },
+				});
+			}
 		}
 
-		// Mother reference doesn't exist
-		if (person.motherCrId && !peopleMap.has(person.motherCrId)) {
-			issues.push({
-				code: 'ORPHAN_MOTHER_REF',
-				message: `Mother reference (${person.motherCrId}) points to non-existent person`,
-				severity: 'warning',
-				category: 'orphan_reference',
-				person,
-				details: { missingCrId: person.motherCrId, relationship: 'mother' },
-			});
+		// Mother reference
+		if (person.motherCrId) {
+			if (!this.isValidCrIdFormat(person.motherCrId)) {
+				issues.push({
+					code: 'CORRUPT_CRID_FORMAT',
+					message: `Mother reference has invalid cr_id format: ${person.motherCrId}`,
+					severity: 'error',
+					category: 'orphan_reference',
+					person,
+					details: { corruptCrId: person.motherCrId, relationship: 'mother' },
+				});
+			} else if (!peopleMap.has(person.motherCrId)) {
+				issues.push({
+					code: 'ORPHAN_MOTHER_REF',
+					message: `Mother reference (${person.motherCrId}) points to non-existent person`,
+					severity: 'warning',
+					category: 'orphan_reference',
+					person,
+					details: { missingCrId: person.motherCrId, relationship: 'mother' },
+				});
+			}
 		}
 
-		// Spouse references don't exist
+		// Spouse references
 		for (const spouseCrId of person.spouseCrIds) {
-			if (!peopleMap.has(spouseCrId)) {
+			if (!this.isValidCrIdFormat(spouseCrId)) {
+				issues.push({
+					code: 'CORRUPT_CRID_FORMAT',
+					message: `Spouse reference has invalid cr_id format: ${spouseCrId}`,
+					severity: 'error',
+					category: 'orphan_reference',
+					person,
+					details: { corruptCrId: spouseCrId, relationship: 'spouse' },
+				});
+			} else if (!peopleMap.has(spouseCrId)) {
 				issues.push({
 					code: 'ORPHAN_SPOUSE_REF',
 					message: `Spouse reference (${spouseCrId}) points to non-existent person`,
@@ -676,9 +718,18 @@ export class DataQualityService {
 			}
 		}
 
-		// Child references don't exist
+		// Child references
 		for (const childCrId of person.childrenCrIds) {
-			if (!peopleMap.has(childCrId)) {
+			if (!this.isValidCrIdFormat(childCrId)) {
+				issues.push({
+					code: 'CORRUPT_CRID_FORMAT',
+					message: `Child reference has invalid cr_id format: ${childCrId}`,
+					severity: 'error',
+					category: 'orphan_reference',
+					person,
+					details: { corruptCrId: childCrId, relationship: 'child' },
+				});
+			} else if (!peopleMap.has(childCrId)) {
 				issues.push({
 					code: 'ORPHAN_CHILD_REF',
 					message: `Child reference (${childCrId}) points to non-existent person`,

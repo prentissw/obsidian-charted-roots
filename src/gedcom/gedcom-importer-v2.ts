@@ -359,7 +359,8 @@ export class GedcomImporterV2 {
 						await this.updateRelationships(
 							individual,
 							gedcomToCrId,
-							gedcomToNotePath
+							gedcomToNotePath,
+							gedcomData
 						);
 					} catch (error: unknown) {
 						result.errors.push(
@@ -572,7 +573,8 @@ export class GedcomImporterV2 {
 	private async updateRelationships(
 		individual: GedcomIndividualV2,
 		gedcomToCrId: Map<string, string>,
-		gedcomToNotePath: Map<string, string>
+		gedcomToNotePath: Map<string, string>,
+		gedcomData: GedcomDataV2
 	): Promise<void> {
 		const crId = gedcomToCrId.get(individual.id);
 		if (!crId) return;
@@ -609,21 +611,51 @@ export class GedcomImporterV2 {
 			const spouseCrId = gedcomToCrId.get(spouseRef);
 			if (spouseCrId) {
 				replacements.push({ from: spouseRef, to: spouseCrId });
+			} else {
+				console.warn(`[GEDCOM Import] No cr_id found for spouse ref ${spouseRef} of ${individual.name} (${individual.id})`);
 			}
 		}
 
+		// Collect child references from families where this person is a parent
+		for (const family of gedcomData.families.values()) {
+			if (family.husbandRef === individual.id || family.wifeRef === individual.id) {
+				for (const childRef of family.childRefs) {
+					const childCrId = gedcomToCrId.get(childRef);
+					if (childCrId && !replacements.some(r => r.from === childRef)) {
+						replacements.push({ from: childRef, to: childCrId });
+					}
+				}
+			}
+		}
+
+		// DEBUG: Log replacements for debugging spouse_id issues
+		if (replacements.length > 0) {
+			console.log(`[GEDCOM Import] Updating relationships for ${individual.name} (${individual.id}):`,
+				replacements.map(r => `${r.from} -> ${r.to}`).join(', '));
+		}
+
 		// Apply replacements
-		for (const { from, to } of replacements) {
+		// Sort by length descending to replace longer IDs first (e.g., I27 before I2)
+		// This prevents partial matches where I2 matches within I27
+		const sortedReplacements = [...replacements].sort((a, b) => b.from.length - a.from.length);
+
+		for (const { from, to } of sortedReplacements) {
 			const escapedFrom = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-			// Replace in property values
+			// Replace in property values - use word boundary to prevent partial matches
+			// Match the ID only when followed by end of line, comma, bracket, or whitespace
 			updatedContent = updatedContent.replace(
-				new RegExp(`(father_id|mother_id|spouse_id|children_id):\\s*${escapedFrom}`, 'g'),
+				new RegExp(`(father_id|mother_id|spouse_id|children_id):\\s*${escapedFrom}(?=\\s*$|\\s*,|\\s*\\]|\\s*\\n)`, 'gm'),
 				`$1: ${to}`
 			);
-			// Replace in array format
+			// Replace in array format (YAML list items)
 			updatedContent = updatedContent.replace(
 				new RegExp(`(\\s{2}- )${escapedFrom}$`, 'gm'),
 				`$1${to}`
+			);
+			// Replace in inline array format: ["I1", "I2"]
+			updatedContent = updatedContent.replace(
+				new RegExp(`"${escapedFrom}"`, 'g'),
+				`"${to}"`
 			);
 		}
 

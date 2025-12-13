@@ -18,6 +18,7 @@ This directory contains progressively larger GEDCOM test files for stress-testin
 | `gedcom-sample-xlarge.ged` | 599 | 179 | 7 | 113 KB | Extreme stress test |
 | `gedcom-sample-small-malformed.ged` | 13 | 5 | 3 | 2.1 KB | Error handling test |
 | `gedcom-sample-small-remarriage.ged` | - | - | - | 6.4 KB | Remarriage scenarios |
+| `gedcom-sample-duplicates-27.ged` | 27 | 10 | 4 | 5.5 KB | Duplicate name handling |
 
 ### Full Files (All Note Types: People, Events, Sources, Places)
 
@@ -420,6 +421,74 @@ Record which specific edge cases caused issues and how they were handled. This w
 - Error handling improvements
 - User documentation (what data formats are supported)
 - Validation rules for GEDCOM import
+
+---
+
+### 7. Duplicate Names - RELATIONSHIP RESOLUTION TEST
+**File:** `gedcom-sample-duplicates-27.ged`
+
+**What to test:**
+- Correct handling of multiple people with identical names
+- Import creates distinct notes with numeric suffixes (`John Smith.md`, `John Smith 1.md`)
+- Relationship IDs point to the correct person (not confused by name)
+- Bidirectional relationship fix tool distinguishes between people with same name
+
+**Duplicate Names Included:**
+
+| Name | Count | Birth Years | Notes |
+|------|-------|-------------|-------|
+| John Smith | 2 | 1920, 1975 | Grandfather and grandson |
+| Mary Johnson | 2 | 1930, 1942 | Different family branches (Chicago vs Texas) |
+| William Brown | 2 | 1965, 1965 | **Same birth date** - hardest case |
+
+**Family Structure:**
+- **Smith line (3 generations):**
+  - John Smith (grandfather, b.1920) + Mary Jones → Robert Smith, Susan Smith
+  - Robert Smith + Elizabeth Taylor → John Smith (grandson, b.1975)
+  - John Smith (grandson) + Sarah Williams → Emily Smith, Michael Smith
+
+- **Chicago Johnson line:**
+  - Henry Johnson + Mary Johnson #1 (b.1930) → Thomas Johnson
+  - Thomas Johnson + Patricia Moore → James Johnson
+
+- **Texas Brown line:**
+  - George Brown + Mary Johnson #2 (b.1942) → William Brown #1 (b.1965)
+  - William Brown #1 + Linda Davis → Christopher Brown, Jessica Brown
+
+- **Oregon Miller/Brown line:**
+  - Richard Miller + Dorothy Clark → William Brown #2 (b.1965, same birth date as #1)
+  - William Brown #2 + Karen White → Amanda Brown, Daniel Brown
+
+**Expected Behavior:**
+- Import creates 27 distinct person notes
+- Duplicate names get numeric suffixes (e.g., `John Smith 1.md`)
+- `father_id`, `mother_id`, `spouse_id`, `children_id` contain correct `cr_id` values
+- Bidirectional relationship fix tool does NOT flag correct relationships as inconsistent
+- Each person's relationships point to the correct individual despite name collisions
+
+**Success Criteria:**
+- ✅ All 27 people imported as distinct notes
+- ✅ Duplicate names have suffixes (verify filenames)
+- ✅ No GEDCOM IDs (`@I1@`, etc.) remain in frontmatter after import
+- ✅ All `cr_id` references point to the correct person
+- ✅ Bidirectional fix tool shows 0 inconsistencies (or only real ones)
+- ✅ Tree generation correctly shows family relationships
+
+**Red Flags to Watch For:**
+- ❌ Wrong person linked (e.g., grandson's children linked to grandfather)
+- ❌ Bidirectional fix tool flags correct relationships as broken
+- ❌ GEDCOM IDs remain in frontmatter (import didn't complete properly)
+- ❌ Duplicate names overwrite each other instead of getting suffixes
+- ❌ Tree shows impossible relationships (child older than parent)
+
+**Testing Steps:**
+1. Import `gedcom-sample-duplicates-27.ged` to fresh folder
+2. Verify 27 notes created with appropriate suffixes
+3. Spot-check frontmatter for correct `cr_id` references
+4. Run "Fix bidirectional relationship inconsistencies"
+5. Verify no false positives (or document any that appear)
+6. Generate tree from John Smith (grandfather) - verify correct descendants
+7. Generate tree from John Smith (grandson) - verify correct family
 
 ---
 
