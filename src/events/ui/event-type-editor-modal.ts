@@ -186,7 +186,7 @@ export class EventTypeEditorModal extends Modal {
 					});
 					dropdown.setValue(this.category);
 					dropdown.onChange(value => {
-						this.category = value as EventTypeCategory;
+						this.category = value;
 					});
 				});
 		}

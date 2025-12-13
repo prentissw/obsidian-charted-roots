@@ -1102,7 +1102,7 @@ export class PlaceGraphService {
 		// Supports: parent_place_id (preferred), parent_place, parent (GEDCOM import uses 'parent')
 		// Also supports property aliases
 		const propAliases = this.settings?.propertyAliases || {};
-		let parentId: string | undefined = fm.parent_place_id;
+		const parentId: string | undefined = fm.parent_place_id;
 		let parentWikilink: string | undefined;
 
 		// Check for parent wikilink in various property names

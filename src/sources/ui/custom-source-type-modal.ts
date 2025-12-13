@@ -151,7 +151,7 @@ export class CustomSourceTypeModal extends Modal {
 				});
 				dropdown.setValue(this.category);
 				dropdown.onChange(value => {
-					this.category = value as SourceTypeDefinition['category'];
+					this.category = value;
 				});
 			});
 
