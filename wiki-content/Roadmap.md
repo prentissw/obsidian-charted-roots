@@ -80,7 +80,7 @@ After a GEDCOM import (especially from a file with data quality issues), users f
 | Step | Operation | Current Location | Why This Order |
 |------|-----------|------------------|----------------|
 | 1 | Quality Report | Data Quality tab | Understand scope of issues before fixing |
-| 2 | Fix Bidirectional Relationships | Data Quality tab | Graph integrity required for other operations |
+| 2 | Fix Bidirectional Relationships | People tab | Graph integrity required for other operations |
 | 3 | Normalize Date Formats | Data Quality tab | Standardized dates enable age calculations |
 | 4 | Normalize Gender Values | Data Quality tab | Required for parent role validation |
 | 5 | Clear Orphan References | Data Quality tab | Remove dangling links |

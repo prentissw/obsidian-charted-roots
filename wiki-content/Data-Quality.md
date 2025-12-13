@@ -24,7 +24,7 @@ Start here to understand the scope of issues. The report shows:
 This gives you the big picture before diving into fixes.
 
 ### Step 2: Fix Bidirectional Relationships
-**Location:** Control Center → Data Quality tab → "Fix bidirectional relationships"
+**Location:** Control Center → People tab → Batch operations → "Fix bidirectional relationship inconsistencies"
 
 Run this early — it ensures the family graph is internally consistent. If a child lists a parent, the parent should list the child. This step is essential for tree generation and navigation to work correctly.
 
@@ -33,10 +33,10 @@ Run this early — it ensures the family graph is internally consistent. If a ch
 
 Converts varied date formats (`15 Mar 1920`, `Mar 15, 1920`, etc.) to the standard `YYYY-MM-DD` format. Standardized dates enable proper sorting, filtering, and age calculations.
 
-### Step 4: Normalize Gender Values
-**Location:** Control Center → Data Quality tab → "Normalize gender values"
+### Step 4: Normalize Sex Values
+**Location:** Control Center → Data Quality tab → "Normalize sex values"
 
-Converts `M`, `Male`, `F`, `Female` to canonical `male`/`female` values. Consistent gender values are required for parent role validation (father vs. mother).
+Converts `M`, `Male`, `F`, `Female` to canonical `male`/`female` values. Consistent sex values are required for parent role validation (father vs. mother).
 
 ### Step 5: Clear Orphan References
 **Location:** Control Center → Data Quality tab → "Clear orphan references"
@@ -44,7 +44,7 @@ Converts `M`, `Male`, `F`, `Female` to canonical `male`/`female` values. Consist
 Removes `father_id` and `mother_id` values that point to non-existent people. This cleans up dangling references that can cause errors in tree generation.
 
 ### Step 6: Standardize Place Names
-**Location:** Control Center → Places tab → "Standardize place variants"
+**Location:** Control Center → Places tab → "Standardize variants"
 
 Unifies spelling variations ("USA" vs "United States of America", state abbreviations). Consistent place names enable proper grouping and hierarchy building.
 
