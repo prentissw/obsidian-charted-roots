@@ -2,6 +2,22 @@
 
 Canvas Roots includes comprehensive data quality tools to help you maintain accurate, consistent genealogical data. These tools detect issues, preview changes, and apply fixes across your vault.
 
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Post-Import Cleanup Workflow](#post-import-cleanup-workflow)
+- [Control Center Data Quality Tab](#control-center-data-quality-tab)
+  - [Quality Report](#quality-report)
+  - [Issue Categories](#issue-categories)
+- [Batch Operations](#batch-operations)
+- [Place Data Quality](#place-data-quality)
+- [GEDCOM Import Quality Preview](#gedcom-import-quality-preview)
+- [Best Practices](#best-practices)
+
+---
+
 ## Overview
 
 Data quality tools are available in two contexts:

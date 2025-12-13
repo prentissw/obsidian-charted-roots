@@ -2,6 +2,24 @@
 
 Common questions about Canvas Roots.
 
+---
+
+## Table of Contents
+
+- [General](#general)
+- [Data Entry](#data-entry)
+- [Tree Generation](#tree-generation)
+- [Family Chart View](#family-chart-view)
+- [Import/Export](#importexport)
+- [Geographic Features](#geographic-features)
+- [Performance](#performance)
+- [Troubleshooting](#troubleshooting)
+- [Events](#events)
+- [Property Aliases](#property-aliases)
+- [Getting Help](#getting-help)
+
+---
+
 ## General
 
 ### What is Canvas Roots?
