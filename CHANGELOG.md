@@ -9,9 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.11.8] - 2025-12-13
+
 ### Fixed
 
 - **Base templates: columns not visible by default** - Fixed an issue where Obsidian Bases templates for Events, Sources, Organizations, and Places did not display columns by default. The templates had `sort` (which controls sorting direction) but were missing `order` (which controls visible columns). Added `order` arrays to the first view in each template specifying which columns to display.
+
+- **Descendant tree canvas export missing edges** - Fixed a bug where descendant tree canvas exports had no connecting arrows between person cards. The `buildDescendantTree()` function was creating edges with `type: 'child'` which were filtered out by the canvas generator (which skips child edges to avoid duplicates). Changed edge type to `'parent'` so edges are properly included in the export.
 
 ---
 

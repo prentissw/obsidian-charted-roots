@@ -700,7 +700,7 @@ export class FamilyGraphService {
 		for (const childCrId of node.childrenCrIds) {
 			const child = this.personCache.get(childCrId);
 			if (child && this.shouldIncludePerson(child, options)) {
-				edges.push({ from: node.crId, to: child.crId, type: 'child' });
+				edges.push({ from: node.crId, to: child.crId, type: 'parent' });
 				this.buildDescendantTree(child, nodes, edges, options, currentGeneration + 1);
 			}
 		}
