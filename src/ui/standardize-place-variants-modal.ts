@@ -313,7 +313,7 @@ export class StandardizePlaceVariantsModal extends Modal {
 					});
 					setLucideIcon(openTabBtn, 'file-text');
 					openTabBtn.addEventListener('click', () => {
-						this.app.workspace.getLeaf('tab').openFile(match.files[0]);
+						void this.app.workspace.getLeaf('tab').openFile(match.files[0]);
 					});
 
 					const openWindowBtn = actionsCell.createEl('button', {
@@ -322,7 +322,7 @@ export class StandardizePlaceVariantsModal extends Modal {
 					});
 					setLucideIcon(openWindowBtn, 'external-link');
 					openWindowBtn.addEventListener('click', () => {
-						this.app.workspace.getLeaf('window').openFile(match.files[0]);
+						void this.app.workspace.getLeaf('window').openFile(match.files[0]);
 					});
 				}
 			}

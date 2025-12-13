@@ -15,11 +15,11 @@ import { LoggerFactory, getLogger } from './src/core/logging';
 import { getErrorMessage } from './src/core/error-utils';
 import { FamilyGraphService } from './src/core/family-graph';
 import { CanvasGenerator } from './src/core/canvas-generator';
-import { BASE_TEMPLATE, generatePeopleBaseTemplate } from './src/constants/base-template';
-import { PLACES_BASE_TEMPLATE, generatePlacesBaseTemplate } from './src/constants/places-base-template';
+import { generatePeopleBaseTemplate } from './src/constants/base-template';
+import { generatePlacesBaseTemplate } from './src/constants/places-base-template';
 import { ORGANIZATIONS_BASE_TEMPLATE } from './src/constants/organizations-base-template';
 import { SOURCES_BASE_TEMPLATE } from './src/constants/sources-base-template';
-import { EVENTS_BASE_TEMPLATE, generateEventsBaseTemplate } from './src/constants/events-base-template';
+import { generateEventsBaseTemplate } from './src/constants/events-base-template';
 import { ExcalidrawExporter } from './src/excalidraw/excalidraw-exporter';
 import { BidirectionalLinker } from './src/core/bidirectional-linker';
 import { generateCrId } from './src/core/uuid';
@@ -2316,7 +2316,7 @@ export default class CanvasRootsPlugin extends Plugin {
 											const eventTitle = cache?.frontmatter?.title || file.basename;
 											const confirmed = await this.confirmDeleteEvent(eventTitle);
 											if (confirmed) {
-												await this.app.vault.delete(file);
+												await this.app.fileManager.trashFile(file);
 												new Notice(`Deleted event: ${eventTitle}`);
 											}
 										});
@@ -2377,7 +2377,7 @@ export default class CanvasRootsPlugin extends Plugin {
 										const eventTitle = cache?.frontmatter?.title || file.basename;
 										const confirmed = await this.confirmDeleteEvent(eventTitle);
 										if (confirmed) {
-											await this.app.vault.delete(file);
+											await this.app.fileManager.trashFile(file);
 											new Notice(`Deleted event: ${eventTitle}`);
 										}
 									});

@@ -250,16 +250,22 @@ export async function createPersonNote(
 		if (Array.isArray(value)) {
 			yamlLines.push(`${key}:`);
 			for (const item of value) {
-				yamlLines.push(`  - ${item}`);
+				// Handle potential object items in arrays
+				const itemStr = typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item);
+				yamlLines.push(`  - ${itemStr}`);
 			}
+		} else if (typeof value === 'object' && value !== null) {
+			// Handle nested objects by serializing to JSON
+			yamlLines.push(`${key}: ${JSON.stringify(value)}`);
 		} else {
 			// Quote values that contain wikilinks to prevent YAML parsing issues
 			// [[foo]] in YAML is interpreted as nested array [["foo"]]
-			const needsQuotes = typeof value === 'string' && value.includes('[[') && !value.startsWith('"');
+			const strValue = String(value);
+			const needsQuotes = typeof value === 'string' && strValue.includes('[[') && !strValue.startsWith('"');
 			if (needsQuotes) {
-				yamlLines.push(`${key}: "${value}"`);
+				yamlLines.push(`${key}: "${strValue}"`);
 			} else {
-				yamlLines.push(`${key}: ${value}`);
+				yamlLines.push(`${key}: ${strValue}`);
 			}
 		}
 	}

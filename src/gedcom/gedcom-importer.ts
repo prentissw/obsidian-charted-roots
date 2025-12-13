@@ -174,13 +174,14 @@ export class GedcomImporter {
 			// Ensure people folder exists
 			await this.ensureFolderExists(options.peopleFolder);
 
-			// Create mapping of GEDCOM IDs to cr_ids
+			// Create mapping of GEDCOM IDs to cr_ids and file paths
 			const gedcomToCrId = new Map<string, string>();
+			const gedcomToFilePath = new Map<string, string>();
 
 			// First pass: Create all person notes
 			for (const [gedcomId, individual] of gedcomData.individuals) {
 				try {
-					const crId = await this.importIndividual(
+					const { crId, filePath } = await this.importIndividual(
 						individual,
 						gedcomData,
 						options,
@@ -188,6 +189,7 @@ export class GedcomImporter {
 					);
 
 					gedcomToCrId.set(gedcomId, crId);
+					gedcomToFilePath.set(gedcomId, filePath);
 					result.individualsImported++;
 					result.familiesCreated++; // Count each person note
 					result.individualsProcessed++; // Keep for backward compat
@@ -212,9 +214,8 @@ export class GedcomImporter {
 				try {
 					await this.updateRelationships(
 						individual,
-						gedcomData,
 						gedcomToCrId,
-						options
+						gedcomToFilePath
 					);
 				} catch (error: unknown) {
 					result.errors.push(
@@ -248,13 +249,14 @@ export class GedcomImporter {
 
 	/**
 	 * Import a single individual
+	 * @returns Object containing the cr_id and the actual file path created
 	 */
 	private async importIndividual(
 		individual: GedcomIndividual,
 		gedcomData: GedcomData,
 		options: GedcomImportOptions,
 		gedcomToCrId: Map<string, string>
-	): Promise<string> {
+	): Promise<{ crId: string; filePath: string }> {
 		const crId = generateCrId();
 
 		// Convert GEDCOM individual to PersonData
@@ -315,13 +317,13 @@ export class GedcomImporter {
 
 		// Write person note using the createPersonNote function
 		// Disable bidirectional linking during import - we'll fix relationships in pass 2
-		await createPersonNote(this.app, personData, {
+		const file = await createPersonNote(this.app, personData, {
 			directory: options.peopleFolder,
 			addBidirectionalLinks: false,
 			propertyAliases: options.propertyAliases
 		});
 
-		return crId;
+		return { crId, filePath: file.path };
 	}
 
 	/**
@@ -329,21 +331,17 @@ export class GedcomImporter {
 	 */
 	private async updateRelationships(
 		individual: GedcomIndividual,
-		gedcomData: GedcomData,
 		gedcomToCrId: Map<string, string>,
-		options: GedcomImportOptions
+		gedcomToFilePath: Map<string, string>
 	): Promise<void> {
 		const crId = gedcomToCrId.get(individual.id);
 		if (!crId) return;
 
-		// Generate the expected file name
-		const fileName = this.generateFileName(individual.name || 'Unknown');
-		const filePath = options.peopleFolder
-			? `${options.peopleFolder}/${fileName}`
-			: fileName;
+		// Look up the actual file path from the map (handles duplicate names with suffixes)
+		const filePath = gedcomToFilePath.get(individual.id);
+		if (!filePath) return;
 
-		const normalizedPath = normalizePath(filePath);
-		const file = this.app.vault.getAbstractFileByPath(normalizedPath);
+		const file = this.app.vault.getAbstractFileByPath(filePath);
 
 		if (!file || !(file instanceof TFile)) {
 			return;
@@ -406,19 +404,6 @@ export class GedcomImporter {
 		if (updatedContent !== content) {
 			await this.app.vault.modify(file, updatedContent);
 		}
-	}
-
-	/**
-	 * Generate file name from person name
-	 */
-	private generateFileName(name: string): string {
-		// Sanitize name for file system
-		const sanitized = name
-			.replace(/[\\/:*?"<>|]/g, '-')
-			.replace(/\s+/g, ' ')
-			.trim();
-
-		return `${sanitized}.md`;
 	}
 
 	/**

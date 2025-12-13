@@ -352,10 +352,11 @@ export class FamilyChartView extends ItemView {
 			'--background-color': isDarkMode ? 'rgb(33, 33, 33)' : 'rgb(250, 250, 250)',
 			'--text-color': isDarkMode ? '#fff' : '#333'
 		});
-		// Set direct styles on container
+		// Set direct styles on container (hidden until chart is positioned)
 		this.chartContainerEl.setCssStyles({
 			backgroundColor: isDarkMode ? 'rgb(33, 33, 33)' : 'rgb(250, 250, 250)',
-			color: isDarkMode ? '#fff' : '#333'
+			color: isDarkMode ? '#fff' : '#333',
+			visibility: 'hidden'
 		});
 
 		// Show loading overlay during initial positioning (positioned absolutely over the container)
@@ -404,7 +405,7 @@ export class FamilyChartView extends ItemView {
 					// Show container after animation completes
 					setTimeout(() => {
 						if (this.chartContainerEl) {
-							this.chartContainerEl.style.visibility = 'visible';
+							this.chartContainerEl.setCssStyles({ visibility: 'visible' });
 							loadingOverlay.remove();
 						}
 					}, 850);
@@ -555,7 +556,7 @@ export class FamilyChartView extends ItemView {
 	 */
 	refreshChart(): void {
 		// Force reload the cache to get fresh data
-		this.familyGraphService.reloadCache();
+		void this.familyGraphService.reloadCache();
 
 		if (this.rootPersonId) {
 			this.initializeChart();

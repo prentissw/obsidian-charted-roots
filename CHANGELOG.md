@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.11.5] - 2025-12-12
+
+Obsidian plugin review fixes (Round 12) and GEDCOM import bug fix.
+
+### Fixed
+
+- **GEDCOM import: parent IDs not replaced for duplicate names** - Fixed an issue where `father_id`, `mother_id`, `spouse_id`, and `children_id` properties retained GEDCOM IDs (e.g., `I2060`) instead of being replaced with `cr_id` values when importing people with duplicate names. The issue occurred because the relationship update phase looked for files by regenerating the filename, which didn't account for numeric suffixes added to handle duplicates (e.g., `John Smith 1.md`). Now tracks actual file paths during creation and uses them for relationship updates. Fixed in all three importers: `gedcom-importer.ts`, `gedcom-importer-v2.ts`, and `gedcomx-importer.ts`.
+
+### Changed
+
+- **PR review compliance (Round 12)** - Addressed all required items from Obsidian plugin review:
+  - Fixed 27 floating promises by adding `void` or `await` as appropriate
+  - Fixed lexical declaration in case block by wrapping in braces
+  - Fixed `element.style.visibility` usage to use `setCssStyles()` instead
+  - Removed `async` keyword from 4 methods that didn't use `await`
+  - Added defensive object handling in YAML serialization to prevent `[object Object]`
+  - Analyzed 449 sentence case flags - all determined to be false positives (proper nouns, product names, already sentence case)
+
+- **PR review optional items** - Cleaned up deprecated code:
+  - Removed unused template exports (`BASE_TEMPLATE`, `PLACES_BASE_TEMPLATE`, `EVENTS_BASE_TEMPLATE`)
+  - Replaced `Vault.delete()` with `FileManager.trashFile()` to respect user preferences
+  - Removed unused variables and function definitions
+
+---
+
 ## [0.11.4] - 2025-12-12
 
 Obsidian plugin review fixes (Round 11) and bug fixes.

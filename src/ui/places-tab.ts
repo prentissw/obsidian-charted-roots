@@ -981,9 +981,10 @@ function loadPlaceList(
 					return (peopleCountMap.get(b.id) || 0) - (peopleCountMap.get(a.id) || 0);
 				case 'people_asc':
 					return (peopleCountMap.get(a.id) || 0) - (peopleCountMap.get(b.id) || 0);
-				case 'category':
+				case 'category': {
 					const catOrder = ['real', 'historical', 'disputed', 'legendary', 'mythological', 'fictional'];
 					return catOrder.indexOf(a.category) - catOrder.indexOf(b.category);
+				}
 				case 'type':
 					return (a.placeType || '').localeCompare(b.placeType || '');
 				default:
@@ -1150,23 +1151,6 @@ function loadPlaceList(
 }
 
 /**
- * Create a stat item for the statistics grid
- */
-function _createStatItem(container: HTMLElement, label: string, value: string, icon?: LucideIconName): void {
-	const item = container.createDiv({ cls: 'crc-stat-item' });
-
-	if (icon) {
-		const iconEl = createLucideIcon(icon, 16);
-		iconEl.addClass('crc-stat-icon');
-		item.appendChild(iconEl);
-	}
-
-	const content = item.createDiv({ cls: 'crc-stat-content' });
-	content.createEl('div', { text: value, cls: 'crc-stat-value' });
-	content.createEl('div', { text: label, cls: 'crc-stat-label' });
-}
-
-/**
  * Format place category name for display
  */
 function formatPlaceCategoryName(category: PlaceCategory): string {
@@ -1238,46 +1222,6 @@ function showQuickCreatePlaceModal(
 		settings: plugin.settings,
 		onCreated: () => {
 			new Notice(`Created place note: ${placeName}`);
-			// Refresh the Places tab
-			showTab('places');
-		}
-	});
-	modal.open();
-}
-
-/**
- * Show modal to build place hierarchy (assign parents to orphan places)
- */
-function _showBuildHierarchyModal(plugin: CanvasRootsPlugin, showTab: (tabId: string) => void): void {
-	const placeService = new PlaceGraphService(plugin.app);
-	placeService.setSettings(plugin.settings);
-	placeService.setValueAliases(plugin.settings.valueAliases);
-	placeService.reloadCache();
-
-	const allPlaces = placeService.getAllPlaces();
-
-	// Find orphan places (no parent and not top-level types)
-	// Countries and regions without parents are typically sovereign nations
-	const orphanPlaces = allPlaces.filter(place =>
-		!place.parentId &&
-		place.placeType &&
-		!['continent', 'country', 'region'].includes(place.placeType)
-	);
-
-	if (orphanPlaces.length === 0) {
-		new Notice('No orphan places found! All places have parent assignments or are top-level.');
-		return;
-	}
-
-	// Get potential parent places (higher-level places)
-	const potentialParents = allPlaces.filter(place =>
-		place.placeType && ['continent', 'country', 'state', 'province', 'region', 'county'].includes(place.placeType)
-	);
-
-	// Create hierarchy wizard modal
-	const modal = new BuildPlaceHierarchyModal(plugin.app, orphanPlaces, potentialParents, {
-		onComplete: (updated: number) => {
-			new Notice(`Updated ${updated} place${updated !== 1 ? 's' : ''} with parent assignments`);
 			// Refresh the Places tab
 			showTab('places');
 		}
@@ -1574,7 +1518,7 @@ function showNormalizePlaceNamesApply(plugin: CanvasRootsPlugin, showTab: (tabId
 	};
 
 	// Process each file asynchronously
-	(async () => {
+	void (async () => {
 		for (const file of files) {
 			try {
 				const cache = plugin.app.metadataCache.getFileCache(file);

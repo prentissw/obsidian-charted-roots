@@ -358,9 +358,8 @@ export class GedcomImporterV2 {
 					try {
 						await this.updateRelationships(
 							individual,
-							gedcomData,
 							gedcomToCrId,
-							options
+							gedcomToNotePath
 						);
 					} catch (error: unknown) {
 						result.errors.push(
@@ -572,20 +571,17 @@ export class GedcomImporterV2 {
 
 	private async updateRelationships(
 		individual: GedcomIndividualV2,
-		gedcomData: GedcomDataV2,
 		gedcomToCrId: Map<string, string>,
-		options: GedcomImportOptionsV2
+		gedcomToNotePath: Map<string, string>
 	): Promise<void> {
 		const crId = gedcomToCrId.get(individual.id);
 		if (!crId) return;
 
-		const fileName = this.formatFilename(individual.name || 'Unknown', this.getFormatForType('people', options));
-		const filePath = options.peopleFolder
-			? `${options.peopleFolder}/${fileName}`
-			: fileName;
+		// Look up the actual file path from the map (handles duplicate names with suffixes)
+		const filePath = gedcomToNotePath.get(individual.id);
+		if (!filePath) return;
 
-		const normalizedPath = normalizePath(filePath);
-		const file = this.app.vault.getAbstractFileByPath(normalizedPath);
+		const file = this.app.vault.getAbstractFileByPath(filePath);
 
 		if (!file || !(file instanceof TFile)) {
 			return;
@@ -1166,10 +1162,10 @@ export class GedcomImporterV2 {
 	 * 1. full_name (case-insensitive) - primary lookup
 	 * 2. title + parent combination - fallback for notes without full_name
 	 */
-	private async buildExistingPlaceCache(): Promise<{
+	private buildExistingPlaceCache(): {
 		byFullName: Map<string, TFile>;
 		byTitleAndParent: Map<string, TFile>;
-	}> {
+	} {
 		const byFullName = new Map<string, TFile>();
 		const byTitleAndParent = new Map<string, TFile>();
 		const files = this.app.vault.getMarkdownFiles();

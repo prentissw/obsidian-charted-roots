@@ -2033,7 +2033,7 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Load parent claim conflicts into container
 	 */
-	private async loadParentClaimConflicts(container: HTMLElement): Promise<void> {
+	private loadParentClaimConflicts(container: HTMLElement): void {
 		container.empty();
 
 		// Create services
@@ -2103,7 +2103,7 @@ export class ControlCenterModal extends Modal {
 			});
 			childLink.addEventListener('click', (e) => {
 				e.preventDefault();
-				this.app.workspace.openLinkText(child.file.path, '', false);
+				void this.app.workspace.openLinkText(child.file.path, '', false);
 			});
 
 			// Conflict type
@@ -2117,7 +2117,7 @@ export class ControlCenterModal extends Modal {
 			});
 			claimant1Link.addEventListener('click', (e) => {
 				e.preventDefault();
-				this.app.workspace.openLinkText(claimant1.file.path, '', false);
+				void this.app.workspace.openLinkText(claimant1.file.path, '', false);
 			});
 			claimant1Cell.createEl('span', {
 				text: ` (${claimant1.crId})`,
@@ -2132,7 +2132,7 @@ export class ControlCenterModal extends Modal {
 			});
 			claimant2Link.addEventListener('click', (e) => {
 				e.preventDefault();
-				this.app.workspace.openLinkText(claimant2.file.path, '', false);
+				void this.app.workspace.openLinkText(claimant2.file.path, '', false);
 			});
 			claimant2Cell.createEl('span', {
 				text: ` (${claimant2.crId})`,
@@ -2212,7 +2212,7 @@ export class ControlCenterModal extends Modal {
 
 			// Reload cache
 			const familyGraph = this.plugin.createFamilyGraphService();
-			familyGraph.reloadCache();
+			await familyGraph.reloadCache();
 		} finally {
 			// Resume linker after a short delay
 			setTimeout(() => {
@@ -11992,7 +11992,7 @@ export class ControlCenterModal extends Modal {
 			}
 
 			// Refresh the family graph cache
-			familyGraph.reloadCache();
+			await familyGraph.reloadCache();
 
 		} catch (error) {
 			new Notice(`${operation} failed: ${getErrorMessage(error)}`);
@@ -12178,7 +12178,7 @@ export class ControlCenterModal extends Modal {
 		}
 
 		// Refresh the family graph cache
-		familyGraph.reloadCache();
+		await familyGraph.reloadCache();
 
 		// Refresh the People tab
 		this.showTab('people');
@@ -12489,7 +12489,7 @@ export class ControlCenterModal extends Modal {
 		}
 
 		// Refresh the family graph cache
-		familyGraph.reloadCache();
+		await familyGraph.reloadCache();
 
 		// Refresh the People tab
 		this.showTab('people');
@@ -12582,7 +12582,7 @@ export class ControlCenterModal extends Modal {
 		}
 
 		// Refresh the family graph cache
-		familyGraph.reloadCache();
+		await familyGraph.reloadCache();
 
 		// Refresh the People tab
 		this.showTab('people');
@@ -12866,7 +12866,7 @@ export class ControlCenterModal extends Modal {
 		}
 
 		// Refresh the family graph cache
-		familyGraph.reloadCache();
+		await familyGraph.reloadCache();
 
 		// Refresh the People tab
 		this.showTab('people');
@@ -13114,7 +13114,7 @@ export class ControlCenterModal extends Modal {
 		}
 
 		// Refresh the family graph cache
-		familyGraph.reloadCache();
+		await familyGraph.reloadCache();
 
 		// Refresh the People tab
 		this.showTab('people');
@@ -13686,7 +13686,7 @@ class DuplicateRelationshipsPreviewModal extends Modal {
 			const fileIcon = createLucideIcon('file-text', 14);
 			openTabBtn.appendChild(fileIcon);
 			openTabBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf('tab').openFile(change.file);
+				void this.app.workspace.getLeaf('tab').openFile(change.file);
 			});
 
 			// Open in new window button
@@ -13697,7 +13697,7 @@ class DuplicateRelationshipsPreviewModal extends Modal {
 			const windowIcon = createLucideIcon('external-link', 14);
 			openWindowBtn.appendChild(windowIcon);
 			openWindowBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf('window').openFile(change.file);
+				void this.app.workspace.getLeaf('window').openFile(change.file);
 			});
 		}
 
@@ -13929,7 +13929,7 @@ class PlaceholderRemovalPreviewModal extends Modal {
 			const fileIcon = createLucideIcon('file-text', 14);
 			openTabBtn.appendChild(fileIcon);
 			openTabBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf('tab').openFile(change.file);
+				void this.app.workspace.getLeaf('tab').openFile(change.file);
 			});
 
 			// Open in new window button
@@ -13940,7 +13940,7 @@ class PlaceholderRemovalPreviewModal extends Modal {
 			const windowIcon = createLucideIcon('external-link', 14);
 			openWindowBtn.appendChild(windowIcon);
 			openWindowBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf('window').openFile(change.file);
+				void this.app.workspace.getLeaf('window').openFile(change.file);
 			});
 		}
 
@@ -14152,7 +14152,7 @@ class NameNormalizationPreviewModal extends Modal {
 			const fileIcon = createLucideIcon('file-text', 14);
 			openTabBtn.appendChild(fileIcon);
 			openTabBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf('tab').openFile(change.file);
+				void this.app.workspace.getLeaf('tab').openFile(change.file);
 			});
 
 			// Open in new window button
@@ -14163,7 +14163,7 @@ class NameNormalizationPreviewModal extends Modal {
 			const windowIcon = createLucideIcon('external-link', 14);
 			openWindowBtn.appendChild(windowIcon);
 			openWindowBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf('window').openFile(change.file);
+				void this.app.workspace.getLeaf('window').openFile(change.file);
 			});
 		}
 
@@ -14389,7 +14389,7 @@ class OrphanedRefsPreviewModal extends Modal {
 			const fileIcon = createLucideIcon('file-text', 14);
 			openTabBtn.appendChild(fileIcon);
 			openTabBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf().openFile(change.person.file);
+				void this.app.workspace.getLeaf().openFile(change.person.file);
 			});
 
 			// Open in new window button
@@ -14400,7 +14400,7 @@ class OrphanedRefsPreviewModal extends Modal {
 			const windowIcon = createLucideIcon('external-link', 14);
 			openWindowBtn.appendChild(windowIcon);
 			openWindowBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf('window').openFile(change.person.file);
+				void this.app.workspace.getLeaf('window').openFile(change.person.file);
 			});
 		}
 
@@ -14652,7 +14652,7 @@ class BidirectionalInconsistencyPreviewModal extends Modal {
 			const fileIcon1 = createLucideIcon('file-text', 14);
 			openPersonTabBtn.appendChild(fileIcon1);
 			openPersonTabBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf().openFile(change.person.file);
+				void this.app.workspace.getLeaf().openFile(change.person.file);
 			});
 
 			// Open person in new window
@@ -14663,7 +14663,7 @@ class BidirectionalInconsistencyPreviewModal extends Modal {
 			const windowIcon1 = createLucideIcon('external-link', 14);
 			openPersonWindowBtn.appendChild(windowIcon1);
 			openPersonWindowBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf('window').openFile(change.person.file);
+				void this.app.workspace.getLeaf('window').openFile(change.person.file);
 			});
 
 			// Separator
@@ -14677,7 +14677,7 @@ class BidirectionalInconsistencyPreviewModal extends Modal {
 			const fileIcon2 = createLucideIcon('file-text', 14);
 			openRelatedTabBtn.appendChild(fileIcon2);
 			openRelatedTabBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf().openFile(change.relatedPerson.file);
+				void this.app.workspace.getLeaf().openFile(change.relatedPerson.file);
 			});
 
 			// Open related person in new window
@@ -14688,7 +14688,7 @@ class BidirectionalInconsistencyPreviewModal extends Modal {
 			const windowIcon2 = createLucideIcon('external-link', 14);
 			openRelatedWindowBtn.appendChild(windowIcon2);
 			openRelatedWindowBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf('window').openFile(change.relatedPerson.file);
+				void this.app.workspace.getLeaf('window').openFile(change.relatedPerson.file);
 			});
 		}
 
@@ -14917,7 +14917,7 @@ class ImpossibleDatesPreviewModal extends Modal {
 			const fileIcon1 = createLucideIcon('file-text', 14);
 			openPersonTabBtn.appendChild(fileIcon1);
 			openPersonTabBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf().openFile(change.person.file);
+				void this.app.workspace.getLeaf().openFile(change.person.file);
 			});
 
 			// Open person in new window
@@ -14928,7 +14928,7 @@ class ImpossibleDatesPreviewModal extends Modal {
 			const windowIcon1 = createLucideIcon('external-link', 14);
 			openPersonWindowBtn.appendChild(windowIcon1);
 			openPersonWindowBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf('window').openFile(change.person.file);
+				void this.app.workspace.getLeaf('window').openFile(change.person.file);
 			});
 
 			// If there's a related person, add buttons for them too
@@ -14944,7 +14944,7 @@ class ImpossibleDatesPreviewModal extends Modal {
 				const fileIcon2 = createLucideIcon('file-text', 14);
 				openRelatedTabBtn.appendChild(fileIcon2);
 				openRelatedTabBtn.addEventListener('click', () => {
-					this.app.workspace.getLeaf().openFile(change.relatedPerson!.file);
+					void this.app.workspace.getLeaf().openFile(change.relatedPerson!.file);
 				});
 
 				// Open related person in new window
@@ -14955,7 +14955,7 @@ class ImpossibleDatesPreviewModal extends Modal {
 				const windowIcon2 = createLucideIcon('external-link', 14);
 				openRelatedWindowBtn.appendChild(windowIcon2);
 				openRelatedWindowBtn.addEventListener('click', () => {
-					this.app.workspace.getLeaf('window').openFile(change.relatedPerson!.file);
+					void this.app.workspace.getLeaf('window').openFile(change.relatedPerson!.file);
 				});
 			}
 		}
@@ -15767,7 +15767,7 @@ class DateValidationPreviewModal extends Modal {
 				cls: 'crc-batch-action-btn'
 			});
 			openBtn.addEventListener('click', () => {
-				this.app.workspace.getLeaf().openFile(issue.file);
+				void this.app.workspace.getLeaf().openFile(issue.file);
 			});
 		}
 

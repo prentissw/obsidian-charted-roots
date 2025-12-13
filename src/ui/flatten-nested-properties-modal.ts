@@ -180,7 +180,7 @@ export class FlattenNestedPropertiesModal extends Modal {
 	/**
 	 * Scan all Canvas Roots notes for nested properties
 	 */
-	private async runScan(): Promise<void> {
+	private runScan(): void {
 		if (this.isScanning || this.selectedProperties.size === 0) {
 			return;
 		}

@@ -258,7 +258,7 @@ export class ExportOptionsBuilder {
 			graphService.setFolderFilter(new (await import('../core/folder-filter')).FolderFilterService(this.settings));
 			graphService.setPropertyAliases(this.settings.propertyAliases);
 			graphService.setValueAliases(this.settings.valueAliases);
-			graphService.reloadCache();
+			await graphService.reloadCache();
 
 			// Determine effective privacy settings
 			const effectiveProtection = this.options.privacyOverrideEnabled

@@ -72,11 +72,11 @@ export class ExportStatisticsService {
 	/**
 	 * Calculate export statistics based on filter options
 	 */
-	async calculateStatistics(
+	calculateStatistics(
 		graphService: GraphServiceForStats,
 		privacyService: PrivacyService | null,
 		filterOptions: ExportFilterOptions = {}
-	): Promise<ExportStatistics> {
+	): ExportStatistics {
 		// Get all people from the person cache (same as exporters use)
 		// Access private members via bracket notation - cast to Record for property access
 		const gs = graphService as unknown as Record<string, unknown>;

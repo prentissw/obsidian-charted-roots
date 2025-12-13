@@ -551,7 +551,7 @@ export class TimelineCanvasExporter {
 		let rowIndex = 0;
 		const personRows = [...byPerson.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
-		for (const [_person, personEvents] of personRows) {
+		for (const [, personEvents] of personRows) {
 			const y = rowIndex * (nodeHeight + spacingY);
 
 			for (const event of personEvents) {
@@ -639,7 +639,7 @@ export class TimelineCanvasExporter {
 		let groupOffset = 0;
 		const personGroups = [...byPerson.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
-		for (const [_person, personEvents] of personGroups) {
+		for (const [, personEvents] of personGroups) {
 			for (let i = 0; i < personEvents.length; i++) {
 				const x = isHorizontal ? i * (nodeWidth + spacingX) : groupOffset;
 				const y = isHorizontal ? groupOffset : i * (nodeHeight + spacingY);

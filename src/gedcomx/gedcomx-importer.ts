@@ -173,13 +173,14 @@ export class GedcomXImporter {
 			// Ensure people folder exists
 			await this.ensureFolderExists(options.peopleFolder);
 
-			// Create mapping of GEDCOM X IDs to cr_ids
+			// Create mapping of GEDCOM X IDs to cr_ids and file paths
 			const gedcomXToCrId = new Map<string, string>();
+			const gedcomXToFilePath = new Map<string, string>();
 
 			// First pass: Create all person notes
 			for (const [personId, person] of gedcomXData.persons) {
 				try {
-					const crId = await this.importPerson(
+					const { crId, filePath } = await this.importPerson(
 						person,
 						gedcomXData,
 						options,
@@ -187,6 +188,7 @@ export class GedcomXImporter {
 					);
 
 					gedcomXToCrId.set(personId, crId);
+					gedcomXToFilePath.set(personId, filePath);
 					result.individualsImported++;
 					result.notesCreated++;
 
@@ -210,9 +212,8 @@ export class GedcomXImporter {
 				try {
 					await this.updateRelationships(
 						person,
-						gedcomXData,
 						gedcomXToCrId,
-						options
+						gedcomXToFilePath
 					);
 				} catch (error: unknown) {
 					result.errors.push(
@@ -249,13 +250,14 @@ export class GedcomXImporter {
 
 	/**
 	 * Import a single person
+	 * @returns Object containing the cr_id and the actual file path created
 	 */
 	private async importPerson(
 		person: ParsedGedcomXPerson,
 		gedcomXData: ParsedGedcomXData,
 		options: GedcomXImportOptions,
 		gedcomXToCrId: Map<string, string>
-	): Promise<string> {
+	): Promise<{ crId: string; filePath: string }> {
 		const crId = generateCrId();
 
 		// Convert GEDCOM X person to PersonData
@@ -316,13 +318,13 @@ export class GedcomXImporter {
 
 		// Write person note using the createPersonNote function
 		// Disable bidirectional linking during import - we'll fix relationships in pass 2
-		await createPersonNote(this.app, personData, {
+		const file = await createPersonNote(this.app, personData, {
 			directory: options.peopleFolder,
 			addBidirectionalLinks: false,
 			propertyAliases: options.propertyAliases
 		});
 
-		return crId;
+		return { crId, filePath: file.path };
 	}
 
 	/**
@@ -330,21 +332,17 @@ export class GedcomXImporter {
 	 */
 	private async updateRelationships(
 		person: ParsedGedcomXPerson,
-		_gedcomXData: ParsedGedcomXData,
 		gedcomXToCrId: Map<string, string>,
-		options: GedcomXImportOptions
+		gedcomXToFilePath: Map<string, string>
 	): Promise<void> {
 		const crId = gedcomXToCrId.get(person.id);
 		if (!crId) return;
 
-		// Generate the expected file name
-		const fileName = this.generateFileName(person.name || 'Unknown');
-		const filePath = options.peopleFolder
-			? `${options.peopleFolder}/${fileName}`
-			: fileName;
+		// Look up the actual file path from the map (handles duplicate names with suffixes)
+		const filePath = gedcomXToFilePath.get(person.id);
+		if (!filePath) return;
 
-		const normalizedPath = normalizePath(filePath);
-		const file = this.app.vault.getAbstractFileByPath(normalizedPath);
+		const file = this.app.vault.getAbstractFileByPath(filePath);
 
 		if (!file || !(file instanceof TFile)) {
 			return;
@@ -429,19 +427,6 @@ export class GedcomXImporter {
 	 */
 	private escapeRegex(str: string): string {
 		return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-	}
-
-	/**
-	 * Generate file name from person name
-	 */
-	private generateFileName(name: string): string {
-		// Sanitize name for file system
-		const sanitized = name
-			.replace(/[\\/:*?"<>|]/g, '-')
-			.replace(/\s+/g, ' ')
-			.trim();
-
-		return `${sanitized}.md`;
 	}
 
 	/**
