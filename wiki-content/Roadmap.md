@@ -17,6 +17,7 @@ This document outlines planned features for Canvas Roots. For completed features
   - [Dynamic Note Content](#dynamic-note-content) 📋 Medium
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
   - [Step & Adoptive Parent Support](#step--adoptive-parent-support) 💡 Low
+  - [Gramps Source Import](#gramps-source-import) 💡 Low
 - [Future Considerations](#future-considerations)
 - [Known Limitations](#known-limitations)
 - [Contributing](#contributing)
@@ -703,6 +704,52 @@ adoptive_mother_id: efg-123-hij-456
 | `step` | Step-child | `stepfather_id`, `stepmother_id` |
 
 See [Step & Adoptive Parent Support Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/step-adoptive-parent-support.md) for implementation details.
+
+---
+
+### Gramps Source Import
+
+**Priority:** 💡 Low — Complete Gramps migration support
+
+**Summary:** Import source and citation records from Gramps XML files, creating Canvas Roots source notes with full metadata.
+
+**Problem Statement:**
+
+Gramps XML import currently supports people, places, and events, but source/citation records are not imported. Users migrating from Gramps must manually recreate their source documentation or re-import via GEDCOM (which may lose Gramps-specific metadata).
+
+**Gramps Source Structure:**
+
+Gramps sources contain:
+- **Title** — Source name/description
+- **Author** — Creator of the source material
+- **Publication info** — Publisher, date, location
+- **Abbreviation** — Short reference name
+- **Repository** — Archive/library where source is held
+- **Notes** — Research notes attached to sources
+- **Citations** — References linking sources to facts with page/volume details
+
+**Proposed Features:**
+
+| Feature | Description |
+|---------|-------------|
+| **Source note creation** | One note per Gramps source record |
+| **Citation linking** | Link citations to person/event notes |
+| **Repository preservation** | Store repository info in source metadata |
+| **Note import** | Attach Gramps notes to source note body |
+
+**Technical Considerations:**
+
+- Map Gramps source fields to Canvas Roots source schema
+- Handle citation confidence levels (Gramps uses 0-4 scale)
+- Preserve Gramps internal IDs for re-import scenarios
+- Consider Gramps media references attached to sources
+
+**Relation to GEDCOM:**
+
+GEDCOM import already supports source records. Gramps source import would provide:
+- Native Gramps field preservation (abbreviations, repositories)
+- Gramps-specific citation confidence mapping
+- Direct migration path without GEDCOM conversion step
 
 ---
 
