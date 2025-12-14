@@ -4010,7 +4010,7 @@ export class ControlCenterModal extends Modal {
 
 		// Wire up preview button
 		generatePreviewBtn.addEventListener('click', () => {
-			void (() => {
+			void (async () => {
 				if (!rootPersonField.crId) {
 					new Notice('Please select a root person first');
 					return;
@@ -4019,6 +4019,9 @@ export class ControlCenterModal extends Modal {
 				try {
 					generatePreviewBtn.disabled = true;
 					generatePreviewBtn.setText('Generating preview...');
+
+					// Yield to allow button state to render before expensive work
+					await new Promise(resolve => setTimeout(resolve, 50));
 
 					// Build family tree
 					const graphService = this.plugin.createFamilyGraphService();
@@ -4041,6 +4044,15 @@ export class ControlCenterModal extends Modal {
 						return;
 					}
 
+					// Disable preview for large trees - the layout algorithm can freeze
+					const PREVIEW_LIMIT = 200;
+					const totalNodeCount = familyTree.nodes.size;
+
+					if (totalNodeCount > PREVIEW_LIMIT) {
+						new Notice(`Tree has ${totalNodeCount} people - too large for preview. Generate the canvas directly instead.`, 5000);
+						return;
+					}
+
 					// Build layout options
 					// Map tree type values (ancestors/descendants -> ancestor/descendant for layout engine)
 					const treeTypeValue: 'ancestor' | 'descendant' | 'full' = typeSelect.value === 'ancestors' ? 'ancestor' :
@@ -4056,10 +4068,13 @@ export class ControlCenterModal extends Modal {
 						nodeHeight: this.plugin.settings.defaultNodeHeight
 					};
 
+					// Yield before layout calculation
+					await new Promise(resolve => setTimeout(resolve, 0));
+
 					// Render preview
 					this.treePreviewRenderer?.renderPreview(familyTree, layoutOptions);
 
-					new Notice('Preview generated successfully');
+					new Notice(`Preview generated (${totalNodeCount} people)`);
 				} catch (error: unknown) {
 					console.error('Preview generation failed:', error);
 					new Notice('Failed to generate preview. See console for details.');

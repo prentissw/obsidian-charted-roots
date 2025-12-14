@@ -241,6 +241,10 @@ export class CanvasGenerator {
 		});
 
 		// Choose layout engine based on layout type
+		// For very large trees (>200 people), fall back to D3 layout to avoid freeze
+		const LARGE_TREE_THRESHOLD = 200;
+		const isLargeTree = familyTree.nodes.size > LARGE_TREE_THRESHOLD;
+
 		let layoutResult;
 		if (layoutType === 'timeline') {
 			// Timeline layout: position by birth year
@@ -248,11 +252,14 @@ export class CanvasGenerator {
 		} else if (layoutType === 'hourglass') {
 			// Hourglass layout: ancestors above, descendants below
 			layoutResult = this.hourglassLayoutEngine.calculateLayout(familyTree, opts);
-		} else if (opts.useFamilyChartLayout) {
+		} else if (opts.useFamilyChartLayout && !isLargeTree) {
 			// Standard/compact: use family-chart for proper spouse handling
 			layoutResult = this.familyChartLayoutEngine.calculateLayout(familyTree, opts);
 		} else {
-			// Fallback: use D3 hierarchical layout
+			// Large trees or explicit request: use D3 hierarchical layout (faster)
+			if (isLargeTree) {
+				logger.info('generate-canvas', `Large tree (${familyTree.nodes.size} people) - using D3 layout for performance`);
+			}
 			layoutResult = this.layoutEngine.calculateLayout(familyTree, opts);
 		}
 
