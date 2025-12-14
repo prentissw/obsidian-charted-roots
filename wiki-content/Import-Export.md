@@ -1,6 +1,27 @@
 # Import & Export
 
-Canvas Roots supports importing and exporting family data in GEDCOM and CSV formats.
+Canvas Roots supports importing and exporting family data in GEDCOM, Gramps XML, and CSV formats.
+
+## Table of Contents
+
+- [GEDCOM Import/Export](#gedcom-importexport)
+  - [Importing a GEDCOM File](#importing-a-gedcom-file)
+  - [After Import](#after-import)
+  - [Duplicate Handling](#duplicate-handling)
+  - [Exporting to GEDCOM](#exporting-to-gedcom)
+  - [Privacy Protection for Export](#privacy-protection-for-export)
+- [Gramps XML Import](#gramps-xml-import)
+  - [Supported File Formats](#supported-file-formats)
+  - [Importing a Gramps File](#importing-a-gramps-file)
+  - [What Gets Created](#what-gets-created)
+  - [Place Linking](#place-linking)
+  - [Supported Event Types](#supported-event-types)
+  - [Limitations](#limitations)
+- [CSV Import/Export](#csv-importexport)
+  - [Importing from CSV/TSV](#importing-from-csvtsv)
+  - [Exporting to CSV](#exporting-to-csv)
+  - [Format Comparison](#format-comparison)
+- [Selective Branch Export](#selective-branch-export)
 
 ## GEDCOM Import/Export
 
@@ -189,6 +210,87 @@ Canvas Roots includes optional privacy controls for protecting living persons in
 - Comply with genealogical privacy best practices
 - Create "public" and "private" versions of your research
 
+## Gramps XML Import
+
+Canvas Roots supports importing family data from [Gramps](https://gramps-project.org/), a popular open-source genealogy application.
+
+### Supported File Formats
+
+- **`.gramps`** - Native Gramps compressed format (gzip-compressed XML)
+- **`.xml`** - Uncompressed Gramps XML export
+
+### Importing a Gramps File
+
+**Using Control Center:**
+1. Open Control Center → **Import/Export** tab
+2. Set **Format** to "Gramps XML" and **Direction** to "Import"
+3. If folders aren't configured, expand **Configure folders** to set your people folder
+4. Click **Import Gramps XML**
+5. Select your `.gramps` or `.xml` file
+6. Review the file analysis (people, families, places, events found)
+7. Configure import options:
+   - **Create place notes** - Location notes linked from person birth/death places (default: off)
+   - **Create event notes** - Birth, death, marriage, and other life events (default: off)
+8. Click **Import**
+
+### What Gets Created
+
+| Note Type | What's Created |
+|-----------|----------------|
+| **People** | One note per individual with relationships, dates, places |
+| **Places** | One note per location (when enabled), linked from person notes |
+| **Events** | One note per life event (when enabled), linked to persons and places |
+
+### Place Linking
+
+When you enable "Create place notes", Canvas Roots:
+1. Creates place notes first
+2. Automatically converts birth/death places in person notes to wikilinks
+3. Links event notes to place notes as well
+
+This creates a fully connected web of notes where you can navigate between people, events, and places.
+
+### Supported Event Types
+
+Gramps events are mapped to Canvas Roots event types:
+
+| Gramps Event | Canvas Roots Type |
+|--------------|-------------------|
+| Birth | birth |
+| Death | death |
+| Marriage | marriage |
+| Divorce | divorce |
+| Burial | burial |
+| Baptism, Christening | baptism |
+| Confirmation | confirmation |
+| Ordination | ordination |
+| Residence | residence |
+| Occupation | occupation |
+| Military, Military Service | military |
+| Immigration, Emigration, Naturalization | immigration |
+| Education, Graduation | education |
+
+Events not in this list are imported as "custom" type.
+
+### Place Type Mapping
+
+Gramps place types are preserved and mapped to Canvas Roots place types:
+- Administrative: country, state, province, county, region, district, borough, municipality
+- Populated: city, town, village, parish, neighborhood
+- Specific: cemetery, church, building, farm, street, address
+
+### After Import
+
+1. Review imported notes in your configured folders
+2. Add research notes below the frontmatter in each file
+3. Generate tree using Control Center → Tree Generation
+
+### Limitations
+
+- **Sources**: Source/citation import is not yet supported (planned for future release)
+- **Media**: Media references are not imported
+- **Notes**: Gramps note records are not imported as separate notes
+
 ## CSV Import/Export
 
 Canvas Roots supports CSV and TSV file formats for easy data exchange with spreadsheets and other applications.
@@ -253,15 +355,19 @@ Same privacy options as GEDCOM export:
 - Anonymize living persons (replace PII with "[Living]")
 - Configurable birth year threshold
 
-### CSV vs GEDCOM
+### Format Comparison
 
-| Feature | CSV | GEDCOM |
-|---------|-----|--------|
-| **Compatibility** | Spreadsheets, databases | Genealogy software |
-| **Structure** | Flat (one row per person) | Hierarchical (individuals + families) |
-| **Best for** | Quick edits, bulk changes | Software interchange |
-| **Marriage data** | Limited | Full support |
-| **Use case** | Working with data | Archiving/sharing |
+| Feature | CSV | GEDCOM | Gramps XML |
+|---------|-----|--------|------------|
+| **Compatibility** | Spreadsheets, databases | Most genealogy software | Gramps only |
+| **Structure** | Flat (one row per person) | Hierarchical (individuals + families) | Hierarchical with events |
+| **Best for** | Quick edits, bulk changes | Software interchange | Gramps users |
+| **Marriage data** | Limited | Full support | Full support |
+| **Place hierarchy** | No | Limited | Yes |
+| **Events** | No | Yes | Yes |
+| **Sources** | No | Yes | Not yet |
+| **Export support** | Yes | Yes | Import only |
+| **Use case** | Working with data | Archiving/sharing | Migration from Gramps |
 
 ## Selective Branch Export
 
