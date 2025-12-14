@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.12.1] - 2025-12-14
+
 ### Changed
 
 - **Family chart opens in main workspace** - "Open in family chart" now opens as a new tab in the main workspace instead of the sidebar, providing more screen space for viewing complex trees.
