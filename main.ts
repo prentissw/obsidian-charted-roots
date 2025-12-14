@@ -1435,6 +1435,30 @@ export default class CanvasRootsPlugin extends Plugin {
 										.setIcon('git-fork')
 										.setSubmenu();
 
+									// Open in family chart (interactive view, no file created)
+									generateTreeSubmenu.addItem((genItem) => {
+										genItem
+											.setTitle('Open in family chart')
+											.setIcon('git-fork')
+											.onClick(async () => {
+												// Try cache first, fall back to reading file directly
+												let crId = this.app.metadataCache.getFileCache(file)?.frontmatter?.cr_id;
+												if (!crId) {
+													// Fallback: read frontmatter directly from file
+													const content = await this.app.vault.read(file);
+													const match = content.match(/^cr_id:\s*["']?([^"'\n]+)["']?\s*$/m);
+													crId = match?.[1];
+												}
+												if (crId) {
+													await this.activateFamilyChartView(crId);
+												} else {
+													new Notice('Could not find cr_id for this person note');
+												}
+											});
+									});
+
+									generateTreeSubmenu.addSeparator();
+
 									generateTreeSubmenu.addItem((genItem) => {
 										genItem
 											.setTitle('Generate Canvas tree')
@@ -1629,28 +1653,6 @@ export default class CanvasRootsPlugin extends Plugin {
 										.setIcon('map')
 										.onClick(async () => {
 											await this.activateMapView();
-										});
-								});
-
-								// Open in family chart
-								submenu.addItem((subItem) => {
-									subItem
-										.setTitle('Open in family chart')
-										.setIcon('git-fork')
-										.onClick(async () => {
-											// Try cache first, fall back to reading file directly
-											let crId = this.app.metadataCache.getFileCache(file)?.frontmatter?.cr_id;
-											if (!crId) {
-												// Fallback: read frontmatter directly from file
-												const content = await this.app.vault.read(file);
-												const match = content.match(/^cr_id:\s*["']?([^"'\n]+)["']?\s*$/m);
-												crId = match?.[1];
-											}
-											if (crId) {
-												await this.activateFamilyChartView(crId);
-											} else {
-												new Notice('Could not find cr_id for this person note');
-											}
 										});
 								});
 
@@ -3597,7 +3599,7 @@ export default class CanvasRootsPlugin extends Plugin {
 
 		// Get family graph for collection options
 		const familyGraph = new FamilyGraphService(this.app);
-		familyGraph.reloadCache();
+		void familyGraph.reloadCache();
 
 		// Open the modal in edit mode
 		new CreatePlaceModal(this.app, {
@@ -3787,7 +3789,7 @@ export default class CanvasRootsPlugin extends Plugin {
 
 		// Get family graph for collection options
 		const familyGraph = new FamilyGraphService(this.app);
-		familyGraph.reloadCache();
+		void familyGraph.reloadCache();
 
 		// Open the modal in edit mode
 		new CreatePersonModal(this.app, {
@@ -4560,8 +4562,8 @@ export default class CanvasRootsPlugin extends Plugin {
 				return;
 			}
 
-			// Save Excalidraw file
-			const outputPath = `${canvasFile.parent?.path || ''}/${result.fileName}.excalidraw.md`;
+			// Save Excalidraw file to vault root
+			const outputPath = `${result.fileName}.excalidraw.md`;
 			await this.app.vault.create(outputPath, result.excalidrawContent!);
 
 			new Notice(`Exported ${result.elementsExported} elements to ${result.fileName}.excalidraw.md`);
@@ -4716,7 +4718,9 @@ export default class CanvasRootsPlugin extends Plugin {
 					});
 
 					if (excalidrawResult.success && excalidrawResult.excalidrawContent) {
-						const excalidrawPath = result.path.replace('.canvas', '.excalidraw.md');
+						// Save to vault root
+						const excalidrawFileName = result.path.replace('.canvas', '.excalidraw.md').split('/').pop();
+						const excalidrawPath = excalidrawFileName || result.path.replace('.canvas', '.excalidraw.md');
 						await this.app.vault.create(excalidrawPath, excalidrawResult.excalidrawContent);
 						new Notice(`Timeline exported to ${excalidrawPath}`);
 						const file = this.app.vault.getAbstractFileByPath(excalidrawPath);
@@ -5360,15 +5364,14 @@ export default class CanvasRootsPlugin extends Plugin {
 				return;
 			}
 
-			// Save Excalidraw file
+			// Save Excalidraw file to vault root
 			const outputFileName = `Family Tree - ${rootName}.excalidraw.md`;
-			const outputPath = `${personFile.parent?.path || ''}/${outputFileName}`;
 
 			// Check if file exists and create unique name if needed
-			let finalPath = outputPath;
+			let finalPath = outputFileName;
 			let counter = 1;
 			while (this.app.vault.getAbstractFileByPath(finalPath)) {
-				finalPath = `${personFile.parent?.path || ''}/Family Tree - ${rootName} (${counter}).excalidraw.md`;
+				finalPath = `Family Tree - ${rootName} (${counter}).excalidraw.md`;
 				counter++;
 			}
 
@@ -5828,7 +5831,7 @@ export default class CanvasRootsPlugin extends Plugin {
 	 * @param useMainWorkspace - If true, opens in main workspace instead of sidebar
 	 * @param forceNew - If true, always creates a new view even if one exists
 	 */
-	async activateFamilyChartView(rootPersonId?: string, useMainWorkspace: boolean = false, forceNew: boolean = false): Promise<void> {
+	async activateFamilyChartView(rootPersonId?: string, useMainWorkspace: boolean = true, forceNew: boolean = false): Promise<void> {
 		const { workspace } = this.app;
 
 		let leaf: WorkspaceLeaf | null = null;

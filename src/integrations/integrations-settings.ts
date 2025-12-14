@@ -77,7 +77,7 @@ function renderCalendariumSection(
 					await plugin.saveSettings();
 
 					// Refresh the status display
-					renderCalendariumStatus(statusContainer, plugin, bridge);
+					void renderCalendariumStatus(statusContainer, plugin, bridge);
 
 					if (value === 'read') {
 						new Notice('Calendarium calendars will now appear in date system dropdowns');
@@ -87,7 +87,7 @@ function renderCalendariumSection(
 
 	// Status container (shows available calendars when enabled)
 	const statusContainer = container.createDiv({ cls: 'cr-calendarium-status' });
-	renderCalendariumStatus(statusContainer, plugin, bridge);
+	void renderCalendariumStatus(statusContainer, plugin, bridge);
 }
 
 /**

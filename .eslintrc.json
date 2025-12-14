@@ -48,6 +48,7 @@
 		"*.config.mjs",
 		"node_modules/**",
 		"docs/**",
+		"external/**",
 		"build-css.js",
 		"gedcom-testing/**"
 	]

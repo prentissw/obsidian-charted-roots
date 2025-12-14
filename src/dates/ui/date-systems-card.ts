@@ -50,7 +50,7 @@ export function createDateSystemsCard(
 				.onChange(async (value) => {
 					plugin.settings.showBuiltInDateSystems = value;
 					await plugin.saveSettings();
-					renderDateSystemsList(listContainer, plugin, createCard);
+					void renderDateSystemsList(listContainer, plugin, createCard);
 				}));
 
 		// Date systems list container
@@ -68,7 +68,7 @@ export function createDateSystemsCard(
 					new DateSystemModal(plugin.app, plugin, null, async (system) => {
 						plugin.settings.fictionalDateSystems.push(system);
 						await plugin.saveSettings();
-						renderDateSystemsList(listContainer, plugin, createCard);
+						void renderDateSystemsList(listContainer, plugin, createCard);
 						new Notice(`Added date system: ${system.name}`);
 					}).open();
 				}));
@@ -324,7 +324,7 @@ function createSystemItem(
 				if (index >= 0) {
 					plugin.settings.fictionalDateSystems[index] = updated;
 					await plugin.saveSettings();
-					renderDateSystemsList(listContainer, plugin, createCard);
+					void renderDateSystemsList(listContainer, plugin, createCard);
 					new Notice(`Updated date system: ${updated.name}`);
 				}
 			}).open();
@@ -341,7 +341,7 @@ function createSystemItem(
 						s => s.id !== system.id
 					);
 					await plugin.saveSettings();
-					renderDateSystemsList(listContainer, plugin, createCard);
+					void renderDateSystemsList(listContainer, plugin, createCard);
 					new Notice(`Deleted date system: ${system.name}`);
 				}
 			})();

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Family chart opens in main workspace** - "Open in family chart" now opens as a new tab in the main workspace instead of the sidebar, providing more screen space for viewing complex trees.
+
+- **Context menu reorganization** - Moved "Open in family chart" into the "Generate tree" submenu for person notes, grouping all tree visualization options together. A separator distinguishes the interactive view from file-generating options.
+
 ### Fixed
 
 - **cr_id prefix bug in context menu** - Fixed "Add essential place properties" and "Add essential event properties" context menu actions incorrectly adding `place_` or `event_` prefixes to generated cr_id values. The cr_type field already identifies the note type, so cr_id should be a plain UUID format.
@@ -18,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Canvas generation freeze on large trees** - Trees with more than 200 people now automatically use the D3 hierarchical layout instead of family-chart to prevent UI freeze. Spouse positioning may be less accurate for very large trees, but the canvas will generate successfully.
 
 - **Canvas files not using configured folder** - Generated canvas files now correctly use the "Canvases folder" setting from Preferences. Previously, canvases were created in the vault root instead of the configured folder.
+
+- **Excalidraw files created in wrong folder** - Exported Excalidraw files are now saved to the vault root instead of the source file's parent folder (e.g., People folder). This applies to canvas-to-Excalidraw exports, timeline exports, and person-to-Excalidraw exports.
 
 ---
 

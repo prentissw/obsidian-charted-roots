@@ -8,12 +8,13 @@ This document outlines planned features for Canvas Roots. For completed features
 
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
-  - [Post-Import Cleanup Wizard](#post-import-cleanup-wizard) ⚡ High
-  - [Bulk Source-Image Linking](#bulk-source-image-linking) 📋 Medium
+  - [Calendarium Integration](#calendarium-integration) ⚡ High
+  - [Bulk Source-Image Linking](#bulk-source-image-linking) ⚡ High
+  - [Post-Import Cleanup Wizard](#post-import-cleanup-wizard) 📋 Medium
   - [Configurable Normalization](#configurable-normalization) 📋 Medium
-  - [Calendarium Integration](#calendarium-integration) 📋 Medium
   - [Reports & Print Export](#reports--print-export) 📋 Medium
   - [Statistics Dashboard](#statistics-dashboard) 📋 Medium
+  - [Dynamic Note Content](#dynamic-note-content) 📋 Medium
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
   - [Step & Adoptive Parent Support](#step--adoptive-parent-support) 💡 Low
 - [Future Considerations](#future-considerations)
@@ -64,9 +65,115 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 ---
 
+### Calendarium Integration
+
+**Priority:** ⚡ High — Unified timeline experience for fictional worldbuilders
+
+**Status:** ✅ Phase 1 complete (v0.12.0) | Phases 2-4 planned
+
+**Summary:** Integration with the [Calendarium](https://plugins.javalent.com/calendarium) plugin to share calendar definitions, eliminating duplicate configuration for worldbuilders. Designed to be invisible to users who don't need it—settings default to off, and no UI changes appear unless Calendarium is installed.
+
+**User Feedback (December 2024):**
+- Calendar definition is the main value—users want Calendarium for setting up calendar structure (dates, eras), not primarily for events
+- Date ranges (`fc-date` + `fc-end`) are important for lifespans, reign periods, residences
+- Pain points with Calendarium include era handling and per-calendar frontmatter fields
+- Phase 1 (read-only calendar import) validated as the right starting point
+
+**Integration Modes:**
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| Standalone | Canvas Roots manages its own calendars | Users without Calendarium |
+| Calendarium Primary | Canvas Roots reads Calendarium calendars | Existing Calendarium users |
+| Bidirectional | Full sync between both plugins | Power users wanting unified experience |
+
+**Phased Approach:**
+- ✅ **Phase 1 (v0.12.0):** Import calendar definitions from Calendarium—delivers ~80% of value
+- **Phase 2:** Display Calendarium events on Canvas Roots timelines; support date ranges (`fc-end`)
+- **Phase 3:** Bidirectional sync between plugins
+- **Phase 4:** Cross-calendar date translation
+
+**Phase 1 Implementation (v0.12.0):**
+- Detects Calendarium plugin installation
+- Imports calendar definitions (names, eras, abbreviations, year directions)
+- Displays imported calendars in Date Systems card and Create Event modal
+- Graceful fallback when Calendarium not installed
+- Integrations card hidden when Calendarium not installed
+
+See [Fictional Date Systems - Calendarium Integration](Fictional-Date-Systems#calendarium-integration) for usage documentation.
+
+**Data Mapping (Planned for Phase 2+):**
+
+| Canvas Roots Field | Calendarium Field |
+|--------------------|-------------------|
+| `fictional_date` | `fc-date` / `fc-start` |
+| `fictional_date_end` | `fc-end` |
+| `calendar_system` | `fc-calendar` |
+| `event_category` | `fc-category` |
+| `display_name` | `fc-display-name` |
+
+**Settings:**
+- `calendariumIntegration`: off / read-only (bidirectional planned for Phase 3)
+
+**API Integration:** Uses `window.Calendarium` global when available, with graceful fallback when Calendarium is not installed.
+
+**Future Consideration:** Per-calendar frontmatter fields (e.g., `mycalendar-date` instead of `fc-calendar` + `fc-date`) to allow one note to have dates across multiple calendars.
+
+See [Calendarium Integration Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/calendarium-integration.md) for implementation details.
+
+---
+
+### Bulk Source-Image Linking
+
+**Priority:** ⚡ High — Streamline bulk import of source images with metadata extraction
+
+**Summary:** Import external source images (census records, vital records, photos, etc.) into the vault, parse filenames to extract metadata, and create source notes with media attached. Addresses the common genealogist workflow of having hundreds of inconsistently-named source images that need to be organized and linked.
+
+**Problem Statement:**
+
+Users have existing image files with inconsistent naming conventions that need to be matched to source notes. Manual matching is tedious for large collections (~100-500 images). Common pain points:
+- **Inconsistent naming:** Files from different eras, scanning sessions, or sources follow different patterns
+- **Scattered storage:** Source images often live outside the vault in archive folders
+- **Manual linking:** Creating source notes and attaching media one-by-one is time-consuming
+- **Multi-part documents:** Census pages, multi-page vital records need grouping into single sources
+
+**Phased Implementation:**
+
+| Phase | Goal | Features |
+|-------|------|----------|
+| 1 | Core Import Wizard | Filename parser, import wizard UI, source note creation |
+| 2 | Person Matching | Match images to existing person notes by surname/birth year |
+| 3 | Fact-Level Linking | Link sources to specific facts via `sourced_facts` |
+| 4 | Advanced Features | Duplicate detection, OCR integration, batch rename |
+
+**Phase 1 Features:**
+
+1. **Filename Parser Service** — Extract surnames, years, record types, locations, multi-part indicators from filenames
+2. **Import Wizard UI** — Multi-step modal: select files → review parsed data → configure → execute
+3. **Multi-part Grouping** — Detect and group `_a`/`_b`, `_p1`/`_p2`, `_page1`/`_page2` suffixes
+4. **Source Type Mapping** — Map filename tokens to source types (census, military, vital_record, etc.)
+
+**Wizard Steps:**
+
+| Step | Description |
+|------|-------------|
+| Select Source | Choose folder or files, filter thumbnails, show preview |
+| Review Parsed Data | Editable table with confidence indicators, grouping preview |
+| Configure Import | Destination folder, copy vs move, source note folder |
+| Execute | Progress bar, summary of created sources |
+
+**Integration:**
+- Builds on [Source Media Gallery](Release-History#source-media-gallery--document-viewer-v080) media attachment system
+- Uses existing `SourceService` for note creation
+- Respects existing source note schema (`media`, `media_2`, etc.)
+
+See [Bulk Source-Image Linking Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/bulk-source-image-linking.md) for implementation details.
+
+---
+
 ### Post-Import Cleanup Wizard
 
-**Priority:** ⚡ High — Guided workflow for data quality after GEDCOM import
+**Priority:** 📋 Medium — Guided workflow for data quality after GEDCOM import
 
 **Summary:** A step-by-step wizard that guides users through the recommended post-import cleanup sequence. After importing a messy GEDCOM file, users currently must navigate multiple Control Center tabs and run operations in the correct order. The wizard consolidates this into a single guided experience.
 
@@ -150,54 +257,6 @@ After a GEDCOM import (especially from a file with data quality issues), users f
 
 ---
 
-### Bulk Source-Image Linking
-
-**Priority:** 📋 Medium — Streamline bulk import of source images with metadata extraction
-
-**Summary:** Import external source images (census records, vital records, photos, etc.) into the vault, parse filenames to extract metadata, and create source notes with media attached. Addresses the common genealogist workflow of having hundreds of inconsistently-named source images that need to be organized and linked.
-
-**Problem Statement:**
-
-Users have existing image files with inconsistent naming conventions that need to be matched to source notes. Manual matching is tedious for large collections (~100-500 images). Common pain points:
-- **Inconsistent naming:** Files from different eras, scanning sessions, or sources follow different patterns
-- **Scattered storage:** Source images often live outside the vault in archive folders
-- **Manual linking:** Creating source notes and attaching media one-by-one is time-consuming
-- **Multi-part documents:** Census pages, multi-page vital records need grouping into single sources
-
-**Phased Implementation:**
-
-| Phase | Goal | Features |
-|-------|------|----------|
-| 1 | Core Import Wizard | Filename parser, import wizard UI, source note creation |
-| 2 | Person Matching | Match images to existing person notes by surname/birth year |
-| 3 | Fact-Level Linking | Link sources to specific facts via `sourced_facts` |
-| 4 | Advanced Features | Duplicate detection, OCR integration, batch rename |
-
-**Phase 1 Features:**
-
-1. **Filename Parser Service** — Extract surnames, years, record types, locations, multi-part indicators from filenames
-2. **Import Wizard UI** — Multi-step modal: select files → review parsed data → configure → execute
-3. **Multi-part Grouping** — Detect and group `_a`/`_b`, `_p1`/`_p2`, `_page1`/`_page2` suffixes
-4. **Source Type Mapping** — Map filename tokens to source types (census, military, vital_record, etc.)
-
-**Wizard Steps:**
-
-| Step | Description |
-|------|-------------|
-| Select Source | Choose folder or files, filter thumbnails, show preview |
-| Review Parsed Data | Editable table with confidence indicators, grouping preview |
-| Configure Import | Destination folder, copy vs move, source note folder |
-| Execute | Progress bar, summary of created sources |
-
-**Integration:**
-- Builds on [Source Media Gallery](Release-History#source-media-gallery--document-viewer-v080) media attachment system
-- Uses existing `SourceService` for note creation
-- Respects existing source note schema (`media`, `media_2`, etc.)
-
-See [Bulk Source-Image Linking Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/bulk-source-image-linking.md) for implementation details.
-
----
-
 ### Configurable Normalization
 
 **Priority:** 📋 Medium — Flexible data standardization for worldbuilders
@@ -220,64 +279,6 @@ See [Bulk Source-Image Linking Planning Document](https://github.com/banisteriou
 - Uses existing Data Quality tab infrastructure
 
 See [Sex/Gender Identity Expansion Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/sex-gender-expansion.md) for full context (Phase 4).
-
----
-
-### Calendarium Integration
-
-**Priority:** 📋 Medium — Unified timeline experience for fictional worldbuilders
-
-**Status:** ✅ Phase 1 complete (v0.12.0) | Phases 2-4 planned
-
-**Summary:** Integration with the [Calendarium](https://plugins.javalent.com/calendarium) plugin to share calendar definitions, eliminating duplicate configuration for worldbuilders. Designed to be invisible to users who don't need it—settings default to off, and no UI changes appear unless Calendarium is installed.
-
-**User Feedback (December 2024):**
-- Calendar definition is the main value—users want Calendarium for setting up calendar structure (dates, eras), not primarily for events
-- Date ranges (`fc-date` + `fc-end`) are important for lifespans, reign periods, residences
-- Pain points with Calendarium include era handling and per-calendar frontmatter fields
-- Phase 1 (read-only calendar import) validated as the right starting point
-
-**Integration Modes:**
-
-| Mode | Description | Use Case |
-|------|-------------|----------|
-| Standalone | Canvas Roots manages its own calendars | Users without Calendarium |
-| Calendarium Primary | Canvas Roots reads Calendarium calendars | Existing Calendarium users |
-| Bidirectional | Full sync between both plugins | Power users wanting unified experience |
-
-**Phased Approach:**
-- ✅ **Phase 1 (v0.12.0):** Import calendar definitions from Calendarium—delivers ~80% of value
-- **Phase 2:** Display Calendarium events on Canvas Roots timelines; support date ranges (`fc-end`)
-- **Phase 3:** Bidirectional sync between plugins
-- **Phase 4:** Cross-calendar date translation
-
-**Phase 1 Implementation (v0.12.0):**
-- Detects Calendarium plugin installation
-- Imports calendar definitions (names, eras, abbreviations, year directions)
-- Displays imported calendars in Date Systems card and Create Event modal
-- Graceful fallback when Calendarium not installed
-- Integrations card hidden when Calendarium not installed
-
-See [Fictional Date Systems - Calendarium Integration](Fictional-Date-Systems#calendarium-integration) for usage documentation.
-
-**Data Mapping (Planned for Phase 2+):**
-
-| Canvas Roots Field | Calendarium Field |
-|--------------------|-------------------|
-| `fictional_date` | `fc-date` / `fc-start` |
-| `fictional_date_end` | `fc-end` |
-| `calendar_system` | `fc-calendar` |
-| `event_category` | `fc-category` |
-| `display_name` | `fc-display-name` |
-
-**Settings:**
-- `calendariumIntegration`: off / read-only (bidirectional planned for Phase 3)
-
-**API Integration:** Uses `window.Calendarium` global when available, with graceful fallback when Calendarium is not installed.
-
-**Future Consideration:** Per-calendar frontmatter fields (e.g., `mycalendar-date` instead of `fc-calendar` + `fc-date`) to allow one note to have dates across multiple calendars.
-
-See [Calendarium Integration Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/calendarium-integration.md) for implementation details.
 
 ---
 
@@ -507,6 +508,127 @@ Canvas Roots supports [user-defined schemas](Release-History#schema-validation-v
 2. **Completeness scores** — Birth/death/source coverage
 3. **Top lists** — Surnames, locations, occupations, sources
 4. **Quality metrics** — Unsourced, orphans, missing vitals
+
+---
+
+### Dynamic Note Content
+
+**Priority:** 📋 Medium — Live computed content in person notes
+
+**Summary:** Render dynamic, computed content within person notes using code blocks. Content updates live from vault data, with the option to "freeze" to static markdown for editing or export.
+
+**Problem Statement:**
+
+Person notes currently contain only frontmatter and user-written content. Users wanting to see computed data (timelines, relationship lists, statistics) must navigate to Control Center or other views. This breaks the "note as single source of truth" mental model.
+
+---
+
+#### Code Block Types
+
+| Block | Description |
+|-------|-------------|
+| `cr-timeline` | Chronological list of events linked to this person |
+| `cr-relationships` | Family relationships (parents, spouse, children) with links |
+| `cr-sources` | Sources citing this person with quality indicators |
+| `cr-statistics` | Research coverage, source count, completeness % |
+| `cr-places` | Places associated with this person's events |
+
+**Example Usage:**
+
+~~~markdown
+## Timeline
+```cr-timeline
+```
+
+## Family
+```cr-relationships
+type: immediate
+```
+
+## Sources
+```cr-sources
+sort: quality
+```
+~~~
+
+---
+
+#### Rendered Output
+
+Code blocks render as styled containers with:
+- **Header bar** with block type and toolbar
+- **Live content** computed from vault data
+- **Toolbar actions**: Copy to clipboard, Convert to markdown, Refresh
+
+**Timeline Example:**
+```
+┌─────────────────────────────────────────────┐
+│ Timeline                          [⋮] [📋] │
+├─────────────────────────────────────────────┤
+│ • 1845 — Born in [[Dublin, Ireland]]        │
+│ • 1867 — Married [[Jane Smith]]             │
+│ • 1890 — Resided in [[Boston, MA]]          │
+│ • 1912 — Died in [[Boston, MA]]             │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+#### Freeze to Markdown
+
+Users can convert live code blocks to static markdown for:
+- **Manual editing**: Add notes, reorder, customize formatting
+- **Export compatibility**: Static markdown works everywhere
+- **Historical snapshots**: Preserve state at a point in time
+- **Performance**: Reduce live queries in large vaults
+
+**Conversion Process:**
+1. Click "Convert to markdown" in toolbar
+2. Code block replaced with rendered content
+3. Comment marker added for provenance:
+
+```markdown
+## Timeline
+<!-- cr-timeline: frozen 2025-12-14 -->
+- **1845** — Born in [[Dublin, Ireland]]
+- **1867** — Married [[Jane Smith]]
+- **1912** — Died in [[Boston, MA]]
+```
+
+**Refresh Frozen Content:**
+- Context menu on frozen sections: "Refresh from live data"
+- Shows diff or replaces content
+- Updates timestamp marker
+
+---
+
+#### Configuration Options
+
+Code blocks accept optional parameters:
+
+```
+```cr-timeline
+sort: chronological | reverse
+include: birth, death, marriage, residence
+exclude: occupation
+limit: 10
+```
+```
+
+```
+```cr-relationships
+type: immediate | extended | all
+include: parents, spouse, children, siblings
+```
+```
+
+---
+
+#### v1 Priorities
+
+1. **cr-timeline** — Most requested, high value for viewing person history
+2. **cr-relationships** — Core genealogy use case
+3. **Freeze to markdown** — Essential for export and editing workflows
 
 ---
 
