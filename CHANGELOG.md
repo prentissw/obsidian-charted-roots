@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.12.5] - 2025-12-14
+
+### Added
+
+- **Source Image Import Wizard** - New wizard in Sources tab (`Import` button) for bulk-importing source images. Parses filenames to extract metadata (surnames, years, record types, locations), shows confidence indicators, and creates source notes with media wikilinks attached. Supports multi-part document grouping for census pages and other multi-page records.
+
+- **Source Media Linker Wizard** - New wizard in Sources tab (`Link` button) for attaching images to existing source notes that don't have media. Features smart suggestions with confidence scoring based on filename analysis, auto-selection of top matches, "+N more" badges showing alternative suggestions, and row highlighting for files needing manual selection.
+
+- **Filename parser service** - New `ImageFilenameParser` service extracts metadata from common genealogy naming patterns (`surname_year_type`, `surname_given_byear_type`, descriptive names). Recognizes record type keywords (census, birth, death, marriage, military, immigration, obituary, etc.) and multi-part indicators (`_p1`, `_a`, `_page1`).
+
+---
+
 ## [0.12.2] - 2025-12-14
 
 ### Fixed

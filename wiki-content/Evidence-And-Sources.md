@@ -341,6 +341,70 @@ smith_john_birth_1865.jpg
 2. Add transcriptions and research notes
 3. Link sources to person notes by adding wikilinks
 
+## Link Media to Existing Sources
+
+The **Link Media to Sources** wizard helps you attach images to source notes that don't already have media. This is useful when you have existing source notes (e.g., from GEDCOM import) and images that should be linked to them.
+
+### Opening the Wizard
+
+1. Open **Control Center** (ribbon icon or command palette)
+2. Go to the **Sources** tab
+3. Click **Link** next to "Link media to sources"
+
+### Wizard Steps
+
+#### Step 1: Select Folder
+
+Choose the vault folder containing images to link. The wizard only shows **source notes without media** as potential targets.
+
+A preview shows:
+- Number of images found in the folder
+- Number of source notes without media available to link
+
+#### Step 2: Link Images to Sources
+
+For each image, select which source note to attach it to.
+
+**Smart suggestions:** The wizard analyzes filenames and scores potential matches based on:
+- Surname matches (e.g., "smith" in filename matches "Smith Family Census")
+- Year matches (e.g., "1900" in filename matches source with 1900 date)
+- Type keywords (e.g., "census" in filename matches census source type)
+- Location matches (e.g., "chicago" in filename matches source location)
+
+**UI indicators:**
+- **Confidence dots** - 🟢 High (strong match), 🟡 Medium, 🟠 Low, ⚪ None
+- **Auto-selection** - Top suggestion is pre-selected when available
+- **"+N more" badge** - Shows when alternative suggestions exist
+- **Yellow highlighting** - Rows without suggestions need manual selection
+- **Summary** - Shows "X auto-matched, Y need manual selection"
+
+**Dropdown options:**
+- **Suggestions group** - Top matches with match reasons shown
+- **All sources group** - Complete list for manual selection
+
+#### Step 3: Review
+
+Review your selections before applying:
+- Summary of images to link and sources to update
+- List of all image → source mappings
+
+#### Step 4: Execute
+
+Click **Link media** to apply changes. The wizard:
+1. Updates each source note's frontmatter with media wikilinks
+2. Uses `media` for first image, `media_2`, `media_3`, etc. for additional
+3. Shows progress and results
+
+### Tips for Best Results
+
+**Naming images:** Use consistent naming that includes clues:
+- `smith_census_1900.jpg` → matches sources with "Smith", "census", "1900"
+- `henderson_obituary_1945.jpg` → matches obituary sources with "Henderson", "1945"
+
+**Manual selection:** For images with generic names like `Document (3).jpg` or `Voice Memo 2020-03-15.jpg`, you'll need to manually select the correct source from the dropdown.
+
+**Multiple images per source:** You can link multiple images to the same source note. Each additional image uses the next available `media_N` slot.
+
 ### Confidence Levels
 
 Use confidence to track source reliability:

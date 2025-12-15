@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.12.x](#v012x)
+  - [Bulk Source-Image Linking](#bulk-source-image-linking-v0125)
   - [Calendarium Integration Phase 1](#calendarium-integration-phase-1-v0120)
 - [v0.11.x](#v011x)
   - [Export v2](#export-v2-v0110)
@@ -41,6 +42,66 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.12.x
+
+### Bulk Source-Image Linking (v0.12.5)
+
+Two wizard tools for managing source images: importing new images as source notes, and linking existing images to existing source notes.
+
+**Problem Solved:**
+- Genealogists often have hundreds of source images (census records, vital records, photos) with inconsistent naming conventions
+- Manual creation of source notes from images is tedious
+- Existing source notes without media require manual attachment of related images
+- No way to bulk-process images with intelligent metadata extraction
+
+**Features:**
+
+**Source Image Import Wizard** (`Sources tab → Import`):
+
+| Feature | Description |
+|---------|-------------|
+| **Folder selection** | Browse vault folders containing source images |
+| **Filename parsing** | Extract surnames, years, record types, locations from filenames |
+| **Confidence indicators** | Visual dots (green/yellow/orange/gray) showing parse quality |
+| **Editable metadata** | Review and correct parsed data before import |
+| **Source note creation** | Creates source notes with media wikilinks in frontmatter |
+
+**Source Media Linker Wizard** (`Sources tab → Link`):
+
+| Feature | Description |
+|---------|-------------|
+| **Target sources** | Only shows source notes without existing media |
+| **Smart suggestions** | Scores potential matches based on filename analysis |
+| **Auto-selection** | Top suggestion pre-selected with confidence indicator |
+| **"+N more" badge** | Shows when alternative suggestions exist |
+| **Row highlighting** | Yellow background for rows needing manual selection |
+| **Summary breakdown** | Shows auto-matched vs. manual selection counts |
+
+**Filename Parser:**
+
+Extracts metadata from common genealogy image naming patterns:
+
+| Pattern | Extracted Data |
+|---------|----------------|
+| `smith_census_1900.jpg` | Surname: Smith, Type: census, Year: 1900 |
+| `Marriage Cert Boston 1875.jpeg` | Type: marriage, Location: Boston, Year: 1875 |
+| `henderson_obituary_1945.jpg` | Surname: Henderson, Type: obituary, Year: 1945 |
+
+**Confidence Scoring:**
+
+| Score Range | Confidence | Visual |
+|-------------|------------|--------|
+| ≥50 | High | 🟢 Green dot |
+| 30-49 | Medium | 🟡 Yellow dot |
+| 1-29 | Low | 🟠 Orange dot |
+| 0 | None | ⚪ Gray dot |
+
+**Technical Details:**
+- `ImageFilenameParser` service handles filename analysis
+- Source matching uses scoring algorithm based on surname, year, type, and location overlap
+- Media stored as wikilinks in source frontmatter (`media`, `media_2`, etc.)
+- Builds on existing `SourceService` for note creation and updates
+
+---
 
 ### Calendarium Integration Phase 1 (v0.12.0)
 

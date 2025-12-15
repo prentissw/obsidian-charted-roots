@@ -9,7 +9,6 @@ This document outlines planned features for Canvas Roots. For completed features
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [Calendarium Integration](#calendarium-integration) ⚡ High
-  - [Bulk Source-Image Linking](#bulk-source-image-linking) ⚡ High
   - [Post-Import Cleanup Wizard](#post-import-cleanup-wizard) 📋 Medium
   - [Configurable Normalization](#configurable-normalization) 📋 Medium
   - [Reports & Print Export](#reports--print-export) 📋 Medium
@@ -30,6 +29,7 @@ For detailed implementation documentation of completed features, see [Release Hi
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.12.5 | [Bulk Source-Image Linking](Release-History#bulk-source-image-linking-v0125) | Import images as sources, link media to existing sources |
 | v0.11.0 | [Export v2](Release-History#export-v2-v0110) | Full entity export with round-trip fidelity |
 | v0.10.20 | [Sex/Gender Identity Fields](Release-History#sexgender-identity-fields-v01020) | Separate gender_identity field with export support |
 | v0.10.19 | [Unified Property Configuration](Release-History#unified-property-configuration-v01019) | Consolidated property and value alias management |
@@ -121,54 +121,6 @@ See [Fictional Date Systems - Calendarium Integration](Fictional-Date-Systems#ca
 **Future Consideration:** Per-calendar frontmatter fields (e.g., `mycalendar-date` instead of `fc-calendar` + `fc-date`) to allow one note to have dates across multiple calendars.
 
 See [Calendarium Integration Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/calendarium-integration.md) for implementation details.
-
----
-
-### Bulk Source-Image Linking
-
-**Priority:** ⚡ High — Streamline bulk import of source images with metadata extraction
-
-**Summary:** Import external source images (census records, vital records, photos, etc.) into the vault, parse filenames to extract metadata, and create source notes with media attached. Addresses the common genealogist workflow of having hundreds of inconsistently-named source images that need to be organized and linked.
-
-**Problem Statement:**
-
-Users have existing image files with inconsistent naming conventions that need to be matched to source notes. Manual matching is tedious for large collections (~100-500 images). Common pain points:
-- **Inconsistent naming:** Files from different eras, scanning sessions, or sources follow different patterns
-- **Scattered storage:** Source images often live outside the vault in archive folders
-- **Manual linking:** Creating source notes and attaching media one-by-one is time-consuming
-- **Multi-part documents:** Census pages, multi-page vital records need grouping into single sources
-
-**Phased Implementation:**
-
-| Phase | Goal | Features |
-|-------|------|----------|
-| 1 | Core Import Wizard | Filename parser, import wizard UI, source note creation |
-| 2 | Person Matching | Match images to existing person notes by surname/birth year |
-| 3 | Fact-Level Linking | Link sources to specific facts via `sourced_facts` |
-| 4 | Advanced Features | Duplicate detection, OCR integration, batch rename |
-
-**Phase 1 Features:**
-
-1. **Filename Parser Service** — Extract surnames, years, record types, locations, multi-part indicators from filenames
-2. **Import Wizard UI** — Multi-step modal: select files → review parsed data → configure → execute
-3. **Multi-part Grouping** — Detect and group `_a`/`_b`, `_p1`/`_p2`, `_page1`/`_page2` suffixes
-4. **Source Type Mapping** — Map filename tokens to source types (census, military, vital_record, etc.)
-
-**Wizard Steps:**
-
-| Step | Description |
-|------|-------------|
-| Select Source | Choose folder or files, filter thumbnails, show preview |
-| Review Parsed Data | Editable table with confidence indicators, grouping preview |
-| Configure Import | Destination folder, copy vs move, source note folder |
-| Execute | Progress bar, summary of created sources |
-
-**Integration:**
-- Builds on [Source Media Gallery](Release-History#source-media-gallery--document-viewer-v080) media attachment system
-- Uses existing `SourceService` for note creation
-- Respects existing source note schema (`media`, `media_2`, etc.)
-
-See [Bulk Source-Image Linking Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/bulk-source-image-linking.md) for implementation details.
 
 ---
 
