@@ -620,6 +620,29 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 		});
 
+		// Add command: Insert Dynamic Blocks
+		this.addCommand({
+			id: 'insert-dynamic-blocks',
+			name: 'Insert dynamic blocks in current person note',
+			callback: async () => {
+				const activeFile = this.app.workspace.getActiveFile();
+
+				if (!activeFile || activeFile.extension !== 'md') {
+					new Notice('No active markdown file. Please open a person note first.');
+					return;
+				}
+
+				// Check if the file has a cr_id (is a person note)
+				const cache = this.app.metadataCache.getFileCache(activeFile);
+				if (!cache?.frontmatter?.cr_id) {
+					new Notice('Current file is not a person note (missing cr_id)');
+					return;
+				}
+
+				await this.insertDynamicBlocks([activeFile]);
+			}
+		});
+
 		// Add command: Open Relationships Tab
 		this.addCommand({
 			id: 'open-relationships-tab',
@@ -1757,6 +1780,16 @@ export default class CanvasRootsPlugin extends Plugin {
 										});
 								});
 
+								// Insert dynamic blocks
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Insert dynamic blocks')
+										.setIcon('layout-template')
+										.onClick(async () => {
+											await this.insertDynamicBlocks([file]);
+										});
+								});
+
 								// Events submenu
 								submenu.addItem((subItem) => {
 									const eventsSubmenu: Menu = subItem
@@ -2125,6 +2158,15 @@ export default class CanvasRootsPlugin extends Plugin {
 									.setIcon('archive')
 									.onClick(() => {
 										this.addSourceToPersonNote(file);
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Insert dynamic blocks')
+									.setIcon('layout-template')
+									.onClick(async () => {
+										await this.insertDynamicBlocks([file]);
 									});
 							});
 
@@ -2693,6 +2735,18 @@ export default class CanvasRootsPlugin extends Plugin {
 									});
 							});
 
+							// Insert dynamic blocks to all person notes in folder
+							submenu.addItem((subItem) => {
+								subItem
+									.setTitle('Insert dynamic blocks')
+									.setIcon('layout-template')
+									.onClick(async () => {
+										const files = this.app.vault.getMarkdownFiles()
+											.filter(f => f.path.startsWith(file.path + '/'));
+										await this.insertDynamicBlocks(files);
+									});
+							});
+
 							submenu.addSeparator();
 
 							// Bases submenu
@@ -2900,6 +2954,17 @@ export default class CanvasRootsPlugin extends Plugin {
 									const files = this.app.vault.getMarkdownFiles()
 										.filter(f => f.path.startsWith(file.path + '/'));
 									await this.addCrId(files);
+								});
+						});
+
+						menu.addItem((item) => {
+							item
+								.setTitle('Canvas Roots: Insert dynamic blocks')
+								.setIcon('layout-template')
+								.onClick(async () => {
+									const files = this.app.vault.getMarkdownFiles()
+										.filter(f => f.path.startsWith(file.path + '/'));
+									await this.insertDynamicBlocks(files);
 								});
 						});
 
@@ -5335,6 +5400,137 @@ export default class CanvasRootsPlugin extends Plugin {
 		} catch (error: unknown) {
 			console.error('Error adding cr_id:', error);
 			new Notice('Failed to add cr_id');
+		}
+	}
+
+	/**
+	 * Insert dynamic content blocks into person note(s)
+	 * Adds canvas-roots-timeline and canvas-roots-relationships code blocks
+	 */
+	private async insertDynamicBlocks(files: TFile[]): Promise<void> {
+		// For bulk operations (10+ files), show progress
+		const showProgress = files.length >= 10;
+		let progressNotice: Notice | null = null;
+
+		if (showProgress) {
+			progressNotice = new Notice(
+				`Inserting dynamic blocks: 0/${files.length}...`,
+				0 // Don't auto-dismiss
+			);
+		}
+
+		try {
+			let addedCount = 0;
+			let skippedCount = 0;
+			let errorCount = 0;
+			let processedCount = 0;
+
+			for (const file of files) {
+				try {
+					// Check if this is a person note with cr_id
+					const cache = this.app.metadataCache.getFileCache(file);
+					if (!cache?.frontmatter?.cr_id) {
+						skippedCount++;
+						processedCount++;
+						continue;
+					}
+
+					// Check if it already has dynamic blocks
+					const content = await this.app.vault.read(file);
+					const hasRelationships = content.includes('```canvas-roots-relationships');
+					const hasTimeline = content.includes('```canvas-roots-timeline');
+
+					if (hasRelationships && hasTimeline) {
+						skippedCount++;
+						processedCount++;
+						continue;
+					}
+
+					// Build the blocks to add
+					const blocksToAdd: string[] = [];
+
+					if (!hasRelationships) {
+						blocksToAdd.push('```canvas-roots-relationships');
+						blocksToAdd.push('type: immediate');
+						blocksToAdd.push('```');
+						blocksToAdd.push('');
+					}
+
+					if (!hasTimeline) {
+						blocksToAdd.push('```canvas-roots-timeline');
+						blocksToAdd.push('sort: chronological');
+						blocksToAdd.push('```');
+						blocksToAdd.push('');
+					}
+
+					if (blocksToAdd.length === 0) {
+						skippedCount++;
+						processedCount++;
+						continue;
+					}
+
+					// Find insertion point after frontmatter
+					const frontmatterEnd = content.indexOf('---', 3);
+					if (frontmatterEnd === -1) {
+						// No frontmatter, add at start
+						const newContent = blocksToAdd.join('\n') + '\n' + content;
+						await this.app.vault.modify(file, newContent);
+					} else {
+						// Insert after frontmatter
+						const insertPoint = frontmatterEnd + 3;
+						const before = content.slice(0, insertPoint);
+						const after = content.slice(insertPoint);
+						// Ensure proper spacing
+						const newContent = before + '\n\n' + blocksToAdd.join('\n') + after;
+						await this.app.vault.modify(file, newContent);
+					}
+
+					addedCount++;
+					processedCount++;
+
+					// Update progress notice every 5 files or at the end
+					if (progressNotice && (processedCount % 5 === 0 || processedCount === files.length)) {
+						progressNotice.setMessage(
+							`Inserting dynamic blocks: ${processedCount}/${files.length} (${addedCount} added)...`
+						);
+					}
+
+				} catch (error: unknown) {
+					console.error(`Error adding dynamic blocks to ${file.path}:`, error);
+					errorCount++;
+					processedCount++;
+				}
+			}
+
+			// Hide progress notice
+			if (progressNotice) {
+				progressNotice.hide();
+			}
+
+			// Show summary
+			if (files.length === 1) {
+				if (addedCount === 1) {
+					new Notice('Added dynamic content blocks');
+				} else if (skippedCount === 1) {
+					new Notice('Note already has dynamic blocks or is not a person note');
+				} else {
+					new Notice('Failed to add dynamic blocks');
+				}
+			} else {
+				const parts = [];
+				if (addedCount > 0) parts.push(`${addedCount} updated`);
+				if (skippedCount > 0) parts.push(`${skippedCount} skipped`);
+				if (errorCount > 0) parts.push(`${errorCount} errors`);
+				new Notice(`Dynamic blocks: ${parts.join(', ')}`);
+			}
+
+		} catch (error: unknown) {
+			// Hide progress notice on error
+			if (progressNotice) {
+				progressNotice.hide();
+			}
+			console.error('Error inserting dynamic blocks:', error);
+			new Notice('Failed to add dynamic blocks');
 		}
 	}
 
