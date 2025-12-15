@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Family Chart zoom buttons causing NaN%** - Fixed issue where clicking zoom in/out buttons could show "NaN%" and cause the chart to vanish. Added validation to detect invalid zoom state and reset to fit view if needed.
+- **Family Chart zoom buttons causing NaN%** - Fixed issue where clicking zoom in/out buttons could show "NaN%" and cause the chart to vanish. The `manualZoom` function uses D3's `scaleBy` which multiplies the scale, so zoom in now uses 1.2 (20% larger) and zoom out uses 0.8 (20% smaller) instead of the incorrect additive values. Also added validation to detect invalid zoom state and reset to fit view if needed.
 
 - **Family Chart showing wrong person** - Fixed "Open family chart" command showing a previously loaded person instead of the current note. Now correctly opens with the current note's person, or shows a person picker if no cr_id is found.
 

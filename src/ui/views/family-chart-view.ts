@@ -636,7 +636,8 @@ export class FamilyChartView extends ItemView {
 				this.fitToView();
 				return;
 			}
-			f3.handlers.manualZoom({ amount: 0.2, svg, transition_time: 200 });
+			// manualZoom uses scaleBy which multiplies, so 1.2 = zoom in by 20%
+			f3.handlers.manualZoom({ amount: 1.2, svg, transition_time: 200 });
 			this.updateZoomLevelDisplay();
 		}
 	}
@@ -661,7 +662,8 @@ export class FamilyChartView extends ItemView {
 				logger.debug('zoom', 'Already at minimum zoom level');
 				return;
 			}
-			f3.handlers.manualZoom({ amount: -0.2, svg, transition_time: 200 });
+			// manualZoom uses scaleBy which multiplies, so 0.8 = zoom out by 20%
+			f3.handlers.manualZoom({ amount: 0.8, svg, transition_time: 200 });
 			this.updateZoomLevelDisplay();
 		}
 	}
