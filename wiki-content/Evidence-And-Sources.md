@@ -180,6 +180,7 @@ Canvas Roots includes a pre-configured Obsidian Bases template for managing sour
 | Recently Accessed | Sorted by access date |
 | By Collection | Grouped by collection name |
 | By Location | Grouped by location |
+| Media Gallery | Cards view with media as cover image |
 
 ## Best Practices
 

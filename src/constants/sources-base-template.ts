@@ -203,4 +203,18 @@ views:
     sort:
       - property: note.title
         direction: asc
+  - name: Media Gallery
+    type: cards
+    filter:
+      note.media:
+        ne: null
+    image: note.media
+    imageFit: contain
+    order:
+      - note.title
+      - note.source_type
+      - note.source_date
+    sort:
+      - property: note.source_date
+        direction: desc
 `;

@@ -200,7 +200,25 @@ interface ImageMatchResult {
 
 ---
 
-### Phase 4: Advanced Features
+### Phase 4: Sources Base Media View
+
+**Goal:** Enhance the Sources base template with rendered media thumbnails.
+
+#### 4.1 Media Gallery View
+
+- Add a "Gallery" or "Media Preview" view to sources-base-template.ts
+- Display media property as rendered thumbnail instead of wikilink text
+- Show media in a grid/gallery layout for visual browsing
+
+#### 4.2 Implementation Notes
+
+- Obsidian Bases renders wikilinks to images automatically when the property type is recognized
+- May need to add `displayType: image` or similar to the property definition
+- Test with `[[path/to/image.jpg]]` format in `media` property
+
+---
+
+### Phase 5: Advanced Features
 
 **Goal:** Additional quality-of-life improvements.
 
