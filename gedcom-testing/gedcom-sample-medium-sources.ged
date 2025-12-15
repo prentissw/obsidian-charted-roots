@@ -1,0 +1,1056 @@
+0 HEAD
+1 SOUR Canvas Roots Test
+2 VERS 1.0
+2 NAME Canvas Roots Medium Test - With Sources
+1 DEST ANY
+1 DATE 20 NOV 2025
+1 SUBM @SUBM1@
+1 FILE gedcom-sample-medium.ged
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+0 @SUBM1@ SUBM
+1 NAME Canvas Roots User
+0 @I1@ INDI
+1 NAME William /Anderson/
+2 GIVN William
+2 SURN Anderson
+1 SEX M
+1 BIRT
+2 DATE 12 MAR 1905
+2 PLAC Boston, Massachusetts, USA
+1 DEAT
+2 DATE 8 SEP 1982
+2 PLAC Miami, Florida, USA
+1 FAMS @F1@
+0 @I2@ INDI
+1 NAME Margaret /O'Brien/
+2 GIVN Margaret
+2 SURN O'Brien
+1 SEX F
+1 BIRT
+2 DATE 22 JUN 1908
+2 PLAC Dublin, Ireland
+1 DEAT
+2 DATE 15 NOV 1995
+2 PLAC Miami, Florida, USA
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME Charles /Henderson/
+2 GIVN Charles
+2 SURN Henderson
+1 SEX M
+1 BIRT
+2 DATE 3 FEB 1910
+2 PLAC Chicago, Illinois, USA
+1 DEAT
+2 DATE 28 JUL 1988
+2 PLAC Phoenix, Arizona, USA
+1 FAMS @F2@
+0 @I4@ INDI
+1 NAME Dorothy /Schmidt/
+2 GIVN Dorothy
+2 SURN Schmidt
+1 SEX F
+1 BIRT
+2 DATE 18 SEP 1912
+2 PLAC Milwaukee, Wisconsin, USA
+1 DEAT
+2 DATE 5 DEC 1998
+2 PLAC Phoenix, Arizona, USA
+1 FAMS @F2@
+0 @I5@ INDI
+1 NAME George /Martinez/
+2 GIVN George
+2 SURN Martinez
+1 SEX M
+1 BIRT
+2 DATE 7 MAY 1915
+2 PLAC San Antonio, Texas, USA
+1 DEAT
+2 DATE 22 APR 1992
+2 PLAC Houston, Texas, USA
+1 FAMS @F3@
+0 @I6@ INDI
+1 NAME Rosa /Garcia/
+2 GIVN Rosa
+2 SURN Garcia
+1 SEX F
+1 BIRT
+2 DATE 14 AUG 1918
+2 PLAC Mexico City, Mexico
+1 DEAT
+2 DATE 9 JAN 2005
+2 PLAC Houston, Texas, USA
+1 FAMS @F3@
+0 @I7@ INDI
+1 NAME Robert /Anderson/
+2 GIVN Robert
+2 SURN Anderson
+1 SEX M
+1 BIRT
+2 DATE 25 JAN 1930
+2 PLAC Boston, Massachusetts, USA
+1 DEAT
+2 DATE 17 MAR 2015
+2 PLAC Orlando, Florida, USA
+1 FAMS @F4@
+1 FAMS @F5@
+1 FAMC @F1@
+0 @I8@ INDI
+1 NAME Helen /Henderson/
+2 GIVN Helen
+2 SURN Henderson
+1 SEX F
+1 BIRT
+2 DATE 8 APR 1932
+2 PLAC Chicago, Illinois, USA
+1 DEAT
+2 DATE 3 NOV 1968
+2 PLAC Tampa, Florida, USA
+1 FAMS @F4@
+1 FAMC @F2@
+0 @I9@ INDI
+1 NAME Patricia /Henderson/
+2 GIVN Patricia
+2 SURN Henderson
+1 SEX F
+1 BIRT
+2 DATE 15 JUL 1935
+2 PLAC Phoenix, Arizona, USA
+1 FAMS @F6@
+1 FAMC @F2@
+0 @I10@ INDI
+1 NAME David /Martinez/
+2 GIVN David
+2 SURN Martinez
+1 SEX M
+1 BIRT
+2 DATE 29 NOV 1938
+2 PLAC San Antonio, Texas, USA
+1 FAMS @F7@
+1 FAMC @F3@
+0 @I11@ INDI
+1 NAME Maria /Martinez/
+2 GIVN Maria
+2 SURN Martinez
+1 SEX F
+1 BIRT
+2 DATE 12 MAY 1940
+2 PLAC Houston, Texas, USA
+1 FAMS @F8@
+1 FAMC @F3@
+0 @I12@ INDI
+1 NAME Susan /Anderson/
+2 GIVN Susan
+2 SURN Anderson
+1 SEX F
+1 BIRT
+2 DATE 6 SEP 1933
+2 PLAC Miami, Florida, USA
+1 FAMS @F9@
+1 FAMC @F1@
+0 @I13@ INDI
+1 NAME Catherine /Thompson/
+2 GIVN Catherine
+2 SURN Thompson
+1 SEX F
+1 BIRT
+2 DATE 22 FEB 1942
+2 PLAC Atlanta, Georgia, USA
+1 FAMS @F5@
+0 @I14@ INDI
+1 NAME Thomas /Wilson/
+2 GIVN Thomas
+2 SURN Wilson
+1 SEX M
+1 BIRT
+2 DATE 11 OCT 1934
+2 PLAC Seattle, Washington, USA
+1 FAMS @F6@
+0 @I15@ INDI
+1 NAME Linda /Nguyen/
+2 GIVN Linda
+2 SURN Nguyen
+1 SEX F
+1 BIRT
+2 DATE 5 MAR 1940
+2 PLAC Saigon, Vietnam
+1 FAMS @F7@
+0 @I16@ INDI
+1 NAME James /Johnson/
+2 GIVN James
+2 SURN Johnson
+1 SEX M
+1 BIRT
+2 DATE 19 JUN 1938
+2 PLAC Detroit, Michigan, USA
+1 FAMS @F8@
+0 @I17@ INDI
+1 NAME Richard /Cooper/
+2 GIVN Richard
+2 SURN Cooper
+1 SEX M
+1 BIRT
+2 DATE 28 AUG 1931
+2 PLAC Philadelphia, Pennsylvania, USA
+1 FAMS @F9@
+0 @I18@ INDI
+1 NAME Michael /Anderson/
+2 GIVN Michael
+2 SURN Anderson
+1 SEX M
+1 BIRT
+2 DATE 15 MAY 1955
+2 PLAC Tampa, Florida, USA
+1 FAMS @F10@
+1 FAMC @F4@
+0 @I19@ INDI
+1 NAME Jennifer /Anderson/
+2 GIVN Jennifer
+2 SURN Anderson
+1 SEX F
+1 BIRT
+2 DATE 3 AUG 1957
+2 PLAC Tampa, Florida, USA
+1 FAMS @F11@
+1 FAMC @F4@
+0 @I20@ INDI
+1 NAME Karen /Anderson/
+2 GIVN Karen
+2 SURN Anderson
+1 SEX F
+1 BIRT
+2 DATE 22 NOV 1959
+2 PLAC Tampa, Florida, USA
+1 FAMS @F12@
+1 FAMC @F4@
+0 @I21@ INDI
+1 NAME Steven /Anderson/
+2 GIVN Steven
+2 SURN Anderson
+1 SEX M
+1 BIRT
+2 DATE 8 FEB 1975
+2 PLAC Orlando, Florida, USA
+1 FAMS @F13@
+1 FAMC @F5@
+0 @I22@ INDI
+1 NAME Nancy /Anderson/
+2 GIVN Nancy
+2 SURN Anderson
+1 SEX F
+1 BIRT
+2 DATE 17 JUL 1977
+2 PLAC Orlando, Florida, USA
+1 FAMS @F14@
+1 FAMC @F5@
+0 @I23@ INDI
+1 NAME Brian /Wilson/
+2 GIVN Brian
+2 SURN Wilson
+1 SEX M
+1 BIRT
+2 DATE 29 MAR 1960
+2 PLAC Portland, Oregon, USA
+1 FAMS @F15@
+1 FAMC @F6@
+0 @I24@ INDI
+1 NAME Lisa /Wilson/
+2 GIVN Lisa
+2 SURN Wilson
+1 SEX F
+1 BIRT
+2 DATE 12 SEP 1962
+2 PLAC Portland, Oregon, USA
+1 FAMS @F16@
+1 FAMC @F6@
+0 @I25@ INDI
+1 NAME Paul /Martinez/
+2 GIVN Paul
+2 SURN Martinez
+1 SEX M
+1 BIRT
+2 DATE 4 DEC 1964
+2 PLAC Dallas, Texas, USA
+1 FAMS @F17@
+1 FAMC @F7@
+0 @I26@ INDI
+1 NAME Rebecca /Martinez/
+2 GIVN Rebecca
+2 SURN Martinez
+1 SEX F
+1 BIRT
+2 DATE 18 JUN 1967
+2 PLAC Dallas, Texas, USA
+1 FAMS @F18@
+1 FAMC @F7@
+0 @I27@ INDI
+1 NAME Carlos /Johnson/
+2 GIVN Carlos
+2 SURN Johnson
+1 SEX M
+1 BIRT
+2 DATE 25 FEB 1965
+2 PLAC Chicago, Illinois, USA
+1 FAMS @F19@
+1 FAMS @F20@
+1 FAMC @F8@
+0 @I28@ INDI
+1 NAME Teresa /Johnson/
+2 GIVN Teresa
+2 SURN Johnson
+1 SEX F
+1 BIRT
+2 DATE 7 NOV 1968
+2 PLAC Chicago, Illinois, USA
+1 FAMS @F21@
+1 FAMC @F8@
+0 @I29@ INDI
+1 NAME Daniel /Cooper/
+2 GIVN Daniel
+2 SURN Cooper
+1 SEX M
+1 BIRT
+2 DATE 14 APR 1958
+2 PLAC Baltimore, Maryland, USA
+1 FAMS @F22@
+1 FAMC @F9@
+0 @I30@ INDI
+1 NAME Barbara /Cooper/
+2 GIVN Barbara
+2 SURN Cooper
+1 SEX F
+1 BIRT
+2 DATE 21 OCT 1961
+2 PLAC Baltimore, Maryland, USA
+1 FAMS @F23@
+1 FAMC @F9@
+0 @I31@ INDI
+1 NAME Michelle /Kim/
+2 GIVN Michelle
+2 SURN Kim
+1 SEX F
+1 BIRT
+2 DATE 9 JAN 1957
+2 PLAC Seoul, South Korea
+1 FAMS @F10@
+0 @I32@ INDI
+1 NAME Mark /Davis/
+2 GIVN Mark
+2 SURN Davis
+1 SEX M
+1 BIRT
+2 DATE 16 MAY 1959
+2 PLAC Denver, Colorado, USA
+1 FAMS @F11@
+0 @I33@ INDI
+1 NAME Christopher /Lee/
+2 GIVN Christopher
+2 SURN Lee
+1 SEX M
+1 BIRT
+2 DATE 27 AUG 1961
+2 PLAC San Francisco, California, USA
+1 FAMS @F12@
+0 @I34@ INDI
+1 NAME Amanda /Taylor/
+2 GIVN Amanda
+2 SURN Taylor
+1 SEX F
+1 BIRT
+2 DATE 3 MAR 1977
+2 PLAC Austin, Texas, USA
+1 FAMS @F13@
+0 @I35@ INDI
+1 NAME Kevin /Brown/
+2 GIVN Kevin
+2 SURN Brown
+1 SEX M
+1 BIRT
+2 DATE 11 JUL 1979
+2 PLAC Nashville, Tennessee, USA
+1 FAMS @F14@
+0 @I36@ INDI
+1 NAME Sarah /Clark/
+2 GIVN Sarah
+2 SURN Clark
+1 SEX F
+1 BIRT
+2 DATE 20 SEP 1962
+2 PLAC Boston, Massachusetts, USA
+1 FAMS @F15@
+0 @I37@ INDI
+1 NAME Andrew /White/
+2 GIVN Andrew
+2 SURN White
+1 SEX M
+1 BIRT
+2 DATE 5 DEC 1964
+2 PLAC Minneapolis, Minnesota, USA
+1 FAMS @F16@
+0 @I38@ INDI
+1 NAME Jessica /Robinson/
+2 GIVN Jessica
+2 SURN Robinson
+1 SEX F
+1 BIRT
+2 DATE 14 FEB 1966
+2 PLAC Atlanta, Georgia, USA
+1 FAMS @F17@
+0 @I39@ INDI
+1 NAME Matthew /Harris/
+2 GIVN Matthew
+2 SURN Harris
+1 SEX M
+1 BIRT
+2 DATE 22 APR 1969
+2 PLAC Miami, Florida, USA
+1 FAMS @F18@
+0 @I40@ INDI
+1 NAME Angela /Turner/
+2 GIVN Angela
+2 SURN Turner
+1 SEX F
+1 BIRT
+2 DATE 8 AUG 1967
+2 PLAC New Orleans, Louisiana, USA
+1 FAMS @F19@
+0 @I41@ INDI
+1 NAME Rachel /Foster/
+2 GIVN Rachel
+2 SURN Foster
+1 SEX F
+1 BIRT
+2 DATE 15 NOV 1985
+2 PLAC Los Angeles, California, USA
+1 FAMS @F20@
+0 @I42@ INDI
+1 NAME Jason /Miller/
+2 GIVN Jason
+2 SURN Miller
+1 SEX M
+1 BIRT
+2 DATE 19 JAN 1970
+2 PLAC Kansas City, Missouri, USA
+1 FAMS @F21@
+0 @I43@ INDI
+1 NAME Elizabeth /Green/
+2 GIVN Elizabeth
+2 SURN Green
+1 SEX F
+1 BIRT
+2 DATE 26 JUN 1960
+2 PLAC Phoenix, Arizona, USA
+1 FAMS @F22@
+0 @I44@ INDI
+1 NAME John /Mitchell/
+2 GIVN John
+2 SURN Mitchell
+1 SEX M
+1 BIRT
+2 DATE 2 OCT 1963
+2 PLAC Charlotte, North Carolina, USA
+1 FAMS @F23@
+0 @I45@ INDI
+1 NAME Emily /Anderson/
+2 GIVN Emily
+2 SURN Anderson
+1 SEX F
+1 BIRT
+2 DATE 12 MAY 1985
+2 PLAC Miami, Florida, USA
+1 FAMC @F10@
+0 @I46@ INDI
+1 NAME Joshua /Anderson/
+2 GIVN Joshua
+2 SURN Anderson
+1 SEX M
+1 BIRT
+2 DATE 8 SEP 1987
+2 PLAC Miami, Florida, USA
+1 FAMC @F10@
+0 @I47@ INDI
+1 NAME Olivia /Anderson/
+2 GIVN Olivia
+2 SURN Anderson
+1 SEX F
+1 BIRT
+2 DATE 22 DEC 1989
+2 PLAC Miami, Florida, USA
+1 FAMC @F10@
+0 @I48@ INDI
+1 NAME Sophia /Davis/
+2 GIVN Sophia
+2 SURN Davis
+1 SEX F
+1 BIRT
+2 DATE 15 MAR 1988
+2 PLAC Denver, Colorado, USA
+1 FAMC @F11@
+0 @I49@ INDI
+1 NAME Ethan /Davis/
+2 GIVN Ethan
+2 SURN Davis
+1 SEX M
+1 BIRT
+2 DATE 3 JUL 1990
+2 PLAC Denver, Colorado, USA
+1 FAMC @F11@
+0 @I50@ INDI
+1 NAME Isabella /Lee/
+2 GIVN Isabella
+2 SURN Lee
+1 SEX F
+1 BIRT
+2 DATE 18 NOV 1995
+2 PLAC San Jose, California, USA
+1 FAMC @F12@
+0 @I51@ INDI
+1 NAME Mason /Lee/
+2 GIVN Mason
+2 SURN Lee
+1 SEX M
+1 BIRT
+2 DATE 7 FEB 1998
+2 PLAC San Jose, California, USA
+1 FAMC @F12@
+0 @I52@ INDI
+1 NAME Ava /Lee/
+2 GIVN Ava
+2 SURN Lee
+1 SEX F
+1 BIRT
+2 DATE 29 AUG 2000
+2 PLAC San Jose, California, USA
+1 FAMC @F12@
+0 @I53@ INDI
+1 NAME Noah /Anderson/
+2 GIVN Noah
+2 SURN Anderson
+1 SEX M
+1 BIRT
+2 DATE 14 JUN 2003
+2 PLAC Dallas, Texas, USA
+1 FAMC @F13@
+0 @I54@ INDI
+1 NAME Liam /Anderson/
+2 GIVN Liam
+2 SURN Anderson
+1 SEX M
+1 BIRT
+2 DATE 25 APR 2005
+2 PLAC Dallas, Texas, USA
+1 FAMC @F13@
+0 @I55@ INDI
+1 NAME Emma /Brown/
+2 GIVN Emma
+2 SURN Brown
+1 SEX F
+1 BIRT
+2 DATE 9 SEP 2008
+2 PLAC Memphis, Tennessee, USA
+1 FAMC @F14@
+0 @I56@ INDI
+1 NAME Charlotte /Brown/
+2 GIVN Charlotte
+2 SURN Brown
+1 SEX F
+1 BIRT
+2 DATE 17 JAN 2011
+2 PLAC Memphis, Tennessee, USA
+1 FAMC @F14@
+0 @I57@ INDI
+1 NAME Lucas /Wilson/
+2 GIVN Lucas
+2 SURN Wilson
+1 SEX M
+1 BIRT
+2 DATE 5 OCT 1997
+2 PLAC Seattle, Washington, USA
+1 FAMC @F15@
+0 @I58@ INDI
+1 NAME Mia /Wilson/
+2 GIVN Mia
+2 SURN Wilson
+1 SEX F
+1 BIRT
+2 DATE 22 MAR 2000
+2 PLAC Seattle, Washington, USA
+1 FAMC @F15@
+0 @I59@ INDI
+1 NAME Harper /Wilson/
+2 GIVN Harper
+2 SURN Wilson
+1 SEX F
+1 BIRT
+2 DATE 11 DEC 2002
+2 PLAC Seattle, Washington, USA
+1 FAMC @F15@
+0 @I60@ INDI
+1 NAME Alexander /White/
+2 GIVN Alexander
+2 SURN White
+1 SEX M
+1 BIRT
+2 DATE 28 JUL 1999
+2 PLAC St. Paul, Minnesota, USA
+1 FAMC @F16@
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 DATE 15 JUN 1928
+2 PLAC Boston, Massachusetts, USA
+1 CHIL @I7@
+1 CHIL @I12@
+0 @F2@ FAM
+1 HUSB @I3@
+1 WIFE @I4@
+1 MARR
+2 DATE 22 SEP 1931
+2 PLAC Chicago, Illinois, USA
+1 CHIL @I8@
+1 CHIL @I9@
+0 @F3@ FAM
+1 HUSB @I5@
+1 WIFE @I6@
+1 MARR
+2 DATE 8 MAY 1937
+2 PLAC San Antonio, Texas, USA
+1 CHIL @I10@
+1 CHIL @I11@
+0 @F4@ FAM
+1 HUSB @I7@
+1 WIFE @I8@
+1 MARR
+2 DATE 12 JUN 1953
+2 PLAC Miami, Florida, USA
+1 CHIL @I18@
+1 CHIL @I19@
+1 CHIL @I20@
+0 @F5@ FAM
+1 HUSB @I7@
+1 WIFE @I13@
+1 MARR
+2 DATE 5 APR 1972
+2 PLAC Tampa, Florida, USA
+1 CHIL @I21@
+1 CHIL @I22@
+0 @F6@ FAM
+1 HUSB @I14@
+1 WIFE @I9@
+1 MARR
+2 DATE 18 AUG 1958
+2 PLAC Seattle, Washington, USA
+1 CHIL @I23@
+1 CHIL @I24@
+0 @F7@ FAM
+1 HUSB @I10@
+1 WIFE @I15@
+1 MARR
+2 DATE 3 NOV 1963
+2 PLAC Houston, Texas, USA
+1 CHIL @I25@
+1 CHIL @I26@
+0 @F8@ FAM
+1 HUSB @I16@
+1 WIFE @I11@
+1 MARR
+2 DATE 25 MAY 1964
+2 PLAC Chicago, Illinois, USA
+1 CHIL @I27@
+1 CHIL @I28@
+0 @F9@ FAM
+1 HUSB @I17@
+1 WIFE @I12@
+1 MARR
+2 DATE 14 JUL 1956
+2 PLAC Philadelphia, Pennsylvania, USA
+1 CHIL @I29@
+1 CHIL @I30@
+0 @F10@ FAM
+1 HUSB @I18@
+1 WIFE @I31@
+1 MARR
+2 DATE 8 SEP 1982
+2 PLAC Orlando, Florida, USA
+1 CHIL @I45@
+1 CHIL @I46@
+1 CHIL @I47@
+0 @F11@ FAM
+1 HUSB @I32@
+1 WIFE @I19@
+1 MARR
+2 DATE 22 JUN 1985
+2 PLAC Denver, Colorado, USA
+1 CHIL @I48@
+1 CHIL @I49@
+0 @F12@ FAM
+1 HUSB @I33@
+1 WIFE @I20@
+1 MARR
+2 DATE 15 MAY 1992
+2 PLAC San Francisco, California, USA
+1 CHIL @I50@
+1 CHIL @I51@
+1 CHIL @I52@
+0 @F13@ FAM
+1 HUSB @I21@
+1 WIFE @I34@
+1 MARR
+2 DATE 3 JUL 2001
+2 PLAC Austin, Texas, USA
+1 CHIL @I53@
+1 CHIL @I54@
+0 @F14@ FAM
+1 HUSB @I35@
+1 WIFE @I22@
+1 MARR
+2 DATE 18 APR 2006
+2 PLAC Nashville, Tennessee, USA
+1 CHIL @I55@
+1 CHIL @I56@
+0 @F15@ FAM
+1 HUSB @I23@
+1 WIFE @I36@
+1 MARR
+2 DATE 12 SEP 1995
+2 PLAC Portland, Oregon, USA
+1 CHIL @I57@
+1 CHIL @I58@
+1 CHIL @I59@
+0 @F16@ FAM
+1 HUSB @I37@
+1 WIFE @I24@
+1 MARR
+2 DATE 7 AUG 1998
+2 PLAC Minneapolis, Minnesota, USA
+1 CHIL @I60@
+0 @F17@ FAM
+1 HUSB @I25@
+1 WIFE @I38@
+1 MARR
+2 DATE 25 MAY 1993
+2 PLAC Dallas, Texas, USA
+0 @F18@ FAM
+1 HUSB @I39@
+1 WIFE @I26@
+1 MARR
+2 DATE 14 NOV 1996
+2 PLAC Houston, Texas, USA
+0 @F19@ FAM
+1 HUSB @I27@
+1 WIFE @I40@
+1 MARR
+2 DATE 5 FEB 1990
+2 PLAC Chicago, Illinois, USA
+0 @F20@ FAM
+1 HUSB @I27@
+1 WIFE @I41@
+1 MARR
+2 DATE 22 JUN 2012
+2 PLAC Los Angeles, California, USA
+0 @F21@ FAM
+1 HUSB @I42@
+1 WIFE @I28@
+1 MARR
+2 DATE 9 SEP 1997
+2 PLAC St. Louis, Missouri, USA
+0 @F22@ FAM
+1 HUSB @I29@
+1 WIFE @I43@
+1 MARR
+2 DATE 18 APR 1986
+2 PLAC Baltimore, Maryland, USA
+0 @F23@ FAM
+1 HUSB @I44@
+1 WIFE @I30@
+1 MARR
+2 DATE 3 OCT 1989
+2 PLAC Raleigh, North Carolina, USA
+0 @S1@ SOUR
+1 TITL 1910 Census - William Anderson
+1 FILE anderson_william_b1905_1910_USA_IL_census.jpg
+1 DATE 1910
+1 TEXT Test source image for bulk import testing
+0 @S2@ SOUR
+1 TITL 1910 Census - Margaret OBrien
+1 FILE obrien_margaret_b1908_1910_USA_MA_census.jpg
+1 DATE 1910
+1 TEXT Test source image for bulk import testing
+0 @S3@ SOUR
+1 TITL 1920 Census - Charles Henderson
+1 FILE henderson_charles_b1910_1920_USA_TX_census.jpg
+1 DATE 1920
+1 TEXT Test source image for bulk import testing
+0 @S4@ SOUR
+1 TITL 1920 Census
+1 FILE SCHMIDT_1920_Census.JPG
+1 DATE 1920
+1 TEXT Test source image for bulk import testing
+0 @S5@ SOUR
+1 TITL 1920 Census
+1 FILE Henderson-Charles-1920-census.jpg
+1 DATE 1920
+1 TEXT Test source image for bulk import testing
+0 @S6@ SOUR
+1 TITL 1920 Census
+1 FILE SCHMIDT dorothy 1920 census.jpg
+1 DATE 1920
+1 TEXT Test source image for bulk import testing
+0 @S7@ SOUR
+1 TITL 1920 Census
+1 FILE Martinez_George_1920_CENSUS_final.jpg
+1 DATE 1920
+1 TEXT Test source image for bulk import testing
+0 @S8@ SOUR
+1 TITL Unknown document
+1 FILE scan0001.jpg
+1 TEXT Test source image for bulk import testing
+0 @S9@ SOUR
+1 TITL Unknown document
+1 FILE scan0002.jpg
+1 TEXT Test source image for bulk import testing
+0 @S10@ SOUR
+1 TITL Unknown document
+1 FILE scan0047.jpg
+1 TEXT Test source image for bulk import testing
+0 @S11@ SOUR
+1 TITL Unknown document
+1 FILE IMG_20231215_143022.jpg
+1 TEXT Test source image for bulk import testing
+0 @S12@ SOUR
+1 TITL Unknown document
+1 FILE IMG_20231215_143156.jpg
+1 TEXT Test source image for bulk import testing
+0 @S13@ SOUR
+1 TITL Unknown document
+1 FILE Document1.jpg
+1 TEXT Test source image for bulk import testing
+0 @S14@ SOUR
+1 TITL Unknown document
+1 FILE Document2.jpg
+1 TEXT Test source image for bulk import testing
+0 @S15@ SOUR
+1 TITL Unknown document
+1 FILE Photo 2023-12-15 at 2.45 PM.jpg
+1 TEXT Test source image for bulk import testing
+0 @S16@ SOUR
+1 TITL Unknown document
+1 FILE Scan 12-15-2023.jpg
+1 TEXT Test source image for bulk import testing
+0 @S17@ SOUR
+1 TITL Birth Record
+1 FILE anderson_william_birth_1905.jpg
+1 TEXT Test source image for bulk import testing
+0 @S18@ SOUR
+1 TITL Birth Record
+1 FILE Birth Certificate - Margaret OBrien 1908.jpg
+1 TEXT Test source image for bulk import testing
+0 @S19@ SOUR
+1 TITL Birth Record
+1 FILE obrien-margaret-b1908-birth_record.jpeg
+1 TEXT Test source image for bulk import testing
+0 @S20@ SOUR
+1 TITL Birth Record
+1 FILE HENDERSON_CHARLES_BIRTH.JPG
+1 TEXT Test source image for bulk import testing
+0 @S21@ SOUR
+1 TITL Birth Record
+1 FILE schmidt dorothy birth record 1912.jpg
+1 TEXT Test source image for bulk import testing
+0 @S22@ SOUR
+1 TITL Birth Record
+1 FILE birth_cert_martinez_george.jpg
+1 TEXT Test source image for bulk import testing
+0 @S23@ SOUR
+1 TITL Marriage Record
+1 FILE anderson_and_obrien_marriage_1928.jpg
+1 TEXT Test source image for bulk import testing
+0 @S24@ SOUR
+1 TITL Marriage Record
+1 FILE Marriage - William Anderson & Margaret OBrien.jpg
+1 TEXT Test source image for bulk import testing
+0 @S25@ SOUR
+1 TITL Marriage Record
+1 FILE henderson-schmidt-wedding-1931.jpg
+1 TEXT Test source image for bulk import testing
+0 @S26@ SOUR
+1 TITL Marriage Record
+1 FILE MARTINEZ_GARCIA_MARRIAGE_LICENSE.JPG
+1 TEXT Test source image for bulk import testing
+0 @S27@ SOUR
+1 TITL Marriage Record
+1 FILE marriage_cert_wilson_henderson_1958.jpg
+1 TEXT Test source image for bulk import testing
+0 @S28@ SOUR
+1 TITL Death Record/Obituary
+1 FILE anderson_william_obit_1982.jpg
+1 TEXT Test source image for bulk import testing
+0 @S29@ SOUR
+1 TITL Death Record/Obituary
+1 FILE Obituary - William Anderson - Miami Herald 1982.jpg
+1 TEXT Test source image for bulk import testing
+0 @S30@ SOUR
+1 TITL Death Record/Obituary
+1 FILE obrien_margaret_death_certificate.jpg
+1 TEXT Test source image for bulk import testing
+0 @S31@ SOUR
+1 TITL Death Record/Obituary
+1 FILE henderson-charles-obit.jpeg
+1 TEXT Test source image for bulk import testing
+0 @S32@ SOUR
+1 TITL Death Record/Obituary
+1 FILE Death Certificate for Dorothy Schmidt 1998.jpg
+1 TEXT Test source image for bulk import testing
+0 @S33@ SOUR
+1 TITL Death Record/Obituary
+1 FILE martinez_george_obituary_1992_houston_chronicle.jpg
+1 TEXT Test source image for bulk import testing
+0 @S34@ SOUR
+1 TITL Military Record
+1 FILE anderson_william_wwii_draft_card.jpg
+1 TEXT Test source image for bulk import testing
+0 @S35@ SOUR
+1 TITL Military Record
+1 FILE WWI Draft Registration - Charles Henderson.jpg
+1 TEXT Test source image for bulk import testing
+0 @S36@ SOUR
+1 TITL Military Record
+1 FILE martinez-george-wwii-draft-1942.jpeg
+1 TEXT Test source image for bulk import testing
+0 @S37@ SOUR
+1 TITL Military Record
+1 FILE draft_registration_henderson_charles_1917.jpg
+1 TEXT Test source image for bulk import testing
+0 @S38@ SOUR
+1 TITL Military Record
+1 FILE WWII_DRAFT_ANDERSON_WILLIAM.JPG
+1 TEXT Test source image for bulk import testing
+0 @S39@ SOUR
+1 TITL Census (multi-part)
+1 FILE anderson_1930_census_p1.jpg
+1 TEXT Test source image for bulk import testing
+0 @S40@ SOUR
+1 TITL Census (multi-part)
+1 FILE anderson_1930_census_p2.jpg
+1 TEXT Test source image for bulk import testing
+0 @S41@ SOUR
+1 TITL Census (multi-part)
+1 FILE henderson_1920_census_a.jpg
+1 TEXT Test source image for bulk import testing
+0 @S42@ SOUR
+1 TITL Census (multi-part)
+1 FILE henderson_1920_census_b.jpg
+1 TEXT Test source image for bulk import testing
+0 @S43@ SOUR
+1 TITL Census (multi-part)
+1 FILE henderson_1920_census_c.jpg
+1 TEXT Test source image for bulk import testing
+0 @S44@ SOUR
+1 TITL Census (multi-part)
+1 FILE martinez-1940-census-01.jpg
+1 TEXT Test source image for bulk import testing
+0 @S45@ SOUR
+1 TITL Census (multi-part)
+1 FILE martinez-1940-census-02.jpg
+1 TEXT Test source image for bulk import testing
+0 @S46@ SOUR
+1 TITL Census (multi-part)
+1 FILE schmidt_1930_census_page1.jpg
+1 TEXT Test source image for bulk import testing
+0 @S47@ SOUR
+1 TITL Census (multi-part)
+1 FILE schmidt_1930_census_page2.jpg
+1 TEXT Test source image for bulk import testing
+0 @S48@ SOUR
+1 TITL Census (multi-part)
+1 FILE wilson_census_1920_partA.jpg
+1 TEXT Test source image for bulk import testing
+0 @S49@ SOUR
+1 TITL Census (multi-part)
+1 FILE wilson_census_1920-part-B.jpg
+1 TEXT Test source image for bulk import testing
+0 @S50@ SOUR
+1 TITL Census (multi-part)
+1 FILE Wilson Census 1920 Part C.jpg
+1 TEXT Test source image for bulk import testing
+0 @S51@ SOUR
+1 TITL Immigration Record
+1 FILE ss_queen_mary_passenger_list_1936.jpg
+1 TEXT Test source image for bulk import testing
+0 @S52@ SOUR
+1 TITL Immigration Record
+1 FILE Ellis Island - OBrien Margaret 1908.jpg
+1 TEXT Test source image for bulk import testing
+0 @S53@ SOUR
+1 TITL Immigration Record
+1 FILE passenger_manifest_1918_garcia_rosa.jpg
+1 TEXT Test source image for bulk import testing
+0 @S54@ SOUR
+1 TITL Immigration Record
+1 FILE immigration-nguyen-linda-1965.jpeg
+1 TEXT Test source image for bulk import testing
+0 @S55@ SOUR
+1 TITL Cemetery Record
+1 FILE Cemetery Record for Florida - Anderson Family Plot.jpg
+1 TEXT Test source image for bulk import testing
+0 @S56@ SOUR
+1 TITL Cemetery Record
+1 FILE gravestone_henderson_charles.jpg
+1 TEXT Test source image for bulk import testing
+0 @S57@ SOUR
+1 TITL Cemetery Record
+1 FILE Miami Memorial Park - Anderson William 1982.jpg
+1 TEXT Test source image for bulk import testing
+0 @S58@ SOUR
+1 TITL Cemetery Record
+1 FILE Burial Record - Schmidt Dorothy.jpg
+1 TEXT Test source image for bulk import testing
+0 @S59@ SOUR
+1 TITL Uncertain Record
+1 FILE martinez_george_1915_census_maybe.jpg
+1 TEXT Test source image for bulk import testing
+0 @S60@ SOUR
+1 TITL Uncertain Record
+1 FILE henderson_1910_census_unverified.jpg
+1 TEXT Test source image for bulk import testing
+0 @S61@ SOUR
+1 TITL Uncertain Record
+1 FILE anderson_birth_possibly_wrong_date.jpg
+1 TEXT Test source image for bulk import testing
+0 @S62@ SOUR
+1 TITL Uncertain Record
+1 FILE wilson_thomas_census_questionable.jpg
+1 TEXT Test source image for bulk import testing
+0 @S63@ SOUR
+1 TITL Edited Record
+1 FILE anderson_1930_census_FINAL.jpg
+1 TEXT Test source image for bulk import testing
+0 @S64@ SOUR
+1 TITL Edited Record
+1 FILE henderson_birth_v2.jpg
+1 TEXT Test source image for bulk import testing
+0 @S65@ SOUR
+1 TITL Edited Record
+1 FILE martinez_obit_edited.jpg
+1 TEXT Test source image for bulk import testing
+0 @S66@ SOUR
+1 TITL Edited Record
+1 FILE schmidt_census_cropped.jpg
+1 TEXT Test source image for bulk import testing
+0 @S67@ SOUR
+1 TITL Edited Record
+1 FILE wilson_marriage (1).jpg
+1 TEXT Test source image for bulk import testing
+0 @S68@ SOUR
+1 TITL Edited Record
+1 FILE wilson_marriage (2).jpg
+1 TEXT Test source image for bulk import testing
+0 @S69@ SOUR
+1 TITL Edited Record
+1 FILE garcia_census_enhanced_contrast.jpg
+1 TEXT Test source image for bulk import testing
+0 TRLR
