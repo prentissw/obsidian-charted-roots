@@ -1081,8 +1081,9 @@ export class FamilyGraphService {
 
 		const childrenIdField = this.resolveProperty<string | string[]>(fm, 'children_id');
 		if (childrenIdField) {
-			// Use _id field (dual storage)
-			childrenCrIds = Array.isArray(childrenIdField) ? childrenIdField : [childrenIdField];
+			// Use _id field (dual storage), deduplicating to avoid issues with family-chart
+			const rawChildren = Array.isArray(childrenIdField) ? childrenIdField : [childrenIdField];
+			childrenCrIds = [...new Set(rawChildren)];
 		} else {
 			// Fallback to legacy fields (with alias support)
 			// Check for 'child' field
@@ -1131,9 +1132,9 @@ export class FamilyGraphService {
 			file,
 			fatherCrId: fatherCrId || undefined,
 			motherCrId: motherCrId || undefined,
-			spouseCrIds,
+			spouseCrIds: [...new Set(spouseCrIds)], // Deduplicate to avoid family-chart issues
 			spouses, // Enhanced spouse relationships with metadata (if present)
-			childrenCrIds, // Now populated from frontmatter
+			childrenCrIds, // Now populated from frontmatter (deduplicated above)
 			collectionName,
 			collection
 		};

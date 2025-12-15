@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Gramps import UI toggles** - Import options now use Obsidian-style toggles for "Create source notes", "Create place notes", and "Create event notes" with descriptions and destination folders.
 
+- **Load testing tools** - Added parameterized GEDCOM generator (`gedcom-testing/generate-loadtest.js`) for creating test files of any size, performance testing documentation, and xxxlarge sample file (7,424 people) for stress testing.
+
 ### Changed
 
 - **Unified Age formula in People base template** - Replaced separate `full_lifespan` and `age_now` formulas with a single intelligent `age` formula. Shows current age for living people, lifespan for deceased, and "Unknown" for people exceeding the configurable age threshold (set in Preferences → Privacy & Export). Living/Deceased view filters also use this threshold to categorize people without death dates.
@@ -28,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Gramps XML import for compressed .gramps files** - Added support for importing gzip-compressed `.gramps` files exported from Gramps 6.x. The importer now automatically detects and decompresses gzip-compressed files. Previously, importing `.gramps` files would fail with "file does not appear to be a valid Gramps XML file" because the compressed binary data was not recognized as XML.
 
 - **Family Chart "child has more than 1 parent" error** - Fixed crash when opening Family Chart after importing data with parent-child relationship inconsistencies. The chart now validates bidirectional relationships, only including children who explicitly reference the parent back. This handles cases where a parent's `child` field lists someone who doesn't list them as father/mother.
+
+- **Family Chart showing wrong person** - Fixed "Open family chart" command showing a previously loaded person instead of the current note. The command now uses the active note's cr_id when available and properly respects property aliases.
+
+- **Family Chart refresh delay** - Removed unnecessary 2-second delay when chart updates from live note changes.
+
+- **Duplicate relationship entries** - Added deduplication for `children_id` and `spouse_id` arrays to handle frontmatter with duplicate entries.
 
 - **Duplicate child/children property after Gramps import** - Fixed inconsistent property naming where Gramps import created `child` property but bidirectional linking and data quality tools used `children`. All components now consistently use the canonical `child` property name for wikilinks (with `children_id` for cr_ids). Also fixed Gramps importer using `child_id` instead of `children_id`.
 

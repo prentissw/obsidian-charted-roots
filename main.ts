@@ -62,6 +62,32 @@ export default class CanvasRootsPlugin extends Plugin {
 	}
 
 	/**
+	 * Resolve a frontmatter property value, checking aliases if canonical property not found.
+	 * Canonical property takes precedence over aliased property.
+	 * @param frontmatter The frontmatter object from a note
+	 * @param canonicalProperty The canonical property name (e.g., 'cr_id', 'born', 'died')
+	 * @returns The property value, or undefined if not found
+	 */
+	resolveFrontmatterProperty<T>(frontmatter: Record<string, unknown> | undefined, canonicalProperty: string): T | undefined {
+		if (!frontmatter) return undefined;
+
+		// Canonical property takes precedence
+		if (frontmatter[canonicalProperty] !== undefined) {
+			return frontmatter[canonicalProperty] as T;
+		}
+
+		// Check aliases - find user property that maps to this canonical property
+		const aliases = this.settings.propertyAliases ?? {};
+		for (const [userProp, canonicalProp] of Object.entries(aliases)) {
+			if (canonicalProp === canonicalProperty && frontmatter[userProp] !== undefined) {
+				return frontmatter[userProp] as T;
+			}
+		}
+
+		return undefined;
+	}
+
+	/**
 	 * Get the event service for managing event notes
 	 */
 	getEventService(): EventService | null {
@@ -324,11 +350,19 @@ export default class CanvasRootsPlugin extends Plugin {
 		});
 
 		// Add command: Open Family Chart
+		// If a person note is active, use it as the root; otherwise show picker/empty state
 		this.addCommand({
 			id: 'open-family-chart',
 			name: 'Open family chart',
 			callback: () => {
-				void this.activateFamilyChartView();
+				// Try to get cr_id from active note if it's a person note
+				const activeFile = this.app.workspace.getActiveFile();
+				let crId: string | undefined;
+				if (activeFile && activeFile.extension === 'md') {
+					const cache = this.app.metadataCache.getFileCache(activeFile);
+					crId = this.resolveFrontmatterProperty<string>(cache?.frontmatter, 'cr_id');
+				}
+				void this.activateFamilyChartView(crId);
 			}
 		});
 
@@ -369,11 +403,11 @@ export default class CanvasRootsPlugin extends Plugin {
 					return false;
 				}
 				const cache = this.app.metadataCache.getFileCache(activeFile);
-				if (!cache?.frontmatter?.cr_id) {
+				const crId = this.resolveFrontmatterProperty<string>(cache?.frontmatter, 'cr_id');
+				if (!crId) {
 					return false;
 				}
 				if (!checking) {
-					const crId = cache.frontmatter.cr_id as string;
 					void this.activateFamilyChartView(crId);
 				}
 				return true;
