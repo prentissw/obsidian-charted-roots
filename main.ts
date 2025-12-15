@@ -5429,7 +5429,10 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 
 			// Create the file with template content (using aliased property names)
-			const templateContent = generatePeopleBaseTemplate(this.settings.propertyAliases);
+			const templateContent = generatePeopleBaseTemplate({
+				aliases: this.settings.propertyAliases,
+				maxLivingAge: this.settings.livingPersonAgeThreshold
+			});
 			const file = await this.app.vault.create(defaultPath, templateContent);
 
 			new Notice('Base template created with 22 pre-configured views!');

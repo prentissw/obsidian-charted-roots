@@ -9,6 +9,16 @@
 export type PropertyAliases = Record<string, string>;
 
 /**
+ * Options for generating the People base template
+ */
+export interface PeopleBaseTemplateOptions {
+	/** Property aliases from plugin settings */
+	aliases?: PropertyAliases;
+	/** Maximum age to consider someone without a death date as still living (default: 125) */
+	maxLivingAge?: number;
+}
+
+/**
  * Get the display property name for a canonical property
  * If an alias exists, returns the user's aliased name; otherwise returns the canonical name
  */
@@ -24,10 +34,30 @@ function getPropertyName(canonical: string, aliases: PropertyAliases): string {
 
 /**
  * Generate the People base template with property aliases applied
- * @param aliases Property aliases from plugin settings
+ * @param aliasesOrOptions Property aliases object OR options object with aliases and maxLivingAge
  * @returns The base template string with aliased property names
  */
-export function generatePeopleBaseTemplate(aliases: PropertyAliases = {}): string {
+export function generatePeopleBaseTemplate(aliasesOrOptions: PropertyAliases | PeopleBaseTemplateOptions = {}): string {
+	// Handle both old signature (just aliases) and new signature (options object)
+	let aliases: PropertyAliases;
+	let maxLivingAge: number;
+
+	// Check if it's the new options object format (has 'aliases' or 'maxLivingAge' keys)
+	const isOptionsObject = aliasesOrOptions &&
+		typeof aliasesOrOptions === 'object' &&
+		('aliases' in aliasesOrOptions || 'maxLivingAge' in aliasesOrOptions);
+
+	if (isOptionsObject) {
+		// New options object format
+		const options = aliasesOrOptions as PeopleBaseTemplateOptions;
+		aliases = options.aliases ?? {};
+		maxLivingAge = options.maxLivingAge ?? 125;
+	} else {
+		// Old format (just aliases) for backward compatibility
+		aliases = aliasesOrOptions as PropertyAliases;
+		maxLivingAge = 125;
+	}
+
 	// Get aliased property names
 	const name = getPropertyName('name', aliases);
 	const cr_id = getPropertyName('cr_id', aliases);
@@ -68,8 +98,7 @@ filters:
     - note.${cr_type} != "map"
 formulas:
   display_name: ${name} || file.name
-  full_lifespan: if(${born} && ${died}, (${died} - ${born}).years.floor() + " years", "")
-  age_now: if(${born} && !${died}, (now() - ${born}).years.floor(), "")
+  age: if(${born}.isEmpty(), "Unknown", if(${died}.isEmpty() && (now() - ${born}).years.floor() < ${maxLivingAge}, (now() - ${born}).years.floor() + " years", if(${born} && !${died}.isEmpty(), (${died} - ${born}).years.floor() + " years", "Unknown")))
   birth_display: if(${born}, ${born}.format("YYYY-MM-DD"), "")
   death_display: if(${died}, ${died}.format("YYYY-MM-DD"), "")
 properties:
@@ -89,9 +118,7 @@ properties:
     displayName: Born
   formula.death_display:
     displayName: Died
-  formula.full_lifespan:
-    displayName: Lifespan
-  formula.age_now:
+  formula.age:
     displayName: Age
   note.${sex}:
     displayName: Sex
@@ -129,29 +156,30 @@ views:
     summaries:
       ${born}: Earliest
       ${died}: Latest
-      formula.full_lifespan: Average
+      formula.age: Average
   - type: table
     name: Living members
     filters:
       and:
         - note.${cr_id}
         - ${died}.isEmpty()
+        - (now() - ${born}).years.floor() < ${maxLivingAge}
     order:
       - ${born}
       - ${name}
     summaries:
-      formula.age_now: Average
+      formula.age: Average
   - type: table
     name: Deceased members
     filters:
       and:
         - note.${cr_id}
-        - "!${died}.isEmpty()"
+        - "!${died}.isEmpty() || (now() - ${born}).years.floor() >= ${maxLivingAge}"
     order:
       - ${died}
       - ${name}
     summaries:
-      formula.full_lifespan: Average
+      formula.age: Average
       ${died}: Latest
   - type: table
     name: Recently added
@@ -357,8 +385,7 @@ filters:
     - note.cr_type != "map"
 formulas:
   display_name: name || file.name
-  full_lifespan: if(born && died, (died - born).years.floor() + " years", "")
-  age_now: if(born && !died, (now() - born).years.floor(), "")
+  age: if(born.isEmpty(), "Unknown", if(died.isEmpty() && (now() - born).years.floor() < 125, (now() - born).years.floor() + " years", if(born && !died.isEmpty(), (died - born).years.floor() + " years", "Unknown")))
   birth_display: if(born, born.format("YYYY-MM-DD"), "")
   death_display: if(died, died.format("YYYY-MM-DD"), "")
 properties:
@@ -378,9 +405,7 @@ properties:
     displayName: Born
   formula.death_display:
     displayName: Died
-  formula.full_lifespan:
-    displayName: Lifespan
-  formula.age_now:
+  formula.age:
     displayName: Age
   note.sex:
     displayName: Sex
@@ -418,29 +443,30 @@ views:
     summaries:
       born: Earliest
       died: Latest
-      formula.full_lifespan: Average
+      formula.age: Average
   - type: table
     name: Living members
     filters:
       and:
         - note.cr_id
         - died.isEmpty()
+        - (now() - born).years.floor() < 125
     order:
       - born
       - name
     summaries:
-      formula.age_now: Average
+      formula.age: Average
   - type: table
     name: Deceased members
     filters:
       and:
         - note.cr_id
-        - "!died.isEmpty()"
+        - "!died.isEmpty() || (now() - born).years.floor() >= 125"
     order:
       - died
       - name
     summaries:
-      formula.full_lifespan: Average
+      formula.age: Average
       died: Latest
   - type: table
     name: Recently added
