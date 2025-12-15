@@ -14,7 +14,6 @@ This document outlines planned features for Canvas Roots. For completed features
   - [Reports & Print Export](#reports--print-export) 📋 Medium
   - [Statistics Dashboard](#statistics-dashboard) 📋 Medium
   - [Dynamic Note Content](#dynamic-note-content) 📋 Medium
-  - [Gramps Source Import](#gramps-source-import) 📋 Medium
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
   - [Step & Adoptive Parent Support](#step--adoptive-parent-support) 💡 Low
 - [Future Considerations](#future-considerations)
@@ -29,6 +28,7 @@ For detailed implementation documentation of completed features, see [Release Hi
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.12.6 | [Gramps Source Import](Release-History#gramps-source-import-v0126) | Import sources, citations, and repositories from Gramps XML |
 | v0.12.5 | [Bulk Source-Image Linking](Release-History#bulk-source-image-linking-v0125) | Import images as sources, link media to existing sources |
 | v0.11.0 | [Export v2](Release-History#export-v2-v0110) | Full entity export with round-trip fidelity |
 | v0.10.20 | [Sex/Gender Identity Fields](Release-History#sexgender-identity-fields-v01020) | Separate gender_identity field with export support |
@@ -582,72 +582,6 @@ include: parents, spouse, children, siblings
 1. **cr-timeline** — Most requested, high value for viewing person history
 2. **cr-relationships** — Core genealogy use case
 3. **Freeze to markdown** — Essential for export and editing workflows
-
----
-
-### Gramps Source Import
-
-**Priority:** 📋 Medium — Complete Gramps migration support
-
-**Status:** Planned | Phase 1 scoped
-
-**Summary:** Import source and citation records from Gramps XML files, creating Canvas Roots source notes with full metadata and linking citations to person/event notes.
-
-**Problem Statement:**
-
-Gramps XML import currently supports people, places, and events, but source/citation records are not imported. Users migrating from Gramps must manually recreate their source documentation or re-import via GEDCOM (which may lose Gramps-specific metadata).
-
-**Gramps Data Structure:**
-
-Sources in Gramps XML contain:
-- **Title** (`<stitle>`) — Source name/description
-- **Author** (`<sauthor>`) — Creator of the source material
-- **Publication info** (`<spubinfo>`) — Publisher, date, location
-- **Notes** (`<noteref>`) — Research notes attached to sources
-
-Citations link sources to facts:
-- **Confidence** (0-4 scale) — Certainty level
-- **Source reference** (`<sourceref>`) — Link to parent source
-- Events reference citations via `<citationref>`
-
-**Phased Implementation:**
-
-**Phase 1 — Core Import:**
-
-| Feature | Description |
-|---------|-------------|
-| **Source note creation** | One note per Gramps source record |
-| **Field mapping** | `stitle` → `title`, `sauthor` → `author`, `spubinfo` → `repository` |
-| **Note import** | Attach Gramps notes to source note body |
-| **Citation linking** | Add `sources` field to person/event notes with wikilinks |
-| **Confidence mapping** | Gramps 0-4 → Canvas Roots high/medium/low |
-
-**Confidence Scale Mapping:**
-
-| Gramps | Meaning | Canvas Roots |
-|--------|---------|--------------|
-| 0 | Very Low | low |
-| 1 | Low | low |
-| 2 | Normal | medium |
-| 3 | High | high |
-| 4 | Very High | high |
-
-**Phase 2 — Extended Features (Future):**
-
-| Feature | Description |
-|---------|-------------|
-| **Repository support** | Separate repository notes or enhanced source metadata |
-| **Media references** | Import media attached to sources |
-| **Gramps ID preservation** | Store original IDs for re-import scenarios |
-
-**Relation to GEDCOM:**
-
-GEDCOM import already supports source records. Gramps source import provides:
-- Native Gramps field preservation (publication info structure)
-- Gramps-specific citation confidence mapping
-- Direct migration path without GEDCOM conversion step
-
-See [Gramps Source Import Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/gramps-source-import.md) for implementation details.
 
 ---
 

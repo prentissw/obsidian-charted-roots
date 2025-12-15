@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.12.x](#v012x)
+  - [Gramps Source Import](#gramps-source-import-v0126)
   - [Bulk Source-Image Linking](#bulk-source-image-linking-v0125)
   - [Calendarium Integration Phase 1](#calendarium-integration-phase-1-v0120)
 - [v0.11.x](#v011x)
@@ -42,6 +43,92 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.12.x
+
+### Gramps Source Import (v0.12.6)
+
+Import source and citation records from Gramps XML files, creating Canvas Roots source notes with full metadata and linking citations to person/event notes.
+
+**Problem Solved:**
+- Gramps XML import supported people, places, and events, but source/citation records were not imported
+- Users migrating from Gramps had to manually recreate source documentation
+- Repository metadata and media references were lost during migration
+
+**Features:**
+
+| Feature | Description |
+|---------|-------------|
+| **Source note creation** | One note per Gramps source record with full metadata |
+| **Repository support** | Parse `<repositories>` and `<reporef>` elements for archive/library data |
+| **Media references** | Store Gramps media handles in `gramps_media_refs` for manual linking |
+| **Source property aliases** | Full property alias support for all 15 source properties |
+| **Gramps ID preservation** | Store `gramps_handle` and `gramps_id` for re-import scenarios |
+| **Progress indicator** | Real-time progress modal during import |
+| **UI toggles** | Obsidian-style toggles for import options |
+
+**Field Mapping:**
+
+| Gramps Field | Canvas Roots Property |
+|--------------|----------------------|
+| `<stitle>` | `title` |
+| `<sauthor>` | `author` |
+| `<spubinfo>` | `repository` (fallback) |
+| Repository `<rname>` | `repository` |
+| Repository `<type>` | `repository_type` |
+| `<reporef medium>` | `source_medium` |
+| `<noteref>` text | Note body content |
+| `<objref>` handles | `gramps_media_refs` |
+
+**Confidence Scale Mapping:**
+
+| Gramps (0-4) | Meaning | Canvas Roots |
+|--------------|---------|--------------|
+| 0 | Very Low | low |
+| 1 | Low | low |
+| 2 | Normal | medium |
+| 3 | High | high |
+| 4 | Very High | high |
+
+**Source Property Aliases:**
+
+All 15 source properties support aliasing via Preferences → Property aliases:
+
+| Property | Description |
+|----------|-------------|
+| `cr_id` | Unique identifier |
+| `cr_type` | Note type (source) |
+| `title` | Source title |
+| `author` | Author/creator |
+| `source_type` | Type (census, vital_record, etc.) |
+| `repository` | Archive or website |
+| `repository_type` | Library, Archive, etc. |
+| `source_medium` | Book, Electronic, etc. |
+| `confidence` | High/medium/low |
+| `url` | Online source URL |
+| `access_date` | Date accessed |
+| `citation_detail` | Page, volume, etc. |
+| `gramps_handle` | Original Gramps handle |
+| `gramps_id` | Original Gramps ID |
+| `gramps_media_refs` | Media handles for manual linking |
+
+**Import Options UI:**
+
+The Gramps import modal includes Obsidian-style toggles for:
+- Create source notes (enabled by default)
+- Create place notes
+- Create event notes
+
+Each toggle shows the count of records found in the file.
+
+**Technical Details:**
+- Parses `<sources>`, `<citations>`, `<notes>`, and `<repositories>` sections
+- Resolves note references to include text in source note body
+- Resolves repository references to get name, type, and medium
+- Builds citation-to-source mapping for linking to person/event notes
+- Source type inferred from title keywords (census, vital_record, church_record, etc.)
+
+See [Gramps Source Import Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/gramps-source-import.md) for full implementation details.
+
+---
 
 ### Bulk Source-Image Linking (v0.12.5)
 
