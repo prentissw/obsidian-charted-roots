@@ -2,6 +2,43 @@
 
 Canvas Roots provides tools for managing genealogical sources and evidence, helping you document your research with proper citations and track which ancestors are well-documented.
 
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Source Notes](#source-notes)
+  - [Creating a Source Note](#creating-a-source-note)
+  - [Source Note Properties](#source-note-properties)
+  - [Source Types](#source-types)
+- [Linking Sources to People](#linking-sources-to-people)
+- [Source Indicators on Trees](#source-indicators-on-trees)
+  - [Enabling Source Indicators](#enabling-source-indicators)
+  - [How Indicators Appear](#how-indicators-appear)
+  - [How It Works](#how-it-works)
+- [Sources Bases Template](#sources-bases-template)
+  - [Creating a Sources Base](#creating-a-sources-base)
+  - [Included Views](#included-views)
+- [Best Practices](#best-practices)
+  - [Organizing Source Notes](#organizing-source-notes)
+  - [Naming Conventions](#naming-conventions)
+  - [Media Organization](#media-organization)
+- [Bulk Source Image Import](#bulk-source-image-import)
+  - [Opening the Wizard](#opening-the-wizard)
+  - [Wizard Steps](#wizard-steps)
+  - [Filename Parsing](#filename-parsing)
+  - [Tips for Best Results](#tips-for-best-results)
+- [Link Media to Existing Sources](#link-media-to-existing-sources)
+  - [Opening the Wizard](#opening-the-wizard-1)
+  - [Wizard Steps](#wizard-steps-1)
+  - [Tips for Best Results](#tips-for-best-results-1)
+  - [Confidence Levels](#confidence-levels)
+- [Transcription Tips](#transcription-tips)
+  - [Workflow](#workflow)
+- [Related Pages](#related-pages)
+
+---
+
 ## Overview
 
 The Evidence & Source Management features enable you to:
