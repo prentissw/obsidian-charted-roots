@@ -1,16 +1,201 @@
-# Reports & Print Export
+# Statistics & Reports
 
 ## Overview
 
-Generate structured reports and print-ready outputs for genealogists, writers, worldbuilders, and historians. Reports are saved as Markdown notes with wikilinks for seamless integration with Obsidian's linking and search.
+A unified statistics and reporting system with a shared data layer. The Statistics Dashboard provides at-a-glance metrics and monitoring, while Reports generate formatted output from the same underlying data. This architecture ensures consistency and avoids duplicate computation.
 
-See [Roadmap: Reports & Print Export](../../wiki-content/Roadmap.md#reports--print-export) for the user-facing summary.
+See [Roadmap: Statistics & Reports](../../wiki-content/Roadmap.md#statistics--reports) for the user-facing summary.
 
 ---
 
-## Report Types by Persona
+## Architecture
 
-### Genealogy Reports
+```
+┌─────────────────────────────────────────────────────┐
+│              StatisticsService                       │
+│  (computes all metrics, caches results)             │
+├─────────────────────────────────────────────────────┤
+│  - entityCounts()      - qualityMetrics()           │
+│  - completenessScores() - demographicAnalysis()     │
+│  - topLists(category)   - sourceCoverage()          │
+└─────────────────────────────────────────────────────┘
+           │                          │
+           ▼                          ▼
+┌─────────────────────┐    ┌─────────────────────────┐
+│  Statistics Tab     │    │  Reports Tab            │
+│  (Control Center)   │    │  (Control Center)       │
+│  + Workspace View   │    │  (formatted output)     │
+└─────────────────────┘    └─────────────────────────┘
+```
+
+**Key Benefits:**
+- Single source of truth for all metrics
+- Dashboard provides immediate value and acts as "preview"
+- Reports become formatted views of existing data
+- Drill-down from dashboard metrics to detailed reports
+
+---
+
+## UI Architecture: Hybrid Approach
+
+The system uses a **hybrid UI** that combines quick access in Control Center with deep exploration in a dedicated workspace view:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Control Center → Statistics Tab (Summary Card)                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ 📊 Statistics Overview                                       ││
+│  │                                                              ││
+│  │  People: 1,247    Events: 3,891    Sources: 456              ││
+│  │  Places: 892      Organizations: 23                          ││
+│  │                                                              ││
+│  │  Research Completeness: ████████░░ 78%                       ││
+│  │  Source Coverage:       ██████░░░░ 62%                       ││
+│  │                                                              ││
+│  │  ⚠️ 45 missing vitals  •  23 unsourced facts                 ││
+│  │                                                              ││
+│  │  [ Open Statistics Dashboard ]                               ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ Opens
+┌─────────────────────────────────────────────────────────────────┐
+│  Workspace View → Statistics Dashboard (Full Detail)             │
+│  - Expandable sections with drill-down                          │
+│  - Interactive charts and visualizations                        │
+│  - Direct links to reports and entity lists                     │
+│  - Can be pinned alongside notes (split view)                   │
+│  - Auto-refreshes as vault changes                              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Why This Approach:**
+
+| Aspect | Control Center Tab | Workspace View |
+|--------|-------------------|----------------|
+| **Purpose** | Quick health check | Deep exploration |
+| **Persistence** | Modal (closes when done) | Pinnable (stays open) |
+| **Refresh** | Manual | Auto-refresh on vault changes |
+| **Detail level** | Summary metrics only | Full drill-down capability |
+| **Workflow** | "Check stats, take action" | "Monitor while working" |
+
+**Aligns with Obsidian Patterns:**
+- Similar to Graph View: Status bar shows node count → Graph View shows full visualization
+- Similar to Backlinks: Panel shows count → Dedicated view shows all links
+- Control Center remains action-oriented; workspace view enables monitoring
+
+---
+
+## Statistics Dashboard
+
+### Statistics Service
+
+Core service that computes all metrics with caching and debounced refresh:
+
+```typescript
+interface StatisticsService {
+  // Entity counts
+  getEntityCounts(): EntityCounts;
+  getEntityCountsByType(entityType: string): Map<string, number>;
+
+  // Completeness
+  getCompletenessScores(): CompletenessScores;
+  getMissingVitals(): PersonNote[];
+
+  // Quality metrics
+  getUnsourcedFacts(): EventNote[];
+  getOrphanEntities(): EntityNote[];
+  getDuplicateCandidates(): DuplicatePair[];
+
+  // Top lists
+  getTopSurnames(limit?: number): SurnameCount[];
+  getTopLocations(limit?: number): LocationCount[];
+  getTopOccupations(limit?: number): OccupationCount[];
+  getTopSources(limit?: number): SourceCount[];
+
+  // Demographics (Phase 3)
+  getGenderDistribution(): GenderDistribution;
+  getAgeStatistics(): AgeStatistics;
+  getMigrationPatterns(): MigrationPattern[];
+
+  // Cache management
+  invalidateCache(): void;
+  getCacheAge(): number;
+}
+```
+
+### Control Center Summary Card
+
+Quick-glance metrics in the Statistics tab:
+
+- Entity counts (people, events, sources, places, organizations)
+- Research completeness % with progress bar
+- Quick warning indicators (missing vitals, unsourced facts)
+- "Open Statistics Dashboard" button → opens workspace view
+
+### Workspace View Dashboard
+
+Full statistics dashboard with drill-down capabilities:
+
+**Entity Overview:**
+
+| Statistic | Description |
+|-----------|-------------|
+| **Entity counts** | People, events, sources, places, organizations by type |
+| **Completeness scores** | % of people with birth date, death date, at least one source |
+| **Date range** | Earliest to latest dates across all entities |
+| **Gender/sex breakdown** | Distribution with chart visualization |
+
+**Top Lists:**
+
+| Statistic | Description |
+|-----------|-------------|
+| **Top surnames** | Most common surnames with counts |
+| **Top locations** | Most referenced places (birth, death, residence) |
+| **Top occupations** | Most common occupations |
+| **Top sources** | Most-cited sources |
+
+**Quality Metrics:**
+
+| Statistic | Description |
+|-----------|-------------|
+| **Unsourced facts** | Count of events without source citations |
+| **Orphan entities** | Events/sources not linked to any person |
+| **Missing vitals** | People missing birth or death dates |
+| **Duplicate candidates** | Potential duplicates by name similarity |
+
+**UI Features:**
+- Summary cards at top (entity counts, completeness %)
+- Expandable sections by category
+- Charts for distributions (bar charts, pie charts)
+- **Drill-down links**: Click any metric → opens filtered report or entity list
+- Auto-refreshes when vault changes (debounced)
+- Can be pinned alongside notes in split view
+
+### Dashboard → Report Integration
+
+The dashboard and reports share filtering and link directly:
+
+| Dashboard Metric | Linked Report |
+|------------------|---------------|
+| Missing vitals count | Gaps Report (filtered list) |
+| Completeness % | Individual Summary (for specific person) |
+| Top surnames | Surname Report (all people with that name) |
+| Unsourced facts | Evidence Matrix (show gaps) |
+| Top locations | Place Report (events at location) |
+
+**Example Flow:**
+1. Dashboard shows "Missing Vitals: 45 people"
+2. Click → Opens Gaps Report pre-filtered to those 45 people
+3. Click person → Opens Individual Summary for that person
+
+---
+
+## Reports
+
+### Report Types by Persona
+
+#### Genealogy Reports
 
 | Report | Description | Data Required | Priority |
 |--------|-------------|---------------|----------|
@@ -24,8 +209,9 @@ See [Roadmap: Reports & Print Export](../../wiki-content/Roadmap.md#reports--pri
 | **Fan Chart** | Circular ancestor display | Person notes, relationships | Future |
 | **Surname Report** | All people sharing a surname | Person notes | Future |
 | **Place Report** | All events/people at a location | Events, places | Future |
+| **Gaps Report** | Missing vital records by generation | Person notes | v1 |
 
-### Creative Writing Reports
+#### Creative Writing Reports
 
 | Report | Description | Data Required | Priority |
 |--------|-------------|---------------|----------|
@@ -35,7 +221,7 @@ See [Roadmap: Reports & Print Export](../../wiki-content/Roadmap.md#reports--pri
 | **Subplot Timeline** | Events filtered by group tag with arc status and intersections | Events with groups | v2 |
 | **Appearances by Book** | Character presence across volumes in a series | Events with book field | v2 |
 
-### Worldbuilding Reports
+#### Worldbuilding Reports
 
 | Report | Description | Data Required | Priority |
 |--------|-------------|---------------|----------|
@@ -46,7 +232,7 @@ See [Roadmap: Reports & Print Export](../../wiki-content/Roadmap.md#reports--pri
 | **Age Audit** | Characters' ages at key story dates (catch anachronisms) | Person birth dates, events | v2 |
 | **Lifespan Overlap** | Which characters could have met? Matrix of overlapping lifetimes | Person birth/death dates | v2 |
 
-### Historian Reports
+#### Historian Reports
 
 | Report | Description | Data Required | Priority |
 |--------|-------------|---------------|----------|
@@ -55,19 +241,18 @@ See [Roadmap: Reports & Print Export](../../wiki-content/Roadmap.md#reports--pri
 | **Cohort Analysis** | People sharing characteristics (occupation, location, time period) | Person notes | Future |
 | **Prosopography** | Collective biography of a defined group | Person notes, collections | Future |
 
-### Research Reports
+#### Research Reports
 
 | Report | Description | Data Required | Priority |
 |--------|-------------|---------------|----------|
 | **Research Log** | Sources consulted, findings, next steps | Sources, proof summaries | Future |
 | **Conflicting Evidence** | Facts with contradictory sources | Events, sources | Future |
-| **Gaps Report** | Missing vital records by generation | Person notes | Future |
 
 ---
 
-## Data Model Considerations
+### Data Model Considerations
 
-### Existing Fields (No Changes Needed)
+#### Existing Fields (No Changes Needed)
 
 These reports work with the current data model:
 
@@ -78,7 +263,7 @@ These reports work with the current data model:
 - Character Arc (uses events filtered by person)
 - Subplot Timeline (uses `groups` field on events)
 
-### Optional Schema Extensions
+#### Optional Schema Extensions
 
 These fields would enhance certain reports but are not required:
 
@@ -93,9 +278,9 @@ Users who don't need these reports don't need these fields. Reports gracefully d
 
 ---
 
-## Report Output Examples
+### Report Output Examples
 
-### Family Group Sheet
+#### Family Group Sheet
 
 ```markdown
 # Smith-Jones Family
@@ -130,7 +315,7 @@ Users who don't need these reports don't need these fields. Reports gracefully d
 *Generated by Canvas Roots on 2025-12-09*
 ```
 
-### Character Arc Report
+#### Character Arc Report
 
 ```markdown
 # Character Arc: Frodo Baggins
@@ -179,7 +364,7 @@ Users who don't need these reports don't need these fields. Reports gracefully d
 *Generated by Canvas Roots on 2025-12-09*
 ```
 
-### Subplot Timeline Report
+#### Subplot Timeline Report
 
 ```markdown
 # Subplot: Ring Quest
@@ -211,100 +396,25 @@ Users who don't need these reports don't need these fields. Reports gracefully d
 *Generated by Canvas Roots on 2025-12-09*
 ```
 
-### Appearances by Book Report
-
-```markdown
-# Character Appearances by Book
-
-## The Fellowship of the Ring
-
-| Character | Events | First Appearance | Last Appearance |
-|-----------|--------|------------------|-----------------|
-| [[Frodo Baggins]] | 34 | Ch 1 - A Long-expected Party | Ch 10 - Breaking |
-| [[Gandalf]] | 28 | Ch 1 - A Long-expected Party | Ch 5 - Bridge |
-| [[Aragorn]] | 18 | Ch 10 - Strider | Ch 10 - Breaking |
-| [[Boromir]] | 12 | Ch 2 - Council of Elrond | Ch 10 - Breaking |
-
-## The Two Towers
-
-| Character | Events | First Appearance | Last Appearance |
-|-----------|--------|------------------|-----------------|
-| [[Frodo Baggins]] | 22 | Ch 1 - Taming of Sméagol | Ch 10 - Choices |
-| [[Gandalf]] | 15 | Ch 5 - The White Rider | Ch 8 - Road to Isengard |
-| [[Aragorn]] | 20 | Ch 1 - Departure of Boromir | Ch 7 - Helm's Deep |
-
-## Character Continuity
-
-| Character | Book 1 | Book 2 | Book 3 | Total |
-|-----------|--------|--------|--------|-------|
-| [[Frodo Baggins]] | ✓ (34) | ✓ (22) | ✓ (18) | 74 |
-| [[Gandalf]] | ✓ (28) | ✓ (15) | ✓ (25) | 68 |
-| [[Boromir]] | ✓ (12) | ✓ (1) | — | 13 |
-| [[Éowyn]] | — | ✓ (8) | ✓ (12) | 20 |
-
-## New Characters by Book
-- **Book 1:** Frodo, Gandalf, Sam, Merry, Pippin, Aragorn, Legolas, Gimli, Boromir
-- **Book 2:** Éomer, Éowyn, Théoden, Faramir, Gollum, Treebeard
-- **Book 3:** Denethor, Prince Imrahil
-
----
-*Generated by Canvas Roots on 2025-12-09*
-```
-
-### POV Coverage Report
-
-```markdown
-# POV Coverage Report
-
-## Events by POV Character
-
-| POV Character | Events | % of Total |
-|---------------|--------|------------|
-| [[Frodo Baggins]] | 45 | 38% |
-| [[Aragorn]] | 32 | 27% |
-| [[Merry]] | 18 | 15% |
-| [[Pippin]] | 15 | 13% |
-| [[Sam]] | 8 | 7% |
-
-## Unwitnessed Events
-
-These events happen "offstage" (no POV character present):
-
-| Date | Event | Characters Present |
-|------|-------|-------------------|
-| TA 3019 | [[Ents attack Isengard]] | Treebeard, Ents |
-| TA 3019 | [[Denethor's madness]] | Denethor (alone) |
-
-## Events with Multiple POVs
-
-| Event | POV Characters |
-|-------|----------------|
-| [[Council of Elrond]] | Frodo, Aragorn |
-| [[Battle of Helm's Deep]] | Aragorn, Merry |
-
----
-*Generated by Canvas Roots on 2025-12-09*
-```
-
 ---
 
-## Output Formats
+### Output Formats
 
-### Markdown (Primary)
+#### Markdown (Primary)
 
 - Standard output format
 - Contains wikilinks for Obsidian integration
 - Embeddable in other notes
 - Searchable and linkable
 
-### PDF (via Browser Print)
+#### PDF (via Browser Print)
 
 - Reports include print-optimized CSS
 - Users print via Ctrl/Cmd+P → Save as PDF
 - Clean layout with hidden navigation elements
 - Page breaks at logical sections
 
-### Dataview Query (Dynamic)
+#### Dataview Query (Dynamic)
 
 Instead of a static snapshot, generate a Dataview query that produces the report dynamically:
 
@@ -328,7 +438,7 @@ SORT born ASC
 
 ### Reports Tab
 
-New Control Center tab between Events and Import/Export:
+Control Center tab for generating formatted output:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -388,9 +498,36 @@ New Control Center tab between Events and Import/Export:
 
 ## Implementation Phases
 
-### Phase 1 (v1)
+### Phase 1: Statistics Dashboard
 
-**Focus:** Core genealogy reports that are most requested and establish patterns.
+**Focus:** Core statistics infrastructure and dashboard.
+
+1. **StatisticsService**
+   - Entity counts with caching
+   - Completeness scores
+   - Quality metrics (missing vitals, unsourced facts)
+   - Top lists (surnames, locations, occupations, sources)
+   - Debounced cache invalidation on vault changes
+
+2. **Control Center Summary Card**
+   - Entity count display
+   - Completeness progress bars
+   - Warning indicators
+   - "Open Statistics Dashboard" button
+
+3. **Statistics Workspace View**
+   - Full dashboard with expandable sections
+   - Charts for distributions
+   - Auto-refresh on vault changes
+   - Split view support
+
+4. **Basic Drill-Down**
+   - Click metric → open entity list
+   - Links to relevant reports (Phase 2)
+
+### Phase 2: Reports Generator
+
+**Focus:** Core genealogy reports that are most requested.
 
 1. **Family Group Sheet**
    - Select a couple or individual
@@ -407,32 +544,70 @@ New Control Center tab between Events and Import/Export:
    - Configurable generation depth
    - Standard genealogical format
 
+4. **Gaps Report**
+   - Missing vital records by generation
+   - Linked from dashboard "Missing Vitals" metric
+
 **Infrastructure:**
 - Report generation service
 - Markdown templating system
 - Reports tab in Control Center
 - Preview modal
 
-### Phase 2
+### Phase 3: Extended Statistics
 
-**Focus:** Expand to worldbuilding, creative writing, and historian use cases.
+**Focus:** Demographics, source coverage, worldbuilding metrics.
+
+- Longevity analysis (average lifespan by generation, time period, location)
+- Family size patterns (average children per family by generation)
+- Marriage patterns (age at marriage, remarriage rates)
+- Migration flows (birth-to-death location changes)
+- Source coverage by generation
+- Source type distribution (primary vs secondary vs derivative)
+- Characters by universe/faction
+- Timeline density (events per year/era)
+
+### Phase 4: Additional Reports
+
+**Focus:** Expand to all report types.
 
 - Character Sheet, Cast List, Organization Roster
 - Character Arc, Scene Outline, POV Coverage
 - Source Bibliography, Evidence Matrix
 - Faction Timeline, Age Audit, Lifespan Overlap
 - Register Report, Pedigree/Descendant Charts
-
-### Future
-
-- Hourglass Chart, Fan Chart
-- Surname Report, Place Report
-- Research Log, Conflicting Evidence, Gaps Report
-- Cohort Analysis, Prosopography
+- Dataview query generation
 
 ---
 
 ## Technical Considerations
+
+### Statistics Service Architecture
+
+```typescript
+interface StatisticsCache {
+  entityCounts?: EntityCounts;
+  completenessScores?: CompletenessScores;
+  topLists?: TopListsCache;
+  lastUpdated: number;
+}
+
+class StatisticsService {
+  private cache: StatisticsCache;
+  private refreshDebounceMs = 1000;
+
+  constructor(private plugin: CanvasRootsPlugin) {
+    // Register vault change listeners
+    this.plugin.registerEvent(
+      this.plugin.app.vault.on('modify', this.scheduleRefresh.bind(this))
+    );
+  }
+
+  private scheduleRefresh(): void {
+    // Debounced cache invalidation
+  }
+}
+```
 
 ### Report Generator Architecture
 
@@ -457,13 +632,13 @@ class FamilyGroupSheetGenerator implements ReportGenerator<FGSOptions, FGSResult
 
 ### Leveraging Existing Services
 
-| Service | Reports Using It |
-|---------|-----------------|
-| `FamilyGraphService` | Family Group Sheet, Ahnentafel, Pedigree, Descendant |
-| `EventGraphService` | Individual Summary, Character Arc, Timelines |
-| `SourceGraphService` | Source Bibliography, Evidence Matrix |
-| `PlaceGraphService` | Place Report |
-| `OrgGraphService` | Organization Roster |
+| Service | Used By |
+|---------|---------|
+| `FamilyGraphService` | Statistics (entity counts), Family Group Sheet, Ahnentafel, Pedigree |
+| `EventGraphService` | Statistics (timeline density), Individual Summary, Character Arc |
+| `SourceGraphService` | Statistics (source coverage), Source Bibliography, Evidence Matrix |
+| `PlaceGraphService` | Statistics (top locations), Place Report |
+| `OrgGraphService` | Statistics (org counts), Organization Roster |
 
 ### Print CSS
 
@@ -489,7 +664,7 @@ class FamilyGroupSheetGenerator implements ReportGenerator<FGSOptions, FGSResult
 
 ## Related Documentation
 
-- [Roadmap: Reports & Print Export](../../wiki-content/Roadmap.md#reports--print-export)
+- [Roadmap: Statistics & Reports](../../wiki-content/Roadmap.md#statistics--reports)
 - [Events & Timelines](../../wiki-content/Events-And-Timelines.md)
 - [Evidence & Sources](../../wiki-content/Evidence-And-Sources.md)
 - [Organization Notes](../../wiki-content/Organization-Notes.md)

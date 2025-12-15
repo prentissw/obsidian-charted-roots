@@ -247,6 +247,56 @@ See [Sex/Gender Identity Expansion Planning Document](https://github.com/baniste
 
 ---
 
+#### UI Architecture: Hybrid Approach
+
+The system uses a **hybrid UI** that combines quick access in Control Center with deep exploration in a dedicated workspace view:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Control Center → Statistics Tab (Summary Card)                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ 📊 Statistics Overview                                       ││
+│  │                                                              ││
+│  │  People: 1,247    Events: 3,891    Sources: 456              ││
+│  │  Places: 892      Organizations: 23                          ││
+│  │                                                              ││
+│  │  Research Completeness: ████████░░ 78%                       ││
+│  │  Source Coverage:       ██████░░░░ 62%                       ││
+│  │                                                              ││
+│  │  ⚠️ 45 missing vitals  •  23 unsourced facts                 ││
+│  │                                                              ││
+│  │  [ Open Statistics Dashboard ]                               ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ Opens
+┌─────────────────────────────────────────────────────────────────┐
+│  Workspace View → Statistics Dashboard (Full Detail)             │
+│  - Expandable sections with drill-down                          │
+│  - Interactive charts and visualizations                        │
+│  - Direct links to reports and entity lists                     │
+│  - Can be pinned alongside notes (split view)                   │
+│  - Auto-refreshes as vault changes                              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Why This Approach:**
+
+| Aspect | Control Center Tab | Workspace View |
+|--------|-------------------|----------------|
+| **Purpose** | Quick health check | Deep exploration |
+| **Persistence** | Modal (closes when done) | Pinnable (stays open) |
+| **Refresh** | Manual | Auto-refresh on vault changes |
+| **Detail level** | Summary metrics only | Full drill-down capability |
+| **Workflow** | "Check stats, take action" | "Monitor while working" |
+
+**Aligns with Obsidian Patterns:**
+- Similar to Graph View: Status bar shows node count → Graph View shows full visualization
+- Similar to Backlinks: Panel shows count → Dedicated view shows all links
+- Control Center remains action-oriented; workspace view enables monitoring
+
+---
+
 #### Architecture
 
 ```
@@ -276,7 +326,7 @@ See [Sex/Gender Identity Expansion Planning Document](https://github.com/baniste
 
 #### Statistics Dashboard (Phase 1)
 
-**New Control Center tab** providing quantitative insights across all entity types.
+**Dedicated workspace view** providing quantitative insights across all entity types, plus a **summary card** in Control Center for quick access.
 
 **Entity Overview:**
 
@@ -305,11 +355,19 @@ See [Sex/Gender Identity Expansion Planning Document](https://github.com/baniste
 | **Missing vitals** | People missing birth or death dates |
 | **Duplicate candidates** | Potential duplicates by name similarity |
 
-**Dashboard UI:**
+**Control Center Summary Card:**
+- Entity counts (people, events, sources, places, organizations)
+- Research completeness % with progress bar
+- Quick warning indicators (missing vitals, unsourced facts)
+- "Open Statistics Dashboard" button → opens workspace view
+
+**Workspace View UI:**
 - Summary cards at top (entity counts, completeness %)
 - Expandable sections by category
 - Charts for distributions (bar charts, pie charts)
 - **Drill-down links**: Click any metric → opens filtered report or entity list
+- Auto-refreshes when vault changes (debounced)
+- Can be pinned alongside notes in split view
 
 ---
 
@@ -423,16 +481,17 @@ Shared filtering controls used by both dashboard and reports:
 | **Phase 4** | Additional Reports | Full report catalog, Dataview integration |
 
 **Phase 1 Priorities:**
-1. `StatisticsService` with caching
-2. Statistics Tab UI with summary cards
-3. Basic drill-down to entity lists
+1. `StatisticsService` with caching and debounced refresh
+2. Control Center summary card with key metrics
+3. Statistics workspace view (opens via button or command palette)
+4. Basic drill-down to entity lists
 
 **Phase 2 Priorities:**
 1. Report templates (Family Group Sheet, Individual Summary, Ahnentafel)
 2. Report Modal with scope configuration
 3. Markdown generation with wikilinks
 
-See [Reports Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/reports.md) for output examples.
+See [Statistics & Reports Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/statistics-and-reports.md) for implementation details and output examples.
 
 ---
 
