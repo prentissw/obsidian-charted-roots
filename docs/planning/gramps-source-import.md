@@ -302,19 +302,43 @@ interface GrampsImportOptions {
 
 #### 2.1 Repository Support
 
-Parse `<repositories>` section and `<reporef>` on sources:
+Parse `<repositories>` section and `<reporef>` on sources.
+
+**Gramps XML Structure:**
 
 ```xml
-<repository handle="_xyz" id="R0001">
-  <rname>National Archives</rname>
-  <type>Archive</type>
-  <url href="https://archives.gov" type="Web Home"/>
-</repository>
+<repositories>
+  <repository handle="_100f5a92e8dc1305b33efa2a3c72" id="R0000">
+    <rname>FamilySearch</rname>
+    <type>Library</type>
+  </repository>
+</repositories>
 ```
 
-**Options:**
-- Create separate repository notes, OR
-- Store as enhanced metadata on source notes (`repository_name`, `repository_type`, `repository_url`)
+Sources reference repositories via `<reporef>`:
+
+```xml
+<source handle="_100f5a95a79023e38002377c7258" id="S0000">
+  <stitle>1920 US Census</stitle>
+  <reporef hlink="_100f5a92e8dc1305b33efa2a3c72" medium="Book"/>
+</source>
+```
+
+**Design Decision:** Store repository metadata on source notes (not separate repository notes). This keeps data together and simplifies the import while preserving all information. Future upgrades could extract repositories into separate notes if demand exists.
+
+**Implementation:**
+
+1. Parse `<repositories>` and build a handle-to-repository map
+2. When creating source notes, resolve `reporef` and add fields:
+
+```yaml
+repository_name: "FamilySearch"
+repository_type: "Library"
+source_medium: "Book"
+```
+
+**Repository Types in Gramps:**
+- Library, Archive, Cemetery, Church, Collection, Repository, Web site, Unknown
 
 #### 2.2 Media References
 
@@ -327,9 +351,105 @@ Parse `<objref>` on sources for attached media:
 </source>
 ```
 
-Link to existing media or note missing media for user to resolve.
+**Design Decision:** Note missing media for user to resolve manually. Store the reference metadata (`gramps_media_ref`) so users can identify what needs to be attached. Users can then use the existing Source Media Gallery feature to manually attach files.
 
-#### 2.3 Gramps ID Preservation
+**Implementation:**
+
+1. Parse `<objref>` elements on sources
+2. Add `gramps_media_refs` field to source frontmatter (array of handles)
+3. Log warning for each media reference that needs resolution
+4. User manually imports media files and links them via Source Media Gallery
+
+#### 2.3 Source Property Alias Support
+
+Add source properties to the property alias system, enabling users to customize property names for source notes.
+
+**Current State:** The property alias service (`src/core/property-alias-service.ts`) supports person, event, and place properties, but not source properties. The `PropertyMetadata` interface defines a `source` category, but no `CANONICAL_SOURCE_PROPERTIES` or `SOURCE_PROPERTY_METADATA` arrays exist.
+
+**Implementation:**
+
+1. Define canonical source properties in `property-alias-service.ts`:
+
+```typescript
+export const CANONICAL_SOURCE_PROPERTIES = [
+  'title',
+  'author',
+  'source_type',
+  'repository',
+  'confidence',
+  'url',
+  'access_date',
+  'citation_detail'
+] as const;
+```
+
+2. Add source property metadata:
+
+```typescript
+export const SOURCE_PROPERTY_METADATA: PropertyMetadata[] = [
+  {
+    canonical: 'title',
+    category: 'source',
+    description: 'Source title or name',
+    examples: ['1920 United States Census', 'Family Bible']
+  },
+  {
+    canonical: 'author',
+    category: 'source',
+    description: 'Author or creator of the source',
+    examples: ['U.S. Census Bureau', 'State Archives']
+  },
+  {
+    canonical: 'source_type',
+    category: 'source',
+    description: 'Type of source record',
+    examples: ['census', 'vital_record', 'church_record']
+  },
+  {
+    canonical: 'repository',
+    category: 'source',
+    description: 'Archive or website where source is held',
+    examples: ['Ancestry.com', 'FamilySearch', 'State Archives']
+  },
+  {
+    canonical: 'confidence',
+    category: 'source',
+    description: 'Confidence level in the source',
+    examples: ['high', 'medium', 'low']
+  },
+  {
+    canonical: 'url',
+    category: 'source',
+    description: 'URL to online source',
+    examples: ['https://www.ancestry.com/...']
+  },
+  {
+    canonical: 'access_date',
+    category: 'source',
+    description: 'Date the source was accessed',
+    examples: ['2024-01-15']
+  },
+  {
+    canonical: 'citation_detail',
+    category: 'source',
+    description: 'Specific citation details (page, volume, etc.)',
+    examples: ['Page 5, Line 23']
+  }
+];
+```
+
+3. Update `ALL_CANONICAL_PROPERTIES` and `ALL_PROPERTY_METADATA` to include source properties
+
+4. Update settings UI to show source property aliases in the property alias configuration
+
+**Use Cases:**
+- User prefers `creator` instead of `author`
+- User prefers `archive` instead of `repository`
+- User prefers `source_url` instead of `url`
+
+---
+
+#### 2.4 Gramps ID Preservation
 
 Store original Gramps IDs for re-import scenarios:
 
@@ -338,9 +458,16 @@ gramps_handle: _100f30e032ad4f9c70cdf9a910bc
 gramps_id: S0001
 ```
 
-Enables:
-- Re-importing updated Gramps files without duplicates
-- Matching sources across imports
+**Use Case:** User imports their Gramps file, continues working in Gramps, then re-imports an updated file. With preserved IDs, the importer can:
+- Recognize existing sources by `gramps_handle`
+- Update rather than create duplicates
+- Maintain link integrity
+
+**Implementation:**
+
+1. Add `gramps_handle` and `gramps_id` fields to source frontmatter during import
+2. On re-import, check for existing notes with matching `gramps_handle`
+3. If found, update the existing note instead of creating a duplicate
 
 ---
 
@@ -373,7 +500,9 @@ Enables:
 |------|---------|
 | `src/gramps/gramps-types.ts` | Add `GrampsRepository`, `GrampsMedia` interfaces |
 | `src/gramps/gramps-parser.ts` | Add repository and media parsing |
-| `src/gramps/gramps-importer.ts` | Add repository handling, media linking |
+| `src/gramps/gramps-importer.ts` | Add repository handling, media linking, Gramps ID preservation |
+| `src/core/property-alias-service.ts` | Add `CANONICAL_SOURCE_PROPERTIES`, `SOURCE_PROPERTY_METADATA` |
+| `src/ui/settings/property-alias-settings.ts` | Add source property section to settings UI |
 
 ---
 
@@ -512,4 +641,6 @@ sources:
 ## References
 
 - [Gramps XML DTD](http://gramps-project.org/xml/1.7.2/grampsxml.dtd)
-- Sample file: `gedcom-testing/gramps-app-export-test.gramps`
+- Sample files:
+  - `gedcom-testing/gramps-app-export-test.gramps` — Phase 1 test data (sources, citations, notes)
+  - `gedcom-testing/gramps-app-export-test2.gramps` — Phase 2 test data (includes repository with `reporef`)

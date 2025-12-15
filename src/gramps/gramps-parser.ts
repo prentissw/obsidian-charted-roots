@@ -13,6 +13,8 @@ import {
 	GrampsSource,
 	GrampsCitation,
 	GrampsNote,
+	GrampsRepository,
+	GrampsRepoRef,
 	GrampsName,
 	GrampsDate,
 	GrampsValidationResult,
@@ -90,6 +92,14 @@ export interface ParsedGrampsSource {
 	abbrev?: string;
 	/** Note text content (resolved from noteRefs) */
 	noteText?: string;
+	/** Repository name (resolved from repoRef) - Phase 2.1 */
+	repositoryName?: string;
+	/** Repository type (e.g., Library, Archive) - Phase 2.1 */
+	repositoryType?: string;
+	/** Source medium (e.g., Book, Electronic) - Phase 2.1 */
+	sourceMedium?: string;
+	/** Media reference handles (for user to resolve manually) - Phase 2.2 */
+	mediaRefs?: string[];
 }
 
 /**
@@ -323,7 +333,7 @@ export class GrampsParser {
 			});
 		}
 
-		// Convert sources to parsed format with resolved notes
+		// Convert sources to parsed format with resolved notes and repositories
 		const sources = new Map<string, ParsedGrampsSource>();
 		for (const [handle, grampsSource] of database.sources) {
 			// Resolve note text from noteRefs
@@ -341,6 +351,22 @@ export class GrampsParser {
 				}
 			}
 
+			// Resolve repository data (Phase 2.1)
+			let repositoryName: string | undefined;
+			let repositoryType: string | undefined;
+			let sourceMedium: string | undefined;
+			if (grampsSource.repoRef) {
+				const repo = database.repositories.get(grampsSource.repoRef.hlink);
+				if (repo) {
+					repositoryName = repo.name;
+					repositoryType = repo.type;
+				}
+				sourceMedium = grampsSource.repoRef.medium;
+			}
+
+			// Collect media refs for user to resolve (Phase 2.2)
+			const mediaRefs = grampsSource.mediaRefs.length > 0 ? grampsSource.mediaRefs : undefined;
+
 			sources.set(handle, {
 				handle: grampsSource.handle,
 				id: grampsSource.id,
@@ -348,7 +374,11 @@ export class GrampsParser {
 				author: grampsSource.author,
 				pubinfo: grampsSource.pubinfo,
 				abbrev: grampsSource.abbrev,
-				noteText
+				noteText,
+				repositoryName,
+				repositoryType,
+				sourceMedium,
+				mediaRefs
 			});
 		}
 
@@ -390,7 +420,8 @@ export class GrampsParser {
 			places: new Map(),
 			sources: new Map(),
 			citations: new Map(),
-			notes: new Map()
+			notes: new Map(),
+			repositories: new Map()
 		};
 
 		// Parse header
@@ -427,6 +458,15 @@ export class GrampsParser {
 			const note = this.parseNote(noteEl);
 			if (note) {
 				database.notes.set(note.handle, note);
+			}
+		});
+
+		// Parse repositories (needed for sources)
+		const repositories = doc.querySelectorAll('repositories > repository');
+		repositories.forEach(repoEl => {
+			const repo = this.parseRepository(repoEl);
+			if (repo) {
+				database.repositories.set(repo.handle, repo);
 			}
 		});
 
@@ -731,6 +771,23 @@ export class GrampsParser {
 	}
 
 	/**
+	 * Parse a repository element
+	 */
+	private static parseRepository(el: Element): GrampsRepository | null {
+		const handle = el.getAttribute('handle');
+		if (!handle) return null;
+
+		const repo: GrampsRepository = {
+			handle,
+			id: el.getAttribute('id') || undefined,
+			name: el.querySelector('rname')?.textContent || undefined,
+			type: el.querySelector('type')?.textContent || undefined
+		};
+
+		return repo;
+	}
+
+	/**
 	 * Parse a source element
 	 */
 	private static parseSource(el: Element): GrampsSource | null {
@@ -746,6 +803,29 @@ export class GrampsParser {
 			}
 		});
 
+		// Parse repository reference with medium (Phase 2.1)
+		let repoRef: GrampsRepoRef | undefined;
+		const repoRefEl = el.querySelector('reporef');
+		if (repoRefEl) {
+			const hlink = repoRefEl.getAttribute('hlink');
+			if (hlink) {
+				repoRef = {
+					hlink,
+					medium: repoRefEl.getAttribute('medium') || undefined,
+					callno: repoRefEl.getAttribute('callno') || undefined
+				};
+			}
+		}
+
+		// Parse media references (Phase 2.2)
+		const mediaRefs: string[] = [];
+		el.querySelectorAll('objref').forEach(refEl => {
+			const hlink = refEl.getAttribute('hlink');
+			if (hlink) {
+				mediaRefs.push(hlink);
+			}
+		});
+
 		const source: GrampsSource = {
 			handle,
 			id: el.getAttribute('id') || undefined,
@@ -754,7 +834,8 @@ export class GrampsParser {
 			pubinfo: el.querySelector('spubinfo')?.textContent || undefined,
 			abbrev: el.querySelector('sabbrev')?.textContent || undefined,
 			noteRefs,
-			repoRef: el.querySelector('reporef')?.getAttribute('hlink') || undefined
+			repoRef,
+			mediaRefs
 		};
 
 		return source;

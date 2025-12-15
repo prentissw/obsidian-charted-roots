@@ -66,7 +66,8 @@ import {
 	type PropertyMetadata,
 	PERSON_PROPERTY_METADATA,
 	EVENT_PROPERTY_METADATA,
-	PLACE_PROPERTY_METADATA
+	PLACE_PROPERTY_METADATA,
+	SOURCE_PROPERTY_METADATA
 } from '../core/property-alias-service';
 import {
 	ValueAliasService,
@@ -496,6 +497,16 @@ function renderAliasesCard(
 		sectionsContainer,
 		'Place properties',
 		PLACE_PROPERTY_METADATA,
+		propertyAliasService,
+		showTab,
+		false // closed by default
+	);
+
+	// Source properties section
+	renderPropertySection(
+		sectionsContainer,
+		'Source properties',
+		SOURCE_PROPERTY_METADATA,
 		propertyAliasService,
 		showTab,
 		false // closed by default

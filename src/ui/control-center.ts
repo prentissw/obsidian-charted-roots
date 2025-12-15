@@ -9475,7 +9475,8 @@ export class ControlCenterModal extends Modal {
 				createPlaceNotes,
 				placesFolder,
 				createEventNotes,
-				eventsFolder
+				eventsFolder,
+				propertyAliases: this.plugin.settings.propertyAliases
 			});
 
 			// Show results notification

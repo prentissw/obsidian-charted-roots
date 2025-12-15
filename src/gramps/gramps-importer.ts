@@ -697,12 +697,37 @@ export class GrampsImporter {
 			frontmatterLines.push(`${prop('author')}: "${source.author.replace(/"/g, '\\"')}"`);
 		}
 
-		if (source.pubinfo) {
+		// Repository handling: prefer resolved repository name over pubinfo (Phase 2.1)
+		if (source.repositoryName) {
+			frontmatterLines.push(`${prop('repository')}: "${source.repositoryName.replace(/"/g, '\\"')}"`);
+		} else if (source.pubinfo) {
 			frontmatterLines.push(`${prop('repository')}: "${source.pubinfo.replace(/"/g, '\\"')}"`);
+		}
+
+		// Add repository type and source medium if available (Phase 2.1)
+		if (source.repositoryType) {
+			frontmatterLines.push(`${prop('repository_type')}: "${source.repositoryType}"`);
+		}
+		if (source.sourceMedium) {
+			frontmatterLines.push(`${prop('source_medium')}: "${source.sourceMedium}"`);
 		}
 
 		// Default confidence to medium
 		frontmatterLines.push(`${prop('confidence')}: medium`);
+
+		// Add Gramps ID preservation (Phase 2.4)
+		frontmatterLines.push(`${prop('gramps_handle')}: ${source.handle}`);
+		if (source.id) {
+			frontmatterLines.push(`${prop('gramps_id')}: ${source.id}`);
+		}
+
+		// Add media refs for user to resolve manually (Phase 2.2)
+		if (source.mediaRefs && source.mediaRefs.length > 0) {
+			frontmatterLines.push(`${prop('gramps_media_refs')}:`);
+			for (const ref of source.mediaRefs) {
+				frontmatterLines.push(`  - "${ref}"`);
+			}
+		}
 
 		frontmatterLines.push('---');
 
@@ -710,6 +735,13 @@ export class GrampsImporter {
 		let body = `\n# ${title}\n`;
 		if (source.noteText) {
 			body += `\n${source.noteText}\n`;
+		}
+
+		// Add note about media refs that need manual resolution (Phase 2.2)
+		if (source.mediaRefs && source.mediaRefs.length > 0) {
+			body += `\n## Media References\n\n`;
+			body += `This source has ${source.mediaRefs.length} media reference(s) from Gramps that need to be manually attached.\n`;
+			body += `Use the Source Media Gallery feature to link media files.\n`;
 		}
 
 		const content = frontmatterLines.join('\n') + body;

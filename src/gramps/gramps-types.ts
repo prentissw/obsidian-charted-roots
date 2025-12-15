@@ -123,7 +123,8 @@ export interface GrampsSource {
 	pubinfo?: string;    // <spubinfo>
 	abbrev?: string;     // <sabbrev>
 	noteRefs: string[];  // Handle links to notes
-	repoRef?: string;    // Handle link to repository
+	repoRef?: GrampsRepoRef;  // Reference to repository with medium
+	mediaRefs: string[]; // Handle links to media objects (Phase 2.2)
 }
 
 /**
@@ -145,6 +146,25 @@ export interface GrampsNote {
 	id?: string;
 	type?: string;       // e.g., "Source text"
 	text?: string;
+}
+
+/**
+ * Repository record
+ */
+export interface GrampsRepository {
+	handle: string;
+	id?: string;
+	name?: string;       // <rname>
+	type?: string;       // Library, Archive, Cemetery, Church, Collection, Repository, Web site, Unknown
+}
+
+/**
+ * Repository reference on a source
+ */
+export interface GrampsRepoRef {
+	hlink: string;       // Handle link to repository
+	medium?: string;     // e.g., "Book", "Electronic", etc.
+	callno?: string;     // Call number
 }
 
 /**
@@ -173,6 +193,7 @@ export interface GrampsDatabase {
 	sources: Map<string, GrampsSource>;
 	citations: Map<string, GrampsCitation>;
 	notes: Map<string, GrampsNote>;
+	repositories: Map<string, GrampsRepository>;
 	header?: {
 		createdBy?: string;
 		createdDate?: string;

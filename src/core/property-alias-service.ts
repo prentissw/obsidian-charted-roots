@@ -102,12 +102,36 @@ export const CANONICAL_PLACE_PROPERTIES = [
 export type CanonicalPlaceProperty = typeof CANONICAL_PLACE_PROPERTIES[number];
 
 /**
+ * Canonical source note properties that can be aliased
+ */
+export const CANONICAL_SOURCE_PROPERTIES = [
+	'cr_id',
+	'cr_type',
+	'title',
+	'author',
+	'source_type',
+	'repository',
+	'repository_type',
+	'source_medium',
+	'confidence',
+	'url',
+	'access_date',
+	'citation_detail',
+	'gramps_handle',
+	'gramps_id',
+	'gramps_media_refs'
+] as const;
+
+export type CanonicalSourceProperty = typeof CANONICAL_SOURCE_PROPERTIES[number];
+
+/**
  * All canonical properties across all note types
  */
 export const ALL_CANONICAL_PROPERTIES = [
 	...CANONICAL_PERSON_PROPERTIES,
 	...CANONICAL_EVENT_PROPERTIES,
-	...CANONICAL_PLACE_PROPERTIES
+	...CANONICAL_PLACE_PROPERTIES,
+	...CANONICAL_SOURCE_PROPERTIES
 ] as const;
 
 /**
@@ -166,7 +190,19 @@ export const CANONICAL_PROPERTY_LABELS: Record<string, string> = {
 	place_type: 'Place type',
 	parent_place: 'Parent place',
 	coordinates: 'Coordinates',
-	collection: 'Collection'
+	collection: 'Collection',
+	// Source properties
+	author: 'Author',
+	source_type: 'Source type',
+	repository: 'Repository',
+	repository_type: 'Repository type',
+	source_medium: 'Source medium',
+	url: 'URL',
+	access_date: 'Access date',
+	citation_detail: 'Citation detail',
+	gramps_handle: 'Gramps handle',
+	gramps_id: 'Gramps ID',
+	gramps_media_refs: 'Gramps media refs'
 };
 
 /**
@@ -611,12 +647,124 @@ export const PLACE_PROPERTY_METADATA: PropertyMetadata[] = [
 ];
 
 /**
+ * Source property metadata
+ */
+export const SOURCE_PROPERTY_METADATA: PropertyMetadata[] = [
+	{
+		canonical: 'cr_id',
+		label: 'CR ID',
+		description: 'Unique identifier for the source',
+		category: 'source',
+		commonAliases: ['id', 'source_id', 'uuid']
+	},
+	{
+		canonical: 'cr_type',
+		label: 'CR type',
+		description: 'Note type identifier (usually "source")',
+		category: 'source',
+		commonAliases: ['type', 'note_type']
+	},
+	{
+		canonical: 'title',
+		label: 'Title',
+		description: 'Source title or name',
+		category: 'source',
+		commonAliases: ['name', 'source_name', 'source_title']
+	},
+	{
+		canonical: 'author',
+		label: 'Author',
+		description: 'Author or creator of the source',
+		category: 'source',
+		commonAliases: ['creator', 'author_name', 'by']
+	},
+	{
+		canonical: 'source_type',
+		label: 'Source type',
+		description: 'Type of source record (census, vital_record, etc.)',
+		category: 'source',
+		commonAliases: ['type', 'record_type', 'category']
+	},
+	{
+		canonical: 'repository',
+		label: 'Repository',
+		description: 'Archive or website where source is held',
+		category: 'source',
+		commonAliases: ['archive', 'location', 'held_at', 'source_repository']
+	},
+	{
+		canonical: 'repository_type',
+		label: 'Repository type',
+		description: 'Type of repository (Library, Archive, etc.)',
+		category: 'source',
+		commonAliases: ['archive_type', 'repo_type']
+	},
+	{
+		canonical: 'source_medium',
+		label: 'Source medium',
+		description: 'Medium of the source (Book, Electronic, etc.)',
+		category: 'source',
+		commonAliases: ['medium', 'format']
+	},
+	{
+		canonical: 'confidence',
+		label: 'Confidence',
+		description: 'Confidence level in the source (high, medium, low)',
+		category: 'source',
+		commonAliases: ['reliability', 'certainty', 'quality']
+	},
+	{
+		canonical: 'url',
+		label: 'URL',
+		description: 'URL to online source',
+		category: 'source',
+		commonAliases: ['link', 'source_url', 'web_address']
+	},
+	{
+		canonical: 'access_date',
+		label: 'Access date',
+		description: 'Date the source was accessed',
+		category: 'source',
+		commonAliases: ['accessed', 'date_accessed', 'viewed']
+	},
+	{
+		canonical: 'citation_detail',
+		label: 'Citation detail',
+		description: 'Specific citation details (page, volume, etc.)',
+		category: 'source',
+		commonAliases: ['page', 'volume', 'citation', 'reference']
+	},
+	{
+		canonical: 'gramps_handle',
+		label: 'Gramps handle',
+		description: 'Original Gramps internal identifier',
+		category: 'source',
+		commonAliases: []
+	},
+	{
+		canonical: 'gramps_id',
+		label: 'Gramps ID',
+		description: 'Original Gramps user-visible ID',
+		category: 'source',
+		commonAliases: []
+	},
+	{
+		canonical: 'gramps_media_refs',
+		label: 'Gramps media refs',
+		description: 'Gramps media handles needing manual resolution',
+		category: 'source',
+		commonAliases: []
+	}
+];
+
+/**
  * All property metadata combined
  */
 export const ALL_PROPERTY_METADATA: PropertyMetadata[] = [
 	...PERSON_PROPERTY_METADATA,
 	...EVENT_PROPERTY_METADATA,
-	...PLACE_PROPERTY_METADATA
+	...PLACE_PROPERTY_METADATA,
+	...SOURCE_PROPERTY_METADATA
 ];
 
 /**
