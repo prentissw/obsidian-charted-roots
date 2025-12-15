@@ -43,6 +43,7 @@ import { EventService } from './src/events/services/event-service';
 import { CreateEventModal } from './src/events/ui/create-event-modal';
 import { isPlaceNote, isSourceNote, isEventNote, isMapNote, isSchemaNote } from './src/utils/note-type-detection';
 import { GeocodingService } from './src/maps/services/geocoding-service';
+import { TimelineProcessor, RelationshipsProcessor } from './src/dynamic-content';
 
 const logger = getLogger('CanvasRootsPlugin');
 
@@ -206,6 +207,19 @@ export default class CanvasRootsPlugin extends Plugin {
 		this.registerView(
 			VIEW_TYPE_MAP,
 			(leaf) => new MapView(leaf, this)
+		);
+
+		// Register dynamic content code block processors
+		const timelineProcessor = new TimelineProcessor(this);
+		this.registerMarkdownCodeBlockProcessor(
+			'canvas-roots-timeline',
+			(source, el, ctx) => timelineProcessor.process(source, el, ctx)
+		);
+
+		const relationshipsProcessor = new RelationshipsProcessor(this);
+		this.registerMarkdownCodeBlockProcessor(
+			'canvas-roots-relationships',
+			(source, el, ctx) => relationshipsProcessor.process(source, el, ctx)
 		);
 
 		// Add ribbon icon for control center
