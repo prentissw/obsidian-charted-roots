@@ -576,15 +576,20 @@ Control Center tab for generating formatted output:
 - ✅ Source coverage by generation
 - ✅ Timeline density (events per decade with gap detection)
 
-### Phase 4: Additional Reports
+### Phase 4: Additional Reports (In Progress)
 
 **Focus:** Expand to all report types.
 
+**Completed:**
+- ✅ Register Report (NGSQ-style descendant numbering)
+- ✅ Pedigree Chart (markdown ancestor tree)
+- ✅ Descendant Chart (markdown descendant tree)
+
+**Future:**
 - Character Sheet, Cast List, Organization Roster
 - Character Arc, Scene Outline, POV Coverage
 - Source Bibliography, Evidence Matrix
 - Faction Timeline, Age Audit, Lifespan Overlap
-- Register Report, Pedigree/Descendant Charts
 - Dataview query generation
 
 ### Future: Enhanced Drill-Down

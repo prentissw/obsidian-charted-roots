@@ -11,7 +11,10 @@ export type ReportType =
 	| 'family-group-sheet'
 	| 'individual-summary'
 	| 'ahnentafel'
-	| 'gaps-report';
+	| 'gaps-report'
+	| 'register-report'
+	| 'pedigree-chart'
+	| 'descendant-chart';
 
 /**
  * Base options for all reports
@@ -84,6 +87,46 @@ export interface GapsReportOptions extends ReportOptions {
 	};
 	/** Maximum number of items per category */
 	maxItemsPerCategory: number;
+}
+
+/**
+ * Options for Register Report (NGSQ-style descendant report)
+ */
+export interface RegisterReportOptions extends ReportOptions {
+	/** CR ID of the root ancestor */
+	rootPersonCrId: string;
+	/** Maximum number of generations to include */
+	maxGenerations: number;
+	/** Include dates and places */
+	includeDetails: boolean;
+	/** Include spouse information */
+	includeSpouses: boolean;
+}
+
+/**
+ * Options for Pedigree Chart (ancestor tree)
+ */
+export interface PedigreeChartOptions extends ReportOptions {
+	/** CR ID of the root person */
+	rootPersonCrId: string;
+	/** Maximum number of generations to include */
+	maxGenerations: number;
+	/** Include dates and places */
+	includeDetails: boolean;
+}
+
+/**
+ * Options for Descendant Chart
+ */
+export interface DescendantChartOptions extends ReportOptions {
+	/** CR ID of the root ancestor */
+	rootPersonCrId: string;
+	/** Maximum number of generations to include */
+	maxGenerations: number;
+	/** Include dates and places */
+	includeDetails: boolean;
+	/** Include spouse information */
+	includeSpouses: boolean;
 }
 
 /**
@@ -194,6 +237,68 @@ export interface GapsReportResult extends ReportResult {
 }
 
 /**
+ * Register Report entry with NGSQ numbering
+ */
+export interface RegisterEntry {
+	/** NGSQ-style number (e.g., "1", "2", "3i", "3ii") */
+	registerNumber: string;
+	/** Person data */
+	person: ReportPerson;
+	/** Generation number (1 = root, 2 = children, etc.) */
+	generation: number;
+	/** Whether this person has descendants in the report */
+	hasDescendants: boolean;
+	/** Reference number for descendants (the number they are listed under) */
+	descendantRef?: string;
+	/** Spouses */
+	spouses: ReportPerson[];
+	/** Children (with their register numbers if they continue the line) */
+	children: Array<{ person: ReportPerson; registerNumber?: string }>;
+}
+
+/**
+ * Register Report result
+ */
+export interface RegisterReportResult extends ReportResult {
+	/** Root ancestor */
+	rootPerson: ReportPerson;
+	/** All entries in register order */
+	entries: RegisterEntry[];
+}
+
+/**
+ * Pedigree Chart result
+ */
+export interface PedigreeChartResult extends ReportResult {
+	/** Root person */
+	rootPerson: ReportPerson;
+	/** Ancestor lines as formatted tree text */
+	treeContent: string;
+}
+
+/**
+ * Descendant entry for chart
+ */
+export interface DescendantEntry {
+	/** Person data */
+	person: ReportPerson;
+	/** Indentation level (0 = root) */
+	level: number;
+	/** Spouses (if included) */
+	spouses: ReportPerson[];
+}
+
+/**
+ * Descendant Chart result
+ */
+export interface DescendantChartResult extends ReportResult {
+	/** Root ancestor */
+	rootPerson: ReportPerson;
+	/** All descendants in tree order */
+	entries: DescendantEntry[];
+}
+
+/**
  * Report metadata for display
  */
 export interface ReportMetadata {
@@ -235,5 +340,26 @@ export const REPORT_METADATA: Record<ReportType, ReportMetadata> = {
 		description: 'Missing vital records and research opportunities',
 		icon: 'search',
 		requiresPerson: false
+	},
+	'register-report': {
+		type: 'register-report',
+		name: 'Register report',
+		description: 'Descendants with NGSQ-style genealogical numbering',
+		icon: 'list-ordered',
+		requiresPerson: true
+	},
+	'pedigree-chart': {
+		type: 'pedigree-chart',
+		name: 'Pedigree chart',
+		description: 'Ancestor tree formatted as markdown',
+		icon: 'git-branch',
+		requiresPerson: true
+	},
+	'descendant-chart': {
+		type: 'descendant-chart',
+		name: 'Descendant chart',
+		description: 'Descendant tree formatted as markdown',
+		icon: 'git-fork',
+		requiresPerson: true
 	}
 };

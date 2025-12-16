@@ -14,12 +14,18 @@ import type {
 	FamilyGroupSheetOptions,
 	IndividualSummaryOptions,
 	AhnentafelOptions,
-	GapsReportOptions
+	GapsReportOptions,
+	RegisterReportOptions,
+	PedigreeChartOptions,
+	DescendantChartOptions
 } from '../types/report-types';
 import { FamilyGroupSheetGenerator } from './family-group-sheet-generator';
 import { IndividualSummaryGenerator } from './individual-summary-generator';
 import { AhnentafelGenerator } from './ahnentafel-generator';
 import { GapsReportGenerator } from './gaps-report-generator';
+import { RegisterReportGenerator } from './register-report-generator';
+import { PedigreeChartGenerator } from './pedigree-chart-generator';
+import { DescendantChartGenerator } from './descendant-chart-generator';
 import { getLogger } from '../../core/logging';
 
 const logger = getLogger('ReportGenerationService');
@@ -36,6 +42,9 @@ export class ReportGenerationService {
 	private individualSummaryGenerator: IndividualSummaryGenerator;
 	private ahnentafelGenerator: AhnentafelGenerator;
 	private gapsReportGenerator: GapsReportGenerator;
+	private registerReportGenerator: RegisterReportGenerator;
+	private pedigreeChartGenerator: PedigreeChartGenerator;
+	private descendantChartGenerator: DescendantChartGenerator;
 
 	constructor(app: App, settings: CanvasRootsSettings) {
 		this.app = app;
@@ -46,6 +55,9 @@ export class ReportGenerationService {
 		this.individualSummaryGenerator = new IndividualSummaryGenerator(app, settings);
 		this.ahnentafelGenerator = new AhnentafelGenerator(app, settings);
 		this.gapsReportGenerator = new GapsReportGenerator(app, settings);
+		this.registerReportGenerator = new RegisterReportGenerator(app, settings);
+		this.pedigreeChartGenerator = new PedigreeChartGenerator(app, settings);
+		this.descendantChartGenerator = new DescendantChartGenerator(app, settings);
 	}
 
 	/**
@@ -53,7 +65,7 @@ export class ReportGenerationService {
 	 */
 	async generateReport(
 		type: ReportType,
-		options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions
+		options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions | RegisterReportOptions | PedigreeChartOptions | DescendantChartOptions
 	): Promise<ReportResult> {
 		logger.info('generate', `Generating ${type} report`);
 
@@ -71,6 +83,15 @@ export class ReportGenerationService {
 				break;
 			case 'gaps-report':
 				result = await this.gapsReportGenerator.generate(options as GapsReportOptions);
+				break;
+			case 'register-report':
+				result = await this.registerReportGenerator.generate(options as RegisterReportOptions);
+				break;
+			case 'pedigree-chart':
+				result = await this.pedigreeChartGenerator.generate(options as PedigreeChartOptions);
+				break;
+			case 'descendant-chart':
+				result = await this.descendantChartGenerator.generate(options as DescendantChartOptions);
 				break;
 			default:
 				return {

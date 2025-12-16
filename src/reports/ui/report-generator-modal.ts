@@ -11,7 +11,10 @@ import type {
 	FamilyGroupSheetOptions,
 	IndividualSummaryOptions,
 	AhnentafelOptions,
-	GapsReportOptions
+	GapsReportOptions,
+	RegisterReportOptions,
+	PedigreeChartOptions,
+	DescendantChartOptions
 } from '../types/report-types';
 import { REPORT_METADATA } from '../types/report-types';
 import { ReportGenerationService } from '../services/report-generation-service';
@@ -78,6 +81,26 @@ export class ReportGeneratorModal extends Modal {
 		},
 		maxItemsPerCategory: 50,
 		includeSources: false
+	};
+
+	private registerReportOptions = {
+		maxGenerations: 5,
+		includeDetails: true,
+		includeSpouses: true,
+		includeSources: true
+	};
+
+	private pedigreeChartOptions = {
+		maxGenerations: 5,
+		includeDetails: true,
+		includeSources: true
+	};
+
+	private descendantChartOptions = {
+		maxGenerations: 5,
+		includeDetails: true,
+		includeSpouses: true,
+		includeSources: true
 	};
 
 	// UI elements
@@ -210,6 +233,15 @@ export class ReportGeneratorModal extends Modal {
 				break;
 			case 'gaps-report':
 				this.renderGapsReportOptions();
+				break;
+			case 'register-report':
+				this.renderRegisterReportOptions();
+				break;
+			case 'pedigree-chart':
+				this.renderPedigreeChartOptions();
+				break;
+			case 'descendant-chart':
+				this.renderDescendantChartOptions();
 				break;
 		}
 	}
@@ -428,6 +460,116 @@ export class ReportGeneratorModal extends Modal {
 	}
 
 	/**
+	 * Render Register Report options
+	 */
+	private renderRegisterReportOptions(): void {
+		if (!this.optionsContainer) return;
+
+		new Setting(this.optionsContainer)
+			.setName('Maximum generations')
+			.setDesc('How many generations of descendants to include')
+			.addSlider(slider => {
+				slider
+					.setLimits(2, 10, 1)
+					.setValue(this.registerReportOptions.maxGenerations)
+					.setDynamicTooltip()
+					.onChange(value => {
+						this.registerReportOptions.maxGenerations = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Include details')
+			.setDesc('Include birth/death dates and places')
+			.addToggle(toggle => {
+				toggle.setValue(this.registerReportOptions.includeDetails)
+					.onChange(value => {
+						this.registerReportOptions.includeDetails = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Include spouses')
+			.setDesc('Include spouse information for each person')
+			.addToggle(toggle => {
+				toggle.setValue(this.registerReportOptions.includeSpouses)
+					.onChange(value => {
+						this.registerReportOptions.includeSpouses = value;
+					});
+			});
+	}
+
+	/**
+	 * Render Pedigree Chart options
+	 */
+	private renderPedigreeChartOptions(): void {
+		if (!this.optionsContainer) return;
+
+		new Setting(this.optionsContainer)
+			.setName('Maximum generations')
+			.setDesc('How many generations of ancestors to include')
+			.addSlider(slider => {
+				slider
+					.setLimits(2, 10, 1)
+					.setValue(this.pedigreeChartOptions.maxGenerations)
+					.setDynamicTooltip()
+					.onChange(value => {
+						this.pedigreeChartOptions.maxGenerations = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Include details')
+			.setDesc('Include birth/death dates and places')
+			.addToggle(toggle => {
+				toggle.setValue(this.pedigreeChartOptions.includeDetails)
+					.onChange(value => {
+						this.pedigreeChartOptions.includeDetails = value;
+					});
+			});
+	}
+
+	/**
+	 * Render Descendant Chart options
+	 */
+	private renderDescendantChartOptions(): void {
+		if (!this.optionsContainer) return;
+
+		new Setting(this.optionsContainer)
+			.setName('Maximum generations')
+			.setDesc('How many generations of descendants to include')
+			.addSlider(slider => {
+				slider
+					.setLimits(2, 10, 1)
+					.setValue(this.descendantChartOptions.maxGenerations)
+					.setDynamicTooltip()
+					.onChange(value => {
+						this.descendantChartOptions.maxGenerations = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Include details')
+			.setDesc('Include birth/death dates and places')
+			.addToggle(toggle => {
+				toggle.setValue(this.descendantChartOptions.includeDetails)
+					.onChange(value => {
+						this.descendantChartOptions.includeDetails = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Include spouses')
+			.setDesc('Include spouse information for each person')
+			.addToggle(toggle => {
+				toggle.setValue(this.descendantChartOptions.includeSpouses)
+					.onChange(value => {
+						this.descendantChartOptions.includeSpouses = value;
+					});
+			});
+	}
+
+	/**
 	 * Generate the report
 	 */
 	private async generateReport(): Promise<void> {
@@ -440,7 +582,7 @@ export class ReportGeneratorModal extends Modal {
 		}
 
 		// Build options based on report type
-		let options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions;
+		let options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions | RegisterReportOptions | PedigreeChartOptions | DescendantChartOptions;
 
 		switch (this.selectedReportType) {
 			case 'family-group-sheet':
@@ -487,6 +629,41 @@ export class ReportGeneratorModal extends Modal {
 					collectionPath: this.gapsReportOptions.collectionPath || undefined,
 					fieldsToCheck: this.gapsReportOptions.fieldsToCheck,
 					maxItemsPerCategory: this.gapsReportOptions.maxItemsPerCategory
+				};
+				break;
+
+			case 'register-report':
+				options = {
+					rootPersonCrId: this.selectedPersonCrId,
+					outputMethod: this.outputMethod,
+					outputFolder: this.outputFolder || undefined,
+					includeSources: this.registerReportOptions.includeSources,
+					maxGenerations: this.registerReportOptions.maxGenerations,
+					includeDetails: this.registerReportOptions.includeDetails,
+					includeSpouses: this.registerReportOptions.includeSpouses
+				};
+				break;
+
+			case 'pedigree-chart':
+				options = {
+					rootPersonCrId: this.selectedPersonCrId,
+					outputMethod: this.outputMethod,
+					outputFolder: this.outputFolder || undefined,
+					includeSources: this.pedigreeChartOptions.includeSources,
+					maxGenerations: this.pedigreeChartOptions.maxGenerations,
+					includeDetails: this.pedigreeChartOptions.includeDetails
+				};
+				break;
+
+			case 'descendant-chart':
+				options = {
+					rootPersonCrId: this.selectedPersonCrId,
+					outputMethod: this.outputMethod,
+					outputFolder: this.outputFolder || undefined,
+					includeSources: this.descendantChartOptions.includeSources,
+					maxGenerations: this.descendantChartOptions.maxGenerations,
+					includeDetails: this.descendantChartOptions.includeDetails,
+					includeSpouses: this.descendantChartOptions.includeSpouses
 				};
 				break;
 		}
