@@ -12,7 +12,7 @@ This document outlines planned features for Canvas Roots. For completed features
   - [Post-Import Cleanup Wizard](#post-import-cleanup-wizard) 📋 Medium
   - [Configurable Normalization](#configurable-normalization) 📋 Medium
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
-  - [Step & Adoptive Parent Support](#step--adoptive-parent-support) 💡 Low
+  - [Step & Adoptive Parent Support](#step--adoptive-parent-support) 📋 Medium
 - [Future Considerations](#future-considerations)
 - [Known Limitations](#known-limitations)
 - [Contributing](#contributing)
@@ -264,9 +264,11 @@ oral_facts:
 
 ### Step & Adoptive Parent Support
 
-**Priority:** 💡 Low — Specialized for blended families and adoption records
+**Priority:** 📋 Medium — Import fidelity for GEDCOM data with non-biological relationships
 
 **Summary:** Distinguish biological, step, and adoptive parent relationships in person notes. Prevents false parent claim conflicts when GEDCOM files contain non-biological parent relationships.
+
+> **Note:** This feature is complementary to the existing [Custom Relationships](Custom-Relationships) feature. Custom Relationships handles non-parental extended relationships (godparents, mentors, witnesses), while Step & Adoptive Parent Support addresses parental relationship types that directly affect family tree structure and ancestor/descendant calculations.
 
 **Problem Statement:**
 
@@ -377,10 +379,6 @@ Expand Data Quality → Data Analysis scope options beyond folder-based filterin
 - Note-type-specific validations (e.g., place notes check for missing coordinates, person notes check for missing birth date)
 
 This requires generalizing the `DataQualityIssue` interface to support multiple note types instead of just `PersonNode`.
-
-### Note Creation from Images
-
-Context menu actions to create map or source notes from image files, pre-populating with image link.
 
 ### Person Note Templates
 

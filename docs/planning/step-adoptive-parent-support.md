@@ -2,9 +2,11 @@
 
 ## Overview
 
-**Priority:** 💡 Low — Specialized for blended families and adoption records
+**Priority:** 📋 Medium — Import fidelity for GEDCOM data with non-biological relationships
 
 **Summary:** Distinguish biological, step, and adoptive parent relationships in person notes. Prevents false parent claim conflicts when GEDCOM files contain non-biological parent relationships.
+
+> **Note:** This feature is complementary to the existing [Custom Relationships](../../wiki-content/Custom-Relationships.md) feature. Custom Relationships handles non-parental extended relationships (godparents, mentors, witnesses), while Step & Adoptive Parent Support addresses parental relationship types that directly affect family tree structure and ancestor/descendant calculations.
 
 ---
 
@@ -181,23 +183,127 @@ This indicates John is a biological child in family F1 and a step-child in famil
 
 ---
 
+## Impact Analysis
+
+This feature is a significant cross-cutting change affecting ~15-20 files across multiple subsystems.
+
+### 1. Import Tools — All Importers Need Updates
+
+| Importer | File | Changes Needed |
+|----------|------|----------------|
+| GEDCOM v2 | `src/gedcom/gedcom-importer-v2.ts` | Parse `PEDI` tags, route to appropriate fields |
+| GEDCOM v1 | `src/gedcom/gedcom-importer.ts` | Same PEDI tag parsing |
+| GedcomX | `src/gedcomx/gedcomx-importer.ts` | Map relationship qualifiers to step/adoptive fields |
+| Gramps XML | `src/gramps/gramps-importer.ts` | Parse `<childref>` pedigree attributes |
+| CSV | `src/csv/csv-importer.ts` | Add columns for new fields |
+
+Currently none of these parse pedigree types—they all assume biological parents.
+
+### 2. Note Templates — Yes
+
+`src/ui/template-snippets-modal.ts` currently generates:
+```yaml
+father:
+father_id:
+mother:
+mother_id:
+```
+
+Would need to add optional step/adoptive parent fields to the person template snippets.
+
+### 3. Base Templates — Yes
+
+`src/constants/base-template.ts` uses `father`/`mother` in:
+- Visible properties
+- Filter views ("Missing parents", "Sibling groups", "Root generation")
+- Order clauses
+
+New views would be useful: "Has step-parents", "Has adoptive parents"
+
+### 4. Essential Fields — Probably Not
+
+Step/adoptive parents are specialized—they wouldn't be "essential" for most users. These would remain optional fields.
+
+### 5. Property Aliases — Yes
+
+`src/core/property-alias-service.ts` needs new entries:
+
+```typescript
+// In PERSON_PROPERTIES array:
+'stepfather_id',
+'stepmother_id',
+'adoptive_father_id',
+'adoptive_mother_id',
+
+// In DEFAULT_DISPLAY_NAMES:
+stepfather_id: 'Stepfather ID',
+stepmother_id: 'Stepmother ID',
+adoptive_father_id: 'Adoptive father ID',
+adoptive_mother_id: 'Adoptive mother ID',
+
+// In ALIASABLE_PROPERTIES:
+{ canonical: 'stepfather_id', label: 'Stepfather ID', ... },
+// etc.
+```
+
+### 6. Documentation — Yes
+
+`wiki-content/Frontmatter-Reference.md` needs:
+- New properties in the Parent Relationships table
+- Updated ER diagram showing step/adoptive relationships
+- Examples with step/adoptive parents
+
+---
+
 ## Files to Modify
 
-### Phase 1
-- `src/types/person.ts` — Add step/adoptive parent fields to interface
-- `src/core/family-graph.ts` — Update PersonNode, graph building logic
-- `src/gedcom/gedcom-parser-v2.ts` — Parse PEDI tags
-- `src/gedcom/gedcom-importer-v2.ts` — Write to appropriate fields
-- `src/templates/person-template.ts` — Add optional fields
+### Core Types & Services
 
-### Phase 2
-- `src/core/data-quality.ts` — Update conflict detection
-- `src/ui/control-center.ts` — Show relationship types in UI
+| File | Changes |
+|------|---------|
+| `src/types/frontmatter.ts` | Add interface properties for step/adoptive parent IDs |
+| `src/core/family-graph.ts` | Update PersonNode, handle step/adoptive in ancestor/descendant calculations |
+| `src/core/data-quality.ts` | New validation rules, exclude step/adoptive from biological conflicts |
+| `src/core/relationship-validator.ts` | Exclude step/adoptive from biological parent conflicts |
+| `src/core/property-alias-service.ts` | Add new properties, display names, and aliasable entries |
+| `src/core/vault-stats.ts` | Include new fields in statistics gathering |
+| `src/core/merge-service.ts` | Handle merging step/adoptive parent data |
+| `src/core/relationship-manager.ts` | Support step/adoptive relationship operations |
 
-### Phase 3
-- `src/canvas/tree-builder.ts` — Support non-biological edges
-- `src/canvas/canvas-exporter.ts` — Edge styling by type
-- `styles.css` — Edge style classes
+### Import/Export
+
+| File | Changes |
+|------|---------|
+| `src/gedcom/gedcom-importer-v2.ts` | Parse PEDI tags, write to appropriate fields |
+| `src/gedcom/gedcom-importer.ts` | Same PEDI tag parsing (v1 importer) |
+| `src/gedcomx/gedcomx-importer.ts` | Map relationship qualifiers |
+| `src/gramps/gramps-importer.ts` | Parse `<childref>` pedigree attributes |
+| `src/csv/csv-importer.ts` | Add columns for new fields |
+| `src/csv/csv-exporter.ts` | Export new fields |
+
+### UI & Templates
+
+| File | Changes |
+|------|---------|
+| `src/ui/template-snippets-modal.ts` | Add step/adoptive fields to person template |
+| `src/ui/control-center.ts` | Show relationship types in person details |
+| `src/constants/base-template.ts` | Add views for step/adoptive relationships |
+
+### Canvas & Visualization
+
+| File | Changes |
+|------|---------|
+| `src/canvas/tree-builder.ts` | Support non-biological edges |
+| `src/canvas/canvas-exporter.ts` | Edge styling by relationship type |
+| `styles.css` | Edge style classes (dashed/dotted for step/adoptive) |
+
+### Documentation
+
+| File | Changes |
+|------|---------|
+| `wiki-content/Frontmatter-Reference.md` | Document new properties, update ER diagram |
+| `wiki-content/Data-Entry.md` | Add examples with step/adoptive parents |
+| `wiki-content/Import-Export.md` | Document PEDI tag handling |
 
 ---
 
