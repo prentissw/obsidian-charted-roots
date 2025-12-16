@@ -65,6 +65,23 @@ export interface TopListItem {
 }
 
 /**
+ * Person reference for drill-down lists
+ */
+export interface PersonRef {
+	/** Person's cr_id */
+	crId: string;
+	/** Display name */
+	name: string;
+	/** File reference for opening the note */
+	file: TFile;
+}
+
+/**
+ * Top list item type for determining drill-down behavior
+ */
+export type TopListType = 'surname' | 'location' | 'occupation' | 'source' | 'generic';
+
+/**
  * Date range across all entities
  */
 export interface DateRange {

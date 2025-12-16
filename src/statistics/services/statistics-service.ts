@@ -20,6 +20,7 @@ import type {
 	DateRange,
 	GenderDistribution,
 	TopListItem,
+	PersonRef,
 	EventTypeDistribution,
 	SourceTypeDistribution,
 	SourceConfidenceDistribution,
@@ -622,6 +623,103 @@ export class StatisticsService {
 	 */
 	getGenderDistribution(): GenderDistribution {
 		return this.getAllStatistics().genderDistribution;
+	}
+
+	// =========================================================================
+	// Drill-down Methods (for Top Lists)
+	// =========================================================================
+
+	/**
+	 * Get people with a specific surname
+	 */
+	getPeopleBySurname(surname: string): PersonRef[] {
+		const people = this.getFamilyGraphService().getAllPeople();
+		const matches: PersonRef[] = [];
+
+		for (const person of people) {
+			if (!person.name) continue;
+			const parts = person.name.trim().split(/\s+/);
+			if (parts.length > 1) {
+				const personSurname = parts[parts.length - 1];
+				if (personSurname.toLowerCase() === surname.toLowerCase()) {
+					const file = this.getPersonFile(person);
+					if (file) {
+						matches.push({
+							crId: person.crId,
+							name: person.name,
+							file
+						});
+					}
+				}
+			}
+		}
+
+		return matches.sort((a, b) => a.name.localeCompare(b.name));
+	}
+
+	/**
+	 * Get people associated with a specific location (birth or death place)
+	 */
+	getPeopleByLocation(location: string): PersonRef[] {
+		const people = this.getFamilyGraphService().getAllPeople();
+		const matches: PersonRef[] = [];
+		const normalizedLocation = this.normalizePlace(location).toLowerCase();
+
+		for (const person of people) {
+			const birthPlace = person.birthPlace ? this.normalizePlace(person.birthPlace).toLowerCase() : null;
+			const deathPlace = person.deathPlace ? this.normalizePlace(person.deathPlace).toLowerCase() : null;
+
+			if (birthPlace === normalizedLocation || deathPlace === normalizedLocation) {
+				const file = this.getPersonFile(person);
+				if (file) {
+					matches.push({
+						crId: person.crId,
+						name: person.name ?? person.crId,
+						file
+					});
+				}
+			}
+		}
+
+		return matches.sort((a, b) => a.name.localeCompare(b.name));
+	}
+
+	/**
+	 * Get people with a specific occupation
+	 */
+	getPeopleByOccupation(occupation: string): PersonRef[] {
+		const people = this.getFamilyGraphService().getAllPeople();
+		const matches: PersonRef[] = [];
+		const normalizedOccupation = occupation.toLowerCase().trim();
+
+		for (const person of people) {
+			if (person.occupation && person.occupation.toLowerCase().trim() === normalizedOccupation) {
+				const file = this.getPersonFile(person);
+				if (file) {
+					matches.push({
+						crId: person.crId,
+						name: person.name ?? person.crId,
+						file
+					});
+				}
+			}
+		}
+
+		return matches.sort((a, b) => a.name.localeCompare(b.name));
+	}
+
+	/**
+	 * Get the TFile for a person by their cr_id
+	 */
+	private getPersonFile(person: PersonNode): TFile | null {
+		const files = this.app.vault.getMarkdownFiles();
+		for (const file of files) {
+			const cache = this.app.metadataCache.getFileCache(file);
+			if (cache?.frontmatter?.cr_id === person.crId) {
+				return file;
+			}
+		}
+		return null;
 	}
 
 	// =========================================================================

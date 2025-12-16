@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-16 16:27:31 UTC
+ * - Generated: 2025-12-16 16:40:32 UTC
  * - Components: 32 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -17884,7 +17884,7 @@ body:has(.cr-media-linker) .suggestion-container {
    COMPONENT: STATISTICS.CSS
    ========================================================================== */
 
-/* Component Size: 1158 lines, 22.24 KB */
+/* Component Size: 1233 lines, 23.96 KB */
 
 /**
  * Statistics Tab & View Styles
@@ -19044,6 +19044,81 @@ body:has(.cr-media-linker) .suggestion-container {
   margin-right: var(--size-4-1);
 }
 
+/* =============================================================================
+   DRILL-DOWN EXPANSION (Top Lists)
+   ============================================================================= */
+
+/* Expanded row highlight */
+.cr-sv-top-list-table tr.cr-sv-top-list-expanded {
+  background-color: var(--background-secondary);
+}
+
+/* Drill-down header (clickable row with chevron) */
+.cr-sv-drilldown-header {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  cursor: pointer;
+  user-select: none;
+}
+
+.cr-sv-drilldown-header:hover {
+  color: var(--text-accent);
+}
+
+.cr-sv-drilldown-chevron {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  width: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cr-sv-drilldown-name {
+  flex: 1;
+}
+
+/* Drill-down content row */
+.cr-sv-drilldown-row {
+  background-color: var(--background-secondary-alt);
+}
+
+.cr-sv-drilldown-row:hover {
+  background-color: var(--background-secondary-alt);
+}
+
+.cr-sv-drilldown-cell {
+  padding: var(--size-4-2) var(--size-4-3) var(--size-4-3) var(--size-4-5) !important;
+}
+
+/* Drill-down list of people */
+.cr-sv-drilldown-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-1) var(--size-4-2);
+}
+
+.cr-sv-drilldown-person {
+  display: inline-block;
+  padding: var(--size-4-1) var(--size-4-2);
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-small);
+  color: var(--text-accent);
+  cursor: pointer;
+  transition:
+    background-color 0.1s ease,
+    border-color 0.1s ease;
+}
+
+.cr-sv-drilldown-person:hover {
+  background-color: var(--background-modifier-hover);
+  border-color: var(--text-accent);
+  text-decoration: none;
+}
+
 
 /* End of statistics.css */
 
@@ -19564,10 +19639,10 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-16 16:27:31 UTC
+ * Build completed: 2025-12-16 16:40:32 UTC
  * Components processed: 32
- * Total lines: 19253
- * Total size: 381.03 KB
+ * Total lines: 19328
+ * Total size: 382.75 KB
  * Build duration: 0.03 seconds
  *
  * Component breakdown:
@@ -19597,7 +19672,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - timeline-callouts.css: 319 lines, 10.4 KB
  * - organizations.css: 245 lines, 4.36 KB
  * - sources.css: 2664 lines, 54.11 KB
- * - statistics.css: 1158 lines, 22.24 KB
+ * - statistics.css: 1233 lines, 23.96 KB
  * - preferences.css: 242 lines, 5.29 KB
  * - dynamic-content.css: 189 lines, 3.98 KB
  * - animations.css: 16 lines, 0.18 KB

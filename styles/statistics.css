@@ -1155,3 +1155,78 @@
   color: var(--color-orange);
   margin-right: var(--size-4-1);
 }
+
+/* =============================================================================
+   DRILL-DOWN EXPANSION (Top Lists)
+   ============================================================================= */
+
+/* Expanded row highlight */
+.cr-sv-top-list-table tr.cr-sv-top-list-expanded {
+  background-color: var(--background-secondary);
+}
+
+/* Drill-down header (clickable row with chevron) */
+.cr-sv-drilldown-header {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  cursor: pointer;
+  user-select: none;
+}
+
+.cr-sv-drilldown-header:hover {
+  color: var(--text-accent);
+}
+
+.cr-sv-drilldown-chevron {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  width: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cr-sv-drilldown-name {
+  flex: 1;
+}
+
+/* Drill-down content row */
+.cr-sv-drilldown-row {
+  background-color: var(--background-secondary-alt);
+}
+
+.cr-sv-drilldown-row:hover {
+  background-color: var(--background-secondary-alt);
+}
+
+.cr-sv-drilldown-cell {
+  padding: var(--size-4-2) var(--size-4-3) var(--size-4-3) var(--size-4-5) !important;
+}
+
+/* Drill-down list of people */
+.cr-sv-drilldown-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-1) var(--size-4-2);
+}
+
+.cr-sv-drilldown-person {
+  display: inline-block;
+  padding: var(--size-4-1) var(--size-4-2);
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-small);
+  color: var(--text-accent);
+  cursor: pointer;
+  transition:
+    background-color 0.1s ease,
+    border-color 0.1s ease;
+}
+
+.cr-sv-drilldown-person:hover {
+  background-color: var(--background-modifier-hover);
+  border-color: var(--text-accent);
+  text-decoration: none;
+}

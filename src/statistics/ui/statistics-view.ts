@@ -12,6 +12,8 @@ import type {
 	StatisticsData,
 	StatisticsViewState,
 	TopListItem,
+	TopListType,
+	PersonRef,
 	LongevityAnalysis,
 	FamilySizeAnalysis,
 	MarriagePatternAnalysis,
@@ -36,6 +38,8 @@ export class StatisticsView extends ItemView {
 		SECTION_IDS.COMPLETENESS,
 		SECTION_IDS.QUALITY
 	]);
+	/** Tracks which drill-down rows are expanded (key: "type:name") */
+	private expandedDrilldowns: Set<string> = new Set();
 	private refreshTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: CanvasRootsPlugin) {
@@ -227,22 +231,22 @@ export class StatisticsView extends ItemView {
 
 		// Top Surnames section
 		this.buildSection(sectionsContainer, SECTION_IDS.TOP_SURNAMES, 'Top surnames', 'users', () => {
-			return this.buildTopListContent(this.stats!.topSurnames);
+			return this.buildTopListContent(this.stats!.topSurnames, 'surname');
 		});
 
 		// Top Locations section
 		this.buildSection(sectionsContainer, SECTION_IDS.TOP_LOCATIONS, 'Top locations', 'map-pin', () => {
-			return this.buildTopListContent(this.stats!.topLocations);
+			return this.buildTopListContent(this.stats!.topLocations, 'location');
 		});
 
 		// Top Occupations section
 		this.buildSection(sectionsContainer, SECTION_IDS.TOP_OCCUPATIONS, 'Top occupations', 'briefcase', () => {
-			return this.buildTopListContent(this.stats!.topOccupations);
+			return this.buildTopListContent(this.stats!.topOccupations, 'occupation');
 		});
 
 		// Top Sources section
 		this.buildSection(sectionsContainer, SECTION_IDS.TOP_SOURCES, 'Top sources', 'archive', () => {
-			return this.buildTopListContent(this.stats!.topSources);
+			return this.buildTopListContent(this.stats!.topSources, 'source');
 		});
 
 		// Events by Type section
@@ -250,7 +254,7 @@ export class StatisticsView extends ItemView {
 			const items = Object.entries(this.stats!.eventsByType)
 				.map(([name, count]) => ({ name, count }))
 				.sort((a, b) => b.count - a.count);
-			return this.buildTopListContent(items);
+			return this.buildTopListContent(items, 'generic');
 		});
 
 		// Sources by Type section
@@ -258,7 +262,7 @@ export class StatisticsView extends ItemView {
 			const items = Object.entries(this.stats!.sourcesByType)
 				.map(([name, count]) => ({ name, count }))
 				.sort((a, b) => b.count - a.count);
-			return this.buildTopListContent(items);
+			return this.buildTopListContent(items, 'generic');
 		});
 
 		// Sources by Confidence section
@@ -271,7 +275,7 @@ export class StatisticsView extends ItemView {
 			const items = Object.entries(this.stats!.placesByCategory)
 				.map(([name, count]) => ({ name, count }))
 				.sort((a, b) => b.count - a.count);
-			return this.buildTopListContent(items);
+			return this.buildTopListContent(items, 'generic');
 		});
 
 		// === Extended Statistics (Phase 3) ===
@@ -635,9 +639,9 @@ export class StatisticsView extends ItemView {
 	}
 
 	/**
-	 * Build top list content
+	 * Build top list content with optional drill-down support
 	 */
-	private buildTopListContent(items: TopListItem[]): HTMLElement {
+	private buildTopListContent(items: TopListItem[], listType: TopListType): HTMLElement {
 		const content = document.createElement('div');
 		content.addClass('cr-sv-top-list');
 
@@ -650,17 +654,32 @@ export class StatisticsView extends ItemView {
 		const tbody = table.createEl('tbody');
 
 		for (const item of items) {
-			const row = tbody.createEl('tr');
+			const drilldownKey = `${listType}:${item.name}`;
+			const isExpanded = this.expandedDrilldowns.has(drilldownKey);
+			const canDrillDown = this.canDrillDown(listType, item);
+
+			const row = tbody.createEl('tr', { cls: isExpanded ? 'cr-sv-top-list-expanded' : '' });
 			const nameCell = row.createEl('td', { cls: 'cr-sv-top-list-name' });
 
-			// Make clickable if we have a file reference
+			// Make clickable if we have a file reference (direct link) or can drill down
 			if (item.file) {
+				// Direct file link (e.g., for sources)
 				const link = nameCell.createEl('a', { text: item.name, cls: 'cr-sv-top-list-link' });
 				link.addEventListener('click', (e) => {
 					e.preventDefault();
 					if (item.file) {
 						void this.app.workspace.getLeaf('tab').openFile(item.file);
 					}
+				});
+			} else if (canDrillDown) {
+				// Expandable drill-down for aggregate items
+				const expandWrapper = nameCell.createDiv({ cls: 'cr-sv-drilldown-header' });
+				const chevron = expandWrapper.createSpan({ cls: 'cr-sv-drilldown-chevron' });
+				setIcon(chevron, isExpanded ? 'chevron-down' : 'chevron-right');
+				expandWrapper.createSpan({ text: item.name, cls: 'cr-sv-drilldown-name' });
+
+				expandWrapper.addEventListener('click', () => {
+					this.toggleDrilldown(drilldownKey, item, listType, row, tbody);
 				});
 			} else {
 				nameCell.setText(item.name);
@@ -670,9 +689,115 @@ export class StatisticsView extends ItemView {
 				cls: 'cr-sv-top-list-count crc-text-muted',
 				text: formatNumber(item.count)
 			});
+
+			// If already expanded, add the drill-down content
+			if (isExpanded && canDrillDown) {
+				this.addDrilldownContent(tbody, item, listType);
+			}
 		}
 
 		return content;
+	}
+
+	/**
+	 * Check if drill-down is available for a given list type and item
+	 */
+	private canDrillDown(listType: TopListType, item: TopListItem): boolean {
+		// Sources already have direct file links, no drill-down needed
+		// Generic items (event types, source types, place categories) don't support drill-down yet
+		return (listType === 'surname' || listType === 'location' || listType === 'occupation') && !item.file;
+	}
+
+	/**
+	 * Toggle drill-down expansion for an item
+	 */
+	private toggleDrilldown(key: string, item: TopListItem, listType: TopListType, row: HTMLTableRowElement, tbody: HTMLTableSectionElement): void {
+		const wasExpanded = this.expandedDrilldowns.has(key);
+
+		if (wasExpanded) {
+			// Collapse: remove drill-down rows and update state
+			this.expandedDrilldowns.delete(key);
+			row.removeClass('cr-sv-top-list-expanded');
+
+			// Update chevron
+			const chevron = row.querySelector('.cr-sv-drilldown-chevron');
+			if (chevron) {
+				chevron.empty();
+				setIcon(chevron as HTMLElement, 'chevron-right');
+			}
+
+			// Remove drill-down content rows
+			let sibling = row.nextElementSibling;
+			while (sibling && sibling.hasClass('cr-sv-drilldown-row')) {
+				const toRemove = sibling;
+				sibling = sibling.nextElementSibling;
+				toRemove.remove();
+			}
+		} else {
+			// Expand: add drill-down rows
+			this.expandedDrilldowns.add(key);
+			row.addClass('cr-sv-top-list-expanded');
+
+			// Update chevron
+			const chevron = row.querySelector('.cr-sv-drilldown-chevron');
+			if (chevron) {
+				chevron.empty();
+				setIcon(chevron as HTMLElement, 'chevron-down');
+			}
+
+			// Insert drill-down content after this row
+			this.addDrilldownContent(tbody, item, listType, row);
+		}
+	}
+
+	/**
+	 * Add drill-down content rows to the table
+	 */
+	private addDrilldownContent(tbody: HTMLTableSectionElement, item: TopListItem, listType: TopListType, afterRow?: HTMLTableRowElement): void {
+		if (!this.service) return;
+
+		// Get the people for this item
+		let people: PersonRef[] = [];
+		switch (listType) {
+			case 'surname':
+				people = this.service.getPeopleBySurname(item.name);
+				break;
+			case 'location':
+				people = this.service.getPeopleByLocation(item.name);
+				break;
+			case 'occupation':
+				people = this.service.getPeopleByOccupation(item.name);
+				break;
+		}
+
+		if (people.length === 0) return;
+
+		// Create the drill-down row
+		const drilldownRow = document.createElement('tr');
+		drilldownRow.addClass('cr-sv-drilldown-row');
+		const drilldownCell = drilldownRow.createEl('td', {
+			attr: { colspan: '2' },
+			cls: 'cr-sv-drilldown-cell'
+		});
+
+		const peopleList = drilldownCell.createDiv({ cls: 'cr-sv-drilldown-list' });
+		for (const person of people) {
+			const personLink = peopleList.createEl('a', {
+				text: person.name,
+				cls: 'cr-sv-drilldown-person'
+			});
+			personLink.addEventListener('click', (e) => {
+				e.preventDefault();
+				void this.app.workspace.getLeaf('tab').openFile(person.file);
+			});
+		}
+
+		// Insert the drill-down row
+		if (afterRow && afterRow.nextSibling) {
+			tbody.insertBefore(drilldownRow, afterRow.nextSibling);
+		} else {
+			tbody.appendChild(drilldownRow);
+		}
 	}
 
 	// ==========================================================================
