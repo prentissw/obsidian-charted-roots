@@ -576,7 +576,9 @@ Control Center tab for generating formatted output:
 - ✅ Source coverage by generation
 - ✅ Timeline density (events per decade with gap detection)
 
-### Phase 4: Additional Reports (In Progress)
+### Phase 4: Additional Reports ✅
+
+**Status:** Complete
 
 **Focus:** Expand to all report types.
 
@@ -591,6 +593,28 @@ Control Center tab for generating formatted output:
 - Source Bibliography, Evidence Matrix
 - Faction Timeline, Age Audit, Lifespan Overlap
 - Dataview query generation
+
+### Phase 5: Quality Drill-Down ✅
+
+**Status:** Complete
+
+**Focus:** Enhanced data quality section with drill-down and additional metrics.
+
+**Bug Fix:**
+- ✅ Fixed orphaned people calculation (was returning negative values due to incorrect subtraction of overlapping sets)
+
+**New Quality Metrics:**
+- ✅ Missing death dates (people with birth but no death, excluding living)
+- ✅ Incomplete parents (people with only one parent linked)
+- ✅ Date inconsistencies (birth after death, age > 120)
+
+**Drill-Down Support:**
+- ✅ All quality issues are now clickable and expandable
+- ✅ Click to expand → shows affected people/items as clickable chips
+- ✅ Right-click context menu (open to right, new window)
+- ✅ Ctrl+hover for preview
+- ✅ Severity levels: error (red), warning (orange), info (blue)
+- ✅ Scrollable drill-down list (max 50 items with "...and X more" indicator)
 
 ### Future: Enhanced Drill-Down
 

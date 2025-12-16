@@ -52,6 +52,10 @@ export interface QualityMetrics {
 	unsourcedEvents: number;
 	/** Places without coordinates */
 	placesWithoutCoordinates: number;
+	/** People with only one parent linked (incomplete family) */
+	incompleteParents: number;
+	/** People with date inconsistencies (birth after death, child born before parent, etc.) */
+	dateInconsistencies: number;
 }
 
 /**
@@ -80,6 +84,18 @@ export interface PersonRef {
  * Top list item type for determining drill-down behavior
  */
 export type TopListType = 'surname' | 'location' | 'occupation' | 'source' | 'generic';
+
+/**
+ * Quality issue type for drill-down
+ */
+export type QualityIssueType =
+	| 'missingBirthDate'
+	| 'missingDeathDate'
+	| 'orphanedPeople'
+	| 'unsourcedEvents'
+	| 'placesWithoutCoordinates'
+	| 'incompleteParents'
+	| 'dateInconsistencies';
 
 /**
  * Date range across all entities

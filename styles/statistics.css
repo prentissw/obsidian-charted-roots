@@ -516,6 +516,68 @@
   font-weight: var(--font-semibold);
 }
 
+/* Quality alert wrapper (for drill-down support) */
+.cr-sv-quality-alert-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Clickable quality alerts */
+.cr-sv-quality-clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease;
+}
+
+.cr-sv-quality-clickable:hover {
+  filter: brightness(0.95);
+}
+
+.cr-sv-quality-expanded {
+  border-radius: var(--radius-s) var(--radius-s) 0 0;
+}
+
+/* Quality severity levels */
+.cr-sv-quality-error {
+  background-color: var(--background-modifier-error);
+  border-left: 3px solid var(--color-red);
+}
+
+.cr-sv-quality-chevron {
+  flex-shrink: 0;
+  width: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+/* Quality drill-down content */
+.cr-sv-quality-drilldown {
+  padding: var(--size-4-2) var(--size-4-3);
+  background-color: var(--background-secondary-alt);
+  border-radius: 0 0 var(--radius-s) var(--radius-s);
+  border-left: 3px solid var(--background-modifier-border);
+  margin-left: 0;
+}
+
+.cr-sv-quality-drilldown .cr-sv-drilldown-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.cr-sv-drilldown-more {
+  padding: var(--size-4-2);
+  font-size: var(--font-ui-smaller);
+  text-align: center;
+}
+
+.cr-sv-drilldown-empty {
+  padding: var(--size-4-2);
+  font-size: var(--font-ui-small);
+  text-align: center;
+}
+
 /* Gender content */
 .cr-sv-gender-grid {
   display: grid;

@@ -14,6 +14,7 @@ import type {
 	TopListItem,
 	TopListType,
 	PersonRef,
+	QualityIssueType,
 	LongevityAnalysis,
 	FamilySizeAnalysis,
 	MarriagePatternAnalysis,
@@ -442,7 +443,7 @@ export class StatisticsView extends ItemView {
 	}
 
 	/**
-	 * Build quality content
+	 * Build quality content with drill-down support
 	 */
 	private buildQualityContent(): HTMLElement {
 		const content = document.createElement('div');
@@ -453,9 +454,12 @@ export class StatisticsView extends ItemView {
 		const { quality } = this.stats;
 
 		const hasIssues = quality.missingBirthDate > 0 ||
+			quality.missingDeathDate > 0 ||
 			quality.orphanedPeople > 0 ||
 			quality.unsourcedEvents > 0 ||
-			quality.placesWithoutCoordinates > 0;
+			quality.placesWithoutCoordinates > 0 ||
+			quality.incompleteParents > 0 ||
+			quality.dateInconsistencies > 0;
 
 		if (!hasIssues) {
 			const success = content.createDiv({ cls: 'cr-sv-quality-success' });
@@ -467,27 +471,206 @@ export class StatisticsView extends ItemView {
 
 		const alertsList = content.createDiv({ cls: 'cr-sv-quality-alerts' });
 
-		const createAlert = (icon: string, label: string, count: number, severity: 'warning' | 'info') => {
+		// Helper to create expandable quality alerts
+		const createExpandableAlert = (
+			icon: string,
+			label: string,
+			count: number,
+			severity: 'error' | 'warning' | 'info',
+			issueType: QualityIssueType
+		) => {
 			if (count === 0) return;
 
-			const alert = alertsList.createDiv({ cls: `cr-sv-quality-alert cr-sv-quality-${severity}` });
+			const drilldownKey = `quality:${issueType}`;
+			const isExpanded = this.expandedDrilldowns.has(drilldownKey);
+
+			const alertWrapper = alertsList.createDiv({ cls: 'cr-sv-quality-alert-wrapper' });
+			const alert = alertWrapper.createDiv({
+				cls: `cr-sv-quality-alert cr-sv-quality-${severity} cr-sv-quality-clickable ${isExpanded ? 'cr-sv-quality-expanded' : ''}`
+			});
+
+			const chevron = alert.createSpan({ cls: 'cr-sv-quality-chevron' });
+			setIcon(chevron, isExpanded ? 'chevron-down' : 'chevron-right');
+
 			const iconEl = alert.createSpan({ cls: 'cr-sv-quality-alert-icon' });
 			setIcon(iconEl, icon);
 			alert.createSpan({ cls: 'cr-sv-quality-alert-label', text: label });
 			alert.createSpan({ cls: 'cr-sv-quality-alert-count', text: formatNumber(count) });
+
+			// Click to toggle drill-down
+			alert.addEventListener('click', () => {
+				this.toggleQualityDrilldown(drilldownKey, issueType, alertWrapper, chevron);
+			});
+
+			// If already expanded, show the drill-down content
+			if (isExpanded) {
+				this.addQualityDrilldownContent(alertWrapper, issueType);
+			}
 		};
 
-		createAlert('alert-circle', 'Missing birth dates', quality.missingBirthDate, 'warning');
-		createAlert('link', 'Orphaned people', quality.orphanedPeople, 'warning');
-		createAlert('archive', 'Unsourced events', quality.unsourcedEvents, 'info');
-		createAlert('map-pin', 'Places without coordinates', quality.placesWithoutCoordinates, 'info');
+		// High severity (errors)
+		createExpandableAlert('alert-triangle', 'Date inconsistencies', quality.dateInconsistencies, 'error', 'dateInconsistencies');
 
+		// Medium severity (warnings)
+		createExpandableAlert('alert-circle', 'Missing birth dates', quality.missingBirthDate, 'warning', 'missingBirthDate');
+		createExpandableAlert('calendar-x', 'Missing death dates', quality.missingDeathDate, 'warning', 'missingDeathDate');
+		createExpandableAlert('link', 'Orphaned people', quality.orphanedPeople, 'warning', 'orphanedPeople');
+		createExpandableAlert('users', 'Incomplete parents', quality.incompleteParents, 'warning', 'incompleteParents');
+
+		// Low severity (info)
+		createExpandableAlert('archive', 'Unsourced events', quality.unsourcedEvents, 'info', 'unsourcedEvents');
+		createExpandableAlert('map-pin', 'Places without coordinates', quality.placesWithoutCoordinates, 'info', 'placesWithoutCoordinates');
+
+		// Living people count (informational, not an issue)
 		if (quality.livingPeople > 0) {
 			const info = content.createDiv({ cls: 'cr-sv-quality-info crc-text-muted' });
 			info.createSpan({ text: `${formatNumber(quality.livingPeople)} people marked as living` });
 		}
 
 		return content;
+	}
+
+	/**
+	 * Toggle drill-down for a quality issue
+	 */
+	private toggleQualityDrilldown(
+		key: string,
+		issueType: QualityIssueType,
+		wrapper: HTMLElement,
+		chevron: HTMLElement
+	): void {
+		const wasExpanded = this.expandedDrilldowns.has(key);
+
+		if (wasExpanded) {
+			// Collapse
+			this.expandedDrilldowns.delete(key);
+			wrapper.querySelector('.cr-sv-quality-alert')?.removeClass('cr-sv-quality-expanded');
+			chevron.empty();
+			setIcon(chevron, 'chevron-right');
+
+			// Remove drill-down content
+			wrapper.querySelector('.cr-sv-quality-drilldown')?.remove();
+		} else {
+			// Expand
+			this.expandedDrilldowns.add(key);
+			wrapper.querySelector('.cr-sv-quality-alert')?.addClass('cr-sv-quality-expanded');
+			chevron.empty();
+			setIcon(chevron, 'chevron-down');
+
+			// Add drill-down content
+			this.addQualityDrilldownContent(wrapper, issueType);
+		}
+	}
+
+	/**
+	 * Add drill-down content for a quality issue
+	 */
+	private addQualityDrilldownContent(wrapper: HTMLElement, issueType: QualityIssueType): void {
+		if (!this.service) return;
+
+		const drilldown = wrapper.createDiv({ cls: 'cr-sv-quality-drilldown' });
+
+		// Get the affected items based on issue type
+		let personRefs: PersonRef[] = [];
+		let fileRefs: TFile[] = [];
+
+		switch (issueType) {
+			case 'missingBirthDate':
+				personRefs = this.service.getPeopleWithMissingBirthDate();
+				break;
+			case 'missingDeathDate':
+				personRefs = this.service.getPeopleWithMissingDeathDate();
+				break;
+			case 'orphanedPeople':
+				personRefs = this.service.getOrphanedPeople();
+				break;
+			case 'incompleteParents':
+				personRefs = this.service.getPeopleWithIncompleteParents();
+				break;
+			case 'dateInconsistencies':
+				personRefs = this.service.getPeopleWithDateInconsistencies();
+				break;
+			case 'unsourcedEvents':
+				fileRefs = this.service.getUnsourcedEvents();
+				break;
+			case 'placesWithoutCoordinates':
+				fileRefs = this.service.getPlacesWithoutCoordinates();
+				break;
+		}
+
+		// Render person refs
+		if (personRefs.length > 0) {
+			const list = drilldown.createDiv({ cls: 'cr-sv-drilldown-list' });
+			const maxToShow = 50;
+			const itemsToShow = personRefs.slice(0, maxToShow);
+
+			for (const person of itemsToShow) {
+				const personLink = list.createEl('a', {
+					text: person.name,
+					cls: 'cr-sv-drilldown-person internal-link',
+					attr: { 'data-href': person.file.path }
+				});
+				personLink.addEventListener('click', (e) => {
+					e.preventDefault();
+					void this.app.workspace.getLeaf('tab').openFile(person.file);
+				});
+				personLink.addEventListener('contextmenu', (e) => {
+					e.preventDefault();
+					this.showPersonContextMenu(e, person.file);
+				});
+				personLink.addEventListener('mouseover', (e) => {
+					this.triggerHoverPreview(e, person.file, personLink);
+				});
+			}
+
+			if (personRefs.length > maxToShow) {
+				list.createDiv({
+					cls: 'cr-sv-drilldown-more crc-text-muted',
+					text: `...and ${formatNumber(personRefs.length - maxToShow)} more`
+				});
+			}
+		}
+
+		// Render file refs (for events and places)
+		if (fileRefs.length > 0) {
+			const list = drilldown.createDiv({ cls: 'cr-sv-drilldown-list' });
+			const maxToShow = 50;
+			const itemsToShow = fileRefs.slice(0, maxToShow);
+
+			for (const file of itemsToShow) {
+				const fileLink = list.createEl('a', {
+					text: file.basename,
+					cls: 'cr-sv-drilldown-person internal-link',
+					attr: { 'data-href': file.path }
+				});
+				fileLink.addEventListener('click', (e) => {
+					e.preventDefault();
+					void this.app.workspace.getLeaf('tab').openFile(file);
+				});
+				fileLink.addEventListener('contextmenu', (e) => {
+					e.preventDefault();
+					this.showPersonContextMenu(e, file);
+				});
+				fileLink.addEventListener('mouseover', (e) => {
+					this.triggerHoverPreview(e, file, fileLink);
+				});
+			}
+
+			if (fileRefs.length > maxToShow) {
+				list.createDiv({
+					cls: 'cr-sv-drilldown-more crc-text-muted',
+					text: `...and ${formatNumber(fileRefs.length - maxToShow)} more`
+				});
+			}
+		}
+
+		// Empty state
+		if (personRefs.length === 0 && fileRefs.length === 0) {
+			drilldown.createDiv({
+				cls: 'cr-sv-drilldown-empty crc-text-muted',
+				text: 'No items found'
+			});
+		}
 	}
 
 	/**

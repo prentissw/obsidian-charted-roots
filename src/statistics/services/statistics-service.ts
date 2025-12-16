@@ -296,13 +296,42 @@ export class StatisticsService {
 		// Missing death date = total people - people with death date - living people
 		const missingDeathDate = totalPeople - vaultStats.people.peopleWithDeathDate - vaultStats.people.livingPeople;
 
+		// Calculate additional metrics
+		const people = this.getFamilyGraphService().getAllPeople();
+
+		// Incomplete parents: has one parent but not both
+		const incompleteParents = people.filter(p =>
+			(p.fatherCrId && !p.motherCrId) || (!p.fatherCrId && p.motherCrId)
+		).length;
+
+		// Date inconsistencies: birth after death or unreasonable ages
+		let dateInconsistencies = 0;
+		for (const person of people) {
+			if (person.birthDate && person.deathDate) {
+				const birthYear = this.extractYear(person.birthDate);
+				const deathYear = this.extractYear(person.deathDate);
+				if (birthYear !== null && deathYear !== null) {
+					// Birth after death
+					if (birthYear > deathYear) {
+						dateInconsistencies++;
+					}
+					// Age over 120 (likely data error)
+					else if (deathYear - birthYear > 120) {
+						dateInconsistencies++;
+					}
+				}
+			}
+		}
+
 		return {
 			missingBirthDate: totalPeople - vaultStats.people.peopleWithBirthDate,
 			missingDeathDate: Math.max(0, missingDeathDate),
 			orphanedPeople: analytics.relationshipMetrics.orphanedPeople,
 			livingPeople: vaultStats.people.livingPeople,
 			unsourcedEvents: this.countUnsourcedEvents(),
-			placesWithoutCoordinates: vaultStats.places.totalPlaces - vaultStats.places.placesWithCoordinates
+			placesWithoutCoordinates: vaultStats.places.totalPlaces - vaultStats.places.placesWithCoordinates,
+			incompleteParents,
+			dateInconsistencies
 		};
 	}
 
@@ -720,6 +749,197 @@ export class StatisticsService {
 			}
 		}
 		return null;
+	}
+
+	// =========================================================================
+	// Drill-down Methods (for Quality Issues)
+	// =========================================================================
+
+	/**
+	 * Get people missing birth date
+	 */
+	getPeopleWithMissingBirthDate(): PersonRef[] {
+		const people = this.getFamilyGraphService().getAllPeople();
+		const matches: PersonRef[] = [];
+
+		for (const person of people) {
+			if (!person.birthDate) {
+				const file = this.getPersonFile(person);
+				if (file) {
+					matches.push({
+						crId: person.crId,
+						name: person.name ?? person.crId,
+						file
+					});
+				}
+			}
+		}
+
+		return matches.sort((a, b) => a.name.localeCompare(b.name));
+	}
+
+	/**
+	 * Get people missing death date (excluding living people)
+	 */
+	getPeopleWithMissingDeathDate(): PersonRef[] {
+		const people = this.getFamilyGraphService().getAllPeople();
+		const matches: PersonRef[] = [];
+
+		for (const person of people) {
+			// Missing death date but not marked as living (has birth but no death)
+			if (!person.deathDate && person.birthDate) {
+				// Check if marked as living in frontmatter
+				const file = this.getPersonFile(person);
+				if (file) {
+					const cache = this.app.metadataCache.getFileCache(file);
+					const isLiving = cache?.frontmatter?.living === true ||
+						cache?.frontmatter?.living === 'true';
+					if (!isLiving) {
+						matches.push({
+							crId: person.crId,
+							name: person.name ?? person.crId,
+							file
+						});
+					}
+				}
+			}
+		}
+
+		return matches.sort((a, b) => a.name.localeCompare(b.name));
+	}
+
+	/**
+	 * Get orphaned people (no relationships at all)
+	 */
+	getOrphanedPeople(): PersonRef[] {
+		const people = this.getFamilyGraphService().getAllPeople();
+		const matches: PersonRef[] = [];
+
+		for (const person of people) {
+			const hasNoRelationships =
+				!person.fatherCrId &&
+				!person.motherCrId &&
+				person.spouseCrIds.length === 0 &&
+				person.childrenCrIds.length === 0;
+
+			if (hasNoRelationships) {
+				const file = this.getPersonFile(person);
+				if (file) {
+					matches.push({
+						crId: person.crId,
+						name: person.name ?? person.crId,
+						file
+					});
+				}
+			}
+		}
+
+		return matches.sort((a, b) => a.name.localeCompare(b.name));
+	}
+
+	/**
+	 * Get people with incomplete parent links (one parent but not both)
+	 */
+	getPeopleWithIncompleteParents(): PersonRef[] {
+		const people = this.getFamilyGraphService().getAllPeople();
+		const matches: PersonRef[] = [];
+
+		for (const person of people) {
+			const hasOnlyFather = person.fatherCrId && !person.motherCrId;
+			const hasOnlyMother = !person.fatherCrId && person.motherCrId;
+
+			if (hasOnlyFather || hasOnlyMother) {
+				const file = this.getPersonFile(person);
+				if (file) {
+					matches.push({
+						crId: person.crId,
+						name: person.name ?? person.crId,
+						file
+					});
+				}
+			}
+		}
+
+		return matches.sort((a, b) => a.name.localeCompare(b.name));
+	}
+
+	/**
+	 * Get people with date inconsistencies (birth after death, age > 120)
+	 */
+	getPeopleWithDateInconsistencies(): PersonRef[] {
+		const people = this.getFamilyGraphService().getAllPeople();
+		const matches: PersonRef[] = [];
+
+		for (const person of people) {
+			if (person.birthDate && person.deathDate) {
+				const birthYear = this.extractYear(person.birthDate);
+				const deathYear = this.extractYear(person.deathDate);
+
+				if (birthYear !== null && deathYear !== null) {
+					// Birth after death or age over 120
+					if (birthYear > deathYear || (deathYear - birthYear) > 120) {
+						const file = this.getPersonFile(person);
+						if (file) {
+							matches.push({
+								crId: person.crId,
+								name: person.name ?? person.crId,
+								file
+							});
+						}
+					}
+				}
+			}
+		}
+
+		return matches.sort((a, b) => a.name.localeCompare(b.name));
+	}
+
+	/**
+	 * Get unsourced events as file references
+	 */
+	getUnsourcedEvents(): TFile[] {
+		const files = this.app.vault.getMarkdownFiles();
+		const unsourced: TFile[] = [];
+
+		for (const file of files) {
+			const cache = this.app.metadataCache.getFileCache(file);
+			if (!cache?.frontmatter) continue;
+
+			const fm = cache.frontmatter;
+			if (fm.cr_type === 'event' || cache.tags?.some(t => t.tag === '#event')) {
+				if (!fm.source && !fm.sources && !fm.source_id) {
+					unsourced.push(file);
+				}
+			}
+		}
+
+		return unsourced.sort((a, b) => a.basename.localeCompare(b.basename));
+	}
+
+	/**
+	 * Get places without coordinates
+	 */
+	getPlacesWithoutCoordinates(): TFile[] {
+		const files = this.app.vault.getMarkdownFiles();
+		const noCoords: TFile[] = [];
+
+		for (const file of files) {
+			const cache = this.app.metadataCache.getFileCache(file);
+			if (!cache?.frontmatter) continue;
+
+			const fm = cache.frontmatter;
+			if (fm.cr_type === 'place' || cache.tags?.some(t => t.tag === '#place')) {
+				// Check for coordinates in various fields
+				const hasCoords = fm.coordinates || fm.coords ||
+					fm.latitude || fm.lat ||
+					fm.longitude || fm.long || fm.lng;
+				if (!hasCoords) {
+					noCoords.push(file);
+				}
+			}
+		}
+
+		return noCoords.sort((a, b) => a.basename.localeCompare(b.basename));
 	}
 
 	// =========================================================================
