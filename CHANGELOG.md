@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Family Chart PNG/PDF export failing silently for large charts** - Charts exceeding browser canvas limits (16384px dimension or ~268M pixels) now show a persistent dismissable error message suggesting SVG export instead.
+
+- **Family Chart SVG export missing button styling** - Exported SVG files now properly resolve CSS variables in the "Open note" buttons to actual colors, ensuring correct rendering in standalone viewers.
+
+---
+
 ## [0.12.9] - 2025-12-16
 
 ### Added

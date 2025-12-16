@@ -986,16 +986,39 @@ export class FamilyChartView extends ItemView {
 			// Prepare SVG for export using shared helper
 			const { svgClone, width, height } = this.prepareSvgForExport(svg as SVGSVGElement);
 
+			logger.debug('export-png', 'Preparing PNG export', { width, height, area: width * height });
+
+			// Check for canvas size limits (browsers typically cap at ~16384px or ~268 million pixels)
+			const maxDimension = 16384;
+			const maxArea = 268435456; // 2^28 pixels
+			const scaledWidth = width * 2;
+			const scaledHeight = height * 2;
+			const scaledArea = scaledWidth * scaledHeight;
+
+			if (scaledWidth > maxDimension || scaledHeight > maxDimension) {
+				logger.warn('export-png', 'Canvas dimensions exceed browser limits', { scaledWidth, scaledHeight, maxDimension });
+				new Notice(`Chart too large for PNG export (${Math.round(width)}x${Math.round(height)}px). Try SVG export instead.`, 0);
+				return;
+			}
+
+			if (scaledArea > maxArea) {
+				logger.warn('export-png', 'Canvas area exceeds browser limits', { scaledArea, maxArea });
+				new Notice(`Chart too large for PNG export (${Math.round(scaledArea / 1000000)}M pixels). Try SVG export instead.`, 0);
+				return;
+			}
+
 			// Serialize SVG
 			const serializer = new XMLSerializer();
 			const svgString = serializer.serializeToString(svgClone);
 			const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
 			const svgUrl = URL.createObjectURL(svgBlob);
 
+			logger.debug('export-png', 'SVG serialized', { svgStringLength: svgString.length });
+
 			// Create canvas and draw SVG
 			const canvas = document.createElement('canvas');
-			canvas.width = width * 2; // 2x for better quality
-			canvas.height = height * 2;
+			canvas.width = scaledWidth;
+			canvas.height = scaledHeight;
 			const ctx = canvas.getContext('2d');
 			if (!ctx) {
 				new Notice('Failed to create canvas context');
@@ -1007,6 +1030,7 @@ export class FamilyChartView extends ItemView {
 
 			const img = new Image();
 			img.onload = () => {
+				logger.debug('export-png', 'Image loaded, drawing to canvas');
 				ctx.scale(2, 2);
 				ctx.drawImage(img, 0, 0);
 				URL.revokeObjectURL(svgUrl);
@@ -1014,6 +1038,7 @@ export class FamilyChartView extends ItemView {
 				// Download PNG
 				canvas.toBlob((blob) => {
 					if (blob) {
+						logger.debug('export-png', 'Blob created', { size: blob.size });
 						const url = URL.createObjectURL(blob);
 						const link = document.createElement('a');
 						link.href = url;
@@ -1021,12 +1046,16 @@ export class FamilyChartView extends ItemView {
 						link.click();
 						URL.revokeObjectURL(url);
 						new Notice('PNG exported successfully');
+					} else {
+						logger.error('export-png', 'Failed to create blob from canvas');
+						new Notice('Failed to create PNG image');
 					}
 				}, 'image/png');
 			};
-			img.onerror = () => {
+			img.onerror = (e) => {
 				URL.revokeObjectURL(svgUrl);
-				new Notice('Failed to render chart as PNG');
+				logger.error('export-png', 'Failed to load SVG as image', { error: e });
+				new Notice('Failed to render chart as PNG. Try SVG export instead.');
 			};
 			img.src = svgUrl;
 
@@ -1135,8 +1164,27 @@ export class FamilyChartView extends ItemView {
 		svgClone.insertBefore(styleEl, svgClone.firstChild);
 
 		// Set fill on all text elements for maximum compatibility
+		// Also remove any inline styles that might override our fill, and ensure visibility
 		svgClone.querySelectorAll('text, tspan').forEach((el) => {
 			el.setAttribute('fill', textColor);
+			// Remove any inline style that might contain CSS variables or override fill
+			const style = el.getAttribute('style');
+			if (style) {
+				// Remove fill, color, and any CSS variable references from inline style
+				const cleanedStyle = style
+					.replace(/fill:[^;]+;?/gi, '')
+					.replace(/color:[^;]+;?/gi, '')
+					.replace(/var\([^)]+\)/gi, textColor)
+					.trim();
+				if (cleanedStyle) {
+					el.setAttribute('style', cleanedStyle);
+				} else {
+					el.removeAttribute('style');
+				}
+			}
+			// Ensure text is visible
+			el.setAttribute('opacity', '1');
+			el.setAttribute('visibility', 'visible');
 		});
 
 		// Remove clip-path and mask references
@@ -1154,6 +1202,34 @@ export class FamilyChartView extends ItemView {
 		// CRITICAL: Remove text-overflow-mask elements - they cover the text when mask is removed!
 		svgClone.querySelectorAll('.text-overflow-mask').forEach((el) => {
 			el.remove();
+		});
+
+		// Replace CSS variables in Open note buttons with actual colors
+		// These buttons use Obsidian CSS variables that won't work in standalone SVG
+		const buttonBgColor = isDark ? 'rgb(30, 30, 30)' : 'rgb(255, 255, 255)';
+		const buttonStrokeColor = isDark ? 'rgb(150, 150, 150)' : 'rgb(100, 100, 100)';
+
+		svgClone.querySelectorAll('.cr-open-note-btn').forEach((btnGroup) => {
+			// Fix circle background
+			const circle = btnGroup.querySelector('circle');
+			if (circle) {
+				const fill = circle.getAttribute('fill');
+				if (fill && fill.includes('var(')) {
+					circle.setAttribute('fill', buttonBgColor);
+				}
+				const stroke = circle.getAttribute('stroke');
+				if (stroke && stroke.includes('var(')) {
+					circle.setAttribute('stroke', buttonStrokeColor);
+				}
+			}
+			// Fix path (icon) stroke
+			const path = btnGroup.querySelector('path');
+			if (path) {
+				const stroke = path.getAttribute('stroke');
+				if (stroke && stroke.includes('var(')) {
+					path.setAttribute('stroke', buttonStrokeColor);
+				}
+			}
 		});
 
 		// Add background rect
@@ -1467,6 +1543,28 @@ export class FamilyChartView extends ItemView {
 			// Prepare SVG for export using shared helper
 			const { svgClone, width, height } = this.prepareSvgForExport(svg as SVGSVGElement);
 
+			logger.debug('export-pdf', 'Preparing PDF export', { width, height, area: width * height });
+
+			// Check for canvas size limits (same as PNG - PDF uses canvas internally)
+			const maxDimension = 16384;
+			const maxArea = 268435456; // 2^28 pixels
+			const scale = 2; // Higher quality
+			const scaledWidth = width * scale;
+			const scaledHeight = height * scale;
+			const scaledArea = scaledWidth * scaledHeight;
+
+			if (scaledWidth > maxDimension || scaledHeight > maxDimension) {
+				logger.warn('export-pdf', 'Canvas dimensions exceed browser limits', { scaledWidth, scaledHeight, maxDimension });
+				new Notice(`Chart too large for PDF export (${Math.round(width)}x${Math.round(height)}px). Try SVG export instead.`, 0);
+				return;
+			}
+
+			if (scaledArea > maxArea) {
+				logger.warn('export-pdf', 'Canvas area exceeds browser limits', { scaledArea, maxArea });
+				new Notice(`Chart too large for PDF export (${Math.round(scaledArea / 1000000)}M pixels). Try SVG export instead.`, 0);
+				return;
+			}
+
 			// Serialize SVG
 			const serializer = new XMLSerializer();
 			const svgString = serializer.serializeToString(svgClone);
@@ -1475,9 +1573,8 @@ export class FamilyChartView extends ItemView {
 
 			// Create canvas and draw SVG (same as PNG export)
 			const canvas = document.createElement('canvas');
-			const scale = 2; // Higher quality
-			canvas.width = width * scale;
-			canvas.height = height * scale;
+			canvas.width = scaledWidth;
+			canvas.height = scaledHeight;
 			const ctx = canvas.getContext('2d');
 			if (!ctx) {
 				new Notice('Failed to create canvas context');
@@ -1489,6 +1586,7 @@ export class FamilyChartView extends ItemView {
 
 			const img = new Image();
 			img.onload = () => {
+				logger.debug('export-pdf', 'Image loaded, drawing to canvas');
 				ctx.scale(scale, scale);
 				ctx.drawImage(img, 0, 0);
 				URL.revokeObjectURL(svgUrl);
@@ -1510,9 +1608,10 @@ export class FamilyChartView extends ItemView {
 				pdf.save(filename);
 				new Notice('PDF exported successfully');
 			};
-			img.onerror = () => {
+			img.onerror = (e) => {
 				URL.revokeObjectURL(svgUrl);
-				new Notice('Failed to render chart as PDF');
+				logger.error('export-pdf', 'Failed to load SVG as image', { error: e });
+				new Notice('Failed to render chart as PDF. Try SVG export instead.');
 			};
 			img.src = svgUrl;
 
