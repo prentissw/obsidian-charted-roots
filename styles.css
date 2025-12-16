@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-16 16:01:11 UTC
+ * - Generated: 2025-12-16 16:27:31 UTC
  * - Components: 32 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -17884,7 +17884,7 @@ body:has(.cr-media-linker) .suggestion-container {
    COMPONENT: STATISTICS.CSS
    ========================================================================== */
 
-/* Component Size: 846 lines, 16.2 KB */
+/* Component Size: 1158 lines, 22.24 KB */
 
 /**
  * Statistics Tab & View Styles
@@ -18732,6 +18732,318 @@ body:has(.cr-media-linker) .suggestion-container {
   border-top: 1px solid var(--background-modifier-border);
 }
 
+/* =============================================================================
+   EXTENDED STATISTICS SECTIONS (Phase 3)
+   ============================================================================= */
+
+/* Shared extended statistics styles */
+.cr-sv-section-label {
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--size-4-2);
+}
+
+.cr-sv-section-label-spaced {
+  margin-top: var(--size-4-4);
+}
+
+.cr-sv-count-info {
+  font-size: var(--font-ui-small);
+  margin-top: var(--size-4-2);
+}
+
+.cr-sv-summary-text {
+  font-size: var(--font-ui-medium);
+  margin-bottom: var(--size-4-1);
+}
+
+.cr-sv-highlight-value {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  color: var(--text-accent);
+}
+
+/* Stats grid (for longevity overview) */
+.cr-sv-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-2);
+}
+
+.cr-sv-stat-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--size-4-2);
+  background-color: var(--background-secondary);
+  border-radius: var(--radius-s);
+}
+
+.cr-sv-stat-label {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.cr-sv-stat-value {
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+}
+
+/* Decade bars (shared by longevity, timeline) */
+.cr-sv-decade-bars,
+.cr-sv-distribution-bars,
+.cr-sv-timeline-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+}
+
+.cr-sv-decade-row,
+.cr-sv-dist-row {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.cr-sv-decade-label,
+.cr-sv-dist-label {
+  width: 60px;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.cr-sv-bar-container {
+  flex: 1;
+  height: 16px;
+  background-color: var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+
+.cr-sv-bar {
+  height: 100%;
+  border-radius: var(--radius-s);
+  transition: width 0.3s ease;
+}
+
+.cr-sv-bar-primary {
+  background-color: var(--color-blue);
+}
+
+.cr-sv-bar-secondary {
+  background-color: var(--color-purple);
+}
+
+.cr-sv-bar-timeline {
+  background-color: var(--color-cyan);
+}
+
+.cr-sv-decade-value,
+.cr-sv-dist-value {
+  width: 100px;
+  font-size: var(--font-ui-small);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Location table (longevity by location) */
+.cr-sv-location-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cr-sv-location-table td {
+  padding: var(--size-4-1) var(--size-4-2);
+  font-size: var(--font-ui-small);
+}
+
+.cr-sv-loc-name {
+  font-weight: var(--font-medium);
+}
+
+.cr-sv-loc-value {
+  text-align: right;
+}
+
+.cr-sv-loc-count {
+  text-align: right;
+  width: 100px;
+}
+
+/* Decade table (family size by decade) */
+.cr-sv-decade-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cr-sv-decade-table td {
+  padding: var(--size-4-1) var(--size-4-2);
+  font-size: var(--font-ui-small);
+}
+
+.cr-sv-decade-name {
+  font-weight: var(--font-medium);
+}
+
+/* Comparison grid (marriage patterns by sex) */
+.cr-sv-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--size-4-3);
+  margin-bottom: var(--size-4-2);
+}
+
+.cr-sv-comparison-col {
+  display: flex;
+  flex-direction: column;
+  padding: var(--size-4-3);
+  background-color: var(--background-secondary);
+  border-radius: var(--radius-s);
+}
+
+.cr-sv-comparison-header {
+  font-weight: var(--font-semibold);
+  margin-bottom: var(--size-4-2);
+}
+
+.cr-sv-comparison-value {
+  font-size: var(--font-ui-medium);
+}
+
+.cr-sv-comparison-subvalue {
+  font-size: var(--font-ui-small);
+}
+
+.cr-sv-comparison-count {
+  font-size: var(--font-ui-smaller);
+  margin-top: var(--size-4-1);
+}
+
+/* Remarriage info */
+.cr-sv-remarriage-info {
+  font-size: var(--font-ui-medium);
+}
+
+/* Migration routes table */
+.cr-sv-routes-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cr-sv-routes-table td {
+  padding: var(--size-4-1) var(--size-4-2);
+  font-size: var(--font-ui-small);
+}
+
+.cr-sv-route-from {
+  font-weight: var(--font-medium);
+}
+
+.cr-sv-route-arrow {
+  width: 24px;
+  color: var(--text-muted);
+}
+
+.cr-sv-route-to {
+  font-weight: var(--font-medium);
+}
+
+.cr-sv-route-count {
+  text-align: right;
+}
+
+/* Inline list (top destinations) */
+.cr-sv-inline-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-2);
+}
+
+.cr-sv-inline-item {
+  display: inline-block;
+  padding: var(--size-4-1) var(--size-4-2);
+  background-color: var(--background-secondary);
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-small);
+}
+
+/* Generation table (source coverage) */
+.cr-sv-generation-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cr-sv-generation-table th {
+  text-align: left;
+  padding: var(--size-4-1) var(--size-4-2);
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-medium);
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.cr-sv-generation-table td {
+  padding: var(--size-4-2);
+  font-size: var(--font-ui-small);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.cr-sv-generation-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Mini progress bar (inline in table) */
+.cr-sv-mini-progress {
+  display: inline-block;
+  width: 60px;
+  height: 8px;
+  background-color: var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: var(--size-4-1);
+}
+
+.cr-sv-mini-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-s);
+}
+
+.cr-sv-mini-progress-label {
+  font-size: var(--font-ui-smaller);
+}
+
+/* Timeline gaps */
+.cr-sv-gaps-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-1);
+}
+
+.cr-sv-gap-item {
+  display: flex;
+  align-items: center;
+  padding: var(--size-4-2);
+  background-color: var(--background-modifier-error);
+  border-left: 3px solid var(--color-orange);
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-small);
+}
+
+.cr-sv-gap-range {
+  font-weight: var(--font-semibold);
+}
+
+.cr-sv-warning-icon {
+  color: var(--color-orange);
+  margin-right: var(--size-4-1);
+}
+
 
 /* End of statistics.css */
 
@@ -19252,11 +19564,11 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-16 16:01:11 UTC
+ * Build completed: 2025-12-16 16:27:31 UTC
  * Components processed: 32
- * Total lines: 18941
- * Total size: 374.99 KB
- * Build duration: 0.04 seconds
+ * Total lines: 19253
+ * Total size: 381.03 KB
+ * Build duration: 0.03 seconds
  *
  * Component breakdown:
  * - variables.css: 48 lines, 1.33 KB
@@ -19285,7 +19597,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - timeline-callouts.css: 319 lines, 10.4 KB
  * - organizations.css: 245 lines, 4.36 KB
  * - sources.css: 2664 lines, 54.11 KB
- * - statistics.css: 846 lines, 16.2 KB
+ * - statistics.css: 1158 lines, 22.24 KB
  * - preferences.css: 242 lines, 5.29 KB
  * - dynamic-content.css: 189 lines, 3.98 KB
  * - animations.css: 16 lines, 0.18 KB

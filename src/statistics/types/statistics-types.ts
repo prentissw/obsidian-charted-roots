@@ -154,3 +154,270 @@ export interface StatisticsCache {
 	lastUpdated: number;
 	isValid: boolean;
 }
+
+// =============================================================================
+// Extended Statistics Types (Phase 3)
+// =============================================================================
+
+/**
+ * Age statistics for a group of people
+ */
+export interface AgeStatistics {
+	/** Number of people with calculable lifespan */
+	count: number;
+	/** Average age at death in years */
+	averageAge: number;
+	/** Median age at death in years */
+	medianAge: number;
+	/** Minimum age at death */
+	minAge: number;
+	/** Maximum age at death */
+	maxAge: number;
+}
+
+/**
+ * Age statistics grouped by decade
+ */
+export interface DecadeAgeStats {
+	/** Decade start year (e.g., 1850) */
+	decade: number;
+	/** Decade label (e.g., "1850s") */
+	label: string;
+	/** Statistics for this decade */
+	stats: AgeStatistics;
+}
+
+/**
+ * Age statistics grouped by location
+ */
+export interface LocationAgeStats {
+	/** Normalized location name */
+	location: string;
+	/** Statistics for people from this location */
+	stats: AgeStatistics;
+}
+
+/**
+ * Longevity analysis results
+ */
+export interface LongevityAnalysis {
+	/** Overall statistics across all people */
+	overall: AgeStatistics;
+	/** Statistics grouped by birth decade */
+	byBirthDecade: DecadeAgeStats[];
+	/** Statistics grouped by birth location (top 10) */
+	byBirthLocation: LocationAgeStats[];
+}
+
+/**
+ * Family size statistics
+ */
+export interface FamilySizeStats {
+	/** Number of families/people analyzed */
+	count: number;
+	/** Average number of children */
+	averageChildren: number;
+	/** Median number of children */
+	medianChildren: number;
+	/** Maximum number of children in a family */
+	maxChildren: number;
+	/** Total children across all families */
+	totalChildren: number;
+}
+
+/**
+ * Family size statistics by decade
+ */
+export interface DecadeFamilyStats {
+	/** Decade start year */
+	decade: number;
+	/** Decade label */
+	label: string;
+	/** Statistics for this decade */
+	stats: FamilySizeStats;
+}
+
+/**
+ * Family size distribution bucket
+ */
+export interface FamilySizeBucket {
+	/** Bucket label (e.g., "0", "1-2", "3-4", "5+") */
+	label: string;
+	/** Number of families in this bucket */
+	count: number;
+	/** Percentage of total */
+	percent: number;
+}
+
+/**
+ * Family size analysis results
+ */
+export interface FamilySizeAnalysis {
+	/** Overall statistics */
+	overall: FamilySizeStats;
+	/** Statistics by birth decade of parent */
+	byBirthDecade: DecadeFamilyStats[];
+	/** Distribution buckets */
+	sizeDistribution: FamilySizeBucket[];
+}
+
+/**
+ * Marriage age statistics
+ */
+export interface MarriageStats {
+	/** Number of people with calculable marriage age */
+	count: number;
+	/** Average age at first marriage */
+	averageAge: number;
+	/** Median age at first marriage */
+	medianAge: number;
+	/** Minimum age at marriage */
+	minAge: number;
+	/** Maximum age at marriage */
+	maxAge: number;
+}
+
+/**
+ * Remarriage statistics
+ */
+export interface RemarriageStats {
+	/** Total married people analyzed */
+	totalMarried: number;
+	/** Number of people who remarried */
+	remarriedCount: number;
+	/** Percentage who remarried */
+	remarriageRate: number;
+	/** Average number of marriages for those who remarried */
+	averageMarriagesForRemarried: number;
+}
+
+/**
+ * Marriage pattern analysis results
+ */
+export interface MarriagePatternAnalysis {
+	/** Overall marriage age statistics */
+	overall: MarriageStats;
+	/** Statistics by sex */
+	bySex: {
+		male: MarriageStats;
+		female: MarriageStats;
+	};
+	/** Remarriage statistics */
+	remarriage: RemarriageStats;
+}
+
+/**
+ * Migration route (from one place to another)
+ */
+export interface MigrationRoute {
+	/** Origin location (birth place) */
+	from: string;
+	/** Destination location (death place) */
+	to: string;
+	/** Number of people who made this migration */
+	count: number;
+}
+
+/**
+ * Migration analysis results
+ */
+export interface MigrationAnalysis {
+	/** Number of people with both birth and death places */
+	analyzedCount: number;
+	/** Number who moved (different birth/death locations) */
+	movedCount: number;
+	/** Migration rate (percentage who moved) */
+	migrationRate: number;
+	/** Top migration routes */
+	topRoutes: MigrationRoute[];
+	/** Top destinations (death places) */
+	topDestinations: TopListItem[];
+	/** Top origins (birth places) */
+	topOrigins: TopListItem[];
+}
+
+/**
+ * Source coverage statistics
+ */
+export interface SourceCoverageStats {
+	/** Number of people analyzed */
+	peopleCount: number;
+	/** Number with at least one source */
+	withSources: number;
+	/** Coverage percentage */
+	coveragePercent: number;
+	/** Average sources per person */
+	averageSourcesPerPerson: number;
+}
+
+/**
+ * Source coverage by generation
+ */
+export interface GenerationSourceStats {
+	/** Generation number (0 = root, 1 = parents, 2 = grandparents, etc.) */
+	generation: number;
+	/** Generation label */
+	label: string;
+	/** Statistics for this generation */
+	stats: SourceCoverageStats;
+}
+
+/**
+ * Source coverage analysis results
+ */
+export interface SourceCoverageAnalysis {
+	/** Overall source coverage */
+	overall: SourceCoverageStats;
+	/** Coverage by generation (requires root person) */
+	byGeneration: GenerationSourceStats[];
+}
+
+/**
+ * Timeline gap (period with unusually low activity)
+ */
+export interface TimelineGap {
+	/** Start year of gap */
+	startYear: number;
+	/** End year of gap */
+	endYear: number;
+	/** Event count in this period */
+	eventCount: number;
+	/** Expected count based on surrounding periods */
+	expectedCount: number;
+}
+
+/**
+ * Decade event count for timeline
+ */
+export interface DecadeEventCount {
+	/** Decade start year */
+	decade: number;
+	/** Decade label */
+	label: string;
+	/** Number of events in this decade */
+	count: number;
+}
+
+/**
+ * Timeline density analysis results
+ */
+export interface TimelineDensityAnalysis {
+	/** Total events analyzed */
+	totalEvents: number;
+	/** Events grouped by decade */
+	byDecade: DecadeEventCount[];
+	/** Detected gaps in the timeline */
+	gaps: TimelineGap[];
+}
+
+/**
+ * Combined extended statistics (Phase 3)
+ */
+export interface ExtendedStatistics {
+	longevity: LongevityAnalysis;
+	familySize: FamilySizeAnalysis;
+	marriagePatterns: MarriagePatternAnalysis;
+	migration: MigrationAnalysis;
+	sourceCoverage: SourceCoverageAnalysis;
+	timelineDensity: TimelineDensityAnalysis;
+}

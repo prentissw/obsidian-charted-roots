@@ -8,7 +8,17 @@
 import { ItemView, WorkspaceLeaf, setIcon, TFile } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import { StatisticsService } from '../services/statistics-service';
-import type { StatisticsData, StatisticsViewState, TopListItem } from '../types/statistics-types';
+import type {
+	StatisticsData,
+	StatisticsViewState,
+	TopListItem,
+	LongevityAnalysis,
+	FamilySizeAnalysis,
+	MarriagePatternAnalysis,
+	MigrationAnalysis,
+	SourceCoverageAnalysis,
+	TimelineDensityAnalysis
+} from '../types/statistics-types';
 import { VIEW_TYPE_STATISTICS, SECTION_IDS } from '../constants/statistics-constants';
 import { REPORT_METADATA } from '../../reports/types/report-types';
 import type { ReportType } from '../../reports/types/report-types';
@@ -262,6 +272,38 @@ export class StatisticsView extends ItemView {
 				.map(([name, count]) => ({ name, count }))
 				.sort((a, b) => b.count - a.count);
 			return this.buildTopListContent(items);
+		});
+
+		// === Extended Statistics (Phase 3) ===
+
+		// Longevity Analysis section
+		this.buildSection(sectionsContainer, SECTION_IDS.LONGEVITY, 'Longevity analysis', 'heart-pulse', () => {
+			return this.buildLongevityContent();
+		});
+
+		// Family Size Patterns section
+		this.buildSection(sectionsContainer, SECTION_IDS.FAMILY_SIZE, 'Family size patterns', 'users', () => {
+			return this.buildFamilySizeContent();
+		});
+
+		// Marriage Patterns section
+		this.buildSection(sectionsContainer, SECTION_IDS.MARRIAGE_PATTERNS, 'Marriage patterns', 'heart', () => {
+			return this.buildMarriagePatternsContent();
+		});
+
+		// Migration Flows section
+		this.buildSection(sectionsContainer, SECTION_IDS.MIGRATION, 'Migration flows', 'plane', () => {
+			return this.buildMigrationContent();
+		});
+
+		// Source Coverage by Generation section
+		this.buildSection(sectionsContainer, SECTION_IDS.SOURCE_COVERAGE_GEN, 'Source coverage by generation', 'archive', () => {
+			return this.buildSourceCoverageContent();
+		});
+
+		// Timeline Density section
+		this.buildSection(sectionsContainer, SECTION_IDS.TIMELINE_DENSITY, 'Timeline density', 'bar-chart-2', () => {
+			return this.buildTimelineDensityContent();
 		});
 	}
 
@@ -631,6 +673,450 @@ export class StatisticsView extends ItemView {
 		}
 
 		return content;
+	}
+
+	// ==========================================================================
+	// Extended Statistics Content Builders (Phase 3)
+	// ==========================================================================
+
+	/**
+	 * Build longevity analysis content
+	 */
+	private buildLongevityContent(): HTMLElement {
+		const content = document.createElement('div');
+		content.addClass('cr-sv-longevity');
+
+		if (!this.service) return content;
+
+		const analysis: LongevityAnalysis = this.service.getLongevityAnalysis();
+
+		if (analysis.overall.count === 0) {
+			content.createSpan({
+				cls: 'crc-text-muted',
+				text: 'No data available (requires people with both birth and death dates)'
+			});
+			return content;
+		}
+
+		// Overall statistics grid
+		const overallLabel = content.createDiv({ cls: 'cr-sv-section-label' });
+		overallLabel.setText('Overall');
+
+		const statsGrid = content.createDiv({ cls: 'cr-sv-stats-grid' });
+		this.createStatCell(statsGrid, 'Average', `${analysis.overall.averageAge.toFixed(1)} yrs`);
+		this.createStatCell(statsGrid, 'Median', `${analysis.overall.medianAge} yrs`);
+		this.createStatCell(statsGrid, 'Min', `${analysis.overall.minAge} yrs`);
+		this.createStatCell(statsGrid, 'Max', `${analysis.overall.maxAge} yrs`);
+
+		const countInfo = content.createDiv({ cls: 'cr-sv-count-info crc-text-muted' });
+		countInfo.setText(`Based on ${formatNumber(analysis.overall.count)} people with calculable lifespans`);
+
+		// By birth decade
+		if (analysis.byBirthDecade.length > 0) {
+			const decadeLabel = content.createDiv({ cls: 'cr-sv-section-label cr-sv-section-label-spaced' });
+			decadeLabel.setText('By birth decade');
+
+			const maxAge = Math.max(...analysis.byBirthDecade.map(d => d.stats.averageAge));
+			const barsContainer = content.createDiv({ cls: 'cr-sv-decade-bars' });
+
+			for (const decade of analysis.byBirthDecade) {
+				const row = barsContainer.createDiv({ cls: 'cr-sv-decade-row' });
+				row.createSpan({ cls: 'cr-sv-decade-label', text: decade.label });
+
+				const barContainer = row.createDiv({ cls: 'cr-sv-bar-container' });
+				const bar = barContainer.createDiv({ cls: 'cr-sv-bar cr-sv-bar-primary' });
+				bar.style.width = `${(decade.stats.averageAge / maxAge) * 100}%`;
+
+				row.createSpan({
+					cls: 'cr-sv-decade-value',
+					text: `${decade.stats.averageAge.toFixed(1)} yrs (${decade.stats.count})`
+				});
+			}
+		}
+
+		// By birth location (top 5)
+		if (analysis.byBirthLocation.length > 0) {
+			const locationLabel = content.createDiv({ cls: 'cr-sv-section-label cr-sv-section-label-spaced' });
+			locationLabel.setText('By birth location');
+
+			const locTable = content.createEl('table', { cls: 'cr-sv-location-table' });
+			const locBody = locTable.createEl('tbody');
+
+			for (const loc of analysis.byBirthLocation.slice(0, 5)) {
+				const row = locBody.createEl('tr');
+				row.createEl('td', { text: loc.location, cls: 'cr-sv-loc-name' });
+				row.createEl('td', {
+					text: `${loc.stats.averageAge.toFixed(1)} yrs avg`,
+					cls: 'cr-sv-loc-value'
+				});
+				row.createEl('td', {
+					text: `(${loc.stats.count} people)`,
+					cls: 'cr-sv-loc-count crc-text-muted'
+				});
+			}
+		}
+
+		return content;
+	}
+
+	/**
+	 * Build family size patterns content
+	 */
+	private buildFamilySizeContent(): HTMLElement {
+		const content = document.createElement('div');
+		content.addClass('cr-sv-family-size');
+
+		if (!this.service) return content;
+
+		const analysis: FamilySizeAnalysis = this.service.getFamilySizeAnalysis();
+
+		if (analysis.overall.count === 0) {
+			content.createSpan({
+				cls: 'crc-text-muted',
+				text: 'No data available (requires people with children)'
+			});
+			return content;
+		}
+
+		// Overall summary
+		const summary = content.createDiv({ cls: 'cr-sv-summary-text' });
+		summary.createSpan({ text: `${analysis.overall.averageChildren.toFixed(1)}`, cls: 'cr-sv-highlight-value' });
+		summary.createSpan({ text: ' children per family on average' });
+
+		const countInfo = content.createDiv({ cls: 'cr-sv-count-info crc-text-muted' });
+		countInfo.setText(`${formatNumber(analysis.overall.count)} families analyzed, ${formatNumber(analysis.overall.totalChildren)} total children`);
+
+		// Distribution buckets
+		if (analysis.sizeDistribution.length > 0) {
+			const distLabel = content.createDiv({ cls: 'cr-sv-section-label cr-sv-section-label-spaced' });
+			distLabel.setText('Distribution');
+
+			const barsContainer = content.createDiv({ cls: 'cr-sv-distribution-bars' });
+
+			for (const bucket of analysis.sizeDistribution) {
+				const row = barsContainer.createDiv({ cls: 'cr-sv-dist-row' });
+				row.createSpan({ cls: 'cr-sv-dist-label', text: bucket.label });
+
+				const barContainer = row.createDiv({ cls: 'cr-sv-bar-container' });
+				const bar = barContainer.createDiv({ cls: 'cr-sv-bar cr-sv-bar-secondary' });
+				bar.style.width = `${bucket.percent}%`;
+
+				row.createSpan({ cls: 'cr-sv-dist-value', text: `${bucket.percent}%` });
+			}
+		}
+
+		// By birth decade
+		if (analysis.byBirthDecade.length > 0) {
+			const decadeLabel = content.createDiv({ cls: 'cr-sv-section-label cr-sv-section-label-spaced' });
+			decadeLabel.setText('By birth decade of parent');
+
+			const decadeTable = content.createEl('table', { cls: 'cr-sv-decade-table' });
+			const decadeBody = decadeTable.createEl('tbody');
+
+			for (const decade of analysis.byBirthDecade) {
+				const row = decadeBody.createEl('tr');
+				row.createEl('td', { text: decade.label, cls: 'cr-sv-decade-name' });
+				row.createEl('td', { text: `${decade.stats.averageChildren.toFixed(1)} children` });
+				row.createEl('td', {
+					text: `(${decade.stats.count} families)`,
+					cls: 'crc-text-muted'
+				});
+			}
+		}
+
+		return content;
+	}
+
+	/**
+	 * Build marriage patterns content
+	 */
+	private buildMarriagePatternsContent(): HTMLElement {
+		const content = document.createElement('div');
+		content.addClass('cr-sv-marriage');
+
+		if (!this.service) return content;
+
+		const analysis: MarriagePatternAnalysis = this.service.getMarriagePatternAnalysis();
+
+		if (analysis.overall.count === 0) {
+			content.createSpan({
+				cls: 'crc-text-muted',
+				text: 'No data available (requires people with birth and marriage dates)'
+			});
+			return content;
+		}
+
+		// Age at first marriage comparison
+		const ageLabel = content.createDiv({ cls: 'cr-sv-section-label' });
+		ageLabel.setText('Age at first marriage');
+
+		const comparisonGrid = content.createDiv({ cls: 'cr-sv-comparison-grid' });
+
+		// Male column
+		if (analysis.bySex.male.count > 0) {
+			const maleCol = comparisonGrid.createDiv({ cls: 'cr-sv-comparison-col' });
+			maleCol.createDiv({ cls: 'cr-sv-comparison-header', text: 'Men' });
+			maleCol.createDiv({
+				cls: 'cr-sv-comparison-value',
+				text: `Avg: ${analysis.bySex.male.averageAge.toFixed(1)} yrs`
+			});
+			maleCol.createDiv({
+				cls: 'cr-sv-comparison-subvalue crc-text-muted',
+				text: `Med: ${analysis.bySex.male.medianAge} yrs`
+			});
+			maleCol.createDiv({
+				cls: 'cr-sv-comparison-count crc-text-muted',
+				text: `(${analysis.bySex.male.count} people)`
+			});
+		}
+
+		// Female column
+		if (analysis.bySex.female.count > 0) {
+			const femaleCol = comparisonGrid.createDiv({ cls: 'cr-sv-comparison-col' });
+			femaleCol.createDiv({ cls: 'cr-sv-comparison-header', text: 'Women' });
+			femaleCol.createDiv({
+				cls: 'cr-sv-comparison-value',
+				text: `Avg: ${analysis.bySex.female.averageAge.toFixed(1)} yrs`
+			});
+			femaleCol.createDiv({
+				cls: 'cr-sv-comparison-subvalue crc-text-muted',
+				text: `Med: ${analysis.bySex.female.medianAge} yrs`
+			});
+			femaleCol.createDiv({
+				cls: 'cr-sv-comparison-count crc-text-muted',
+				text: `(${analysis.bySex.female.count} people)`
+			});
+		}
+
+		// Remarriage statistics
+		if (analysis.remarriage.totalMarried > 0) {
+			const remarriageLabel = content.createDiv({ cls: 'cr-sv-section-label cr-sv-section-label-spaced' });
+			remarriageLabel.setText('Remarriage');
+
+			const remarriageInfo = content.createDiv({ cls: 'cr-sv-remarriage-info' });
+			remarriageInfo.createSpan({
+				cls: 'cr-sv-highlight-value',
+				text: `${analysis.remarriage.remarriageRate.toFixed(1)}%`
+			});
+			remarriageInfo.createSpan({
+				text: ` remarried (${analysis.remarriage.remarriedCount} of ${analysis.remarriage.totalMarried} married people)`
+			});
+
+			if (analysis.remarriage.remarriedCount > 0) {
+				const avgMarriages = content.createDiv({ cls: 'cr-sv-count-info crc-text-muted' });
+				avgMarriages.setText(
+					`Average ${analysis.remarriage.averageMarriagesForRemarried.toFixed(1)} marriages for those who remarried`
+				);
+			}
+		}
+
+		return content;
+	}
+
+	/**
+	 * Build migration flows content
+	 */
+	private buildMigrationContent(): HTMLElement {
+		const content = document.createElement('div');
+		content.addClass('cr-sv-migration');
+
+		if (!this.service) return content;
+
+		const analysis: MigrationAnalysis = this.service.getMigrationAnalysis();
+
+		if (analysis.analyzedCount === 0) {
+			content.createSpan({
+				cls: 'crc-text-muted',
+				text: 'No data available (requires people with both birth and death places)'
+			});
+			return content;
+		}
+
+		// Migration rate
+		const rateInfo = content.createDiv({ cls: 'cr-sv-summary-text' });
+		rateInfo.createSpan({ cls: 'cr-sv-highlight-value', text: `${analysis.migrationRate.toFixed(0)}%` });
+		rateInfo.createSpan({
+			text: ` migration rate (${analysis.movedCount} of ${analysis.analyzedCount} moved from birthplace)`
+		});
+
+		// Top migration routes
+		if (analysis.topRoutes.length > 0) {
+			const routesLabel = content.createDiv({ cls: 'cr-sv-section-label cr-sv-section-label-spaced' });
+			routesLabel.setText('Top migration routes');
+
+			const routesTable = content.createEl('table', { cls: 'cr-sv-routes-table' });
+			const routesBody = routesTable.createEl('tbody');
+
+			for (const route of analysis.topRoutes.slice(0, 10)) {
+				const row = routesBody.createEl('tr');
+				row.createEl('td', { text: route.from, cls: 'cr-sv-route-from' });
+				const arrowCell = row.createEl('td', { cls: 'cr-sv-route-arrow' });
+				setIcon(arrowCell, 'arrow-right');
+				row.createEl('td', { text: route.to, cls: 'cr-sv-route-to' });
+				row.createEl('td', {
+					text: `${route.count} people`,
+					cls: 'cr-sv-route-count crc-text-muted'
+				});
+			}
+		}
+
+		// Top destinations
+		if (analysis.topDestinations.length > 0) {
+			const destLabel = content.createDiv({ cls: 'cr-sv-section-label cr-sv-section-label-spaced' });
+			destLabel.setText('Top destinations');
+
+			const destList = content.createDiv({ cls: 'cr-sv-inline-list' });
+			for (const dest of analysis.topDestinations.slice(0, 5)) {
+				destList.createSpan({ cls: 'cr-sv-inline-item', text: `${dest.name}: ${dest.count}` });
+			}
+		}
+
+		return content;
+	}
+
+	/**
+	 * Build source coverage by generation content
+	 */
+	private buildSourceCoverageContent(): HTMLElement {
+		const content = document.createElement('div');
+		content.addClass('cr-sv-source-coverage');
+
+		if (!this.service) return content;
+
+		// Note: Root person is context-specific (per tree/report), not a global setting.
+		// Without a root person, we show overall stats only.
+		const analysis: SourceCoverageAnalysis = this.service.getSourceCoverageAnalysis();
+
+		if (analysis.overall.peopleCount === 0) {
+			content.createSpan({ cls: 'crc-text-muted', text: 'No data available' });
+			return content;
+		}
+
+		// Overall coverage
+		const overallInfo = content.createDiv({ cls: 'cr-sv-summary-text' });
+		overallInfo.createSpan({
+			cls: 'cr-sv-highlight-value',
+			text: `${analysis.overall.coveragePercent.toFixed(0)}%`
+		});
+		overallInfo.createSpan({ text: ' overall source coverage' });
+
+		const avgInfo = content.createDiv({ cls: 'cr-sv-count-info crc-text-muted' });
+		avgInfo.setText(
+			`${analysis.overall.averageSourcesPerPerson.toFixed(1)} sources per person on average (${analysis.overall.withSources} of ${analysis.overall.peopleCount} have sources)`
+		);
+
+		// By generation table
+		if (analysis.byGeneration.length > 0) {
+			const genLabel = content.createDiv({ cls: 'cr-sv-section-label cr-sv-section-label-spaced' });
+			genLabel.setText('By generation');
+
+			const genTable = content.createEl('table', { cls: 'cr-sv-generation-table' });
+			const genHead = genTable.createEl('thead');
+			const headerRow = genHead.createEl('tr');
+			headerRow.createEl('th', { text: 'Generation' });
+			headerRow.createEl('th', { text: 'People' });
+			headerRow.createEl('th', { text: 'Coverage' });
+			headerRow.createEl('th', { text: 'Avg sources' });
+
+			const genBody = genTable.createEl('tbody');
+
+			for (const gen of analysis.byGeneration) {
+				const row = genBody.createEl('tr');
+				row.createEl('td', { text: gen.label });
+				row.createEl('td', { text: String(gen.stats.peopleCount) });
+
+				const coverageCell = row.createEl('td');
+				const coverageBar = coverageCell.createDiv({ cls: 'cr-sv-mini-progress' });
+				const coverageFill = coverageBar.createDiv({
+					cls: `cr-sv-mini-progress-fill ${getProgressColorClass(gen.stats.coveragePercent)}`
+				});
+				coverageFill.style.width = `${gen.stats.coveragePercent}%`;
+				coverageCell.createSpan({
+					cls: 'cr-sv-mini-progress-label',
+					text: `${gen.stats.coveragePercent.toFixed(0)}%`
+				});
+
+				row.createEl('td', { text: gen.stats.averageSourcesPerPerson.toFixed(1) });
+			}
+		} else {
+			const hint = content.createDiv({ cls: 'cr-sv-count-info crc-text-muted cr-sv-section-label-spaced' });
+			hint.setText('Generation breakdown requires a root person (available in ancestry reports).');
+		}
+
+		return content;
+	}
+
+	/**
+	 * Build timeline density content
+	 */
+	private buildTimelineDensityContent(): HTMLElement {
+		const content = document.createElement('div');
+		content.addClass('cr-sv-timeline');
+
+		if (!this.service) return content;
+
+		const analysis: TimelineDensityAnalysis = this.service.getTimelineDensityAnalysis();
+
+		if (analysis.totalEvents === 0) {
+			content.createSpan({ cls: 'crc-text-muted', text: 'No dated events available' });
+			return content;
+		}
+
+		// Total events info
+		const totalInfo = content.createDiv({ cls: 'cr-sv-count-info crc-text-muted' });
+		totalInfo.setText(`${formatNumber(analysis.totalEvents)} dated events analyzed`);
+
+		// Events by decade chart
+		if (analysis.byDecade.length > 0) {
+			const decadeLabel = content.createDiv({ cls: 'cr-sv-section-label cr-sv-section-label-spaced' });
+			decadeLabel.setText('Events by decade');
+
+			const maxCount = Math.max(...analysis.byDecade.map(d => d.count));
+			const barsContainer = content.createDiv({ cls: 'cr-sv-timeline-bars' });
+
+			for (const decade of analysis.byDecade) {
+				const row = barsContainer.createDiv({ cls: 'cr-sv-decade-row' });
+				row.createSpan({ cls: 'cr-sv-decade-label', text: decade.label });
+
+				const barContainer = row.createDiv({ cls: 'cr-sv-bar-container' });
+				const bar = barContainer.createDiv({ cls: 'cr-sv-bar cr-sv-bar-timeline' });
+				bar.style.width = `${(decade.count / maxCount) * 100}%`;
+
+				row.createSpan({ cls: 'cr-sv-decade-value', text: String(decade.count) });
+			}
+		}
+
+		// Timeline gaps
+		if (analysis.gaps.length > 0) {
+			const gapsLabel = content.createDiv({ cls: 'cr-sv-section-label cr-sv-section-label-spaced' });
+			const gapsIcon = gapsLabel.createSpan({ cls: 'cr-sv-warning-icon' });
+			setIcon(gapsIcon, 'alert-triangle');
+			gapsLabel.createSpan({ text: ' Gaps detected' });
+
+			const gapsList = content.createDiv({ cls: 'cr-sv-gaps-list' });
+			for (const gap of analysis.gaps) {
+				const gapItem = gapsList.createDiv({ cls: 'cr-sv-gap-item' });
+				gapItem.createSpan({
+					cls: 'cr-sv-gap-range',
+					text: `${gap.startYear}–${gap.endYear}`
+				});
+				gapItem.createSpan({
+					cls: 'cr-sv-gap-info crc-text-muted',
+					text: `: ${gap.eventCount} events (expected ~${gap.expectedCount})`
+				});
+			}
+		}
+
+		return content;
+	}
+
+	/**
+	 * Helper: Create a stat cell in a grid
+	 */
+	private createStatCell(container: HTMLElement, label: string, value: string): void {
+		const cell = container.createDiv({ cls: 'cr-sv-stat-cell' });
+		cell.createDiv({ cls: 'cr-sv-stat-label', text: label });
+		cell.createDiv({ cls: 'cr-sv-stat-value', text: value });
 	}
 
 	/**

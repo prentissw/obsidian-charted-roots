@@ -35,5 +35,36 @@ export const SECTION_IDS = {
 	SOURCES_BY_CONFIDENCE: 'sources-by-confidence',
 	PLACES_BY_CATEGORY: 'places-by-category',
 	GENDER_DISTRIBUTION: 'gender-distribution',
-	REPORTS: 'reports'
+	REPORTS: 'reports',
+	// Phase 3: Extended Statistics
+	LONGEVITY: 'longevity',
+	FAMILY_SIZE: 'family-size',
+	MARRIAGE_PATTERNS: 'marriage-patterns',
+	MIGRATION: 'migration',
+	SOURCE_COVERAGE_GEN: 'source-coverage-gen',
+	TIMELINE_DENSITY: 'timeline-density'
 } as const;
+
+/**
+ * Generation labels for ancestor display
+ */
+export const GENERATION_LABELS = [
+	'Self',
+	'Parents',
+	'Grandparents',
+	'Great-grandparents',
+	'2nd great-grandparents',
+	'3rd great-grandparents',
+	'4th great-grandparents',
+	'5th great-grandparents'
+] as const;
+
+/**
+ * Get generation label for a given generation number
+ */
+export function getGenerationLabel(generation: number): string {
+	if (generation < GENERATION_LABELS.length) {
+		return GENERATION_LABELS[generation];
+	}
+	return `${generation - 2}th great-grandparents`;
+}
