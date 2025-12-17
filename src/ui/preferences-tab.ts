@@ -60,7 +60,7 @@ class FolderSuggest extends AbstractInputSuggest<TFolder> {
 }
 import type CanvasRootsPlugin from '../../main';
 import type { LucideIconName } from './lucide-icons';
-import type { ArrowStyle, ColorScheme, SpouseEdgeLabelFormat } from '../settings';
+import type { ArrowStyle, ColorScheme, SpouseEdgeLabelFormat, SexNormalizationMode } from '../settings';
 import {
 	PropertyAliasService,
 	type PropertyMetadata,
@@ -130,6 +130,9 @@ export function renderPreferencesTab(
 
 	// Date Validation card
 	renderDateValidationCard(container, plugin, createCard, showTab);
+
+	// Sex Normalization card
+	renderSexNormalizationCard(container, plugin, createCard);
 
 	// Integrations card (only shows if Calendarium or other integrations are available)
 	createIntegrationsCard(container, plugin, createCard);
@@ -1100,6 +1103,44 @@ function renderDateValidationCard(
 			.setValue(plugin.settings.requireLeadingZeros)
 			.onChange(async (value) => {
 				plugin.settings.requireLeadingZeros = value;
+				await plugin.saveSettings();
+			}));
+
+	container.appendChild(card);
+}
+
+/**
+ * Render the sex value normalization card
+ */
+function renderSexNormalizationCard(
+	container: HTMLElement,
+	plugin: CanvasRootsPlugin,
+	createCard: (options: { title: string; icon?: LucideIconName; subtitle?: string }) => HTMLElement
+): void {
+	const card = createCard({
+		title: 'Sex value normalization',
+		icon: 'sliders',
+		subtitle: 'Configure batch normalization behavior for sex values'
+	});
+	const content = card.querySelector('.crc-card__content') as HTMLElement;
+
+	// Info text
+	content.createEl('p', {
+		cls: 'crc-text-muted',
+		text: 'Controls how the "Normalize sex values" batch operation in Data Quality behaves. Standard mode normalizes all values to GEDCOM M/F, while schema-aware mode respects schemas that define custom sex values.'
+	});
+
+	// Normalization Mode dropdown
+	new Setting(content)
+		.setName('Normalization mode')
+		.setDesc('How sex values are normalized in batch operations')
+		.addDropdown(dropdown => dropdown
+			.addOption('standard', 'Standard - normalize to GEDCOM M/F')
+			.addOption('schema-aware', 'Schema-aware - skip notes with custom schemas')
+			.addOption('disabled', 'Disabled - never normalize sex values')
+			.setValue(plugin.settings.sexNormalizationMode)
+			.onChange(async (value) => {
+				plugin.settings.sexNormalizationMode = value as SexNormalizationMode;
 				await plugin.saveSettings();
 			}));
 

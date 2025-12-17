@@ -3920,6 +3920,13 @@ export default class CanvasRootsPlugin extends Plugin {
 		const familyGraph = new FamilyGraphService(this.app);
 		void familyGraph.reloadCache();
 
+		// Merge universes from both places and people
+		const placeGraph = new PlaceGraphService(this.app);
+		placeGraph.setSettings(this.settings);
+		const placeUniverses = placeGraph.getAllUniverses();
+		const personUniverses = familyGraph.getAllUniverses();
+		const allUniverses = [...new Set([...placeUniverses, ...personUniverses])].sort();
+
 		// Open the modal in edit mode
 		new CreatePersonModal(this.app, {
 			editFile: file,
@@ -3938,10 +3945,12 @@ export default class CanvasRootsPlugin extends Plugin {
 				motherName: extractName(fm.mother),
 				spouseIds: spouseIds.length > 0 ? spouseIds : undefined,
 				spouseNames: spouseNames.length > 0 ? spouseNames : undefined,
-				collection: fm.collection
+				collection: fm.collection,
+				universe: fm.universe
 			},
 			familyGraph,
-			propertyAliases: this.settings.propertyAliases
+			propertyAliases: this.settings.propertyAliases,
+			existingUniverses: allUniverses
 		}).open();
 	}
 

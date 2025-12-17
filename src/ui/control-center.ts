@@ -30,7 +30,7 @@ import { FolderFilterService } from '../core/folder-filter';
 import { StagingService, StagingSubfolderInfo } from '../core/staging-service';
 import { CrossImportDetectionService, CrossImportMatch } from '../core/cross-import-detection';
 import { MergeWizardModal } from './merge-wizard-modal';
-import { DataQualityService, DataQualityReport, DataQualityIssue, IssueSeverity, IssueCategory, NormalizationPreview, BatchOperationResult, BidirectionalInconsistency, ImpossibleDateIssue } from '../core/data-quality';
+import { DataQualityService, DataQualityReport, DataQualityIssue, IssueSeverity, IssueCategory, NormalizationPreview, BatchOperationResult, BidirectionalInconsistency, ImpossibleDateIssue, SkippedGenderNote } from '../core/data-quality';
 import { PlaceGraphService } from '../core/place-graph';
 import { CreatePlaceModal } from './create-place-modal';
 import { MigrationDiagramModal } from './migration-diagram-modal';
@@ -1828,12 +1828,22 @@ export class ControlCenterModal extends Modal {
 				.setButtonText('Create person')
 				.setCta()
 				.onClick(() => {
+					const placeGraph = this.plugin.createPlaceGraphService();
+					const familyGraph = this.plugin.createFamilyGraphService();
+					// Merge universes from both places and people
+					const placeUniverses = placeGraph.getAllUniverses();
+					const personUniverses = familyGraph.getAllUniverses();
+					const allUniverses = [...new Set([
+						...placeUniverses,
+						...personUniverses
+					])].sort();
 					new CreatePersonModal(this.app, {
 						directory: this.plugin.settings.peopleFolder || '',
-						familyGraph: this.plugin.createFamilyGraphService(),
+						familyGraph,
 						propertyAliases: this.plugin.settings.propertyAliases,
 						includeDynamicBlocks: false,
 						dynamicBlockTypes: ['timeline', 'relationships'],
+						existingUniverses: allUniverses,
 						onCreated: () => {
 							// Refresh the People tab
 							this.showTab('people');
@@ -2137,7 +2147,8 @@ export class ControlCenterModal extends Modal {
 			this.app,
 			this.plugin.settings,
 			familyGraph,
-			folderFilter
+			folderFilter,
+			this.plugin
 		);
 
 		// Detect conflicts
@@ -2730,6 +2741,15 @@ export class ControlCenterModal extends Modal {
 			const motherId = fm.mother_id || fm.mother;
 			const spouseIds = fm.spouse_id || fm.spouse;
 
+			const placeGraph = this.plugin.createPlaceGraphService();
+			const familyGraph = this.plugin.createFamilyGraphService();
+			// Merge universes from both places and people
+			const placeUniverses = placeGraph.getAllUniverses();
+			const personUniverses = familyGraph.getAllUniverses();
+			const allUniverses = [...new Set([
+				...placeUniverses,
+				...personUniverses
+			])].sort();
 			const modal = new CreatePersonModal(this.app, {
 				editFile: person.file,
 				editPersonData: {
@@ -2745,10 +2765,12 @@ export class ControlCenterModal extends Modal {
 					fatherId: typeof fatherId === 'string' ? fatherId : undefined,
 					motherId: typeof motherId === 'string' ? motherId : undefined,
 					spouseIds: Array.isArray(spouseIds) ? spouseIds : (spouseIds ? [spouseIds] : undefined),
-					collection: fm.collection
+					collection: fm.collection,
+					universe: fm.universe
 				},
-				familyGraph: this.plugin.createFamilyGraphService(),
+				familyGraph,
 				propertyAliases: this.plugin.settings.propertyAliases,
+				existingUniverses: allUniverses,
 				onUpdated: () => {
 					// Refresh the People tab
 					this.showTab('people');
@@ -12292,7 +12314,8 @@ export class ControlCenterModal extends Modal {
 			this.app,
 			this.plugin.settings,
 			familyGraph,
-			folderFilter
+			folderFilter,
+			this.plugin
 		);
 
 		// Run analysis (synchronous)
@@ -12555,11 +12578,11 @@ export class ControlCenterModal extends Modal {
 	/**
 	 * Preview a batch operation
 	 */
-	private previewBatchOperation(
+	private async previewBatchOperation(
 		operation: 'dates' | 'sex' | 'orphans' | 'legacy_type',
 		scope: 'all' | 'staging' | 'folder',
 		folderPath?: string
-	): void {
+	): Promise<void> {
 		// Create service
 		const familyGraph = new FamilyGraphService(this.app);
 		const folderFilter = new FolderFilterService(this.plugin.settings);
@@ -12571,18 +12594,24 @@ export class ControlCenterModal extends Modal {
 			this.app,
 			this.plugin.settings,
 			familyGraph,
-			folderFilter
+			folderFilter,
+			this.plugin
 		);
 
 		// Get preview
-		const preview = dataQualityService.previewNormalization({ scope, folderPath });
+		const preview = await dataQualityService.previewNormalization({ scope, folderPath });
+
+		// Check if sex normalization is disabled
+		const sexNormalizationDisabled = operation === 'sex' &&
+			this.plugin.settings.sexNormalizationMode === 'disabled';
 
 		// Show preview modal
 		const modal = new BatchPreviewModal(
 			this.app,
 			operation,
 			preview,
-			async () => await this.runBatchOperation(operation, scope, folderPath)
+			async () => await this.runBatchOperation(operation, scope, folderPath),
+			sexNormalizationDisabled
 		);
 		modal.open();
 	}
@@ -12606,7 +12635,8 @@ export class ControlCenterModal extends Modal {
 			this.app,
 			this.plugin.settings,
 			familyGraph,
-			folderFilter
+			folderFilter,
+			this.plugin
 		);
 
 		let result: BatchOperationResult;
@@ -13790,7 +13820,8 @@ export class ControlCenterModal extends Modal {
 			this.app,
 			this.plugin.settings,
 			familyGraph1,
-			folderFilter1
+			folderFilter1,
+			this.plugin
 		);
 
 		new Notice('Detecting bidirectional relationship inconsistencies...');
@@ -13857,7 +13888,8 @@ export class ControlCenterModal extends Modal {
 			this.app,
 			this.plugin.settings,
 			familyGraph2,
-			folderFilter2
+			folderFilter2,
+			this.plugin
 		);
 
 		new Notice('Detecting inconsistencies...');
@@ -13916,7 +13948,8 @@ export class ControlCenterModal extends Modal {
 			this.app,
 			this.plugin.settings,
 			familyGraph3,
-			folderFilter3
+			folderFilter3,
+			this.plugin
 		);
 
 		const issues = dataQuality3.detectImpossibleDates();
@@ -15636,6 +15669,7 @@ class BatchPreviewModal extends Modal {
 	private operation: 'dates' | 'sex' | 'orphans' | 'legacy_type';
 	private preview: NormalizationPreview;
 	private onApply: () => Promise<void>;
+	private sexNormalizationDisabled: boolean;
 
 	// All changes for this operation
 	private allChanges: Array<{ person: { name: string }; field: string; oldValue: string; newValue: string }> = [];
@@ -15655,12 +15689,14 @@ class BatchPreviewModal extends Modal {
 		app: App,
 		operation: 'dates' | 'sex' | 'orphans' | 'legacy_type',
 		preview: NormalizationPreview,
-		onApply: () => Promise<void>
+		onApply: () => Promise<void>,
+		sexNormalizationDisabled = false
 	) {
 		super(app);
 		this.operation = operation;
 		this.preview = preview;
 		this.onApply = onApply;
+		this.sexNormalizationDisabled = sexNormalizationDisabled;
 	}
 
 	onOpen(): void {
@@ -15684,6 +15720,16 @@ class BatchPreviewModal extends Modal {
 				text: 'Genealogical records use biological sex (M/F) rather than gender identity, as historical documents and DNA analysis require this distinction.',
 				cls: 'crc-text-muted crc-text-small'
 			});
+
+			// Show disabled mode warning
+			if (this.sexNormalizationDisabled) {
+				const disabledWarning = contentEl.createDiv({ cls: 'crc-info-callout' });
+				const infoIcon = createLucideIcon('info', 16);
+				disabledWarning.appendChild(infoIcon);
+				disabledWarning.createSpan({
+					text: ' Sex normalization is disabled. The preview below shows what would be changed, but no changes will be applied. Change this in Preferences → Sex value normalization.'
+				});
+			}
 		}
 
 		// Get changes for this operation
@@ -15769,8 +15815,33 @@ class BatchPreviewModal extends Modal {
 			this.applyFiltersAndSort();
 		}
 
-		// Backup warning
-		if (this.allChanges.length > 0) {
+		// Show skipped notes for sex operation (schema-aware mode)
+		if (this.operation === 'sex' && this.preview.genderSkipped.length > 0) {
+			const skippedSection = contentEl.createDiv({ cls: 'crc-batch-skipped-section' });
+			const skippedHeader = skippedSection.createDiv({ cls: 'crc-batch-skipped-header' });
+			const infoIcon = createLucideIcon('info', 16);
+			skippedHeader.appendChild(infoIcon);
+			skippedHeader.createSpan({
+				text: ` ${this.preview.genderSkipped.length} note${this.preview.genderSkipped.length === 1 ? '' : 's'} skipped (schema override)`
+			});
+
+			// Collapsible details
+			const detailsContainer = skippedSection.createEl('details', { cls: 'crc-batch-skipped-details' });
+			detailsContainer.createEl('summary', { text: 'Show skipped notes' });
+
+			const skippedList = detailsContainer.createEl('ul', { cls: 'crc-batch-skipped-list' });
+			for (const skipped of this.preview.genderSkipped) {
+				const item = skippedList.createEl('li');
+				item.createSpan({ text: skipped.person.name, cls: 'crc-batch-skipped-name' });
+				item.createSpan({
+					text: ` (${skipped.currentValue}) — schema: ${skipped.schemaName}`,
+					cls: 'crc-text-muted'
+				});
+			}
+		}
+
+		// Backup warning (don't show if normalization is disabled for this operation)
+		if (this.allChanges.length > 0 && !this.sexNormalizationDisabled) {
 			const warning = contentEl.createDiv({ cls: 'crc-warning-callout' });
 			const warningIcon = createLucideIcon('alert-triangle', 16);
 			warning.appendChild(warningIcon);
@@ -15783,12 +15854,18 @@ class BatchPreviewModal extends Modal {
 		const buttonContainer = contentEl.createDiv({ cls: 'crc-confirmation-buttons' });
 
 		const cancelBtn = buttonContainer.createEl('button', {
-			text: 'Cancel',
+			text: this.sexNormalizationDisabled ? 'Close' : 'Cancel',
 			cls: 'crc-btn-secondary'
 		});
 		cancelBtn.addEventListener('click', () => {
 			this.close();
 		});
+
+		// Don't show Apply button if sex normalization is disabled
+		if (this.sexNormalizationDisabled) {
+			// No Apply button when disabled - user already sees the info callout
+			return;
+		}
 
 		// Count actual changes (excluding unrecognized entries that won't be modified)
 		const actualChanges = this.allChanges.filter(c => !c.newValue.includes('(unrecognized'));

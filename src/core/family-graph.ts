@@ -56,6 +56,9 @@ export interface PersonNode {
 	// User-defined collection (optional)
 	collection?: string;
 
+	// Fictional universe (optional)
+	universe?: string;
+
 	// Source count (number of source notes linking to this person)
 	sourceCount?: number;
 
@@ -515,6 +518,24 @@ export class FamilyGraphService {
 		});
 
 		return collections;
+	}
+
+	/**
+	 * Gets all unique universes from person notes
+	 */
+	getAllUniverses(): string[] {
+		// Ensure cache is loaded
+		if (this.personCache.size === 0) {
+			this.loadPersonCache();
+		}
+
+		const universes = new Set<string>();
+		for (const person of this.personCache.values()) {
+			if (person.universe) {
+				universes.add(person.universe);
+			}
+		}
+		return Array.from(universes).sort();
 	}
 
 	/**
@@ -1323,6 +1344,7 @@ export class FamilyGraphService {
 		const sex = this.resolveGender(rawSex);
 		const collectionName = this.resolveProperty<string>(fm, 'group_name');
 		const collection = this.resolveProperty<string>(fm, 'collection');
+		const universe = this.resolveProperty<string>(fm, 'universe');
 
 		return {
 			crId,
@@ -1349,7 +1371,8 @@ export class FamilyGraphService {
 			spouses, // Enhanced spouse relationships with metadata (if present)
 			childrenCrIds, // Now populated from frontmatter (deduplicated above)
 			collectionName,
-			collection
+			collection,
+			universe
 		};
 	}
 

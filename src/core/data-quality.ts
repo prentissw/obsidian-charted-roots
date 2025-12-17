@@ -15,6 +15,9 @@ import { FolderFilterService } from './folder-filter';
 import { CanvasRootsSettings } from '../settings';
 import { ALL_NOTE_TYPES, NoteType } from '../utils/note-type-detection';
 import { CANONICAL_SEX_VALUES, CanonicalSex, BUILTIN_SYNONYMS } from './value-alias-service';
+import { SchemaService } from '../schemas/services/schema-service';
+import type { SchemaNote } from '../schemas/types/schema-types';
+import type CanvasRootsPlugin from '../../main';
 
 const logger = getLogger('DataQuality');
 
@@ -145,12 +148,33 @@ export interface DataQualityOptions {
  * Service for analyzing data quality in person notes
  */
 export class DataQualityService {
+	private schemaService: SchemaService | null = null;
+
 	constructor(
 		private app: App,
 		private settings: CanvasRootsSettings,
 		private familyGraph: FamilyGraphService,
-		private folderFilter: FolderFilterService
-	) {}
+		private folderFilter: FolderFilterService,
+		private plugin?: CanvasRootsPlugin
+	) {
+		// Initialize schema service if plugin is available
+		if (plugin) {
+			this.schemaService = new SchemaService(plugin);
+		}
+	}
+
+	/**
+	 * Check if a schema defines custom sex enum values
+	 */
+	private hasCustomSexSchema(schemas: SchemaNote[]): boolean {
+		for (const schema of schemas) {
+			const sexProp = schema.definition?.properties?.['sex'];
+			if (sexProp?.type === 'enum' && sexProp.values && sexProp.values.length > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Run a full data quality analysis
@@ -1079,8 +1103,21 @@ export class DataQualityService {
 	 * Converts user values to canonical GEDCOM values (M, F, X, U)
 	 * Uses built-in synonyms (male→M, female→F, etc.) and user-defined aliases
 	 * Returns the number of files modified
+	 *
+	 * Behavior depends on settings.sexNormalizationMode:
+	 * - 'standard': Normalize all values to canonical GEDCOM M/F/X/U
+	 * - 'schema-aware': Skip notes with schemas that define custom sex enum values
+	 * - 'disabled': Do nothing (return early)
 	 */
 	async normalizeGenderValues(options: DataQualityOptions = {}): Promise<BatchOperationResult> {
+		const mode = this.settings.sexNormalizationMode ?? 'standard';
+
+		// If disabled, return early with no changes
+		if (mode === 'disabled') {
+			logger.info('normalize-sex', 'Sex value normalization is disabled');
+			return { processed: 0, modified: 0, errors: [] };
+		}
+
 		const people = this.getPeopleForScope(options);
 		const results: BatchOperationResult = {
 			processed: 0,
@@ -1091,6 +1128,15 @@ export class DataQualityService {
 		const canonicalValues = new Set<string>(CANONICAL_SEX_VALUES);
 
 		for (const person of people) {
+			// In schema-aware mode, skip notes protected by schemas with custom sex values
+			if (mode === 'schema-aware' && this.schemaService) {
+				const schemas = await this.schemaService.getSchemasForPerson(person.file);
+				if (this.hasCustomSexSchema(schemas)) {
+					results.processed++;
+					continue;
+				}
+			}
+
 			// Read raw frontmatter value (not the resolved value from person.sex)
 			const cache = this.app.metadataCache.getFileCache(person.file);
 			const fm = cache?.frontmatter as Record<string, unknown> | undefined;
@@ -1713,12 +1759,19 @@ export class DataQualityService {
 
 	/**
 	 * Preview what batch normalization would do without making changes
+	 *
+	 * For sex normalization, behavior depends on settings.sexNormalizationMode:
+	 * - 'standard': Show all non-canonical values that would be normalized
+	 * - 'schema-aware': Also track notes skipped due to schema-defined sex values
+	 * - 'disabled': Still show what would be normalized, but indicate disabled
 	 */
-	previewNormalization(options: DataQualityOptions = {}): NormalizationPreview {
+	async previewNormalization(options: DataQualityOptions = {}): Promise<NormalizationPreview> {
 		const people = this.getPeopleForScope(options);
+		const mode = this.settings.sexNormalizationMode ?? 'standard';
 		const preview: NormalizationPreview = {
 			dateNormalization: [],
 			genderNormalization: [],
+			genderSkipped: [],
 			orphanClearing: [],
 			legacyTypeMigration: [],
 		};
@@ -1760,6 +1813,25 @@ export class DataQualityService {
 			if (rawSexValue && typeof rawSexValue === 'string') {
 				const currentValue = rawSexValue.trim();
 				const normalizedKey = currentValue.toLowerCase();
+
+				// In schema-aware mode, check if protected by schema
+				if (mode === 'schema-aware' && this.schemaService) {
+					const schemas = await this.schemaService.getSchemasForPerson(person.file);
+					if (this.hasCustomSexSchema(schemas)) {
+						// Find the schema name that defines the sex enum
+						const schemaWithSex = schemas.find(s => {
+							const sexProp = s.definition?.properties?.['sex'];
+							return sexProp?.type === 'enum' && sexProp.values && sexProp.values.length > 0;
+						});
+						preview.genderSkipped.push({
+							person,
+							schemaName: schemaWithSex?.name ?? 'Unknown Schema',
+							currentValue,
+						});
+						// Skip to next person - don't add to genderNormalization
+						continue;
+					}
+				}
 
 				// Check if already canonical (M, F, X, U)
 				const isCanonical = CANONICAL_SEX_VALUES.includes(currentValue as CanonicalSex);
@@ -1948,11 +2020,22 @@ export interface BatchOperationResult {
 }
 
 /**
+ * A note skipped from gender normalization due to schema override
+ */
+export interface SkippedGenderNote {
+	person: PersonNode;
+	schemaName: string;
+	currentValue: string;
+}
+
+/**
  * Preview of normalization changes
  */
 export interface NormalizationPreview {
 	dateNormalization: NormalizationChange[];
 	genderNormalization: NormalizationChange[];
+	/** Notes skipped due to schema-defined sex values (schema-aware mode) */
+	genderSkipped: SkippedGenderNote[];
 	orphanClearing: NormalizationChange[];
 	legacyTypeMigration: NormalizationChange[];
 }

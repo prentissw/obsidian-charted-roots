@@ -316,10 +316,10 @@ export class SchemaService {
 		const cache = this.plugin.app.metadataCache.getFileCache(file);
 		if (!cache?.frontmatter) return null;
 
-		const fm = cache.frontmatter as Partial<SchemaNoteFrontmatter>;
+		const fm = cache.frontmatter as Partial<SchemaNoteFrontmatter> & { cr_type?: string };
 
-		// Must have cr_type: schema (or type: schema for backwards compatibility)
-		if (fm.type !== 'schema') return null;
+		// Must have cr_type: schema (preferred) or type: schema (backwards compatibility)
+		if (fm.cr_type !== 'schema' && fm.type !== 'schema') return null;
 
 		// Must have cr_id and name
 		if (!fm.cr_id || !fm.name) {

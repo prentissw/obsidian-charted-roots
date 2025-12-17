@@ -27,6 +27,7 @@ export class CreatePersonModal extends Modal {
 	private onUpdated?: (file: TFile) => void;
 	private familyGraph?: FamilyGraphService;
 	private existingCollections: string[] = [];
+	private existingUniverses: string[] = [];
 
 	// Relationship fields
 	private fatherField: RelationshipField = {};
@@ -75,6 +76,7 @@ export class CreatePersonModal extends Modal {
 				spouseIds?: string[];
 				spouseNames?: string[];
 				collection?: string;
+				universe?: string;
 				// Step and adoptive parents
 				stepfatherId?: string;
 				stepfatherName?: string;
@@ -85,6 +87,8 @@ export class CreatePersonModal extends Modal {
 				adoptiveMotherId?: string;
 				adoptiveMotherName?: string;
 			};
+			// Universe options
+			existingUniverses?: string[];
 		}
 	) {
 		super(app);
@@ -95,6 +99,7 @@ export class CreatePersonModal extends Modal {
 		this.propertyAliases = options?.propertyAliases || {};
 		this.includeDynamicBlocks = options?.includeDynamicBlocks || false;
 		this.dynamicBlockTypes = options?.dynamicBlockTypes || ['timeline', 'relationships'];
+		this.existingUniverses = options?.existingUniverses || [];
 
 		// Check for edit mode
 		if (options?.editFile && options?.editPersonData) {
@@ -109,7 +114,9 @@ export class CreatePersonModal extends Modal {
 				deathDate: ep.died,
 				birthPlace: ep.birthPlace,
 				deathPlace: ep.deathPlace,
-				occupation: ep.occupation
+				occupation: ep.occupation,
+				collection: ep.collection,
+				universe: ep.universe
 			};
 			// Set up relationship fields
 			if (ep.fatherId || ep.fatherName) {
@@ -293,7 +300,7 @@ export class CreatePersonModal extends Modal {
 
 		if (this.existingCollections.length > 0) {
 			let customInput: HTMLInputElement | null = null;
-			let collectionValue: string | undefined = undefined;
+			let collectionValue: string | undefined = this.personData.collection;
 
 			collectionSetting.addDropdown(dropdown => {
 				dropdown
@@ -336,13 +343,74 @@ export class CreatePersonModal extends Modal {
 			// Store the value getter for use when creating
 			this.getCollectionValue = () => collectionValue;
 		} else {
-			let collectionValue: string | undefined = undefined;
+			let collectionValue: string | undefined = this.personData.collection;
 			collectionSetting.addText(text => text
 				.setPlaceholder('e.g., Smith Family')
+				.setValue(collectionValue || '')
 				.onChange(value => {
 					collectionValue = value || undefined;
 				}));
 			this.getCollectionValue = () => collectionValue;
+		}
+
+		// Universe - dropdown with existing + text for custom
+		const universeSetting = new Setting(form)
+			.setName('Universe')
+			.setDesc('Fictional universe or world this person belongs to');
+
+		if (this.existingUniverses.length > 0) {
+			let universeCustomInput: HTMLInputElement | null = null;
+			let universeValue: string | undefined = this.personData.universe;
+
+			universeSetting.addDropdown(dropdown => {
+				dropdown
+					.addOption('', '(None)')
+					.addOption('__custom__', '+ New universe...');
+
+				for (const univ of this.existingUniverses) {
+					dropdown.addOption(univ, univ);
+				}
+
+				dropdown.setValue(universeValue || '');
+				dropdown.onChange(value => {
+					if (value === '__custom__') {
+						if (universeCustomInput) {
+							universeCustomInput.removeClass('cr-hidden');
+							universeCustomInput.focus();
+						}
+						universeValue = undefined;
+					} else {
+						if (universeCustomInput) {
+							universeCustomInput.addClass('cr-hidden');
+							universeCustomInput.value = '';
+						}
+						universeValue = value || undefined;
+					}
+				});
+			});
+
+			// Add text input for custom universe (hidden by default)
+			universeSetting.addText(text => {
+				universeCustomInput = text.inputEl;
+				text.setPlaceholder('Enter new universe name')
+					.onChange(value => {
+						universeValue = value || undefined;
+					});
+				text.inputEl.addClass('cr-hidden');
+				text.inputEl.addClass('crc-input--inline');
+			});
+
+			// Store the value getter for use when creating
+			this.getUniverseValue = () => universeValue;
+		} else {
+			let universeValue: string | undefined = this.personData.universe;
+			universeSetting.addText(text => text
+				.setPlaceholder('e.g., westeros, middle-earth')
+				.setValue(universeValue || '')
+				.onChange(value => {
+					universeValue = value || undefined;
+				}));
+			this.getUniverseValue = () => universeValue;
 		}
 
 		// Directory setting (only show in create mode)
@@ -399,6 +467,9 @@ export class CreatePersonModal extends Modal {
 
 	// Collection value getter (set by collection field setup)
 	private getCollectionValue: () => string | undefined = () => undefined;
+
+	// Universe value getter (set by universe field setup)
+	private getUniverseValue: () => string | undefined = () => undefined;
 
 	/**
 	 * Create a relationship field with link/unlink button
@@ -535,8 +606,9 @@ export class CreatePersonModal extends Modal {
 				data.adoptiveMotherName = this.adoptiveMotherField.name;
 			}
 
-			// Note: PersonData doesn't have a collection field yet
-			// This would need to be added to person-note-writer.ts if needed
+			// Add collection and universe
+			data.collection = this.getCollectionValue();
+			data.universe = this.getUniverseValue();
 
 			const file = await createPersonNote(this.app, data, {
 				directory: this.directory,
@@ -651,6 +723,10 @@ export class CreatePersonModal extends Modal {
 				data.adoptiveMotherCrId = undefined;
 				data.adoptiveMotherName = undefined;
 			}
+
+			// Add collection and universe
+			data.collection = this.getCollectionValue();
+			data.universe = this.getUniverseValue();
 
 			await updatePersonNote(this.app, this.editingFile, data);
 

@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-17 16:00:08 UTC
+ * - Generated: 2025-12-17 18:50:58 UTC
  * - Components: 33 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -8138,7 +8138,7 @@ settings:
    COMPONENT: DATA-QUALITY.CSS
    ========================================================================== */
 
-/* Component Size: 1318 lines, 26 KB */
+/* Component Size: 1392 lines, 27.53 KB */
 
 /**
  * Data Quality Tab Styles
@@ -8673,6 +8673,59 @@ settings:
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
   background: var(--background-secondary);
+}
+
+/* Skipped Notes Section (schema-aware mode) */
+.crc-batch-skipped-section {
+  margin-top: var(--size-4-4);
+  padding: var(--size-4-3);
+  background: var(--background-secondary);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.crc-batch-skipped-header {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.crc-batch-skipped-header svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.crc-batch-skipped-details {
+  margin-top: var(--size-4-2);
+}
+
+.crc-batch-skipped-details summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.crc-batch-skipped-details summary:hover {
+  color: var(--text-normal);
+}
+
+.crc-batch-skipped-list {
+  margin: var(--size-4-2) 0 0 var(--size-4-4);
+  padding: 0;
+  list-style: disc;
+  font-size: var(--font-ui-smaller);
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.crc-batch-skipped-list li {
+  margin-bottom: var(--size-2-1);
+}
+
+.crc-batch-skipped-name {
+  color: var(--text-normal);
 }
 
 /* Research Gaps Section */
@@ -9379,6 +9432,27 @@ settings:
 .crc-warning-callout svg {
   flex-shrink: 0;
   margin-top: 2px;
+}
+
+.crc-info-callout {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  gap: var(--size-4-2);
+  padding: var(--size-4-3);
+  margin: var(--size-4-3) 0;
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  line-height: 1.4;
+}
+
+.crc-info-callout svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-muted);
 }
 
 /* ==========================================================================
@@ -20225,10 +20299,10 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-17 16:00:08 UTC
+ * Build completed: 2025-12-17 18:50:58 UTC
  * Components processed: 33
- * Total lines: 19905
- * Total size: 395.21 KB
+ * Total lines: 19979
+ * Total size: 396.74 KB
  * Build duration: 0.03 seconds
  *
  * Component breakdown:
@@ -20248,7 +20322,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - folder-scan.css: 155 lines, 2.56 KB
  * - relationship-calculator.css: 302 lines, 5.21 KB
  * - family-chart-view.css: 721 lines, 16.69 KB
- * - data-quality.css: 1318 lines, 26 KB
+ * - data-quality.css: 1392 lines, 27.53 KB
  * - relationships.css: 517 lines, 9.76 KB
  * - canvas-navigation.css: 683 lines, 14.64 KB
  * - map-view.css: 1904 lines, 38.98 KB

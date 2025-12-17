@@ -104,6 +104,14 @@ export type FolderFilterMode = 'disabled' | 'exclude' | 'include';
  */
 export type CalendariumIntegrationMode = 'off' | 'read';
 
+/**
+ * Sex value normalization mode
+ * - 'standard': Normalize to GEDCOM M/F values (default)
+ * - 'schema-aware': Skip notes with schemas that define custom sex enum values
+ * - 'disabled': Never normalize sex values
+ */
+export type SexNormalizationMode = 'standard' | 'schema-aware' | 'disabled';
+
 export interface CanvasRootsSettings {
 	defaultNodeWidth: number;
 	defaultNodeHeight: number;
@@ -261,6 +269,8 @@ export interface CanvasRootsSettings {
 	calendariumIntegration: CalendariumIntegrationMode;
 	// Reports settings
 	reportsFolder: string;
+	// Sex value normalization
+	sexNormalizationMode: SexNormalizationMode;
 }
 
 /**
@@ -481,7 +491,9 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	// Calendarium integration
 	calendariumIntegration: 'off',             // Default: no integration (invisible to users without Calendarium)
 	// Reports settings
-	reportsFolder: 'Canvas Roots/Reports'      // Default folder for generated reports
+	reportsFolder: 'Canvas Roots/Reports',     // Default folder for generated reports
+	// Sex value normalization
+	sexNormalizationMode: 'standard'           // Default: normalize to GEDCOM M/F
 };
 
 export class CanvasRootsSettingTab extends PluginSettingTab {

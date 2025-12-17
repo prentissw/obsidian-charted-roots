@@ -533,6 +533,59 @@
   background: var(--background-secondary);
 }
 
+/* Skipped Notes Section (schema-aware mode) */
+.crc-batch-skipped-section {
+  margin-top: var(--size-4-4);
+  padding: var(--size-4-3);
+  background: var(--background-secondary);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--background-modifier-border);
+}
+
+.crc-batch-skipped-header {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.crc-batch-skipped-header svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.crc-batch-skipped-details {
+  margin-top: var(--size-4-2);
+}
+
+.crc-batch-skipped-details summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.crc-batch-skipped-details summary:hover {
+  color: var(--text-normal);
+}
+
+.crc-batch-skipped-list {
+  margin: var(--size-4-2) 0 0 var(--size-4-4);
+  padding: 0;
+  list-style: disc;
+  font-size: var(--font-ui-smaller);
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.crc-batch-skipped-list li {
+  margin-bottom: var(--size-2-1);
+}
+
+.crc-batch-skipped-name {
+  color: var(--text-normal);
+}
+
 /* Research Gaps Section */
 .crc-research-gaps-section {
   margin-top: var(--size-4-4);
@@ -1237,6 +1290,27 @@
 .crc-warning-callout svg {
   flex-shrink: 0;
   margin-top: 2px;
+}
+
+.crc-info-callout {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  gap: var(--size-4-2);
+  padding: var(--size-4-3);
+  margin: var(--size-4-3) 0;
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  line-height: 1.4;
+}
+
+.crc-info-callout svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-muted);
 }
 
 /* ==========================================================================

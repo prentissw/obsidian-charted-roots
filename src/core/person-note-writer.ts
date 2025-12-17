@@ -34,6 +34,8 @@ export interface PersonData {
 	deathPlace?: string;
 	occupation?: string;
 	sex?: string;
+	collection?: string;    // User-defined grouping
+	universe?: string;      // Fictional universe or world
 	father?: string;        // Legacy: name-based relationship (deprecated)
 	mother?: string;        // Legacy: name-based relationship (deprecated)
 	spouse?: string[];      // Legacy: name-based relationship (deprecated)
@@ -151,6 +153,14 @@ export async function createPersonNote(
 
 	if (person.sex) {
 		frontmatter[prop('sex')] = person.sex;
+	}
+
+	if (person.collection) {
+		frontmatter[prop('collection')] = person.collection;
+	}
+
+	if (person.universe) {
+		frontmatter[prop('universe')] = person.universe;
 	}
 
 	// Handle relationships using dual storage: wikilinks for Obsidian + _id fields for reliability
@@ -583,6 +593,24 @@ export async function updatePersonNote(
 				frontmatter.death_place = person.deathPlace;
 			} else {
 				delete frontmatter.death_place;
+			}
+		}
+
+		// Handle collection
+		if (person.collection !== undefined) {
+			if (person.collection) {
+				frontmatter.collection = person.collection;
+			} else {
+				delete frontmatter.collection;
+			}
+		}
+
+		// Handle universe
+		if (person.universe !== undefined) {
+			if (person.universe) {
+				frontmatter.universe = person.universe;
+			} else {
+				delete frontmatter.universe;
 			}
 		}
 
