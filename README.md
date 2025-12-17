@@ -31,7 +31,7 @@
 |---------|-------------|
 | **Full Entity Export** | Export people, events, sources, places, and custom relationships to all formats |
 | **GEDCOM 5.5.1** | Full round-trip import/export with validation, UUID preservation, privacy protection, and PEDI tag parsing for step/adoptive parents |
-| **GEDCOM X** | Import/export with FamilySearch JSON format |
+| **GEDCOM X** | Import/export with FamilySearch JSON format and lineage type parsing for step/adoptive parents |
 | **Gramps XML** | Import/export for Gramps genealogy software with mrel/frel parsing for step/adoptive parents |
 | **CSV/TSV** | Import/export for spreadsheet workflows with auto-detected column mapping |
 | **Excalidraw Export** | Export canvases for manual annotation and hand-drawn styling |

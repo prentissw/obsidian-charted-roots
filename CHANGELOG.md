@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Gramps XML pedigree parsing** - Parse `mrel` and `frel` attributes from Gramps `<childref>` elements. Relationship types mapped: `Birth` → biological, `Stepchild` → step-parent, `Adopted` → adoptive parent. Uses the same dedicated frontmatter fields as GEDCOM import.
 
+- **GEDCOM X lineage type parsing** - Parse lineage type facts (`AdoptiveParent`, `StepParent`, `BiologicalParent`, etc.) from GEDCOM X parent-child relationships. Uses the same dedicated frontmatter fields as GEDCOM and Gramps import.
+
 - **Canvas tree visualization** - Step-parent relationships shown with dashed lines; adoptive parent relationships shown with dotted lines. New toggles in tree generation: "Include step-parents" and "Include adoptive parents". Relationship labels displayed on non-biological parent edges.
 
 - **Create/Edit Person modal** - New "Step & adoptive parents" section for manual entry of stepfather, stepmother, adoptive father, and adoptive mother.

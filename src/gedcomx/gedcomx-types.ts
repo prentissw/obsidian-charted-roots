@@ -28,6 +28,14 @@ export const GEDCOMX_TYPES = {
 	CHRISTENING: 'http://gedcomx.org/Christening',
 	BAPTISM: 'http://gedcomx.org/Baptism',
 
+	// Parent-child relationship lineage types
+	ADOPTIVE_PARENT: 'http://gedcomx.org/AdoptiveParent',
+	BIOLOGICAL_PARENT: 'http://gedcomx.org/BiologicalParent',
+	FOSTER_PARENT: 'http://gedcomx.org/FosterParent',
+	GUARDIAN_PARENT: 'http://gedcomx.org/GuardianParent',
+	STEP_PARENT: 'http://gedcomx.org/StepParent',
+	SOCIOLOGICAL_PARENT: 'http://gedcomx.org/SociologicalParent',
+
 	// Name types
 	BIRTH_NAME: 'http://gedcomx.org/BirthName',
 	MARRIED_NAME: 'http://gedcomx.org/MarriedName',

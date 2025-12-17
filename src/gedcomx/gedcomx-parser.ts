@@ -38,6 +38,12 @@ export interface ParsedGedcomXPerson {
 	// Parent references (filled during relationship processing)
 	fatherRef?: string;
 	motherRef?: string;
+	// Step-parent references (filled during relationship processing)
+	stepfatherRefs: string[];
+	stepmotherRefs: string[];
+	// Adoptive parent references (filled during relationship processing)
+	adoptiveFatherRef?: string;
+	adoptiveMotherRef?: string;
 	// Spouse references (filled during relationship processing)
 	spouseRefs: string[];
 	// Marriage data per spouse
@@ -224,6 +230,8 @@ export class GedcomXParser {
 			deathPlace: this.extractPlace(deathFact),
 			occupation: occupationFact?.value,
 			living: person.living,
+			stepfatherRefs: [],
+			stepmotherRefs: [],
 			spouseRefs: [],
 			marriages: new Map()
 		};
@@ -319,6 +327,37 @@ export class GedcomXParser {
 	}
 
 	/**
+	 * Determine the lineage type from relationship facts
+	 * Returns: 'biological' | 'step' | 'adoptive' | 'foster' | 'guardian'
+	 */
+	private static getLineageType(facts: GedcomXFact[] | undefined): string {
+		if (!facts || facts.length === 0) {
+			return 'biological'; // Default to biological if no facts
+		}
+
+		// Check for specific lineage type facts
+		for (const fact of facts) {
+			const factType = extractTypeName(fact.type);
+			switch (factType) {
+				case 'StepParent':
+					return 'step';
+				case 'AdoptiveParent':
+					return 'adoptive';
+				case 'FosterParent':
+					return 'foster';
+				case 'GuardianParent':
+					return 'guardian';
+				case 'BiologicalParent':
+					return 'biological';
+				case 'SociologicalParent':
+					return 'sociological';
+			}
+		}
+
+		return 'biological'; // Default to biological
+	}
+
+	/**
 	 * Process relationships to build parent/spouse references
 	 */
 	private static processRelationships(
@@ -337,17 +376,60 @@ export class GedcomXParser {
 				const parent = persons.get(person1Id);
 
 				if (child && parent) {
+					// Check for lineage type facts on the relationship
+					const lineageType = this.getLineageType(rel.facts);
+
 					// Determine if father or mother based on gender
-					if (parent.gender === 'M') {
-						child.fatherRef = person1Id;
-					} else if (parent.gender === 'F') {
-						child.motherRef = person1Id;
+					const isMale = parent.gender === 'M';
+					const isFemale = parent.gender === 'F';
+
+					if (lineageType === 'step') {
+						// Step-parent (can have multiple)
+						if (isMale) {
+							if (!child.stepfatherRefs.includes(person1Id)) {
+								child.stepfatherRefs.push(person1Id);
+							}
+						} else if (isFemale) {
+							if (!child.stepmotherRefs.includes(person1Id)) {
+								child.stepmotherRefs.push(person1Id);
+							}
+						} else {
+							// Unknown gender - default to stepfather
+							if (!child.stepfatherRefs.includes(person1Id)) {
+								child.stepfatherRefs.push(person1Id);
+							}
+						}
+					} else if (lineageType === 'adoptive') {
+						// Adoptive parent (typically one per gender)
+						if (isMale) {
+							if (!child.adoptiveFatherRef) {
+								child.adoptiveFatherRef = person1Id;
+							}
+						} else if (isFemale) {
+							if (!child.adoptiveMotherRef) {
+								child.adoptiveMotherRef = person1Id;
+							}
+						} else {
+							// Unknown gender - try adoptive father first
+							if (!child.adoptiveFatherRef) {
+								child.adoptiveFatherRef = person1Id;
+							} else if (!child.adoptiveMotherRef) {
+								child.adoptiveMotherRef = person1Id;
+							}
+						}
 					} else {
-						// Unknown gender - try to assign to empty slot
-						if (!child.fatherRef) {
+						// Biological (default) or other types we treat as biological
+						if (isMale) {
 							child.fatherRef = person1Id;
-						} else if (!child.motherRef) {
+						} else if (isFemale) {
 							child.motherRef = person1Id;
+						} else {
+							// Unknown gender - try to assign to empty slot
+							if (!child.fatherRef) {
+								child.fatherRef = person1Id;
+							} else if (!child.motherRef) {
+								child.motherRef = person1Id;
+							}
 						}
 					}
 				}
