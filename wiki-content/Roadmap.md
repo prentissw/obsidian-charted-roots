@@ -24,7 +24,7 @@ For detailed implementation documentation of completed features, see [Release Hi
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
-| v0.12.10 | [Step & Adoptive Parent Support](Release-History#step--adoptive-parent-support-v01210) | GEDCOM PEDI tags, dedicated fields, canvas visualization |
+| v0.12.10 | [Step & Adoptive Parent Support](Release-History#step--adoptive-parent-support-v01210) | GEDCOM PEDI tags, Gramps mrel/frel, GEDCOM X lineage types, dedicated fields, canvas visualization |
 | v0.12.9 | [Statistics & Reports](Statistics-And-Reports) | Dashboard with metrics, drill-down, and genealogical report generation |
 | v0.12.8 | [Dynamic Note Content](Release-History#dynamic-note-content-v0128) | Live computed timeline and relationships blocks in person notes |
 | v0.12.6 | [Gramps Source Import](Release-History#gramps-source-import-v0126) | Import sources, citations, and repositories from Gramps XML |
