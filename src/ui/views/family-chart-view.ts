@@ -86,6 +86,14 @@ export class FamilyChartView extends ItemView {
 	private historyBackBtn: HTMLElement | null = null;
 	private historyForwardBtn: HTMLElement | null = null;
 
+	// Info panel UI elements
+	private infoPanelEl: HTMLElement | null = null;
+	private infoPanelContentEl: HTMLElement | null = null;
+	private infoPanelActionsEl: HTMLElement | null = null;
+	private selectedPersonId: string | null = null;
+	private infoPanelEditMode: boolean = false;
+	private infoPanelEditData: { firstName: string; lastName: string; birthDate: string; deathDate: string } | null = null;
+
 	// Sync state (prevent infinite loops during sync)
 	private isSyncing: boolean = false;
 
@@ -142,7 +150,7 @@ export class FamilyChartView extends ItemView {
 	}
 
 	/**
-	 * Build the UI structure: toolbar and chart container
+	 * Build the UI structure: toolbar, chart container, and info panel
 	 */
 	private buildUI(): void {
 		const container = this.contentEl;
@@ -153,8 +161,16 @@ export class FamilyChartView extends ItemView {
 		this.toolbarEl = container.createDiv({ cls: 'cr-fcv-toolbar' });
 		this.buildToolbar();
 
+		// Create main content area with chart and info panel side by side
+		const contentArea = container.createDiv({ cls: 'cr-fcv-content' });
+
 		// Create chart container
-		this.chartContainerEl = container.createDiv({ cls: 'cr-fcv-chart-container f3' });
+		this.chartContainerEl = contentArea.createDiv({ cls: 'cr-fcv-chart-container f3' });
+
+		// Create info panel (hidden by default)
+		this.infoPanelEl = contentArea.createDiv({ cls: 'cr-fcv-info-panel' });
+		this.infoPanelEl.style.display = 'none';
+		this.buildInfoPanel();
 	}
 
 	/**
@@ -226,28 +242,7 @@ export class FamilyChartView extends ItemView {
 		setIcon(searchBtn, 'search');
 		searchBtn.addEventListener('click', () => { void this.openPersonSearch(); });
 
-		// Edit mode toggle button
-		this.editModeBtn = rightControls.createEl('button', {
-			cls: `cr-fcv-btn clickable-icon ${this.editMode ? 'is-active' : ''}`,
-			attr: { 'aria-label': 'Toggle edit mode' }
-		});
-		setIcon(this.editModeBtn, 'edit');
-		this.editModeBtn.addEventListener('click', () => this.toggleEditMode());
-
-		// History buttons (undo/redo for edit mode)
-		this.historyBackBtn = rightControls.createEl('button', {
-			cls: 'cr-fcv-btn clickable-icon',
-			attr: { 'aria-label': 'Undo', disabled: 'true' }
-		});
-		setIcon(this.historyBackBtn, 'undo');
-		this.historyBackBtn.addEventListener('click', () => this.historyBack());
-
-		this.historyForwardBtn = rightControls.createEl('button', {
-			cls: 'cr-fcv-btn clickable-icon',
-			attr: { 'aria-label': 'Redo', disabled: 'true' }
-		});
-		setIcon(this.historyForwardBtn, 'redo');
-		this.historyForwardBtn.addEventListener('click', () => this.historyForward());
+		// Note: Edit mode toggle and undo/redo buttons removed - editing is now done via the info panel
 
 		// Fit to view button
 		const fitBtn = rightControls.createEl('button', {
@@ -290,6 +285,375 @@ export class FamilyChartView extends ItemView {
 		});
 		setIcon(refreshBtn, 'refresh-cw');
 		refreshBtn.addEventListener('click', () => { void this.refreshChart(); });
+	}
+
+	/**
+	 * Build the info panel structure
+	 */
+	private buildInfoPanel(): void {
+		if (!this.infoPanelEl) return;
+
+		this.infoPanelEl.empty();
+
+		// Header
+		const header = this.infoPanelEl.createDiv({ cls: 'cr-fcv-info-panel-header' });
+		const headerTitle = header.createEl('h3', { text: 'Person details', cls: 'cr-fcv-info-panel-title' });
+		headerTitle.setAttribute('data-view-title', 'Person details');
+		headerTitle.setAttribute('data-edit-title', 'Edit person');
+
+		const closeBtn = header.createEl('button', { cls: 'cr-fcv-info-panel-close' });
+		closeBtn.innerHTML = '&times;';
+		closeBtn.addEventListener('click', () => this.closeInfoPanel());
+
+		// Content area (populated dynamically)
+		this.infoPanelContentEl = this.infoPanelEl.createDiv({ cls: 'cr-fcv-info-panel-content' });
+
+		// Actions area (Edit button or Save/Cancel)
+		this.infoPanelActionsEl = this.infoPanelEl.createDiv({ cls: 'cr-fcv-info-panel-actions' });
+	}
+
+	/**
+	 * Open the info panel for a specific person
+	 */
+	private openInfoPanel(personId: string): void {
+		if (!this.infoPanelEl) return;
+
+		this.selectedPersonId = personId;
+		this.infoPanelEditMode = false;
+		this.infoPanelEditData = null;
+
+		// Show the panel
+		this.infoPanelEl.style.display = 'flex';
+
+		// Render content
+		this.renderInfoPanelContent();
+	}
+
+	/**
+	 * Close the info panel
+	 */
+	private closeInfoPanel(): void {
+		if (!this.infoPanelEl) return;
+
+		// If in edit mode with changes, ask for confirmation
+		if (this.infoPanelEditMode && this.infoPanelEditData) {
+			// For now, just discard - could add a confirmation dialog later
+		}
+
+		this.selectedPersonId = null;
+		this.infoPanelEditMode = false;
+		this.infoPanelEditData = null;
+		this.infoPanelEl.style.display = 'none';
+	}
+
+	/**
+	 * Render the info panel content based on current mode (view/edit)
+	 */
+	private renderInfoPanelContent(): void {
+		if (!this.infoPanelContentEl || !this.infoPanelActionsEl || !this.selectedPersonId) return;
+
+		// Find the person data
+		const personData = this.chartData.find(p => p.id === this.selectedPersonId);
+		if (!personData) {
+			this.infoPanelContentEl.empty();
+			this.infoPanelContentEl.createEl('p', { text: 'Person not found', cls: 'cr-fcv-info-panel-error' });
+			return;
+		}
+
+		// Update header title
+		const headerTitle = this.infoPanelEl?.querySelector('.cr-fcv-info-panel-header h3');
+		if (headerTitle) {
+			headerTitle.textContent = this.infoPanelEditMode ? 'Edit person' : 'Person details';
+		}
+
+		this.infoPanelContentEl.empty();
+		this.infoPanelActionsEl.empty();
+
+		if (this.infoPanelEditMode) {
+			this.renderInfoPanelEditMode(personData);
+		} else {
+			this.renderInfoPanelViewMode(personData);
+		}
+	}
+
+	/**
+	 * Render info panel in view (read-only) mode
+	 */
+	private renderInfoPanelViewMode(personData: FamilyChartPerson): void {
+		if (!this.infoPanelContentEl || !this.infoPanelActionsEl) return;
+
+		// Fields section
+		const fieldsSection = this.infoPanelContentEl.createDiv({ cls: 'cr-fcv-info-panel-fields' });
+
+		// First name
+		this.createInfoField(fieldsSection, 'First name', personData.data['first name'] || '');
+
+		// Last name
+		this.createInfoField(fieldsSection, 'Last name', personData.data['last name'] || '');
+
+		// Birth date
+		this.createInfoField(fieldsSection, 'Birth date', personData.data.birthday || '');
+
+		// Death date
+		this.createInfoField(fieldsSection, 'Death date', personData.data.deathday || '');
+
+		// Relationships section
+		this.renderRelationshipsSection(personData);
+
+		// Actions - View mode
+		this.infoPanelActionsEl.addClass('view-mode');
+		this.infoPanelActionsEl.removeClass('edit-mode');
+
+		// Open note link (left side)
+		const openNoteLink = this.infoPanelActionsEl.createEl('a', {
+			cls: 'cr-fcv-open-note-link',
+			href: '#'
+		});
+		setIcon(openNoteLink.createSpan(), 'file-text');
+		openNoteLink.createSpan({ text: 'Open note' });
+		openNoteLink.addEventListener('click', (e) => {
+			e.preventDefault();
+			if (this.selectedPersonId) {
+				void this.openPersonNote(this.selectedPersonId);
+			}
+		});
+
+		// Edit button (right side)
+		const editBtn = this.infoPanelActionsEl.createEl('button', {
+			text: 'Edit',
+			cls: 'cr-fcv-btn-primary'
+		});
+		editBtn.addEventListener('click', () => this.enterInfoPanelEditMode(personData));
+	}
+
+	/**
+	 * Render info panel in edit mode
+	 */
+	private renderInfoPanelEditMode(personData: FamilyChartPerson): void {
+		if (!this.infoPanelContentEl || !this.infoPanelActionsEl) return;
+
+		// Initialize edit data if not already set
+		if (!this.infoPanelEditData) {
+			this.infoPanelEditData = {
+				firstName: personData.data['first name'] || '',
+				lastName: personData.data['last name'] || '',
+				birthDate: personData.data.birthday || '',
+				deathDate: personData.data.deathday || ''
+			};
+		}
+
+		// Fields section
+		const fieldsSection = this.infoPanelContentEl.createDiv({ cls: 'cr-fcv-info-panel-fields' });
+
+		// First name input
+		this.createInfoFieldInput(fieldsSection, 'First name', this.infoPanelEditData.firstName, (value) => {
+			if (this.infoPanelEditData) this.infoPanelEditData.firstName = value;
+		});
+
+		// Last name input
+		this.createInfoFieldInput(fieldsSection, 'Last name', this.infoPanelEditData.lastName, (value) => {
+			if (this.infoPanelEditData) this.infoPanelEditData.lastName = value;
+		});
+
+		// Birth date input
+		this.createInfoFieldInput(fieldsSection, 'Birth date', this.infoPanelEditData.birthDate, (value) => {
+			if (this.infoPanelEditData) this.infoPanelEditData.birthDate = value;
+		}, 'Not recorded');
+
+		// Death date input
+		this.createInfoFieldInput(fieldsSection, 'Death date', this.infoPanelEditData.deathDate, (value) => {
+			if (this.infoPanelEditData) this.infoPanelEditData.deathDate = value;
+		}, 'Not recorded');
+
+		// Relationships section (read-only in edit mode for now)
+		this.renderRelationshipsSection(personData);
+
+		// Actions - Edit mode
+		this.infoPanelActionsEl.removeClass('view-mode');
+		this.infoPanelActionsEl.addClass('edit-mode');
+
+		// Cancel button
+		const cancelBtn = this.infoPanelActionsEl.createEl('button', {
+			text: 'Cancel',
+			cls: 'cr-fcv-btn-secondary'
+		});
+		cancelBtn.addEventListener('click', () => this.cancelInfoPanelEdit());
+
+		// Save button
+		const saveBtn = this.infoPanelActionsEl.createEl('button', {
+			text: 'Save',
+			cls: 'cr-fcv-btn-primary'
+		});
+		saveBtn.addEventListener('click', () => void this.saveInfoPanelChanges());
+	}
+
+	/**
+	 * Create a read-only info field
+	 */
+	private createInfoField(container: HTMLElement, label: string, value: string): void {
+		const field = container.createDiv({ cls: 'cr-fcv-info-field' });
+		field.createDiv({ cls: 'cr-fcv-info-field-label', text: label });
+		const valueEl = field.createDiv({ cls: 'cr-fcv-info-field-value' });
+		if (value) {
+			valueEl.textContent = value;
+		} else {
+			valueEl.textContent = 'Not recorded';
+			valueEl.addClass('empty');
+		}
+	}
+
+	/**
+	 * Create an editable info field input
+	 */
+	private createInfoFieldInput(container: HTMLElement, label: string, value: string, onChange: (value: string) => void, placeholder?: string): void {
+		const field = container.createDiv({ cls: 'cr-fcv-info-field' });
+		field.createDiv({ cls: 'cr-fcv-info-field-label', text: label });
+		const input = field.createEl('input', {
+			type: 'text',
+			value: value,
+			placeholder: placeholder || '',
+			cls: 'cr-fcv-info-field-input'
+		});
+		input.addEventListener('input', () => onChange(input.value));
+	}
+
+	/**
+	 * Render the relationships section
+	 */
+	private renderRelationshipsSection(personData: FamilyChartPerson): void {
+		if (!this.infoPanelContentEl) return;
+
+		const relSection = this.infoPanelContentEl.createDiv({ cls: 'cr-fcv-info-panel-relationships' });
+		relSection.createEl('h4', { text: 'Relationships' });
+
+		// Parents
+		if (personData.rels.parents.length > 0) {
+			this.renderRelationshipGroup(relSection, 'Parents', personData.rels.parents);
+		}
+
+		// Spouses
+		if (personData.rels.spouses.length > 0) {
+			this.renderRelationshipGroup(relSection, 'Spouses', personData.rels.spouses);
+		}
+
+		// Children
+		if (personData.rels.children.length > 0) {
+			this.renderRelationshipGroup(relSection, 'Children', personData.rels.children);
+		}
+
+		// If no relationships
+		if (personData.rels.parents.length === 0 && personData.rels.spouses.length === 0 && personData.rels.children.length === 0) {
+			relSection.createEl('p', { text: 'No relationships recorded', cls: 'cr-fcv-info-panel-no-rels' });
+		}
+	}
+
+	/**
+	 * Render a group of relationships (parents, spouses, or children)
+	 */
+	private renderRelationshipGroup(container: HTMLElement, label: string, personIds: string[]): void {
+		const group = container.createDiv({ cls: 'cr-fcv-relationship-group' });
+		group.createDiv({ cls: 'cr-fcv-relationship-group-label', text: label });
+
+		for (const personId of personIds) {
+			const relPerson = this.chartData.find(p => p.id === personId);
+			const name = relPerson
+				? `${relPerson.data['first name'] || ''} ${relPerson.data['last name'] || ''}`.trim() || 'Unknown'
+				: 'Unknown';
+
+			const link = group.createEl('a', {
+				cls: 'cr-fcv-relationship-link',
+				href: '#',
+				text: name
+			});
+			link.addEventListener('click', (e) => {
+				e.preventDefault();
+				this.navigateToPersonInChart(personId);
+			});
+		}
+	}
+
+	/**
+	 * Navigate to a person in the chart and open their info panel
+	 */
+	private navigateToPersonInChart(personId: string): void {
+		// Update chart to center on the person
+		if (this.f3Chart) {
+			this.f3Chart.updateMainId(personId);
+			this.f3Chart.updateTree({});
+		}
+
+		// Open their info panel
+		this.openInfoPanel(personId);
+	}
+
+	/**
+	 * Enter edit mode in the info panel
+	 */
+	private enterInfoPanelEditMode(personData: FamilyChartPerson): void {
+		this.infoPanelEditMode = true;
+		this.infoPanelEditData = {
+			firstName: personData.data['first name'] || '',
+			lastName: personData.data['last name'] || '',
+			birthDate: personData.data.birthday || '',
+			deathDate: personData.data.deathday || ''
+		};
+		this.renderInfoPanelContent();
+	}
+
+	/**
+	 * Cancel edit mode and revert to view mode
+	 */
+	private cancelInfoPanelEdit(): void {
+		this.infoPanelEditMode = false;
+		this.infoPanelEditData = null;
+		this.renderInfoPanelContent();
+	}
+
+	/**
+	 * Save changes from the info panel edit mode
+	 */
+	private async saveInfoPanelChanges(): Promise<void> {
+		if (!this.selectedPersonId || !this.infoPanelEditData) return;
+
+		logger.info('info-panel-save', 'Saving info panel changes', {
+			personId: this.selectedPersonId,
+			data: this.infoPanelEditData
+		});
+
+		// Build datum object for syncDatumToMarkdown
+		const datum = {
+			id: this.selectedPersonId,
+			data: {
+				'first name': this.infoPanelEditData.firstName,
+				'last name': this.infoPanelEditData.lastName,
+				'birthday': this.infoPanelEditData.birthDate,
+				'deathday': this.infoPanelEditData.deathDate
+			}
+		};
+
+		// Sync to markdown
+		await this.syncDatumToMarkdown(datum);
+
+		// Update local chart data
+		const personIndex = this.chartData.findIndex(p => p.id === this.selectedPersonId);
+		if (personIndex >= 0) {
+			this.chartData[personIndex].data['first name'] = this.infoPanelEditData.firstName;
+			this.chartData[personIndex].data['last name'] = this.infoPanelEditData.lastName;
+			this.chartData[personIndex].data.birthday = this.infoPanelEditData.birthDate;
+			this.chartData[personIndex].data.deathday = this.infoPanelEditData.deathDate;
+		}
+
+		// Exit edit mode
+		this.infoPanelEditMode = false;
+		this.infoPanelEditData = null;
+
+		// Refresh the chart to show updated data
+		await this.refreshChart();
+
+		// Re-render the panel in view mode
+		this.renderInfoPanelContent();
+
+		new Notice('Changes saved');
 	}
 
 	/**
@@ -581,22 +945,16 @@ export class FamilyChartView extends ItemView {
 	 * Handle click on a person card
 	 * The d parameter is a TreeDatum from family-chart
 	 */
-	private handleCardClick(e: MouseEvent, d: { data: { id: string; [key: string]: unknown } }): void {
+	private handleCardClick(_e: MouseEvent, d: { data: { id: string; [key: string]: unknown } }): void {
 		const personId = d.data.id;
 
-		logger.debug('card-click', 'Card clicked', { personId, editMode: this.editMode });
+		logger.debug('card-click', 'Card clicked', { personId });
 
-		// In edit mode, EditTree handles the click via setCardClickOpen
-		// In view mode, open the person's note in addition to navigation
-		if (!this.editMode) {
-			void this.openPersonNote(personId);
-		}
-
-		// Call default card click behavior for navigation (centers on the person)
-		if (this.f3Card) {
-			// Cast to unknown first, then to expected type - the f3 library expects its internal TreeDatum type
-			this.f3Card.onCardClickDefault(e, d as unknown as Parameters<typeof this.f3Card.onCardClickDefault>[1]);
-		}
+		// Open the info panel for this person
+		// Note: We don't call onCardClickDefault here because it would re-center the tree
+		// and reset the zoom level. Users can navigate to a person via the relationships
+		// section which will re-center intentionally.
+		this.openInfoPanel(personId);
 	}
 
 	/**
@@ -1688,16 +2046,16 @@ export class FamilyChartView extends ItemView {
 		logger.debug('edit-tree-init', 'Initializing EditTree');
 
 		// Create EditTree instance
+		// Note: We don't use setCardClickOpen() here because we have our own custom info panel
+		// that handles editing. The EditTree is kept for its data management and export capabilities.
 		this.f3EditTree = this.f3Chart.editTree()
-			// Configure editable fields
+			// Configure editable fields (still needed for data export structure)
 			.setFields([
 				{ type: 'text', label: 'First name', id: 'first name' },
 				{ type: 'text', label: 'Last name', id: 'last name' },
 				{ type: 'text', label: 'Birth date', id: 'birthday' },
 				{ type: 'text', label: 'Death date', id: 'deathday' }
 			])
-			// Set up card click to open edit form when in edit mode
-			.setCardClickOpen(this.f3Card)
 			// Handle data changes for bidirectional sync
 			.setOnChange(() => this.handleChartDataChange())
 			// Custom submit handler for sync to markdown

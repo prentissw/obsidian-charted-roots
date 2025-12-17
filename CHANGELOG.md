@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.12.14] - 2025-12-17
+
+### Changed
+
+- **Family chart info panel** - Replaced the hidden edit mode toggle with a dedicated info panel that opens when clicking any person card. The panel shows person details in read-only mode with an explicit "Edit" button to switch to edit mode. Includes clickable relationship links to navigate between family members.
+
+### Fixed
+
+- **Family chart zoom preserved on card click** - Clicking a person card no longer resets the zoom level and re-centers the view. The current view is preserved when opening the info panel.
+
+---
+
 ## [0.12.13] - 2025-12-17
 
 ### Added
