@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.12.12] - 2025-12-17
+
 ### Added
 
 - **Configurable sex normalization** - New setting in Preferences to control how "Normalize sex values" behaves: Standard (GEDCOM M/F), Schema-aware (respects custom sex enum values defined in schemas), or Disabled (never normalize). Schema-aware mode allows worldbuilders to protect custom sex values like "hermaphrodite" or "neuter" from normalization.
