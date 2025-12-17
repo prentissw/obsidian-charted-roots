@@ -5326,15 +5326,24 @@ export class ControlCenterModal extends Modal {
 			// Read file content
 			const content = await file.text();
 
+			// Disable bidirectional sync during import to prevent duplicate relationships
+			this.plugin.disableBidirectionalSync();
+
 			// Create importer
 			const importer = new GedcomImporter(this.app);
 
 			// Import GEDCOM file
-			const result = await importer.importFile(content, {
-				peopleFolder: destFolder,
-				overwriteExisting: false,
-				fileName: file.name
-			});
+			let result;
+			try {
+				result = await importer.importFile(content, {
+					peopleFolder: destFolder,
+					overwriteExisting: false,
+					fileName: file.name
+				});
+			} finally {
+				// Re-enable bidirectional sync after import
+				this.plugin.enableBidirectionalSync();
+			}
 
 			// Log results
 			logger.info('gedcom', `Import complete: ${result.individualsProcessed} individuals processed`);
@@ -5502,8 +5511,9 @@ export class ControlCenterModal extends Modal {
 		fileName?: string,
 		includeDynamicBlocks?: boolean
 	): Promise<void> {
-		// Suspend bidirectional linker during import to prevent race conditions
-		// The linker would otherwise try to sync relationships before Phase 2 replaces GEDCOM IDs with cr_ids
+		// Disable bidirectional sync during import to prevent duplicate relationships
+		// The file watcher would otherwise trigger syncRelationships before Phase 2 replaces GEDCOM IDs with cr_ids
+		this.plugin.disableBidirectionalSync();
 		this.plugin.bidirectionalLinker?.suspend();
 
 		// Show progress modal
@@ -5616,7 +5626,8 @@ export class ControlCenterModal extends Modal {
 			logger.error('gedcom', `GEDCOM v2 import failed: ${errorMsg}`);
 			new Notice(`Failed to import GEDCOM: ${errorMsg}`);
 		} finally {
-			// Resume bidirectional linker after import completes (success or failure)
+			// Re-enable bidirectional sync and resume linker after import completes (success or failure)
+			this.plugin.enableBidirectionalSync();
 			this.plugin.bidirectionalLinker?.resume();
 		}
 	}
@@ -9106,12 +9117,21 @@ export class ControlCenterModal extends Modal {
 
 			logger.info('gedcomx', `Starting GEDCOM X import: ${file.name} to ${destFolder}`);
 
+			// Disable bidirectional sync during import to prevent duplicate relationships
+			this.plugin.disableBidirectionalSync();
+
 			const importer = new GedcomXImporter(this.app);
-			const result = await importer.importFile(content, {
-				peopleFolder: destFolder,
-				overwriteExisting: false,
-				fileName: file.name
-			});
+			let result;
+			try {
+				result = await importer.importFile(content, {
+					peopleFolder: destFolder,
+					overwriteExisting: false,
+					fileName: file.name
+				});
+			} finally {
+				// Re-enable bidirectional sync after import
+				this.plugin.enableBidirectionalSync();
+			}
 
 			// Show results notification
 			this.showGedcomXImportResults(result);
@@ -9663,6 +9683,9 @@ export class ControlCenterModal extends Modal {
 
 			logger.info('gramps', `Starting Gramps import: ${file.name} to ${destFolder}`);
 
+			// Disable bidirectional sync during import to prevent duplicate relationships
+			this.plugin.disableBidirectionalSync();
+
 			const importer = new GrampsImporter(this.app);
 			const result = await importer.importFile(content, {
 				peopleFolder: destFolder,
@@ -9695,6 +9718,9 @@ export class ControlCenterModal extends Modal {
 				}
 			});
 
+			// Re-enable bidirectional sync now that import is complete
+			this.plugin.enableBidirectionalSync();
+
 			// Mark progress as complete and close modal after a brief delay
 			progressModal.markComplete();
 			setTimeout(() => progressModal.close(), 1500);
@@ -9713,6 +9739,9 @@ export class ControlCenterModal extends Modal {
 			}
 
 		} catch (error: unknown) {
+			// Re-enable bidirectional sync even on error
+			this.plugin.enableBidirectionalSync();
+
 			progressModal.close();
 			const errorMsg = getErrorMessage(error);
 			logger.error('gramps', `Gramps import failed: ${errorMsg}`);
@@ -10306,17 +10335,26 @@ export class ControlCenterModal extends Modal {
 			// Read file content
 			const content = await file.text();
 
+			// Disable bidirectional sync during import to prevent duplicate relationships
+			this.plugin.disableBidirectionalSync();
+
 			// Create importer
 			const { CsvImporter } = await import('../csv/csv-importer');
 			const importer = new CsvImporter(this.app);
 
 			// Import CSV file
-			const result = await importer.importFile(content, {
-				peopleFolder: destFolder,
-				overwriteExisting: false,
-				fileName: file.name,
-				parseOptions
-			});
+			let result;
+			try {
+				result = await importer.importFile(content, {
+					peopleFolder: destFolder,
+					overwriteExisting: false,
+					fileName: file.name,
+					parseOptions
+				});
+			} finally {
+				// Re-enable bidirectional sync after import
+				this.plugin.enableBidirectionalSync();
+			}
 
 			// Log results
 			logger.info('csv', `Import complete: ${result.recordsImported} records processed`);

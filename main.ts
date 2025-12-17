@@ -57,6 +57,35 @@ export default class CanvasRootsPlugin extends Plugin {
 	private eventService: EventService | null = null;
 
 	/**
+	 * Flag to temporarily disable bidirectional sync during bulk operations (e.g., import)
+	 * This prevents the file watcher from adding duplicate relationships while importing
+	 */
+	private _syncDisabled: boolean = false;
+
+	/**
+	 * Temporarily disable bidirectional sync (for use during bulk imports)
+	 */
+	disableBidirectionalSync(): void {
+		this._syncDisabled = true;
+		logger.debug('sync-control', 'Bidirectional sync temporarily disabled');
+	}
+
+	/**
+	 * Re-enable bidirectional sync after bulk operation
+	 */
+	enableBidirectionalSync(): void {
+		this._syncDisabled = false;
+		logger.debug('sync-control', 'Bidirectional sync re-enabled');
+	}
+
+	/**
+	 * Check if bidirectional sync is currently disabled
+	 */
+	isSyncDisabled(): boolean {
+		return this._syncDisabled;
+	}
+
+	/**
 	 * Get the folder filter service for filtering person notes by folder
 	 */
 	getFolderFilter(): FolderFilterService | null {
@@ -3343,6 +3372,11 @@ export default class CanvasRootsPlugin extends Plugin {
 			logger.debug('file-watcher', 'Registering file modification handler for bidirectional sync');
 
 			this.fileModifyEventRef = this.app.metadataCache.on('changed', async (file: TFile) => {
+				// Skip if sync is temporarily disabled (e.g., during bulk import)
+				if (this._syncDisabled) {
+					return;
+				}
+
 				// Only process markdown files
 				if (file.extension !== 'md') {
 					return;

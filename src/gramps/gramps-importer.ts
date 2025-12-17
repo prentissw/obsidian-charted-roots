@@ -629,74 +629,125 @@ export class GrampsImporter {
 		}
 
 		// Replace spouse_id references with real cr_ids
+		// Use a targeted approach to avoid cross-contamination with other arrays
 		if (person.spouseRefs.length > 0) {
+			// Handle array format
+			const spouseIdMatch = updatedContent.match(/^spouse_id:\n((?:\s{2}-\s+[^\n]+\n?)+)/m);
+			if (spouseIdMatch) {
+				let spouseIdBlock = spouseIdMatch[0];
+				for (const spouseRef of person.spouseRefs) {
+					const spouseCrId = grampsToCrId.get(spouseRef);
+					if (spouseCrId && spouseIdBlock.includes(spouseRef)) {
+						const escapedRef = this.escapeRegex(spouseRef);
+						spouseIdBlock = spouseIdBlock.replace(
+							new RegExp(`(\\s{2}-\\s+)${escapedRef}`, 'g'),
+							`$1${spouseCrId}`
+						);
+					}
+				}
+				updatedContent = updatedContent.replace(spouseIdMatch[0], spouseIdBlock);
+			}
+			// Handle single-value format (spouse_id: handle)
 			for (const spouseRef of person.spouseRefs) {
 				const spouseCrId = grampsToCrId.get(spouseRef);
 				if (spouseCrId) {
 					const escapedRef = this.escapeRegex(spouseRef);
-					// Replace in spouse_id field
 					updatedContent = updatedContent.replace(
-						new RegExp(`spouse_id: ${escapedRef}`, 'g'),
-						`spouse_id: ${spouseCrId}`
-					);
-					// Also replace in array format
-					updatedContent = updatedContent.replace(
-						new RegExp(` {2}- ${escapedRef}`, 'g'),
-						`  - ${spouseCrId}`
+						new RegExp(`^(spouse_id:\\s+)${escapedRef}$`, 'gm'),
+						`$1${spouseCrId}`
 					);
 				}
 			}
 		}
 
 		// Replace children_id references with real cr_ids
+		// Use a targeted approach: extract, replace, and re-insert the children_id block
+		const childrenIdMatch = updatedContent.match(/^children_id:\n((?:\s{2}-\s+[^\n]+\n?)+)/m);
+		if (childrenIdMatch) {
+			let childrenIdBlock = childrenIdMatch[0];
+			for (const [childHandle] of grampsToCrId) {
+				const childCrId = grampsToCrId.get(childHandle);
+				if (childCrId && childrenIdBlock.includes(childHandle)) {
+					const escapedRef = this.escapeRegex(childHandle);
+					childrenIdBlock = childrenIdBlock.replace(
+						new RegExp(`(\\s{2}-\\s+)${escapedRef}`, 'g'),
+						`$1${childCrId}`
+					);
+				}
+			}
+			updatedContent = updatedContent.replace(childrenIdMatch[0], childrenIdBlock);
+		}
+		// Also handle single-value format (children_id: handle)
 		for (const [childHandle] of grampsToCrId) {
 			const childCrId = grampsToCrId.get(childHandle);
 			if (childCrId && content.includes(childHandle)) {
 				const escapedRef = this.escapeRegex(childHandle);
-				// Replace in children_id field (canonical property name)
 				updatedContent = updatedContent.replace(
-					new RegExp(`children_id: ${escapedRef}`, 'g'),
-					`children_id: ${childCrId}`
-				);
-				// Also replace in array format
-				updatedContent = updatedContent.replace(
-					new RegExp(` {2}- ${escapedRef}`, 'g'),
-					`  - ${childCrId}`
+					new RegExp(`^(children_id:\\s+)${escapedRef}$`, 'gm'),
+					`$1${childCrId}`
 				);
 			}
 		}
 
 		// Replace stepfather_id references with real cr_ids
+		// Use a targeted approach to avoid cross-contamination with other arrays
 		if (person.stepfatherRefs.length > 0) {
+			// Handle array format
+			const stepfatherIdMatch = updatedContent.match(/^stepfather_id:\n((?:\s{2}-\s+[^\n]+\n?)+)/m);
+			if (stepfatherIdMatch) {
+				let stepfatherIdBlock = stepfatherIdMatch[0];
+				for (const stepfatherRef of person.stepfatherRefs) {
+					const stepfatherCrId = grampsToCrId.get(stepfatherRef);
+					if (stepfatherCrId && stepfatherIdBlock.includes(stepfatherRef)) {
+						const escapedRef = this.escapeRegex(stepfatherRef);
+						stepfatherIdBlock = stepfatherIdBlock.replace(
+							new RegExp(`(\\s{2}-\\s+)${escapedRef}`, 'g'),
+							`$1${stepfatherCrId}`
+						);
+					}
+				}
+				updatedContent = updatedContent.replace(stepfatherIdMatch[0], stepfatherIdBlock);
+			}
+			// Handle single-value format
 			for (const stepfatherRef of person.stepfatherRefs) {
 				const stepfatherCrId = grampsToCrId.get(stepfatherRef);
 				if (stepfatherCrId) {
 					const escapedRef = this.escapeRegex(stepfatherRef);
 					updatedContent = updatedContent.replace(
-						new RegExp(`stepfather_id: ${escapedRef}`, 'g'),
-						`stepfather_id: ${stepfatherCrId}`
-					);
-					updatedContent = updatedContent.replace(
-						new RegExp(` {2}- ${escapedRef}`, 'g'),
-						`  - ${stepfatherCrId}`
+						new RegExp(`^(stepfather_id:\\s+)${escapedRef}$`, 'gm'),
+						`$1${stepfatherCrId}`
 					);
 				}
 			}
 		}
 
 		// Replace stepmother_id references with real cr_ids
+		// Use a targeted approach to avoid cross-contamination with other arrays
 		if (person.stepmotherRefs.length > 0) {
+			// Handle array format
+			const stepmotherIdMatch = updatedContent.match(/^stepmother_id:\n((?:\s{2}-\s+[^\n]+\n?)+)/m);
+			if (stepmotherIdMatch) {
+				let stepmotherIdBlock = stepmotherIdMatch[0];
+				for (const stepmotherRef of person.stepmotherRefs) {
+					const stepmotherCrId = grampsToCrId.get(stepmotherRef);
+					if (stepmotherCrId && stepmotherIdBlock.includes(stepmotherRef)) {
+						const escapedRef = this.escapeRegex(stepmotherRef);
+						stepmotherIdBlock = stepmotherIdBlock.replace(
+							new RegExp(`(\\s{2}-\\s+)${escapedRef}`, 'g'),
+							`$1${stepmotherCrId}`
+						);
+					}
+				}
+				updatedContent = updatedContent.replace(stepmotherIdMatch[0], stepmotherIdBlock);
+			}
+			// Handle single-value format
 			for (const stepmotherRef of person.stepmotherRefs) {
 				const stepmotherCrId = grampsToCrId.get(stepmotherRef);
 				if (stepmotherCrId) {
 					const escapedRef = this.escapeRegex(stepmotherRef);
 					updatedContent = updatedContent.replace(
-						new RegExp(`stepmother_id: ${escapedRef}`, 'g'),
-						`stepmother_id: ${stepmotherCrId}`
-					);
-					updatedContent = updatedContent.replace(
-						new RegExp(` {2}- ${escapedRef}`, 'g'),
-						`  - ${stepmotherCrId}`
+						new RegExp(`^(stepmother_id:\\s+)${escapedRef}$`, 'gm'),
+						`$1${stepmotherCrId}`
 					);
 				}
 			}

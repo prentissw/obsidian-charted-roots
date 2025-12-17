@@ -237,7 +237,7 @@ export async function createPersonNote(
 				frontmatter[prop('children_id')] = person.childCrId[0];
 			} else {
 				frontmatter[prop('child')] = person.childName.map(c => `"[[${c}]]"`);
-				frontmatter[prop('children_id')] = person.childCrId;
+				frontmatter[prop('children_id')] = [...person.childCrId]; // Make a copy to avoid reference issues
 			}
 			logger.debug('children', `Added (dual): wikilinks=${JSON.stringify(person.childName)}, ids=${JSON.stringify(person.childCrId)}`);
 		} else {
@@ -245,10 +245,13 @@ export async function createPersonNote(
 			if (person.childCrId.length === 1) {
 				frontmatter[prop('children_id')] = person.childCrId[0];
 			} else {
-				frontmatter[prop('children_id')] = person.childCrId;
+				frontmatter[prop('children_id')] = [...person.childCrId]; // Make a copy to avoid reference issues
 			}
 			logger.debug('children', `Added (id only): ${JSON.stringify(person.childCrId)}`);
 		}
+
+		// Debug: Log what was actually set
+		logger.debug('children-output', `Person ${person.name}: frontmatter[children_id]=${JSON.stringify(frontmatter[prop('children_id')])}`);
 	}
 
 	// Step-father relationship(s) (dual storage)
@@ -344,8 +347,6 @@ export async function createPersonNote(
 	if (!(groupNameProp in frontmatter)) {
 		frontmatter[groupNameProp] = '';
 	}
-
-	logger.debug('frontmatter', `Final: ${JSON.stringify(frontmatter)}`);
 
 	// Build YAML frontmatter string
 	const yamlLines = ['---'];

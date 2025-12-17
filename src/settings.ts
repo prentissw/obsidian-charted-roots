@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, normalizePath, PluginSettingTab, Setting } from 'obsidian';
 import CanvasRootsPlugin from '../main';
 import type { LogLevel } from './core/logging';
 import type { RelationshipTypeDefinition } from './relationships';
@@ -782,6 +782,51 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.plugin.settings.obfuscateLogExports = value;
 					await this.plugin.saveSettings();
+				}));
+
+		new Setting(loggingContent)
+			.setName('Export logs')
+			.setDesc('Export collected logs to a file in the vault')
+			.addButton(button => button
+				.setButtonText('Export')
+				.onClick(async () => {
+					const { LoggerFactory, obfuscateLogs } = await import('./core/logging');
+					const logs = LoggerFactory.getLogs();
+
+					if (logs.length === 0) {
+						new Notice('No logs to export');
+						return;
+					}
+
+					// Optionally obfuscate
+					const logsToExport = this.plugin.settings.obfuscateLogExports
+						? obfuscateLogs(logs)
+						: logs;
+
+					// Format logs as text
+					const lines = logsToExport.map(entry => {
+						const timestamp = entry.timestamp.toISOString();
+						const level = entry.level.toUpperCase().padEnd(5);
+						const dataStr = entry.data ? ` | ${JSON.stringify(entry.data)}` : '';
+						return `[${timestamp}] ${level} [${entry.component}/${entry.category}] ${entry.message}${dataStr}`;
+					});
+					const content = lines.join('\n');
+
+					// Determine output path
+					const folder = this.plugin.settings.logExportPath || '.canvas-roots/logs';
+					const filename = `canvas-roots-${new Date().toISOString().replace(/[:.]/g, '-')}.log`;
+					const fullPath = normalizePath(`${folder}/${filename}`);
+
+					// Ensure folder exists
+					const folderPath = normalizePath(folder);
+					const existingFolder = this.app.vault.getAbstractFileByPath(folderPath);
+					if (!existingFolder) {
+						await this.app.vault.createFolder(folderPath);
+					}
+
+					// Write the file
+					await this.app.vault.create(fullPath, content);
+					new Notice(`Exported ${logs.length} log entries to ${fullPath}`);
 				}));
 
 		// ═══════════════════════════════════════════════════════════════════════
