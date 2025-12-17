@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.12.13] - 2025-12-17
+
+### Added
+
+- **Log export button** - New "Export logs" button in Developer settings allows saving the current session log to a file with optional obfuscation of personal data.
+
+### Fixed
+
+- **Duplicate children_id during Gramps import** - Fixed a race condition where bidirectional sync added relationship IDs while import was still in progress, causing duplicate `children_id` entries. Now all import operations (Gramps, GEDCOM, GEDCOM X, CSV) disable bidirectional sync during the import process.
+
+---
+
 ## [0.12.12] - 2025-12-17
 
 ### Added
