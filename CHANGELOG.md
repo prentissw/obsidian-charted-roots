@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Create all bases button** - New "Create all bases" button in Control Center > Guide > Base templates card creates all five base files (people, places, events, organizations, sources) at once.
+
+- **Auto-create bases on import** - Bases are automatically created after GEDCOM, GEDCOM X, and Gramps imports, making imported data immediately viewable in Obsidian's Bases feature.
+
 ### Changed
 
 - **ESLint upgrade to v9 flat config** - Migrated from ESLint v8 legacy config to v9 flat config with `eslint-plugin-obsidianmd` for Obsidian-specific linting rules.

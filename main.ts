@@ -389,6 +389,15 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 		});
 
+		// Add command: Create All Base Templates
+		this.addCommand({
+			id: 'create-all-bases',
+			name: 'Create all base templates',
+			callback: () => {
+				void this.createAllBases();
+			}
+		});
+
 		// Add command: Calculate Relationship
 		this.addCommand({
 			id: 'calculate-relationship',
@@ -6065,6 +6074,85 @@ export default class CanvasRootsPlugin extends Plugin {
 
 			modal.open();
 		});
+	}
+
+	/**
+	 * Check if Bases feature is available in Obsidian
+	 */
+	private isBasesAvailable(): boolean {
+		const baseFiles = this.app.vault.getFiles().filter(f => f.extension === 'base');
+		// @ts-expect-error - accessing internal plugins
+		const basesInternalPlugin = this.app.internalPlugins?.plugins?.['bases'];
+		return baseFiles.length > 0 || (basesInternalPlugin?.enabled === true);
+	}
+
+	/**
+	 * Create all base templates at once
+	 * Silently skips bases that already exist
+	 */
+	async createAllBases(options?: { silent?: boolean }): Promise<{ created: string[]; skipped: string[] }> {
+		const created: string[] = [];
+		const skipped: string[] = [];
+		const silent = options?.silent ?? false;
+
+		// Check if Bases feature is available
+		if (!this.isBasesAvailable()) {
+			if (!silent) {
+				const proceed = await this.confirmBaseCreation();
+				if (!proceed) return { created, skipped };
+			} else {
+				// In silent mode (auto-create), skip if Bases not available
+				return { created, skipped };
+			}
+		}
+
+		// Determine the target folder
+		const targetFolder = this.settings.basesFolder || '';
+		const folderPath = targetFolder ? targetFolder + '/' : '';
+
+		// Create the bases folder if it doesn't exist
+		if (this.settings.basesFolder && !this.app.vault.getAbstractFileByPath(this.settings.basesFolder)) {
+			await this.app.vault.createFolder(this.settings.basesFolder);
+		}
+
+		// Define all base types with their templates
+		const baseTypes = [
+			{ name: 'people', file: 'people.base', generator: () => generatePeopleBaseTemplate(this.settings.propertyAliases) },
+			{ name: 'places', file: 'places.base', generator: () => generatePlacesBaseTemplate(this.settings.propertyAliases) },
+			{ name: 'events', file: 'events.base', generator: () => generateEventsBaseTemplate(this.settings.propertyAliases) },
+			{ name: 'organizations', file: 'organizations.base', generator: () => ORGANIZATIONS_BASE_TEMPLATE },
+			{ name: 'sources', file: 'sources.base', generator: () => SOURCES_BASE_TEMPLATE },
+		];
+
+		for (const baseType of baseTypes) {
+			const filePath = folderPath + baseType.file;
+			const existingFile = this.app.vault.getAbstractFileByPath(filePath);
+
+			if (existingFile) {
+				skipped.push(baseType.name);
+			} else {
+				try {
+					const content = baseType.generator();
+					await this.app.vault.create(filePath, content);
+					created.push(baseType.name);
+				} catch (error: unknown) {
+					logger.error('create-all-bases', `Failed to create ${baseType.name} base`, error);
+					skipped.push(baseType.name);
+				}
+			}
+		}
+
+		if (!silent) {
+			if (created.length > 0) {
+				new Notice(`Created ${created.length} base${created.length > 1 ? 's' : ''}: ${created.join(', ')}`);
+			}
+			if (skipped.length > 0 && created.length === 0) {
+				new Notice('All bases already exist');
+			}
+		}
+
+		logger.info('create-all-bases', `Created: ${created.join(', ') || 'none'}, Skipped: ${skipped.join(', ') || 'none'}`);
+		return { created, skipped };
 	}
 
 	/**

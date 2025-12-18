@@ -1623,6 +1623,17 @@ export class ControlCenterModal extends Modal {
 			});
 		});
 
+		// Create all bases button
+		const createAllContainer = templatesContent.createDiv({ cls: 'crc-mt-3' });
+		const createAllBtn = createAllContainer.createEl('button', {
+			text: 'Create all bases',
+			cls: 'crc-btn crc-btn--secondary'
+		});
+		createAllBtn.addEventListener('click', () => {
+			this.close();
+			this.app.commands.executeCommandById('canvas-roots:create-all-bases');
+		});
+
 		container.appendChild(templatesCard);
 
 		// =========================================================================
@@ -5616,6 +5627,11 @@ export class ControlCenterModal extends Modal {
 			}
 			new Notice(noticeMsg, 8000);
 
+			// Auto-create bases for imported note types (silently, skips if already exist)
+			if (totalNotesCreated > 0) {
+				await this.plugin.createAllBases({ silent: true });
+			}
+
 			// Refresh status tab
 			if (totalNotesCreated > 0) {
 				this.showTab('status');
@@ -9136,6 +9152,11 @@ export class ControlCenterModal extends Modal {
 			// Show results notification
 			this.showGedcomXImportResults(result);
 
+			// Auto-create bases for imported note types (silently, skips if already exist)
+			if (result.notesCreated > 0) {
+				await this.plugin.createAllBases({ silent: true });
+			}
+
 			// Refresh status tab
 			if (result.notesCreated > 0) {
 				this.showTab('status');
@@ -9727,6 +9748,11 @@ export class ControlCenterModal extends Modal {
 
 			// Show results notification
 			this.showGrampsImportResults(result);
+
+			// Auto-create bases for imported note types (silently, skips if already exist)
+			if (result.notesCreated > 0) {
+				await this.plugin.createAllBases({ silent: true });
+			}
 
 			// Refresh status tab
 			if (result.notesCreated > 0) {
