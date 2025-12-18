@@ -28,6 +28,7 @@ export type LucideIconName =
 	| 'alert-triangle' // Error
 	| 'info'           // Information
 	| 'chevron-right'  // Navigation
+	| 'chevron-left'   // Navigation back
 	| 'chevron-down'   // Dropdown
 	| 'plus'           // Add/create
 	| 'minus'          // Remove
@@ -193,6 +194,12 @@ export const TAB_CONFIGS: TabConfig[] = [
 		name: 'Organizations',
 		icon: 'building',
 		description: 'Manage organizations and memberships'
+	},
+	{
+		id: 'universes',
+		name: 'Universes',
+		icon: 'globe',
+		description: 'Manage fictional universes and worlds'
 	},
 	{
 		id: 'collections',

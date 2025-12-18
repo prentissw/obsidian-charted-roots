@@ -9,8 +9,8 @@ This document outlines planned features for Canvas Roots. For completed features
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [Calendarium Integration](#calendarium-integration) ⚡ High
-  - [Universe Management](#universe-management) 📋 Medium
   - [Post-Import Cleanup Wizard](#post-import-cleanup-wizard) 📋 Medium
+  - [Universe Management Enhancements](#universe-management-enhancements) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
 - [Future Considerations](#future-considerations)
 - [Known Limitations](#known-limitations)
@@ -24,6 +24,7 @@ For detailed implementation documentation of completed features, see [Release Hi
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.13.0 | [Universe Management](Release-History#universe-management-v0130) | First-class universe entity, Universes tab, setup wizard, statistics integration |
 | v0.12.12 | [Configurable Normalization](Release-History#configurable-normalization-v01212) | Schema-aware sex normalization modes for worldbuilders |
 | v0.12.10 | [Step & Adoptive Parent Support](Release-History#step--adoptive-parent-support-v01210) | GEDCOM PEDI tags, Gramps mrel/frel, GEDCOM X lineage types, dedicated fields, canvas visualization |
 | v0.12.9 | [Statistics & Reports](Statistics-And-Reports) | Dashboard with metrics, drill-down, and genealogical report generation |
@@ -124,107 +125,6 @@ See [Calendarium Integration Planning Document](https://github.com/banisterious/
 
 ---
 
-### Universe Management
-
-**Priority:** 📋 Medium — First-class support for fictional worldbuilders
-
-**Summary:** A comprehensive universe management system that includes: (1) Universe as a first-class entity type for canonical registry, (2) a guided setup wizard for new worlds, (3) a Universes tab in Control Center (conditional visibility), (4) a Universes section in Statistics for discovery, and (5) a Universes card in the Guide tab for onboarding.
-
-**Problem Statement:**
-
-When setting up a new fictional world (e.g., Middle-earth, Westeros), users currently need to:
-- Discover that date systems exist and create one
-- Find the maps feature and create a custom map
-- Learn about schemas and create validation rules
-- Remember to use the same universe string everywhere
-- Hope they don't make typos that create duplicate "universes"
-
-These features are spread across different parts of the plugin with no guidance on how they connect. The `universe` field is just a string—there's no validation, no autocomplete, and no central place to see "all my universes."
-
-**Solution: Universe as First-Class Entity**
-
-| Problem | Solution |
-|---------|----------|
-| Typos create duplicates | Autocomplete from universe notes |
-| No central overview | Universe notes + Universes tab |
-| Can't store metadata | Universe note holds description, author, genre, etc. |
-| No validation | Warn when `universe` field references non-existent universe |
-| No discoverability | Browse universe notes, Universes section in Statistics |
-
-**Universe Entity Schema:**
-
-```yaml
-cr_type: universe
-cr_id: middle-earth
-name: Middle-earth
-description: A fantasy world created by J.R.R. Tolkien
-author: J.R.R. Tolkien
-genre: fantasy
-status: active
-default_calendar: shire-reckoning
-default_map: middle-earth-map
-```
-
-**Wizard Flow:**
-
-| Step | Description | Skippable |
-|------|-------------|-----------|
-| 1 | Create universe note (name, description, metadata) | No |
-| 2 | Custom calendar? → Creates date system linked to universe | Yes |
-| 3 | Custom map? → Creates map config linked to universe | Yes |
-| 4 | Validation rules? → Creates schema scoped to universe | Yes |
-| 5 | Summary → Shows universe note with links to created entities | No |
-
-**UI Locations:**
-
-| Location | Purpose |
-|----------|---------|
-| Guide tab → Universes card | Always visible; explains feature, primary entry point |
-| Statistics → Universes section | Always visible; discovery and overview |
-| Control Center → Universes tab | Conditional; appears when universes exist |
-| Command palette | "Create universe" command |
-
-**Conditional Tab Visibility:**
-
-The Universes tab only appears when:
-- Any universe notes exist in the vault, OR
-- Any orphan universe strings exist (entities with `universe` field but no matching note)
-
-This keeps the UI clean for genealogists who never use fictional worlds.
-
-**Phased Implementation:**
-
-**Phase 1 — Universe Entity Type:**
-- Universe schema and types
-- UniverseService (CRUD, aggregation, orphan detection)
-- Property alias support
-
-**Phase 2 — UI Integration:**
-- Guide tab → Universes card (always visible, primary entry point)
-- Statistics → Universes section
-- Control Center → Universes tab (conditional)
-- Autocomplete in entity creation modals
-
-**Phase 3 — Setup Wizard:**
-- Multi-step wizard modal
-- Integration with existing creation forms
-- Summary and entity linking
-
-**Phase 4 — Enhanced Features:**
-- Universe dashboard with entity counts
-- Universe-scoped filtering in quick switcher
-- Batch operations (move entities between universes)
-
-**Backward Compatibility:**
-
-- String-only `universe` values continue to function
-- Migration prompt: "We found 3 universes without notes. Create them?"
-- New entities default to linking via universe notes
-
-See [Universe Management Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/universe-management.md) for implementation details.
-
----
-
 ### Post-Import Cleanup Wizard
 
 **Priority:** 📋 Medium — Guided workflow for data quality after GEDCOM import
@@ -308,6 +208,44 @@ After a GEDCOM import (especially from a file with data quality issues), users f
 
 **Documentation:**
 - See [Data Quality: Post-Import Cleanup Workflow](Data-Quality#post-import-cleanup-workflow) for manual workflow
+
+---
+
+### Universe Management Enhancements
+
+**Priority:** 💡 Low — Advanced features for power users
+
+**Status:** ✅ Core implementation complete | Phase 4 enhancements planned
+
+**Summary:** Additional enhancements to the universe management system. The core universe management features are complete—universe entity type, Universes tab in Control Center, Statistics integration, Guide tab documentation, Create Universe wizard, and context menu actions. These enhancements add power-user features for advanced workflows.
+
+**Current Implementation (Complete):**
+
+- Universe as first-class entity type (`cr_type: universe`)
+- UniverseService with CRUD operations, aggregation, orphan detection
+- Universes tab in Control Center (conditional visibility)
+- Create Universe wizard with guided setup
+- Statistics → Universes section with entity counts and drill-down
+- Guide tab → Universe notes documentation
+- Context menu: "Add essential universe properties"
+- Universes base template with 12 pre-configured views
+
+**Planned Enhancements:**
+
+| Feature | Description |
+|---------|-------------|
+| Universe dashboard | Enhanced overview with visual entity counts, quick access to related entities |
+| Universe-scoped filtering | Filter quick switcher and searches by universe |
+| Batch operations | Move entities between universes, bulk universe assignment |
+
+**When This Becomes Relevant:**
+
+These enhancements become valuable when users have:
+- Multiple universes with many entities each
+- Need to reorganize entities between universes
+- Want streamlined navigation within a single universe context
+
+See [Universe Management Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/universe-management.md) for implementation details.
 
 ---
 

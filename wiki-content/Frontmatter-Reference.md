@@ -1404,11 +1404,71 @@ The principal house of the North...
 
 ---
 
+## Universe Note Properties
+
+Universe notes define fictional worlds as first-class entities. See [Universe Notes](Universe-Notes) for complete documentation.
+
+### Identity
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `cr_type` | `string` | Must be `"universe"` | `"universe"` |
+| `cr_id` | `string` | Unique identifier | `"middle-earth"` |
+
+### Basic Information
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `name` | `string` | Display name of the universe | `"Middle-earth"` |
+| `description` | `string` | Brief description of the world | `"A fantasy world created by J.R.R. Tolkien"` |
+| `author` | `string` | Creator of the fictional world | `"J.R.R. Tolkien"` |
+| `genre` | `string` | Genre (fantasy, sci-fi, etc.) | `"fantasy"` |
+| `status` | `string` | Status: `active`, `draft`, `archived` | `"active"` |
+
+### Linked Configuration
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `default_calendar` | `string` | ID of default date system | `"shire-reckoning"` |
+| `default_map` | `string` | ID of default custom map | `"middle-earth-map"` |
+
+### Metadata
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `created` | `date` | Creation date of the universe note | `"2024-03-15"` |
+
+---
+
+## Example Universe Note
+
+```yaml
+---
+cr_type: universe
+cr_id: middle-earth
+name: Middle-earth
+description: A fantasy world created by J.R.R. Tolkien
+author: J.R.R. Tolkien
+genre: fantasy
+status: active
+default_calendar: shire-reckoning
+default_map: middle-earth-map
+---
+
+# Middle-earth
+
+Middle-earth is the setting for The Hobbit, The Lord of the Rings,
+and The Silmarillion...
+```
+
+---
+
 ## See Also
 
 - [Events And Timelines](Events-And-Timelines) - Complete event documentation
 - [Evidence & Sources](Evidence-And-Sources) - Complete source documentation
 - [Organization Notes](Organization-Notes) - Complete organization documentation
+- [Universe Notes](Universe-Notes) - Complete universe documentation
 - [Schema Validation](Schema-Validation) - Creating and using validation schemas
 - [Geographic Features](Geographic-Features) - Place notes and map features
 - [Data Management](Data-Management) - Managing your family data

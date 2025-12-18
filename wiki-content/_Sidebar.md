@@ -26,6 +26,7 @@
 - [Relationship Tools](Relationship-Tools)
 - [Custom Relationships](Custom-Relationships)
 - [Organization Notes](Organization-Notes)
+- [Universe Notes](Universe-Notes)
 - [Events & Timelines](Events-And-Timelines)
 - [Evidence & Sources](Evidence-And-Sources)
 - [Fictional Date Systems](Fictional-Date-Systems)

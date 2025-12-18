@@ -9,6 +9,8 @@ import { setIcon, Setting } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import type { LucideIconName } from '../../ui/lucide-icons';
 import { StatisticsService } from '../services/statistics-service';
+import { UniverseService } from '../../universes/services/universe-service';
+import { UniverseWizardModal } from '../../universes/ui/universe-wizard';
 import type { StatisticsData, TopListItem } from '../types/statistics-types';
 import { VIEW_TYPE_STATISTICS } from '../constants/statistics-constants';
 
@@ -19,13 +21,14 @@ export function renderStatisticsTab(
 	container: HTMLElement,
 	plugin: CanvasRootsPlugin,
 	createCard: (options: { title: string; icon?: LucideIconName; subtitle?: string }) => HTMLElement,
-	showTab: (tabId: string) => void
+	showTab: (tabId: string) => void,
+	closeModal?: () => void
 ): void {
 	const service = new StatisticsService(plugin.app, plugin.settings);
 	const stats = service.getAllStatistics();
 
 	// Actions card (at top for discoverability)
-	renderActionsCard(container, plugin, createCard);
+	renderActionsCard(container, plugin, createCard, closeModal);
 
 	// Overview card with entity counts
 	renderOverviewCard(container, stats, createCard);
@@ -35,6 +38,9 @@ export function renderStatisticsTab(
 
 	// Quality alerts card
 	renderQualityCard(container, stats, createCard, showTab);
+
+	// Universes card (always visible for discoverability)
+	renderUniversesCard(container, plugin, createCard, showTab);
 
 	// Top lists card
 	renderTopListsCard(container, stats, createCard);
@@ -287,7 +293,8 @@ function renderTopListsCard(
 function renderActionsCard(
 	container: HTMLElement,
 	plugin: CanvasRootsPlugin,
-	createCard: (options: { title: string; icon?: LucideIconName }) => HTMLElement
+	createCard: (options: { title: string; icon?: LucideIconName }) => HTMLElement,
+	closeModal?: () => void
 ): void {
 	const card = createCard({
 		title: 'Actions',
@@ -302,11 +309,120 @@ function renderActionsCard(
 			.setButtonText('Open dashboard')
 			.setCta()
 			.onClick(() => {
+				closeModal?.();
 				void plugin.app.workspace.getLeaf('tab').setViewState({
 					type: VIEW_TYPE_STATISTICS,
 					active: true
 				});
 			}));
+
+	container.appendChild(card);
+}
+
+/**
+ * Render the Universes card
+ */
+function renderUniversesCard(
+	container: HTMLElement,
+	plugin: CanvasRootsPlugin,
+	createCard: (options: { title: string; icon?: LucideIconName; subtitle?: string }) => HTMLElement,
+	showTab: (tabId: string) => void
+): void {
+	const universeService = new UniverseService(plugin);
+	const universes = universeService.getAllUniverses();
+	const orphans = universeService.findOrphanUniverses();
+	const stats = universeService.getStats();
+
+	const subtitle = universes.length > 0
+		? `${universes.length} universe${universes.length === 1 ? '' : 's'}, ${stats.totalEntities} entities`
+		: 'Organize fictional worlds';
+
+	const card = createCard({
+		title: 'Universes',
+		icon: 'globe',
+		subtitle
+	});
+	const content = card.querySelector('.crc-card__content') as HTMLElement;
+
+	if (universes.length > 0) {
+		// Universe list with Setting-style rows
+		universes.forEach(universe => {
+			const counts = universeService.getEntityCountsForUniverse(universe.crId);
+
+			// Build entity count description
+			const countParts: string[] = [];
+			if (counts.people > 0) countParts.push(`${counts.people} people`);
+			if (counts.places > 0) countParts.push(`${counts.places} places`);
+			if (counts.events > 0) countParts.push(`${counts.events} events`);
+			if (counts.organizations > 0) countParts.push(`${counts.organizations} organizations`);
+			const countText = countParts.length > 0 ? countParts.join(', ') : 'No entities yet';
+
+			new Setting(content)
+				.setName(universe.name)
+				.setDesc(countText)
+				.addButton(btn => btn
+					.setButtonText('Open')
+					.onClick(async () => {
+						const leaf = plugin.app.workspace.getLeaf(false);
+						await leaf.openFile(universe.file);
+					}));
+		});
+
+		// Create universe action (Setting-style layout)
+		new Setting(content)
+			.setName('Create universe')
+			.setDesc('Launch the universe setup wizard')
+			.addButton(btn => btn
+				.setButtonText('Create')
+				.setCta()
+				.onClick(() => {
+					new UniverseWizardModal(plugin, {
+						onComplete: () => showTab('universes')
+					}).open();
+				}));
+
+		// Manage link
+		const manageRow = content.createDiv({ cls: 'cr-universes-manage crc-mt-2' });
+		const manageLink = manageRow.createEl('a', {
+			text: 'Manage universes →',
+			cls: 'crc-link'
+		});
+		manageLink.addEventListener('click', (e) => {
+			e.preventDefault();
+			showTab('universes');
+		});
+	} else {
+		// Empty state with Setting-style layout
+		new Setting(content)
+			.setName('Create universe')
+			.setDesc('Universes help you organize fictional worlds with custom calendars, maps, and validation rules')
+			.addButton(btn => btn
+				.setButtonText('Create')
+				.setCta()
+				.onClick(() => {
+					new UniverseWizardModal(plugin, {
+						onComplete: () => showTab('universes')
+					}).open();
+				}));
+	}
+
+	// Orphan warning
+	if (orphans.length > 0) {
+		const warning = content.createDiv({ cls: 'cr-universes-warning crc-mt-3' });
+		const warningIcon = warning.createSpan({ cls: 'cr-warning-icon' });
+		setIcon(warningIcon, 'alert-triangle');
+		warning.createSpan({
+			text: `${orphans.length} orphan universe value${orphans.length === 1 ? '' : 's'} without note${orphans.length === 1 ? '' : 's'}`
+		});
+		const fixLink = warning.createEl('a', {
+			text: 'Fix →',
+			cls: 'crc-link crc-ml-2'
+		});
+		fixLink.addEventListener('click', (e) => {
+			e.preventDefault();
+			showTab('universes');
+		});
+	}
 
 	container.appendChild(card);
 }

@@ -26,7 +26,7 @@ Fictional Date Systems support:
 - **Date parsing**: Recognize formats like "TA 2941" or "AC 283"
 - **Canonical years**: Convert fictional dates to absolute timeline positions for sorting
 - **Age calculation**: Calculate ages within a single calendar system
-- **Universe scoping**: Link calendar systems to specific universes
+- **Universe scoping**: Link calendar systems to specific universes (see [Universe Notes](Universe-Notes))
 
 ---
 
@@ -308,6 +308,7 @@ See the [Calendarium Integration roadmap](Roadmap#calendarium-integration) for d
 
 ## Related Documentation
 
+- [Universe Notes](Universe-Notes) - Managing fictional worlds with default calendars
 - [Frontmatter Reference](Frontmatter-Reference) - Full schema for person notes
 - [Custom Relationships](Custom-Relationships) - Extended relationship types
 - [Roadmap](Roadmap) - Planned enhancements including Chronological Story Mapping
