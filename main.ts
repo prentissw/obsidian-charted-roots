@@ -2840,9 +2840,21 @@ export default class CanvasRootsPlugin extends Plugin {
 					}
 				}
 
-				// Folders: Set as people folder
+				// Folders: Type-specific context menus
 				if (file instanceof TFolder) {
 					menu.addSeparator();
+
+					// Determine folder type
+					const isPeopleFolder = file.path === this.settings.peopleFolder;
+					const isPlacesFolder = file.path === this.settings.placesFolder;
+					const isUniversesFolder = file.path === this.settings.universesFolder;
+					const isSourcesFolder = file.path === this.settings.sourcesFolder;
+					const isEventsFolder = file.path === this.settings.eventsFolder;
+					const isOrganizationsFolder = file.path === this.settings.organizationsFolder;
+
+					// Helper to get files in folder
+					const getFilesInFolder = () => this.app.vault.getMarkdownFiles()
+						.filter(f => f.path.startsWith(file.path + '/'));
 
 					if (useSubmenu) {
 						menu.addItem((item) => {
@@ -2851,9 +2863,671 @@ export default class CanvasRootsPlugin extends Plugin {
 								.setIcon('git-fork')
 								.setSubmenu();
 
-							submenu.addItem((subItem) => {
-								subItem
-									.setTitle('Set as people folder')
+							// === PEOPLE FOLDER ===
+							if (isPeopleFolder) {
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Import GEDCOM')
+										.setIcon('upload')
+										.onClick(async () => {
+											const modal = new ControlCenterModal(this.app, this);
+											modal.openToTab('gedcom');
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Export GEDCOM')
+										.setIcon('download')
+										.onClick(() => {
+											const modal = new ControlCenterModal(this.app, this);
+											modal.openToTab('gedcom');
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Scan for relationship issues')
+										.setIcon('shield-alert')
+										.onClick(() => {
+											new FolderScanModal(this.app, file).open();
+										});
+								});
+
+								submenu.addSeparator();
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add essential person properties')
+										.setIcon('user')
+										.onClick(async () => {
+											await this.addEssentialPersonProperties(getFilesInFolder());
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId(getFilesInFolder());
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Insert dynamic blocks')
+										.setIcon('layout-template')
+										.onClick(async () => {
+											await this.insertDynamicBlocks(getFilesInFolder());
+										});
+								});
+
+								submenu.addSeparator();
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('New people base from template')
+										.setIcon('table')
+										.onClick(async () => {
+											await this.createBaseTemplate(file);
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Generate all trees')
+										.setIcon('git-fork')
+										.onClick(async () => {
+											await this.generateAllTrees();
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Show folder statistics')
+										.setIcon('bar-chart-2')
+										.onClick(() => {
+											this.showFolderStatistics(file);
+										});
+								});
+							}
+
+							// === PLACES FOLDER ===
+							else if (isPlacesFolder) {
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add essential place properties')
+										.setIcon('map-pin')
+										.onClick(async () => {
+											await this.addEssentialPlaceProperties(getFilesInFolder());
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId(getFilesInFolder());
+										});
+								});
+
+								submenu.addSeparator();
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('New places base from template')
+										.setIcon('table')
+										.onClick(async () => {
+											await this.createPlacesBaseTemplate(file);
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Show folder statistics')
+										.setIcon('bar-chart-2')
+										.onClick(() => {
+											this.showFolderStatistics(file);
+										});
+								});
+							}
+
+							// === UNIVERSES FOLDER ===
+							else if (isUniversesFolder) {
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add essential universe properties')
+										.setIcon('globe')
+										.onClick(async () => {
+											await this.addEssentialUniverseProperties(getFilesInFolder());
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId(getFilesInFolder());
+										});
+								});
+
+								submenu.addSeparator();
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('New universes base from template')
+										.setIcon('table')
+										.onClick(async () => {
+											await this.createUniversesBaseTemplate(file);
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Show folder statistics')
+										.setIcon('bar-chart-2')
+										.onClick(() => {
+											this.showFolderStatistics(file);
+										});
+								});
+							}
+
+							// === SOURCES FOLDER ===
+							else if (isSourcesFolder) {
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add essential source properties')
+										.setIcon('archive')
+										.onClick(async () => {
+											await this.addEssentialSourceProperties(getFilesInFolder());
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId(getFilesInFolder());
+										});
+								});
+
+								submenu.addSeparator();
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('New sources base from template')
+										.setIcon('table')
+										.onClick(async () => {
+											await this.createSourcesBaseTemplate(file);
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Show folder statistics')
+										.setIcon('bar-chart-2')
+										.onClick(() => {
+											this.showFolderStatistics(file);
+										});
+								});
+							}
+
+							// === EVENTS FOLDER ===
+							else if (isEventsFolder) {
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add essential event properties')
+										.setIcon('calendar')
+										.onClick(async () => {
+											await this.addEssentialEventProperties(getFilesInFolder());
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId(getFilesInFolder());
+										});
+								});
+
+								submenu.addSeparator();
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('New events base from template')
+										.setIcon('table')
+										.onClick(async () => {
+											await this.createEventsBaseTemplate(file);
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Show folder statistics')
+										.setIcon('bar-chart-2')
+										.onClick(() => {
+											this.showFolderStatistics(file);
+										});
+								});
+							}
+
+							// === ORGANIZATIONS FOLDER ===
+							else if (isOrganizationsFolder) {
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId(getFilesInFolder());
+										});
+								});
+
+								submenu.addSeparator();
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('New organizations base from template')
+										.setIcon('table')
+										.onClick(async () => {
+											await this.createOrganizationsBaseTemplate(file);
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Show folder statistics')
+										.setIcon('bar-chart-2')
+										.onClick(() => {
+											this.showFolderStatistics(file);
+										});
+								});
+							}
+
+							// === GENERIC/UNCONFIGURED FOLDER ===
+							else {
+								// Set as folder type options
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Set as people folder')
+										.setIcon('users')
+										.onClick(async () => {
+											this.settings.peopleFolder = file.path;
+											await this.saveSettings();
+											new Notice(`People folder set to: ${file.path}`);
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Set as places folder')
+										.setIcon('map-pin')
+										.onClick(async () => {
+											this.settings.placesFolder = file.path;
+											await this.saveSettings();
+											new Notice(`Places folder set to: ${file.path}`);
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Set as universes folder')
+										.setIcon('globe')
+										.onClick(async () => {
+											this.settings.universesFolder = file.path;
+											await this.saveSettings();
+											new Notice(`Universes folder set to: ${file.path}`);
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Set as sources folder')
+										.setIcon('archive')
+										.onClick(async () => {
+											this.settings.sourcesFolder = file.path;
+											await this.saveSettings();
+											new Notice(`Sources folder set to: ${file.path}`);
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Set as events folder')
+										.setIcon('calendar')
+										.onClick(async () => {
+											this.settings.eventsFolder = file.path;
+											await this.saveSettings();
+											new Notice(`Events folder set to: ${file.path}`);
+										});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Set as organizations folder')
+										.setIcon('building')
+										.onClick(async () => {
+											this.settings.organizationsFolder = file.path;
+											await this.saveSettings();
+											new Notice(`Organizations folder set to: ${file.path}`);
+										});
+								});
+
+								submenu.addSeparator();
+
+								// Add essential properties submenu
+								submenu.addItem((subItem) => {
+									const propsSubmenu: Menu = subItem
+										.setTitle('Add essential properties')
+										.setIcon('file-plus')
+										.setSubmenu();
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Person properties')
+											.setIcon('user')
+											.onClick(async () => {
+												await this.addEssentialPersonProperties(getFilesInFolder());
+											});
+									});
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Place properties')
+											.setIcon('map-pin')
+											.onClick(async () => {
+												await this.addEssentialPlaceProperties(getFilesInFolder());
+											});
+									});
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Universe properties')
+											.setIcon('globe')
+											.onClick(async () => {
+												await this.addEssentialUniverseProperties(getFilesInFolder());
+											});
+									});
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Source properties')
+											.setIcon('archive')
+											.onClick(async () => {
+												await this.addEssentialSourceProperties(getFilesInFolder());
+											});
+									});
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Event properties')
+											.setIcon('calendar')
+											.onClick(async () => {
+												await this.addEssentialEventProperties(getFilesInFolder());
+											});
+									});
+
+									propsSubmenu.addItem((propItem) => {
+										propItem
+											.setTitle('Map properties')
+											.setIcon('map')
+											.onClick(async () => {
+												await this.addEssentialMapProperties(getFilesInFolder());
+											});
+									});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add cr_id')
+										.setIcon('key')
+										.onClick(async () => {
+											await this.addCrId(getFilesInFolder());
+										});
+								});
+
+								submenu.addSeparator();
+
+								// Bases submenu
+								submenu.addItem((subItem) => {
+									const basesSubmenu: Menu = subItem
+										.setTitle('New base from template')
+										.setIcon('table')
+										.setSubmenu();
+
+									basesSubmenu.addItem((baseItem) => {
+										baseItem
+											.setTitle('People base')
+											.setIcon('users')
+											.onClick(async () => {
+												await this.createBaseTemplate(file);
+											});
+									});
+
+									basesSubmenu.addItem((baseItem) => {
+										baseItem
+											.setTitle('Places base')
+											.setIcon('map-pin')
+											.onClick(async () => {
+												await this.createPlacesBaseTemplate(file);
+											});
+									});
+
+									basesSubmenu.addItem((baseItem) => {
+										baseItem
+											.setTitle('Universes base')
+											.setIcon('globe')
+											.onClick(async () => {
+												await this.createUniversesBaseTemplate(file);
+											});
+									});
+
+									basesSubmenu.addItem((baseItem) => {
+										baseItem
+											.setTitle('Sources base')
+											.setIcon('archive')
+											.onClick(async () => {
+												await this.createSourcesBaseTemplate(file);
+											});
+									});
+
+									basesSubmenu.addItem((baseItem) => {
+										baseItem
+											.setTitle('Events base')
+											.setIcon('calendar')
+											.onClick(async () => {
+												await this.createEventsBaseTemplate(file);
+											});
+									});
+
+									basesSubmenu.addItem((baseItem) => {
+										baseItem
+											.setTitle('Organizations base')
+											.setIcon('building')
+											.onClick(async () => {
+												await this.createOrganizationsBaseTemplate(file);
+											});
+									});
+								});
+
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Show folder statistics')
+										.setIcon('bar-chart-2')
+										.onClick(() => {
+											this.showFolderStatistics(file);
+										});
+								});
+							}
+						});
+					} else {
+						// Mobile: flat menu with prefix - type-specific actions
+
+						// === PEOPLE FOLDER (MOBILE) ===
+						if (isPeopleFolder) {
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Import GEDCOM')
+									.setIcon('upload')
+									.onClick(async () => {
+										const modal = new ControlCenterModal(this.app, this);
+										modal.openToTab('gedcom');
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Export GEDCOM')
+									.setIcon('download')
+									.onClick(() => {
+										const modal = new ControlCenterModal(this.app, this);
+										modal.openToTab('gedcom');
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Scan for relationship issues')
+									.setIcon('shield-alert')
+									.onClick(() => {
+										new FolderScanModal(this.app, file).open();
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add essential person properties')
+									.setIcon('user')
+									.onClick(async () => {
+										await this.addEssentialPersonProperties(getFilesInFolder());
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Insert dynamic blocks')
+									.setIcon('layout-template')
+									.onClick(async () => {
+										await this.insertDynamicBlocks(getFilesInFolder());
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Generate all trees')
+									.setIcon('git-fork')
+									.onClick(async () => {
+										await this.generateAllTrees();
+									});
+							});
+						}
+
+						// === PLACES FOLDER (MOBILE) ===
+						else if (isPlacesFolder) {
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add essential place properties')
+									.setIcon('map-pin')
+									.onClick(async () => {
+										await this.addEssentialPlaceProperties(getFilesInFolder());
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: New places base')
+									.setIcon('table')
+									.onClick(async () => {
+										await this.createPlacesBaseTemplate(file);
+									});
+							});
+						}
+
+						// === UNIVERSES FOLDER (MOBILE) ===
+						else if (isUniversesFolder) {
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add essential universe properties')
+									.setIcon('globe')
+									.onClick(async () => {
+										await this.addEssentialUniverseProperties(getFilesInFolder());
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: New universes base')
+									.setIcon('table')
+									.onClick(async () => {
+										await this.createUniversesBaseTemplate(file);
+									});
+							});
+						}
+
+						// === SOURCES FOLDER (MOBILE) ===
+						else if (isSourcesFolder) {
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add essential source properties')
+									.setIcon('archive')
+									.onClick(async () => {
+										await this.addEssentialSourceProperties(getFilesInFolder());
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: New sources base')
+									.setIcon('table')
+									.onClick(async () => {
+										await this.createSourcesBaseTemplate(file);
+									});
+							});
+						}
+
+						// === EVENTS FOLDER (MOBILE) ===
+						else if (isEventsFolder) {
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Add essential event properties')
+									.setIcon('calendar')
+									.onClick(async () => {
+										await this.addEssentialEventProperties(getFilesInFolder());
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: New events base')
+									.setIcon('table')
+									.onClick(async () => {
+										await this.createEventsBaseTemplate(file);
+									});
+							});
+						}
+
+						// === ORGANIZATIONS FOLDER (MOBILE) ===
+						else if (isOrganizationsFolder) {
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: New organizations base')
+									.setIcon('table')
+									.onClick(async () => {
+										await this.createOrganizationsBaseTemplate(file);
+									});
+							});
+						}
+
+						// === GENERIC FOLDER (MOBILE) ===
+						else {
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Set as people folder')
 									.setIcon('users')
 									.onClick(async () => {
 										this.settings.peopleFolder = file.path;
@@ -2862,54 +3536,9 @@ export default class CanvasRootsPlugin extends Plugin {
 									});
 							});
 
-							submenu.addItem((subItem) => {
-								subItem
-									.setTitle('Import GEDCOM to this folder')
-									.setIcon('upload')
-									.onClick(async () => {
-										// Set this folder as the people folder
-										this.settings.peopleFolder = file.path;
-										await this.saveSettings();
-
-										// Open Control Center to GEDCOM tab
-										const modal = new ControlCenterModal(this.app, this);
-										modal.openToTab('gedcom');
-									});
-							});
-
-							submenu.addItem((subItem) => {
-								subItem
-									.setTitle('Export GEDCOM from this folder')
-									.setIcon('download')
-									.onClick(() => {
-										// Set this folder as the people folder temporarily for export
-										const originalFolder = this.settings.peopleFolder;
-										this.settings.peopleFolder = file.path;
-
-										// Open Control Center to GEDCOM tab
-										const modal = new ControlCenterModal(this.app, this);
-										modal.openToTab('gedcom');
-
-										// Restore original folder (without saving)
-										this.settings.peopleFolder = originalFolder;
-									});
-							});
-
-							submenu.addItem((subItem) => {
-								subItem
-									.setTitle('Scan for relationship issues')
-									.setIcon('shield-alert')
-									.onClick(() => {
-										new FolderScanModal(this.app, file).open();
-									});
-							});
-
-							submenu.addSeparator();
-
-							// Places folder actions
-							submenu.addItem((subItem) => {
-								subItem
-									.setTitle('Set as places folder')
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Set as places folder')
 									.setIcon('map-pin')
 									.onClick(async () => {
 										this.settings.placesFolder = file.path;
@@ -2918,10 +3547,9 @@ export default class CanvasRootsPlugin extends Plugin {
 									});
 							});
 
-							// Universes folder actions
-							submenu.addItem((subItem) => {
-								subItem
-									.setTitle('Set as universes folder')
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Set as universes folder')
 									.setIcon('globe')
 									.onClick(async () => {
 										this.settings.universesFolder = file.path;
@@ -2930,403 +3558,47 @@ export default class CanvasRootsPlugin extends Plugin {
 									});
 							});
 
-							submenu.addSeparator();
-
-							// Add essential properties submenu
-							submenu.addItem((subItem) => {
-								const propsSubmenu: Menu = subItem
-									.setTitle('Add essential properties')
-									.setIcon('file-plus')
-									.setSubmenu();
-
-								propsSubmenu.addItem((propItem) => {
-									propItem
-										.setTitle('Add essential person properties')
-										.setIcon('user')
-										.onClick(async () => {
-											const files = this.app.vault.getMarkdownFiles()
-												.filter(f => f.path.startsWith(file.path + '/'));
-											await this.addEssentialPersonProperties(files);
-										});
-								});
-
-								propsSubmenu.addItem((propItem) => {
-									propItem
-										.setTitle('Add essential place properties')
-										.setIcon('map-pin')
-										.onClick(async () => {
-											const files = this.app.vault.getMarkdownFiles()
-												.filter(f => f.path.startsWith(file.path + '/'));
-											await this.addEssentialPlaceProperties(files);
-										});
-								});
-
-								propsSubmenu.addItem((propItem) => {
-									propItem
-										.setTitle('Add essential source properties')
-										.setIcon('archive')
-										.onClick(async () => {
-											const files = this.app.vault.getMarkdownFiles()
-												.filter(f => f.path.startsWith(file.path + '/'));
-											await this.addEssentialSourceProperties(files);
-										});
-								});
-
-								propsSubmenu.addItem((propItem) => {
-									propItem
-										.setTitle('Add essential map properties')
-										.setIcon('globe')
-										.onClick(async () => {
-											const files = this.app.vault.getMarkdownFiles()
-												.filter(f => f.path.startsWith(file.path + '/'));
-											await this.addEssentialMapProperties(files);
-										});
-								});
-
-								propsSubmenu.addItem((propItem) => {
-									propItem
-										.setTitle('Add essential universe properties')
-										.setIcon('globe')
-										.onClick(async () => {
-											const files = this.app.vault.getMarkdownFiles()
-												.filter(f => f.path.startsWith(file.path + '/'));
-											await this.addEssentialUniverseProperties(files);
-										});
-								});
-							});
-
-							// Add cr_id only
-							submenu.addItem((subItem) => {
-								subItem
-									.setTitle('Add cr_id')
-									.setIcon('key')
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Set as sources folder')
+									.setIcon('archive')
 									.onClick(async () => {
-										const files = this.app.vault.getMarkdownFiles()
-											.filter(f => f.path.startsWith(file.path + '/'));
-										await this.addCrId(files);
-									});
-							});
-
-							// Insert dynamic blocks to all person notes in folder
-							submenu.addItem((subItem) => {
-								subItem
-									.setTitle('Insert dynamic blocks')
-									.setIcon('layout-template')
-									.onClick(async () => {
-										const files = this.app.vault.getMarkdownFiles()
-											.filter(f => f.path.startsWith(file.path + '/'));
-										await this.insertDynamicBlocks(files);
-									});
-							});
-
-							submenu.addSeparator();
-
-							// Bases submenu
-							submenu.addItem((subItem) => {
-								const basesSubmenu: Menu = subItem
-									.setTitle('Bases')
-									.setIcon('table')
-									.setSubmenu();
-
-								basesSubmenu.addItem((baseItem) => {
-									baseItem
-										.setTitle('New people base from template')
-										.setIcon('users')
-										.onClick(async () => {
-											await this.createBaseTemplate(file);
-										});
-								});
-
-								basesSubmenu.addItem((baseItem) => {
-									baseItem
-										.setTitle('New places base from template')
-										.setIcon('map-pin')
-										.onClick(async () => {
-											await this.createPlacesBaseTemplate(file);
-										});
-								});
-
-								basesSubmenu.addItem((baseItem) => {
-									baseItem
-										.setTitle('New organizations base from template')
-										.setIcon('building')
-										.onClick(async () => {
-											await this.createOrganizationsBaseTemplate(file);
-										});
-								});
-
-								basesSubmenu.addItem((baseItem) => {
-									baseItem
-										.setTitle('New sources base from template')
-										.setIcon('archive')
-										.onClick(async () => {
-											await this.createSourcesBaseTemplate(file);
-										});
-								});
-
-								basesSubmenu.addItem((baseItem) => {
-									baseItem
-										.setTitle('New events base from template')
-										.setIcon('calendar')
-										.onClick(async () => {
-											await this.createEventsBaseTemplate(file);
-										});
-								});
-							});
-
-							submenu.addSeparator();
-
-							submenu.addItem((subItem) => {
-								subItem
-									.setTitle('Generate all trees')
-									.setIcon('git-fork')
-									.onClick(async () => {
-										// Temporarily set this folder as people folder
-										const originalFolder = this.settings.peopleFolder;
-										this.settings.peopleFolder = file.path;
+										this.settings.sourcesFolder = file.path;
 										await this.saveSettings();
-
-										// Generate all trees
-										await this.generateAllTrees();
-
-										// Restore original if needed
-										if (originalFolder !== file.path) {
-											this.settings.peopleFolder = originalFolder;
-											await this.saveSettings();
-										}
+										new Notice(`Sources folder set to: ${file.path}`);
 									});
 							});
 
-							submenu.addItem((subItem) => {
-								subItem
-									.setTitle('Show folder statistics')
-									.setIcon('bar-chart-2')
-									.onClick(() => {
-										this.showFolderStatistics(file);
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Set as events folder')
+									.setIcon('calendar')
+									.onClick(async () => {
+										this.settings.eventsFolder = file.path;
+										await this.saveSettings();
+										new Notice(`Events folder set to: ${file.path}`);
 									});
 							});
-						});
-					} else {
-						// Mobile: flat menu with prefix
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Set as people folder')
-								.setIcon('users')
-								.onClick(async () => {
-									this.settings.peopleFolder = file.path;
-									await this.saveSettings();
-									new Notice(`People folder set to: ${file.path}`);
-								});
-						});
 
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Import GEDCOM to this folder')
-								.setIcon('upload')
-								.onClick(async () => {
-									// Set this folder as the people folder
-									this.settings.peopleFolder = file.path;
-									await this.saveSettings();
+							menu.addItem((item) => {
+								item
+									.setTitle('Canvas Roots: Set as organizations folder')
+									.setIcon('building')
+									.onClick(async () => {
+										this.settings.organizationsFolder = file.path;
+										await this.saveSettings();
+										new Notice(`Organizations folder set to: ${file.path}`);
+									});
+							});
+						}
 
-									// Open Control Center to GEDCOM tab
-									const modal = new ControlCenterModal(this.app, this);
-									modal.openToTab('gedcom');
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Export GEDCOM from this folder')
-								.setIcon('download')
-								.onClick(() => {
-									// Set this folder as the people folder temporarily for export
-									const originalFolder = this.settings.peopleFolder;
-									this.settings.peopleFolder = file.path;
-
-									// Open Control Center to GEDCOM tab
-									const modal = new ControlCenterModal(this.app, this);
-									modal.openToTab('gedcom');
-
-									// Restore original folder (without saving)
-									this.settings.peopleFolder = originalFolder;
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Scan for relationship issues')
-								.setIcon('shield-alert')
-								.onClick(() => {
-									new FolderScanModal(this.app, file).open();
-								});
-						});
-
-						// Places folder actions (mobile)
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Set as places folder')
-								.setIcon('map-pin')
-								.onClick(async () => {
-									this.settings.placesFolder = file.path;
-									await this.saveSettings();
-									new Notice(`Places folder set to: ${file.path}`);
-								});
-						});
-
-						// Universes folder actions (mobile)
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Set as universes folder')
-								.setIcon('globe')
-								.onClick(async () => {
-									this.settings.universesFolder = file.path;
-									await this.saveSettings();
-									new Notice(`Universes folder set to: ${file.path}`);
-								});
-						});
-
-						// Essential properties (mobile)
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Add essential person properties')
-								.setIcon('user')
-								.onClick(async () => {
-									const files = this.app.vault.getMarkdownFiles()
-										.filter(f => f.path.startsWith(file.path + '/'));
-									await this.addEssentialPersonProperties(files);
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Add essential place properties')
-								.setIcon('map-pin')
-								.onClick(async () => {
-									const files = this.app.vault.getMarkdownFiles()
-										.filter(f => f.path.startsWith(file.path + '/'));
-									await this.addEssentialPlaceProperties(files);
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Add essential source properties')
-								.setIcon('archive')
-								.onClick(async () => {
-									const files = this.app.vault.getMarkdownFiles()
-										.filter(f => f.path.startsWith(file.path + '/'));
-									await this.addEssentialSourceProperties(files);
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Add essential map properties')
-								.setIcon('globe')
-								.onClick(async () => {
-									const files = this.app.vault.getMarkdownFiles()
-										.filter(f => f.path.startsWith(file.path + '/'));
-									await this.addEssentialMapProperties(files);
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Add essential universe properties')
-								.setIcon('globe')
-								.onClick(async () => {
-									const files = this.app.vault.getMarkdownFiles()
-										.filter(f => f.path.startsWith(file.path + '/'));
-									await this.addEssentialUniverseProperties(files);
-								});
-						});
-
+						// Common actions for all folders (mobile)
 						menu.addItem((item) => {
 							item
 								.setTitle('Canvas Roots: Add cr_id')
 								.setIcon('key')
 								.onClick(async () => {
-									const files = this.app.vault.getMarkdownFiles()
-										.filter(f => f.path.startsWith(file.path + '/'));
-									await this.addCrId(files);
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Insert dynamic blocks')
-								.setIcon('layout-template')
-								.onClick(async () => {
-									const files = this.app.vault.getMarkdownFiles()
-										.filter(f => f.path.startsWith(file.path + '/'));
-									await this.insertDynamicBlocks(files);
-								});
-						});
-
-						// Bases templates (mobile)
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: New people base from template')
-								.setIcon('users')
-								.onClick(async () => {
-									await this.createBaseTemplate(file);
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: New places base from template')
-								.setIcon('map-pin')
-								.onClick(async () => {
-									await this.createPlacesBaseTemplate(file);
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: New organizations base from template')
-								.setIcon('building')
-								.onClick(async () => {
-									await this.createOrganizationsBaseTemplate(file);
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: New sources base from template')
-								.setIcon('archive')
-								.onClick(async () => {
-									await this.createSourcesBaseTemplate(file);
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: New events base from template')
-								.setIcon('calendar')
-								.onClick(async () => {
-									await this.createEventsBaseTemplate(file);
-								});
-						});
-
-						menu.addItem((item) => {
-							item
-								.setTitle('Canvas Roots: Generate all trees')
-								.setIcon('git-fork')
-								.onClick(async () => {
-									// Temporarily set this folder as people folder
-									const originalFolder = this.settings.peopleFolder;
-									this.settings.peopleFolder = file.path;
-									await this.saveSettings();
-
-									// Generate all trees
-									await this.generateAllTrees();
-
-									// Restore original if needed
-									if (originalFolder !== file.path) {
-										this.settings.peopleFolder = originalFolder;
-										await this.saveSettings();
-									}
+									await this.addCrId(getFilesInFolder());
 								});
 						});
 
