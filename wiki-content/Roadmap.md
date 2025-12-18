@@ -9,6 +9,7 @@ This document outlines planned features for Canvas Roots. For completed features
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [Calendarium Integration](#calendarium-integration) ⚡ High
+  - [Universe Setup Wizard](#universe-setup-wizard) 📋 Medium
   - [Post-Import Cleanup Wizard](#post-import-cleanup-wizard) 📋 Medium
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
 - [Future Considerations](#future-considerations)
@@ -120,6 +121,58 @@ See [Fictional Date Systems - Calendarium Integration](Fictional-Date-Systems#ca
 **Future Consideration:** Per-calendar frontmatter fields (e.g., `mycalendar-date` instead of `fc-calendar` + `fc-date`) to allow one note to have dates across multiple calendars.
 
 See [Calendarium Integration Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/calendarium-integration.md) for implementation details.
+
+---
+
+### Universe Setup Wizard
+
+**Priority:** 📋 Medium — Guided onboarding for fictional worldbuilders
+
+**Summary:** A wizard that consolidates universe creation into a single guided flow. New users setting up fictional worlds currently must discover and navigate multiple disconnected features (date systems, custom maps, schemas). This wizard guides them through setting up all universe-related features in one place.
+
+**Problem Statement:**
+
+When setting up a new fictional world (e.g., Middle-earth, Westeros), users currently need to:
+- Discover that date systems exist and create one
+- Find the maps feature and create a custom map
+- Learn about schemas and create validation rules
+- Remember to use the same universe string everywhere
+
+These features are spread across different parts of the plugin with no guidance on how they connect.
+
+**Wizard Flow:**
+
+| Step | Question | Action |
+|------|----------|--------|
+| 1 | Name your universe | Enter name and optional description |
+| 2 | Custom calendar? | Creates date system with universe pre-filled |
+| 3 | Custom map? | Creates map note with universe pre-filled |
+| 4 | Validation rules? | Creates schema scoped to universe |
+| 5 | Summary | Shows created entities with links |
+
+Each step after the first is skippable.
+
+**Technical Approach:**
+
+- No new entity type required—wizard creates existing entity types with `universe` field pre-populated
+- Optional plain markdown note generated as landing page linking to created entities
+- Reuses existing creation modals/forms where possible
+
+**Entry Points:**
+- Control Center > Actions tab: "Create universe" button
+
+**Phased Implementation:**
+
+**Phase 1 — Core Wizard:**
+- Multi-step modal with progress indicator
+- Create date system, map, and schema with universe pre-filled
+- Summary page with links to created entities
+
+**Phase 2 — Enhanced Features:**
+- Universe dashboard showing entity counts
+- Universe-scoped filtering in quick switcher
+
+See [Universe Setup Wizard Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/universe-management.md) for implementation details.
 
 ---
 
