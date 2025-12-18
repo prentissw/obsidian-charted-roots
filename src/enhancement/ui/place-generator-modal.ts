@@ -485,10 +485,9 @@ export class PlaceGeneratorModal extends Modal {
 			const row = this.placesTableBody.createEl('tr');
 			const cell = row.createEl('td', {
 				text: 'No matches found',
-				cls: 'crc-text--muted'
+				cls: 'crc-text--muted crc-text--center'
 			});
 			cell.setAttribute('colspan', this.options.parseHierarchy ? '4' : '3');
-			cell.style.setProperty('text-align', 'center');
 		}
 	}
 
@@ -712,7 +711,7 @@ export class PlaceGeneratorModal extends Modal {
 		// Progress bar
 		const barContainer = this.progressContainer.createDiv({ cls: 'cr-place-generator-progress-bar' });
 		this.progressBarEl = barContainer.createDiv({ cls: 'cr-place-generator-progress-bar__fill' });
-		this.progressBarEl.style.setProperty('width', '0%');
+		this.progressBarEl.setCssProps({ '--progress-width': '0%' });
 
 		// Progress text
 		this.progressTextEl = this.progressContainer.createDiv({ cls: 'cr-place-generator-progress-text' });
@@ -726,7 +725,7 @@ export class PlaceGeneratorModal extends Modal {
 		const percent = Math.round((current / total) * 100);
 
 		if (this.progressBarEl) {
-			this.progressBarEl.style.setProperty('width', `${percent}%`);
+			this.progressBarEl.setCssProps({ '--progress-width': `${percent}%` });
 		}
 
 		if (this.progressTextEl) {
@@ -959,10 +958,9 @@ export class PlaceGeneratorModal extends Modal {
 			const row = this.resultsTableBody.createEl('tr');
 			const cell = row.createEl('td', {
 				text: 'No matches found',
-				cls: 'crc-text--muted'
+				cls: 'crc-text--muted crc-text--center'
 			});
 			cell.setAttribute('colspan', '3');
-			cell.style.setProperty('text-align', 'center');
 		}
 	}
 

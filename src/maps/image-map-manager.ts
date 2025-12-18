@@ -23,7 +23,7 @@ function fmToString(value: unknown, fallback = ''): string {
 	if (value === undefined || value === null) return fallback;
 	if (typeof value === 'object' && value !== null) return JSON.stringify(value);
 	// At this point, value is a primitive
-	return String(value);
+	return String(value as string | number | boolean | bigint | symbol);
 }
 
 // Track state for plugin initialization
@@ -43,9 +43,7 @@ function initDistortableImagePlugins(): void {
 	}
 
 	// Use require() to load the plugins after setting window.L
-	// eslint-disable-next-line @typescript-eslint/no-require-imports -- Leaflet plugins require synchronous loading via require() to attach to window.L
 	require('leaflet-toolbar');
-	// eslint-disable-next-line @typescript-eslint/no-require-imports -- Leaflet plugins require synchronous loading via require() to attach to window.L
 	require('leaflet-distortableimage');
 
 	distortableImageLoaded = true;

@@ -11,6 +11,12 @@ declare module 'leaflet-textpath';
 declare module 'leaflet-toolbar';
 declare module 'leaflet-distortableimage';
 
+// Type aliases for Leaflet types used in namespace augmentation
+type LeafletLatLng = import('leaflet').LatLng;
+type LeafletImageOverlay = import('leaflet').ImageOverlay;
+type LeafletImageOverlayOptions = import('leaflet').ImageOverlayOptions;
+type LeafletFeatureGroup = import('leaflet').FeatureGroup;
+
 /**
  * Extend Leaflet Polyline with setText method from leaflet-textpath
  */
@@ -54,7 +60,7 @@ declare namespace L {
 	/**
 	 * Options for DistortableImageOverlay
 	 */
-	interface DistortableImageOverlayOptions extends ImageOverlayOptions {
+	interface DistortableImageOverlayOptions extends LeafletImageOverlayOptions {
 		/** Initial height in pixels for sizing (default: 200) */
 		height?: number;
 		/** Enable cross-origin requests (default: true) */
@@ -70,7 +76,7 @@ declare namespace L {
 		/** Initial rotation in degrees or radians */
 		rotation?: { deg?: number; rad?: number };
 		/** Four corner positions in NW, NE, SW, SE order */
-		corners?: LatLng[];
+		corners?: LeafletLatLng[];
 		/** Suppress the editing toolbar (default: false) */
 		suppressToolbar?: boolean;
 		/** Custom actions for the toolbar */
@@ -90,7 +96,7 @@ declare namespace L {
 	/**
 	 * DistortableImageOverlay - extends ImageOverlay with interactive editing
 	 */
-	interface DistortableImageOverlay extends ImageOverlay {
+	interface DistortableImageOverlay extends LeafletImageOverlay {
 		/** Editing handler instance */
 		editing: DistortableImageEdit;
 		/** Whether the overlay is editable (can be changed at runtime) */
@@ -102,37 +108,37 @@ declare namespace L {
 
 		// Internal properties (accessed for corner pre-setting)
 		/** Internal corner storage - set before image load for proper initialization */
-		_corners: LatLng[];
+		_corners: LeafletLatLng[];
 
 		/**
 		 * Get all four corner positions
 		 * @returns Array of LatLng in order: NW, NE, SW, SE
 		 */
-		getCorners(): LatLng[];
+		getCorners(): LeafletLatLng[];
 
 		/**
 		 * Get a specific corner position
 		 * @param index Corner index (0=NW, 1=NE, 2=SW, 3=SE)
 		 */
-		getCorner(index: number): LatLng;
+		getCorner(index: number): LeafletLatLng;
 
 		/**
 		 * Set a specific corner position
 		 * @param index Corner index (0=NW, 1=NE, 2=SW, 3=SE)
 		 * @param latlng New position
 		 */
-		setCorner(index: number, latlng: LatLng): this;
+		setCorner(index: number, latlng: LeafletLatLng): this;
 
 		/**
 		 * Set all four corner positions
 		 * @param corners Object with corner indices as keys
 		 */
-		setCorners(corners: { [index: number]: LatLng }): this;
+		setCorners(corners: { [index: number]: LeafletLatLng }): this;
 
 		/**
 		 * Get the center point of the image
 		 */
-		getCenter(): LatLng;
+		getCenter(): LeafletLatLng;
 
 		/**
 		 * Scale the image by a factor around its center
@@ -163,7 +169,7 @@ declare namespace L {
 		/**
 		 * Drag the image by the difference between two points
 		 */
-		dragBy(formerPoint: LatLng, newPoint: LatLng): void;
+		dragBy(formerPoint: LeafletLatLng, newPoint: LeafletLatLng): void;
 
 		/**
 		 * Restore image to initial dimensions and position
@@ -201,7 +207,7 @@ declare namespace L {
 	/**
 	 * DistortableCollection for managing multiple distortable images
 	 */
-	interface DistortableCollection extends FeatureGroup {
+	interface DistortableCollection extends LeafletFeatureGroup {
 		/** Whether the collection is editable */
 		editable: boolean;
 		/** Check if any images are collected/selected */

@@ -1062,13 +1062,13 @@ export class GedcomExporter {
 
 			// For unrecognized values, try legacy format
 			if (sexValue === 'M' || sexValue === 'F' || sexValue === 'U') {
-				return sexValue as 'M' | 'F' | 'U';
+				return sexValue;
 			}
 		} else if (sexValue) {
 			// No value alias service, use value directly if it's in GEDCOM format
 			const upper = sexValue.toUpperCase();
 			if (upper === 'M' || upper === 'F' || upper === 'U') {
-				return upper as 'M' | 'F' | 'U';
+				return upper;
 			}
 		}
 

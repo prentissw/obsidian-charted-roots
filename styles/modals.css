@@ -2292,6 +2292,7 @@
 
 .cr-progress-bar {
   height: 100%;
+  width: var(--progress-width, 0%);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -4850,6 +4851,7 @@
 
 .cr-import-progress__bar {
   height: 100%;
+  width: var(--progress-width, 0%);
   border-radius: 4px;
   background: var(--interactive-accent);
   transition: width 0.2s ease-out;
@@ -5239,6 +5241,7 @@
 
 .cr-export-progress__bar {
   height: 100%;
+  width: var(--progress-width, 0%);
   border-radius: 4px;
   background: var(--interactive-accent);
   transition: width 0.2s ease-out;
@@ -5489,6 +5492,7 @@
 
 .cr-progress-bar {
   height: 100%;
+  width: var(--progress-width, 0%);
   background: var(--interactive-accent);
   border-radius: 4px;
   transition: width 0.3s ease;

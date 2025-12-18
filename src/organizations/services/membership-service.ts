@@ -389,8 +389,8 @@ export class MembershipService {
 				.join('\n');
 		}
 
-		// At this point, value is a primitive (string, symbol, bigint, etc.)
-		return String(value);
+		// At this point, value is a primitive (symbol, bigint, etc.)
+		return String(value as symbol | bigint);
 	}
 }
 

@@ -119,12 +119,12 @@ export class PlaceGraphService {
 			if (linkObj.display) return linkObj.display;
 			if (linkObj.path) return linkObj.path.split('/').pop() || linkObj.path;
 			if (linkObj.link) return linkObj.link;
-			// Fallback: stringify
-			return String(value);
+			// Fallback: stringify (value is already known to be an object)
+			return JSON.stringify(value);
 		}
 
-		// Numbers, booleans, etc.
-		return value != null ? String(value) : '';
+		// Numbers, booleans, etc. (primitives at this point)
+		return value != null ? String(value as string | number | boolean | bigint | symbol) : '';
 	}
 
 	/**
@@ -823,7 +823,7 @@ export class PlaceGraphService {
 			str = JSON.stringify(dateValue);
 		} else {
 			// At this point, dateValue is a primitive
-			str = String(dateValue);
+			str = String(dateValue as string | number | boolean | bigint | symbol);
 		}
 
 		// Try ISO format (YYYY-MM-DD or YYYY)

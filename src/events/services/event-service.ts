@@ -26,7 +26,7 @@ import { isEventNote } from '../../utils/note-type-detection';
 function fmToString(value: unknown): string {
 	if (value === undefined || value === null) return '';
 	if (typeof value === 'object' && value !== null) return JSON.stringify(value);
-	return String(value);
+	return String(value as string | number | boolean | bigint | symbol);
 }
 
 /**

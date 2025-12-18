@@ -1219,6 +1219,7 @@
 
 .cr-place-generator-progress-bar__fill {
   height: 100%;
+  width: var(--progress-width, 0%);
   border-radius: 4px;
   background: var(--interactive-accent);
   transition: width 0.2s ease-out;

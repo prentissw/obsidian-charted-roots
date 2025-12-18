@@ -89,7 +89,7 @@ function toSafeString(value: unknown): string {
 	if (value === undefined || value === null) return '';
 	if (typeof value === 'object' && value !== null) return JSON.stringify(value);
 	// At this point, value is a primitive
-	return String(value);
+	return String(value as string | number | boolean | bigint | symbol);
 }
 
 /**
@@ -1248,7 +1248,7 @@ export class ControlCenterModal extends Modal {
 		const welcomeContent = welcomeCard.querySelector('.crc-card__content') as HTMLElement;
 
 		welcomeContent.createEl('p', {
-			text: 'Canvas Roots generates family trees on the Obsidian Canvas from your markdown notes. Get started in three steps:',
+			text: 'Canvas Roots generates family trees on the Obsidian canvas from your markdown notes. Get started in three steps:',
 			cls: 'crc-mb-3'
 		});
 
@@ -11050,10 +11050,7 @@ export class ControlCenterModal extends Modal {
 	 */
 	private buildRootPersonAccordionContent(container: HTMLElement, rootPersonField: RelationshipField): void {
 		// Selected person display (compact, hidden when empty)
-		const personDisplay = container.createDiv({ cls: 'crc-root-person-display crc-root-person-display--compact' });
-		if (!rootPersonField.crId) {
-			personDisplay.style.display = 'none';
-		}
+		const personDisplay = container.createDiv({ cls: `crc-root-person-display crc-root-person-display--compact${rootPersonField.crId ? '' : ' crc-hidden'}` });
 		this.updateRootPersonDisplayCompact(personDisplay, rootPersonField);
 
 		// Person browser section (inline, compact)
@@ -11828,7 +11825,7 @@ export class ControlCenterModal extends Modal {
 
 		if (rootPersonField.crId) {
 			// Show the display
-			personDisplay.style.display = '';
+			personDisplay.removeClass('crc-hidden');
 
 			// Selected person - compact inline display
 			const selectedPerson = personDisplay.createDiv({ cls: 'crc-root-person-selected crc-root-person-selected--compact' });
@@ -11870,7 +11867,7 @@ export class ControlCenterModal extends Modal {
 			});
 		} else {
 			// Hide the display when no person selected
-			personDisplay.style.display = 'none';
+			personDisplay.addClass('crc-hidden');
 		}
 	}
 
@@ -12969,7 +12966,7 @@ export class ControlCenterModal extends Modal {
 				changes.push({
 					person: { name: person.name || 'Unknown' },
 					field: 'name',
-					oldValue: String(fm.name),
+					oldValue: String(fm.name as string),
 					newValue: '(remove field)',
 					file: person.file
 				});
@@ -16009,10 +16006,9 @@ class BatchPreviewModal extends Modal {
 			const row = this.tbody.createEl('tr');
 			const cell = row.createEl('td', {
 				text: 'No matches found',
-				cls: 'crc-text-muted'
+				cls: 'crc-text-muted crc-text--center'
 			});
 			cell.setAttribute('colspan', '4');
-			cell.style.setProperty('text-align', 'center');
 		}
 	}
 

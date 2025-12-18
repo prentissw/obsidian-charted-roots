@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **ESLint upgrade to v9 flat config** - Migrated from ESLint v8 legacy config to v9 flat config with `eslint-plugin-obsidianmd` for Obsidian-specific linting rules.
+
+### Fixed
+
+- **Code quality improvements** - Fixed 71 ESLint errors/warnings including inline style assignments (now using CSS classes), type safety issues, unused directives, and deprecated API usage.
+
 ---
 
 ## [0.12.14] - 2025-12-17

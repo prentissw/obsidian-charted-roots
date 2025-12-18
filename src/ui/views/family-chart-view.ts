@@ -168,8 +168,7 @@ export class FamilyChartView extends ItemView {
 		this.chartContainerEl = contentArea.createDiv({ cls: 'cr-fcv-chart-container f3' });
 
 		// Create info panel (hidden by default)
-		this.infoPanelEl = contentArea.createDiv({ cls: 'cr-fcv-info-panel' });
-		this.infoPanelEl.style.display = 'none';
+		this.infoPanelEl = contentArea.createDiv({ cls: 'cr-fcv-info-panel crc-hidden' });
 		this.buildInfoPanel();
 	}
 
@@ -323,7 +322,7 @@ export class FamilyChartView extends ItemView {
 		this.infoPanelEditData = null;
 
 		// Show the panel
-		this.infoPanelEl.style.display = 'flex';
+		this.infoPanelEl.removeClass('crc-hidden');
 
 		// Render content
 		this.renderInfoPanelContent();
@@ -343,7 +342,7 @@ export class FamilyChartView extends ItemView {
 		this.selectedPersonId = null;
 		this.infoPanelEditMode = false;
 		this.infoPanelEditData = null;
-		this.infoPanelEl.style.display = 'none';
+		this.infoPanelEl.addClass('crc-hidden');
 	}
 
 	/**

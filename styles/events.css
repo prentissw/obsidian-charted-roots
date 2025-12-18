@@ -1360,3 +1360,13 @@
     height: 12px;
   }
 }
+
+/* ==========================================================================
+   Dropdown Category Headers
+   ========================================================================== */
+
+/* Style for category header options in event type dropdowns */
+.crc-dropdown-category-header {
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+}

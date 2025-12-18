@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-17 23:43:50 UTC
+ * - Generated: 2025-12-18 01:40:39 UTC
  * - Components: 33 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -320,7 +320,7 @@ settings:
    COMPONENT: BASE.CSS
    ========================================================================== */
 
-/* Component Size: 55 lines, 0.76 KB */
+/* Component Size: 73 lines, 0.97 KB */
 
 /* Base Canvas Roots styles */
 
@@ -364,6 +364,24 @@ settings:
 
 .crc-text--strikethrough {
   text-decoration: line-through;
+}
+
+/* Visibility utilities */
+.crc-hidden {
+  display: none !important;
+}
+
+/* Cursor utilities */
+.crc-cursor-grab {
+  cursor: grab;
+}
+
+.crc-cursor-grabbing {
+  cursor: grabbing;
+}
+
+.crc-cursor-help {
+  cursor: help;
 }
 
 .crc-link {
@@ -602,7 +620,7 @@ settings:
    COMPONENT: MODALS.CSS
    ========================================================================== */
 
-/* Component Size: 5884 lines, 107.84 KB */
+/* Component Size: 5888 lines, 107.98 KB */
 
 /* ==========================================================================
    Canvas Roots Control Center - Styling
@@ -2898,6 +2916,7 @@ settings:
 
 .cr-progress-bar {
   height: 100%;
+  width: var(--progress-width, 0%);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -5456,6 +5475,7 @@ settings:
 
 .cr-import-progress__bar {
   height: 100%;
+  width: var(--progress-width, 0%);
   border-radius: 4px;
   background: var(--interactive-accent);
   transition: width 0.2s ease-out;
@@ -5845,6 +5865,7 @@ settings:
 
 .cr-export-progress__bar {
   height: 100%;
+  width: var(--progress-width, 0%);
   border-radius: 4px;
   background: var(--interactive-accent);
   transition: width 0.2s ease-out;
@@ -6095,6 +6116,7 @@ settings:
 
 .cr-progress-bar {
   height: 100%;
+  width: var(--progress-width, 0%);
   background: var(--interactive-accent);
   border-radius: 4px;
   transition: width 0.3s ease;
@@ -8415,7 +8437,7 @@ settings:
    COMPONENT: DATA-QUALITY.CSS
    ========================================================================== */
 
-/* Component Size: 1392 lines, 27.53 KB */
+/* Component Size: 1393 lines, 27.56 KB */
 
 /**
  * Data Quality Tab Styles
@@ -9638,6 +9660,7 @@ settings:
 
 .cr-place-generator-progress-bar__fill {
   height: 100%;
+  width: var(--progress-width, 0%);
   border-radius: 4px;
   background: var(--interactive-accent);
   transition: width 0.2s ease-out;
@@ -13620,7 +13643,7 @@ input[type="text"]::-webkit-input-placeholder {
    COMPONENT: EVENTS.CSS
    ========================================================================== */
 
-/* Component Size: 1363 lines, 27.26 KB */
+/* Component Size: 1373 lines, 27.6 KB */
 
 /**
  * Events Styles
@@ -14983,6 +15006,16 @@ input[type="text"]::-webkit-input-placeholder {
     width: 12px;
     height: 12px;
   }
+}
+
+/* ==========================================================================
+   Dropdown Category Headers
+   ========================================================================== */
+
+/* Style for category header options in event type dropdowns */
+.crc-dropdown-category-header {
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
 }
 
 
@@ -20576,22 +20609,22 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-17 23:43:50 UTC
+ * Build completed: 2025-12-18 01:40:39 UTC
  * Components processed: 33
- * Total lines: 20256
- * Total size: 403.24 KB
+ * Total lines: 20289
+ * Total size: 403.97 KB
  * Build duration: 0.03 seconds
  *
  * Component breakdown:
  * - variables.css: 48 lines, 1.33 KB
  * - style-settings.css: 232 lines, 5.48 KB
- * - base.css: 55 lines, 0.76 KB
+ * - base.css: 73 lines, 0.97 KB
  * - layout.css: 22 lines, 0.24 KB
  * - canvas.css: 4 lines, 0.07 KB
  * - nodes.css: 12 lines, 0.3 KB
  * - edges.css: 4 lines, 0.07 KB
  * - settings.css: 131 lines, 3.53 KB
- * - modals.css: 5884 lines, 107.84 KB
+ * - modals.css: 5888 lines, 107.98 KB
  * - duplicate-detection.css: 163 lines, 2.82 KB
  * - tree-statistics.css: 41 lines, 0.6 KB
  * - validation.css: 84 lines, 1.47 KB
@@ -20599,13 +20632,13 @@ body:has(.cr-media-linker) .suggestion-container {
  * - folder-scan.css: 155 lines, 2.56 KB
  * - relationship-calculator.css: 302 lines, 5.21 KB
  * - family-chart-view.css: 998 lines, 23.19 KB
- * - data-quality.css: 1392 lines, 27.53 KB
+ * - data-quality.css: 1393 lines, 27.56 KB
  * - relationships.css: 517 lines, 9.76 KB
  * - canvas-navigation.css: 683 lines, 14.64 KB
  * - map-view.css: 1904 lines, 38.98 KB
  * - leaflet-distortable.css: 368 lines, 7.73 KB
  * - date-systems.css: 287 lines, 5.31 KB
- * - events.css: 1363 lines, 27.26 KB
+ * - events.css: 1373 lines, 27.6 KB
  * - timeline-callouts.css: 321 lines, 10.66 KB
  * - organizations.css: 245 lines, 4.36 KB
  * - sources.css: 2664 lines, 54.11 KB

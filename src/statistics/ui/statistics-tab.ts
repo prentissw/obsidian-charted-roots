@@ -246,8 +246,7 @@ function renderTopListsCard(
 		const chevron = header.createSpan({ cls: 'cr-top-list-chevron' });
 		setIcon(chevron, 'chevron-down');
 
-		const listContent = section.createDiv({ cls: 'cr-top-list-content' });
-		listContent.style.display = 'none';
+		const listContent = section.createDiv({ cls: 'cr-top-list-content crc-hidden' });
 
 		for (const item of items) {
 			const row = listContent.createDiv({ cls: 'cr-top-list-row' });
@@ -257,8 +256,8 @@ function renderTopListsCard(
 
 		// Toggle on click
 		header.addEventListener('click', () => {
-			const isExpanded = listContent.style.display !== 'none';
-			listContent.style.display = isExpanded ? 'none' : 'block';
+			const isExpanded = !listContent.hasClass('crc-hidden');
+			listContent.toggleClass('crc-hidden', isExpanded);
 			setIcon(chevron, isExpanded ? 'chevron-down' : 'chevron-up');
 			section.classList.toggle('cr-top-list-expanded', !isExpanded);
 		});

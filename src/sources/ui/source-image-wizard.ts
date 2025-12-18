@@ -613,8 +613,7 @@ export class SourceImageWizardModal extends Modal {
 		headerRow.createEl('th', { text: 'Year' });
 		headerRow.createEl('th', { text: 'Type' });
 		headerRow.createEl('th', { text: 'Location' });
-		const groupTh = headerRow.createEl('th', { text: 'Multi-part', attr: { title: 'Multi-page documents (e.g., census_p1.jpg, census_p2.jpg) are grouped together' } });
-		groupTh.style.cursor = 'help';
+		headerRow.createEl('th', { text: 'Multi-part', cls: 'crc-cursor-help', attr: { title: 'Multi-page documents (e.g., census_p1.jpg, census_p2.jpg) are grouped together' } });
 		headerRow.createEl('th', { text: '', cls: 'cr-image-wizard__th-confidence' });
 
 		// Body

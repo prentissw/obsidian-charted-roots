@@ -500,18 +500,20 @@ function analyzeFamilyReferences(
  */
 function analyzeOrphanReferences(data: GedcomDataV2, issues: GedcomQualityIssue[]): void {
 	for (const [, individual] of data.individuals) {
-		// Check FAMC reference
-		if (individual.familyAsChildRef && !data.families.has(individual.familyAsChildRef)) {
-			issues.push({
-				code: 'missing_family_ref',
-				message: `FAMC references non-existent family @${individual.familyAsChildRef}@`,
-				severity: 'error',
-				category: 'reference',
-				recordId: individual.id,
-				recordType: 'individual',
-				recordName: individual.name || `[${individual.id}]`,
-				details: { missingRef: individual.familyAsChildRef, refType: 'FAMC' }
-			});
+		// Check FAMC references (use familyAsChildRefs for all family-as-child references)
+		for (const famcRef of individual.familyAsChildRefs) {
+			if (!data.families.has(famcRef.familyRef)) {
+				issues.push({
+					code: 'missing_family_ref',
+					message: `FAMC references non-existent family @${famcRef.familyRef}@`,
+					severity: 'error',
+					category: 'reference',
+					recordId: individual.id,
+					recordType: 'individual',
+					recordName: individual.name || `[${individual.id}]`,
+					details: { missingRef: famcRef.familyRef, refType: 'FAMC' }
+				});
+			}
 		}
 
 		// Check FAMS references

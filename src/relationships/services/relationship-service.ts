@@ -244,7 +244,7 @@ export class RelationshipService {
 
 		for (const rel of definedRels) {
 			byType[rel.type.id] = (byType[rel.type.id] || 0) + 1;
-			const cat = rel.type.category as RelationshipCategory;
+			const cat = rel.type.category;
 			if (cat in byCategory) {
 				byCategory[cat]++;
 			}

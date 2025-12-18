@@ -330,7 +330,7 @@ export class ValidationService {
 			if (typeof condition.equals === 'object' && condition.equals !== null) {
 				eqStr = JSON.stringify(condition.equals);
 			} else {
-				eqStr = String(condition.equals);
+				eqStr = String(condition.equals as string | number | boolean | bigint | symbol);
 			}
 			return `"${condition.property}" equals "${eqStr}"`;
 		}
@@ -339,7 +339,7 @@ export class ValidationService {
 			if (typeof condition.notEquals === 'object' && condition.notEquals !== null) {
 				neqStr = JSON.stringify(condition.notEquals);
 			} else {
-				neqStr = String(condition.notEquals);
+				neqStr = String(condition.notEquals as string | number | boolean | bigint | symbol);
 			}
 			return `"${condition.property}" is not "${neqStr}"`;
 		}

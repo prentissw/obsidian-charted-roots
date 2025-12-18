@@ -190,7 +190,7 @@ export class GedcomQualityPreviewModal extends Modal {
 			if (tab.id === 'places') {
 				count = summary.placeVariants.length;
 			} else if (tab.id !== 'summary') {
-				count = summary.byCategory[tab.id as QualityIssueCategory] || 0;
+				count = summary.byCategory[tab.id] || 0;
 			}
 
 			if (count > 0) {
@@ -227,7 +227,7 @@ export class GedcomQualityPreviewModal extends Modal {
 				this.renderPlacesTab(this.tabContentEl);
 				break;
 			default:
-				this.renderIssuesTab(this.tabContentEl, this.activeTab as QualityIssueCategory);
+				this.renderIssuesTab(this.tabContentEl, this.activeTab);
 				break;
 		}
 	}

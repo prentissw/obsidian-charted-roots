@@ -370,8 +370,7 @@ export class CreateEventModal extends Modal {
 				for (const option of Array.from(selectEl.options)) {
 					if (option.value.startsWith('__category_')) {
 						option.disabled = true;
-						option.style.setProperty('font-weight', 'bold');
-						option.style.setProperty('color', 'var(--text-muted)');
+						option.addClass('crc-dropdown-category-header');
 					}
 				}
 

@@ -42,6 +42,24 @@
   text-decoration: line-through;
 }
 
+/* Visibility utilities */
+.crc-hidden {
+  display: none !important;
+}
+
+/* Cursor utilities */
+.crc-cursor-grab {
+  cursor: grab;
+}
+
+.crc-cursor-grabbing {
+  cursor: grabbing;
+}
+
+.crc-cursor-help {
+  cursor: help;
+}
+
 .crc-link {
   color: var(--cr-text-accent, var(--text-accent));
   text-decoration: none;

@@ -338,8 +338,7 @@ export class StatisticsView extends ItemView {
 		const isExpanded = this.expandedSections.has(id);
 		setIcon(chevron, isExpanded ? 'chevron-up' : 'chevron-down');
 
-		const contentWrapper = section.createDiv({ cls: 'cr-sv-section-content' });
-		contentWrapper.style.display = isExpanded ? 'block' : 'none';
+		const contentWrapper = section.createDiv({ cls: `cr-sv-section-content${isExpanded ? '' : ' crc-hidden'}` });
 
 		if (isExpanded) {
 			contentWrapper.appendChild(contentBuilder());
@@ -350,11 +349,11 @@ export class StatisticsView extends ItemView {
 			const nowExpanded = this.expandedSections.has(id);
 			if (nowExpanded) {
 				this.expandedSections.delete(id);
-				contentWrapper.style.display = 'none';
+				contentWrapper.addClass('crc-hidden');
 				setIcon(chevron, 'chevron-down');
 			} else {
 				this.expandedSections.add(id);
-				contentWrapper.style.display = 'block';
+				contentWrapper.removeClass('crc-hidden');
 				setIcon(chevron, 'chevron-up');
 				// Build content lazily
 				if (contentWrapper.childElementCount === 0) {

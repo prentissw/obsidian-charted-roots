@@ -723,7 +723,7 @@ function renderExportCard(
 		.setName('Title')
 		.setDesc('Name for the exported file')
 		.addText(text => text
-			.setPlaceholder('Event Timeline')
+			.setPlaceholder('Event timeline')
 			.setValue(titleValue)
 			.onChange(value => { titleValue = value; }));
 

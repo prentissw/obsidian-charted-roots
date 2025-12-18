@@ -164,7 +164,7 @@ export class MergeService {
 			return JSON.stringify(value);
 		}
 		// At this point, value is a primitive (string, number, boolean, bigint, symbol)
-		return String(value);
+		return String(value as string | number | boolean | bigint | symbol);
 	}
 
 	/**
@@ -355,7 +355,7 @@ export class MergeService {
 			return [JSON.stringify(value)];
 		}
 		// At this point, value is a primitive
-		return [String(value)];
+		return [String(value as string | number | boolean | bigint | symbol)];
 	}
 
 	/**

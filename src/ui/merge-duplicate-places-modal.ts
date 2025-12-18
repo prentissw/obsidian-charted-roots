@@ -1126,7 +1126,9 @@ export class MergeDuplicatePlacesModal extends Modal {
 	 */
 	private placeMatches(value: unknown, place: PlaceNode): boolean {
 		if (!value) return false;
-		const str = String(value);
+		const str = typeof value === 'object' && value !== null
+			? JSON.stringify(value)
+			: String(value as string | number | boolean | bigint | symbol);
 
 		// Check for wikilink match
 		const wikilinkMatch = str.match(/\[\[([^\]|#]+)/);
