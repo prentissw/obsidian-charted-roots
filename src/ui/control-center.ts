@@ -1579,6 +1579,11 @@ export class ControlCenterModal extends Modal {
 				title: 'Layout algorithms',
 				desc: 'Choose Standard, Compact, Timeline, or Hourglass layouts depending on your tree size and visualization needs.',
 				wiki: 'Tree-Generation#layout-algorithms'
+			},
+			{
+				title: 'Universe notes',
+				desc: 'Organize fictional worlds as first-class entities. Universes scope people, places, events, calendars, and maps.',
+				wiki: 'Universe-Notes'
 			}
 		];
 
@@ -1669,6 +1674,15 @@ export class ControlCenterModal extends Modal {
 			manageBtn.addEventListener('click', () => {
 				this.switchTab('universes');
 			});
+
+			// Wiki link
+			const wikiLink = universesContent.createEl('a', {
+				text: 'Learn more about universes →',
+				href: `${WIKI_BASE}/Universe-Notes`,
+				cls: 'crc-link crc-mt-2'
+			});
+			wikiLink.setAttr('target', '_blank');
+			wikiLink.style.display = 'block';
 		} else {
 			// No universes - show explanation
 			universesContent.createEl('p', {
@@ -1695,7 +1709,7 @@ export class ControlCenterModal extends Modal {
 
 			const learnLink = btnRow.createEl('a', {
 				text: 'Learn more about universes →',
-				href: `${WIKI_BASE}/Fictional-Worlds`,
+				href: `${WIKI_BASE}/Universe-Notes`,
 				cls: 'crc-link'
 			});
 			learnLink.setAttr('target', '_blank');

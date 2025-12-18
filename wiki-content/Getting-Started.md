@@ -85,7 +85,28 @@ children: ["[[Bob Smith]]", "[[Alice Smith]]"]
 
 ## Next Steps
 
+### For Genealogists
+
 - [Data Entry](Data-Entry) - Learn about all the frontmatter fields for person notes
 - [Bases Integration](Bases-Integration) - Use spreadsheet-like tables for bulk data entry
 - [Tree Generation](Tree-Generation) - Explore generation options and layout settings
 - [Import & Export](Import-Export) - Import existing family data from GEDCOM files
+
+### For Worldbuilders
+
+If you're building fictional worlds (fantasy, sci-fi, alternate history), Canvas Roots has dedicated features for you:
+
+- [Universe Notes](Universe-Notes) - Create universe notes to organize your fictional worlds with metadata, linked calendars, and maps
+- [Fictional Date Systems](Fictional-Date-Systems) - Define custom calendars with eras (Third Age, After Conquest, etc.)
+- [Organization Notes](Organization-Notes) - Track noble houses, guilds, military units, and other hierarchies
+- [Geographic Features](Geographic-Features) - Create custom image maps for your fictional geography
+
+**Quick Start for Worldbuilders:**
+
+1. Open the Control Center → **Universes** tab
+2. Click **Create universe** to launch the guided wizard
+3. The wizard walks you through creating:
+   - A universe note with metadata (name, author, genre)
+   - An optional custom calendar for fictional dates
+   - An optional custom map for your world
+   - An optional validation schema

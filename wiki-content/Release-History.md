@@ -8,6 +8,8 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 
 ## Table of Contents
 
+- [v0.13.x](#v013x)
+  - [Universe Management](#universe-management-v0130)
 - [v0.12.x](#v012x)
   - [Configurable Normalization](#configurable-normalization-v01212)
   - [Step & Adoptive Parent Support](#step--adoptive-parent-support-v01210)
@@ -43,6 +45,106 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
   - [Maps Tab](#maps-tab-v062)
   - [Geographic Features](#geographic-features-v060)
   - [Import/Export Enhancements](#importexport-enhancements-v060)
+
+---
+
+## v0.13.x
+
+### Universe Management (v0.13.0)
+
+First-class universe entity type for managing fictional worlds, with a dedicated Control Center tab, guided setup wizard, and comprehensive statistics integration.
+
+**Problem Solved:**
+- Worldbuilders had no central place to manage fictional universes (Middle-earth, Westeros, etc.)
+- The `universe` field was a plain string with no validation, leading to typos creating duplicate "universes"
+- No way to see which entities belonged to which universe
+- No guided setup for creating a new world with calendar, map, and validation rules
+
+**Universe Entity:**
+
+Universe notes (`cr_type: universe`) serve as a canonical registry for fictional worlds:
+
+```yaml
+cr_type: universe
+cr_id: middle-earth
+name: Middle-earth
+description: A fantasy world created by J.R.R. Tolkien
+author: J.R.R. Tolkien
+genre: fantasy
+status: active
+default_calendar: shire-reckoning
+default_map: middle-earth-map
+```
+
+**Features:**
+
+| Feature | Description |
+|---------|-------------|
+| **Universe entity type** | First-class note type with full CRUD support |
+| **UniverseService** | Entity aggregation, orphan detection, statistics |
+| **Universes tab** | Dedicated Control Center tab (conditional visibility) |
+| **Create Universe wizard** | Multi-step guided setup with optional calendar, map, and schema |
+| **Statistics integration** | Universes section with entity counts and drill-down |
+| **Guide tab documentation** | Universe notes section in Essential Properties card |
+| **Context menu action** | "Add essential universe properties" for universe notes |
+| **Universes base template** | 12 pre-configured views for browsing universes |
+
+**Universes Tab:**
+
+The Universes tab appears in Control Center when:
+- Any universe notes exist in the vault, OR
+- Any orphan universe strings exist (entities with `universe` field but no matching note)
+
+This keeps the UI clean for genealogists who never use fictional worlds.
+
+| Card | Description |
+|------|-------------|
+| **Actions** | Create universe (wizard), Create universes base |
+| **Your universes** | List of universe notes with entity counts |
+| **Orphan universe strings** | Entities referencing non-existent universes |
+
+**Create Universe Wizard:**
+
+| Step | Description | Skippable |
+|------|-------------|-----------|
+| 1 | Universe details (name, description, author, genre, status) | No |
+| 2 | Custom calendar? Creates linked date system | Yes |
+| 3 | Custom map? Creates linked map configuration | Yes |
+| 4 | Validation schema? Creates scoped schema | Yes |
+| 5 | Summary with links to all created entities | No |
+
+**Statistics Integration:**
+
+The Statistics dashboard includes a Universes section showing:
+- Universe count and list
+- Per-universe entity breakdown (people, events, places, sources, organizations)
+- Drill-down to view entities filtered by universe
+- "View full statistics →" link to dashboard with universe filter
+
+**Universes Base Template:**
+
+12 pre-configured views for browsing universes:
+- All Universes
+- By Status (active, draft, archived)
+- By Genre, By Author
+- With/Without Calendars
+- With/Without Maps
+- Recently Created
+
+**Context Menu:**
+
+Right-click on a universe note to access:
+- Add essential universe properties
+- Open in Universes tab
+- Create related entities (person, event, place, etc.) pre-populated with universe
+
+**Backward Compatibility:**
+
+- String-only `universe` values continue to function
+- Orphan detection shows entities referencing non-existent universe notes
+- New entities can link to universe notes via wikilink or use string values
+
+See [Universe Management Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/universe-management.md) for implementation details.
 
 ---
 
