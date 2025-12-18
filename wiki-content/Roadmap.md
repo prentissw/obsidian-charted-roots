@@ -9,7 +9,7 @@ This document outlines planned features for Canvas Roots. For completed features
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [Calendarium Integration](#calendarium-integration) ⚡ High
-  - [Universe Setup Wizard](#universe-setup-wizard) 📋 Medium
+  - [Universe Management](#universe-management) 📋 Medium
   - [Post-Import Cleanup Wizard](#post-import-cleanup-wizard) 📋 Medium
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
 - [Future Considerations](#future-considerations)
@@ -124,11 +124,11 @@ See [Calendarium Integration Planning Document](https://github.com/banisterious/
 
 ---
 
-### Universe Setup Wizard
+### Universe Management
 
-**Priority:** 📋 Medium — Guided onboarding for fictional worldbuilders
+**Priority:** 📋 Medium — First-class support for fictional worldbuilders
 
-**Summary:** A comprehensive universe management system that includes: (1) Universe as a first-class entity type for canonical registry, (2) a guided setup wizard for new worlds, (3) a Universes tab in Control Center (conditional visibility), and (4) a Universes section in Statistics for discovery.
+**Summary:** A comprehensive universe management system that includes: (1) Universe as a first-class entity type for canonical registry, (2) a guided setup wizard for new worlds, (3) a Universes tab in Control Center (conditional visibility), (4) a Universes section in Statistics for discovery, and (5) a Universes card in the Guide tab for onboarding.
 
 **Problem Statement:**
 
@@ -179,6 +179,7 @@ default_map: middle-earth-map
 
 | Location | Purpose |
 |----------|---------|
+| Guide tab → Universes card | Always visible; explains feature, primary entry point |
 | Statistics → Universes section | Always visible; discovery and overview |
 | Control Center → Universes tab | Conditional; appears when universes exist |
 | Command palette | "Create universe" command |
@@ -199,6 +200,7 @@ This keeps the UI clean for genealogists who never use fictional worlds.
 - Property alias support
 
 **Phase 2 — UI Integration:**
+- Guide tab → Universes card (always visible, primary entry point)
 - Statistics → Universes section
 - Control Center → Universes tab (conditional)
 - Autocomplete in entity creation modals

@@ -172,6 +172,57 @@ interface UniverseService {
 
 ---
 
+## UI: Universes Card in Guide Tab
+
+The Guide tab always shows a "Universes" card that explains the feature and provides entry points. This is the primary discovery mechanism for users who haven't created universes yet.
+
+### Card Layout
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🌍  Fictional universes                                    │
+│      For worldbuilders and fiction writers                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Universes help you organize fictional worlds. Create a     │
+│  universe to group related calendars, maps, places, and     │
+│  characters together.                                       │
+│                                                             │
+│  No universes yet.                                          │
+│                                                             │
+│  [Create universe]              Learn more about universes →│
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+When universes exist, the card changes to show a summary:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🌍  Fictional universes                                    │
+│      For worldbuilders and fiction writers                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  You have 2 universes:                                      │
+│  • Middle-earth (12 people, 5 places)                       │
+│  • Westeros (8 people, 3 places)                            │
+│                                                             │
+│  [Create universe]  [Manage universes]                      │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Interactions
+
+| Element | Action |
+|---------|--------|
+| **[Create universe]** | Opens Universe Setup Wizard |
+| **[Manage universes]** | Switches to Universes tab (only shown when universes exist) |
+| **Universe name** | Opens the universe note |
+| **Learn more →** | Opens wiki documentation |
+
+---
+
 ## UI: Universes Tab (Control Center)
 
 ### Conditional Visibility
@@ -387,17 +438,23 @@ When creating entities from within a universe context (e.g., quick actions in Un
 
 **Focus:** Make universes visible and manageable.
 
-1. **Statistics → Universes section**
+1. **Guide tab → Universes card**
+   - Always visible (primary entry point)
+   - Explains what universes are
+   - Shows universe count when they exist
+   - "Create universe" button launches wizard
+
+2. **Statistics → Universes section**
    - Universe list with counts
    - "Create universe" button
    - Orphan warning
 
-2. **Control Center → Universes tab**
+3. **Control Center → Universes tab**
    - Conditional visibility logic
    - Full management UI
    - Orphan resolution
 
-3. **Autocomplete in creation modals**
+4. **Autocomplete in creation modals**
    - Universe field autocomplete
    - Validation warnings
 
