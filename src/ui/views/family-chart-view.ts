@@ -92,7 +92,7 @@ export class FamilyChartView extends ItemView {
 	private infoPanelActionsEl: HTMLElement | null = null;
 	private selectedPersonId: string | null = null;
 	private infoPanelEditMode: boolean = false;
-	private infoPanelEditData: { firstName: string; lastName: string; birthDate: string; deathDate: string } | null = null;
+	private infoPanelEditData: { firstName: string; lastName: string; birthDate: string; deathDate: string; gender: 'M' | 'F' | '' } | null = null;
 
 	// Sync state (prevent infinite loops during sync)
 	private isSyncing: boolean = false;
@@ -396,6 +396,10 @@ export class FamilyChartView extends ItemView {
 		// Death date
 		this.createInfoField(fieldsSection, 'Death date', personData.data.deathday || '');
 
+		// Sex
+		const sexDisplay = personData.data.gender === 'F' ? 'Female' : personData.data.gender === 'M' ? 'Male' : '';
+		this.createInfoField(fieldsSection, 'Sex', sexDisplay);
+
 		// Relationships section
 		this.renderRelationshipsSection(personData);
 
@@ -444,7 +448,8 @@ export class FamilyChartView extends ItemView {
 				firstName: personData.data['first name'] || '',
 				lastName: personData.data['last name'] || '',
 				birthDate: personData.data.birthday || '',
-				deathDate: personData.data.deathday || ''
+				deathDate: personData.data.deathday || '',
+				gender: (personData.data.gender as 'M' | 'F' | '') || ''
 			};
 		}
 
@@ -470,6 +475,27 @@ export class FamilyChartView extends ItemView {
 		this.createInfoFieldInput(fieldsSection, 'Death date', this.infoPanelEditData.deathDate, (value) => {
 			if (this.infoPanelEditData) this.infoPanelEditData.deathDate = value;
 		}, 'Not recorded');
+
+		// Sex dropdown
+		const sexField = fieldsSection.createDiv({ cls: 'cr-fcv-info-field' });
+		sexField.createDiv({ cls: 'cr-fcv-info-field-label', text: 'Sex' });
+		const sexSelect = sexField.createEl('select', { cls: 'cr-fcv-info-field-select dropdown' });
+		const options = [
+			{ value: '', label: 'Unknown' },
+			{ value: 'M', label: 'Male' },
+			{ value: 'F', label: 'Female' }
+		];
+		for (const opt of options) {
+			const optionEl = sexSelect.createEl('option', { value: opt.value, text: opt.label });
+			if (this.infoPanelEditData.gender === opt.value) {
+				optionEl.selected = true;
+			}
+		}
+		sexSelect.addEventListener('change', () => {
+			if (this.infoPanelEditData) {
+				this.infoPanelEditData.gender = sexSelect.value as 'M' | 'F' | '';
+			}
+		});
 
 		// Relationships section (read-only in edit mode for now)
 		this.renderRelationshipsSection(personData);
@@ -605,7 +631,8 @@ export class FamilyChartView extends ItemView {
 			firstName: personData.data['first name'] || '',
 			lastName: personData.data['last name'] || '',
 			birthDate: personData.data.birthday || '',
-			deathDate: personData.data.deathday || ''
+			deathDate: personData.data.deathday || '',
+			gender: (personData.data.gender as 'M' | 'F' | '') || ''
 		};
 		this.renderInfoPanelContent();
 	}
@@ -637,7 +664,8 @@ export class FamilyChartView extends ItemView {
 				'first name': this.infoPanelEditData.firstName,
 				'last name': this.infoPanelEditData.lastName,
 				'birthday': this.infoPanelEditData.birthDate,
-				'deathday': this.infoPanelEditData.deathDate
+				'deathday': this.infoPanelEditData.deathDate,
+				'gender': this.infoPanelEditData.gender
 			}
 		};
 
@@ -651,6 +679,9 @@ export class FamilyChartView extends ItemView {
 			this.chartData[personIndex].data['last name'] = this.infoPanelEditData.lastName;
 			this.chartData[personIndex].data.birthday = this.infoPanelEditData.birthDate;
 			this.chartData[personIndex].data.deathday = this.infoPanelEditData.deathDate;
+			if (this.infoPanelEditData.gender === 'M' || this.infoPanelEditData.gender === 'F') {
+				this.chartData[personIndex].data.gender = this.infoPanelEditData.gender;
+			}
 		}
 
 		// Exit edit mode

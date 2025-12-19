@@ -147,6 +147,10 @@
 ![Interactive Map View](docs/images/canvas-roots-interactive-map-view.png)
 *Leaflet-powered geographic visualization with color-coded markers (green=birth, red=death), marker clustering, migration paths with person labels, and mini-map overview.*
 
+### Interactive Family Chart View
+![Interactive Family Chart View](docs/images/canvas-roots-family-chart-view.png)
+*Real-time family tree visualization with pan/zoom, person details panel, and direct editing with bidirectional sync.*
+
 ### Control Center Dashboard
 ![Control Center Status Tab](docs/images/canvas-roots-control-center-status-tab.png)
 *Status tab showing comprehensive vault statistics: people, relationships, places, custom maps, canvases, vault health, and recent GEDCOM imports.*

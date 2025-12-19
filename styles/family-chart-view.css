@@ -879,6 +879,22 @@
   color: var(--text-faint);
 }
 
+.cr-fcv-info-field-select {
+  flex: 1;
+  padding: var(--size-4-1) var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+}
+
+.cr-fcv-info-field-select:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
 /* ============================================================
  * Info Panel Relationships Section
  * ============================================================ */
