@@ -313,6 +313,26 @@
   color: black;
 }
 
+/* Open note button on cards */
+.cr-fcv-chart-container.f3 .cr-open-note-btn circle {
+  fill: rgba(0, 0, 0, 0.4);
+  stroke: rgba(255, 255, 255, 0.7);
+  stroke-width: 1.5;
+}
+
+.cr-fcv-chart-container.f3 .cr-open-note-btn path {
+  stroke: rgba(255, 255, 255, 0.9);
+}
+
+.cr-fcv-chart-container.f3 .cr-open-note-btn:hover circle {
+  fill: rgba(0, 0, 0, 0.6);
+  stroke: rgba(255, 255, 255, 0.9);
+}
+
+.cr-fcv-chart-container.f3 .cr-open-note-btn:hover path {
+  stroke: #fff;
+}
+
 /* Connection lines */
 .cr-fcv-chart-container.f3 .link {
   stroke: var(--text-color);
