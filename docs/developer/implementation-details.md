@@ -34,6 +34,11 @@ This document covers technical implementation specifics for Canvas Roots feature
   - [Metrics Computed](#metrics-computed)
   - [Report Types](#report-types)
   - [UI Integration](#ui-integration)
+- [Import/Export System](#importexport-system)
+  - [Supported Formats](#supported-formats)
+  - [Two-Pass Import Architecture](#two-pass-import-architecture)
+  - [Export Pipeline](#export-pipeline)
+  - [Data Transformations](#data-transformations)
 - [Privacy and Gender Identity Protection](#privacy-and-gender-identity-protection)
   - [Sex vs Gender Data Model](#sex-vs-gender-data-model)
   - [Living Person Privacy](#living-person-privacy)
@@ -1274,6 +1279,133 @@ SOURCE_COVERAGE_GEN, TIMELINE_DENSITY, REPORTS
 - Folder statistics modal (context menu on folders)
 - Tree statistics modal (context menu on canvas files)
 - Export statistics service (pre-export counts with privacy adjustment)
+
+---
+
+## Import/Export System
+
+Canvas Roots supports multiple genealogical data formats for interoperability with other genealogy software.
+
+### Supported Formats
+
+| Format | Import | Export | Description |
+|--------|--------|--------|-------------|
+| **GEDCOM 5.5.1** | ✅ | ✅ | Standard genealogy interchange format |
+| **GEDCOM X** | ✅ | ✅ | Modern JSON-based FamilySearch format |
+| **Gramps XML** | ✅ | ✅ | Gramps genealogy software format |
+| **CSV** | ✅ | ✅ | Spreadsheet-compatible tabular data |
+
+**File organization:**
+
+| Format | Module | Key Classes |
+|--------|--------|-------------|
+| GEDCOM 5.5.1 | `src/gedcom/` | `GedcomImporter`, `GedcomParser`, `GedcomExporter`, `GedcomQualityAnalyzer` |
+| GEDCOM X | `src/gedcomx/` | `GedcomxImporter`, `GedcomxParser`, `GedcomxExporter` |
+| Gramps XML | `src/gramps/` | `GrampsImporter`, `GrampsParser`, `GrampsExporter` |
+| CSV | `src/csv/` | `CsvImporter`, `CsvExporter` |
+
+### Two-Pass Import Architecture
+
+All importers use a consistent two-pass approach to handle relationship resolution:
+
+```mermaid
+flowchart TD
+    A[Input File] --> B[Validation & Parsing]
+    B --> C[Component Analysis]
+    C --> D[Pass 1: Create Notes]
+    D --> E[Generate cr_ids]
+    D --> F[Write notes with temp refs]
+    D --> G[Build ID mappings]
+    G --> H[Pass 2: Resolve Relationships]
+    H --> I[Read each note]
+    H --> J[Replace temp IDs with cr_ids]
+    H --> K[Update relationship fields]
+    K --> L[Complete Note Network]
+```
+
+**Pass 1: Note Creation**
+1. Parse source file and validate structure
+2. Generate unique `cr_id` for each person
+3. Create person notes with temporary references (GEDCOM IDs, Gramps handles, CSV row IDs)
+4. Build mapping: temporary ID → cr_id
+5. Disable bidirectional linking (deferred to Pass 2)
+
+**Pass 2: Relationship Resolution**
+1. Iterate through all created notes
+2. Read each note's frontmatter
+3. Replace temporary IDs with actual cr_ids in relationship fields
+4. Update: `father_id`, `mother_id`, `spouse_id`, `children_id`, step/adoptive parents
+5. Write updated frontmatter
+
+**Why two passes?** When importing, parent notes may not exist yet when a child is created. The two-pass approach ensures all notes exist before resolving cross-references.
+
+### Export Pipeline
+
+```mermaid
+flowchart LR
+    A[Load Notes] --> B[Apply Filters]
+    B --> C[Load Related Data]
+    C --> D[Privacy Filtering]
+    D --> E[Format Conversion]
+    E --> F[Serialize Output]
+```
+
+**Key services:**
+- `FamilyGraphService` - Loads all person notes, builds relationship graph
+- `EventService` - Loads linked event notes
+- `SourceService` - Loads linked source notes
+- `PlaceGraphService` - Loads place hierarchies with coordinates
+- `PrivacyService` - Filters/obfuscates data for living persons
+
+**Export options:**
+- **Collection filter** - Export only people from a specific collection
+- **Branch filter** - Export ancestors or descendants of a selected person
+- **Privacy filter** - Exclude or obfuscate living persons
+- **Field selection** - Include/exclude specific data types
+
+**Format-specific features:**
+
+| Format | Special Features |
+|--------|-----------------|
+| GEDCOM | Custom `_UID` tag for cr_id, `ASSO` records for custom relationships, `PEDI` for non-biological parents |
+| GEDCOM X | Type URIs for relationships, fact types mapped to standard URIs, place descriptions with coordinates |
+| Gramps | Full event/source/place integration, XML structure matching Gramps schema |
+| CSV | Configurable columns, flattened structure for spreadsheets |
+
+### Data Transformations
+
+**Date conversion:**
+```
+GEDCOM Format          → ISO Format
+15 MAR 1950           → 1950-03-15
+MAR 1950              → 1950-03-01
+1950                  → 1950-01-01
+ABT 15 MAR 1950       → 1950-03-15 (precision: estimated)
+```
+
+**Event type mappings:**
+
+| GEDCOM | Canvas Roots |
+|--------|--------------|
+| BIRT | birth |
+| DEAT | death |
+| MARR | marriage |
+| BAPM, CHR | baptism |
+| BURI | burial |
+| CENS | census |
+| RESI | residence |
+| OCCU | occupation |
+
+**Relationship types:**
+- **GEDCOM PEDI tag:** `birth`, `adop`, `step`, `foster`
+- **GEDCOM X:** ParentChild, StepParent, AdoptiveParent relationship types
+- **Gramps rel attribute:** biological, stepchild, adopted, foster
+
+**Staging area workflow:**
+1. Import to staging folder first
+2. Review imported data
+3. Cross-import duplicate detection
+4. Promote to main tree or delete
 
 ---
 
