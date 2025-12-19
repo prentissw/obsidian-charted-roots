@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.13.2] - 2025-12-19
+
+### Added
+
+- **Place linking for birth/death locations** - The Create Person modal now supports linking birth and death places to existing place notes, using the same pattern as family relationships. Click "Link" to open a place picker that searches all place notes, with options to filter by category. If the place doesn't exist, click "Create new place" to create it on-the-fly. Places are stored with dual fields (birth_place + birth_place_id) for reliable resolution.
+
+---
+
 ## [0.13.1] - 2025-12-18
 
 ### Added
