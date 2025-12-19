@@ -5818,6 +5818,11 @@ export class ControlCenterModal extends Modal {
 			if (totalNotesCreated > 0) {
 				this.showTab('status');
 			}
+
+			// If successful, offer to assign reference numbers
+			if (result.success && result.individualsImported > 0) {
+				this.promptAssignReferenceNumbersAfterImport();
+			}
 		} catch (error: unknown) {
 			progressModal.close();
 			const errorMsg = getErrorMessage(error);
@@ -11007,6 +11012,11 @@ export class ControlCenterModal extends Modal {
 			// Refresh status tab
 			if (result.notesCreated > 0) {
 				this.showTab('status');
+			}
+
+			// If successful, offer to assign reference numbers
+			if (result.success && result.notesCreated > 0) {
+				this.promptAssignReferenceNumbersAfterImport();
 			}
 		} catch (error: unknown) {
 			const errorMsg = getErrorMessage(error);
