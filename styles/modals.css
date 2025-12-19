@@ -1196,6 +1196,33 @@
   color: var(--text-muted);
 }
 
+.crc-picker-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.crc-picker-footer .crc-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Place picker specific styles */
+.crc-place-picker-modal .modal-content {
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.crc-place-picker-modal .crc-picker-results {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
 /* ==========================================================================
    STATISTICS DISPLAY
    ========================================================================== */

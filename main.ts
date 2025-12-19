@@ -4599,6 +4599,10 @@ export default class CanvasRootsPlugin extends Plugin {
 				died: fm.died,
 				birthPlace: fm.birth_place,
 				deathPlace: fm.death_place,
+				birthPlaceId: fm.birth_place_id,
+				birthPlaceName: extractName(fm.birth_place),
+				deathPlaceId: fm.death_place_id,
+				deathPlaceName: extractName(fm.death_place),
 				occupation: fm.occupation,
 				fatherId: fm.father_id,
 				fatherName: extractName(fm.father),
@@ -4610,6 +4614,8 @@ export default class CanvasRootsPlugin extends Plugin {
 				universe: fm.universe
 			},
 			familyGraph,
+			placeGraph,
+			settings: this.settings,
 			propertyAliases: this.settings.propertyAliases,
 			existingUniverses: allUniverses
 		}).open();

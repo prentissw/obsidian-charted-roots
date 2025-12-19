@@ -57,6 +57,11 @@ export interface PersonData {
 	adoptiveFatherName?: string; // Adoptive father's name for wikilink display
 	adoptiveMotherCrId?: string; // Adoptive mother's cr_id
 	adoptiveMotherName?: string; // Adoptive mother's name for wikilink display
+	// Place relationships (dual storage like relationships)
+	birthPlaceCrId?: string;     // Birth place cr_id for reliable resolution
+	birthPlaceName?: string;     // Birth place name for wikilink display
+	deathPlaceCrId?: string;     // Death place cr_id for reliable resolution
+	deathPlaceName?: string;     // Death place name for wikilink display
 }
 
 /**
@@ -139,12 +144,26 @@ export async function createPersonNote(
 		[prop('died')]: person.deathDate || ''
 	};
 
-	if (person.birthPlace) {
+	// Birth place (dual storage: wikilink + ID for reliable resolution)
+	if (person.birthPlaceCrId && person.birthPlaceName) {
+		frontmatter[prop('birth_place')] = `"[[${person.birthPlaceName}]]"`;
+		frontmatter[prop('birth_place_id')] = person.birthPlaceCrId;
+		logger.debug('birthPlace', `Added (dual): wikilink=${person.birthPlaceName}, id=${person.birthPlaceCrId}`);
+	} else if (person.birthPlace) {
+		// Fallback for plain text (legacy or unlinked)
 		frontmatter[prop('birth_place')] = person.birthPlace;
+		logger.debug('birthPlace', `Added (plain text): ${person.birthPlace}`);
 	}
 
-	if (person.deathPlace) {
+	// Death place (dual storage: wikilink + ID for reliable resolution)
+	if (person.deathPlaceCrId && person.deathPlaceName) {
+		frontmatter[prop('death_place')] = `"[[${person.deathPlaceName}]]"`;
+		frontmatter[prop('death_place_id')] = person.deathPlaceCrId;
+		logger.debug('deathPlace', `Added (dual): wikilink=${person.deathPlaceName}, id=${person.deathPlaceCrId}`);
+	} else if (person.deathPlace) {
+		// Fallback for plain text (legacy or unlinked)
 		frontmatter[prop('death_place')] = person.deathPlace;
+		logger.debug('deathPlace', `Added (plain text): ${person.deathPlace}`);
 	}
 
 	if (person.occupation) {
@@ -582,14 +601,43 @@ export async function updatePersonNote(
 				delete frontmatter.occupation;
 			}
 		}
-		if (person.birthPlace !== undefined) {
+		// Handle birth place (dual storage: wikilink + ID)
+		if (person.birthPlaceCrId !== undefined || person.birthPlaceName !== undefined) {
+			if (person.birthPlaceCrId && person.birthPlaceName) {
+				frontmatter.birth_place = `[[${person.birthPlaceName}]]`;
+				frontmatter.birth_place_id = person.birthPlaceCrId;
+			} else if (person.birthPlaceName) {
+				frontmatter.birth_place = `[[${person.birthPlaceName}]]`;
+				delete frontmatter.birth_place_id;
+			} else {
+				// Clear birth place
+				delete frontmatter.birth_place;
+				delete frontmatter.birth_place_id;
+			}
+		} else if (person.birthPlace !== undefined) {
+			// Legacy: plain text birth place
 			if (person.birthPlace) {
 				frontmatter.birth_place = person.birthPlace;
 			} else {
 				delete frontmatter.birth_place;
 			}
 		}
-		if (person.deathPlace !== undefined) {
+
+		// Handle death place (dual storage: wikilink + ID)
+		if (person.deathPlaceCrId !== undefined || person.deathPlaceName !== undefined) {
+			if (person.deathPlaceCrId && person.deathPlaceName) {
+				frontmatter.death_place = `[[${person.deathPlaceName}]]`;
+				frontmatter.death_place_id = person.deathPlaceCrId;
+			} else if (person.deathPlaceName) {
+				frontmatter.death_place = `[[${person.deathPlaceName}]]`;
+				delete frontmatter.death_place_id;
+			} else {
+				// Clear death place
+				delete frontmatter.death_place;
+				delete frontmatter.death_place_id;
+			}
+		} else if (person.deathPlace !== undefined) {
+			// Legacy: plain text death place
 			if (person.deathPlace) {
 				frontmatter.death_place = person.deathPlace;
 			} else {

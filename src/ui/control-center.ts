@@ -2954,6 +2954,10 @@ export class ControlCenterModal extends Modal {
 					died: person.deathDate,
 					birthPlace: person.birthPlace?.placeName,
 					deathPlace: person.deathPlace?.placeName,
+					birthPlaceId: fm.birth_place_id,
+					birthPlaceName: person.birthPlace?.placeName,
+					deathPlaceId: fm.death_place_id,
+					deathPlaceName: person.deathPlace?.placeName,
 					occupation: fm.occupation,
 					fatherId: typeof fatherId === 'string' ? fatherId : undefined,
 					motherId: typeof motherId === 'string' ? motherId : undefined,
@@ -2962,6 +2966,8 @@ export class ControlCenterModal extends Modal {
 					universe: fm.universe
 				},
 				familyGraph,
+				placeGraph,
+				settings: this.plugin.settings,
 				propertyAliases: this.plugin.settings.propertyAliases,
 				existingUniverses: allUniverses,
 				onUpdated: () => {

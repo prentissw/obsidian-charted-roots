@@ -7,7 +7,10 @@ import { App, Modal, Setting, TFile, Notice, normalizePath } from 'obsidian';
 import { createPersonNote, updatePersonNote, PersonData, DynamicBlockType } from '../core/person-note-writer';
 import { createLucideIcon } from './lucide-icons';
 import { FamilyGraphService } from '../core/family-graph';
+import { PlaceGraphService } from '../core/place-graph';
 import { PersonPickerModal, PersonInfo } from './person-picker';
+import { PlacePickerModal, SelectedPlaceInfo } from './place-picker';
+import type { CanvasRootsSettings } from '../settings';
 
 /**
  * Relationship field data
@@ -38,6 +41,11 @@ export class CreatePersonModal extends Modal {
 	private stepmotherField: RelationshipField = {};
 	private adoptiveFatherField: RelationshipField = {};
 	private adoptiveMotherField: RelationshipField = {};
+	// Place fields
+	private birthPlaceField: RelationshipField = {};
+	private deathPlaceField: RelationshipField = {};
+	private placeGraph?: PlaceGraphService;
+	private settings?: CanvasRootsSettings;
 
 	// Edit mode properties
 	private editMode: boolean = false;
@@ -68,6 +76,10 @@ export class CreatePersonModal extends Modal {
 				died?: string;
 				birthPlace?: string;
 				deathPlace?: string;
+				birthPlaceId?: string;
+				birthPlaceName?: string;
+				deathPlaceId?: string;
+				deathPlaceName?: string;
 				occupation?: string;
 				fatherId?: string;
 				fatherName?: string;
@@ -89,6 +101,9 @@ export class CreatePersonModal extends Modal {
 			};
 			// Universe options
 			existingUniverses?: string[];
+			// Place graph for place picker
+			placeGraph?: PlaceGraphService;
+			settings?: CanvasRootsSettings;
 		}
 	) {
 		super(app);
@@ -100,6 +115,8 @@ export class CreatePersonModal extends Modal {
 		this.includeDynamicBlocks = options?.includeDynamicBlocks || false;
 		this.dynamicBlockTypes = options?.dynamicBlockTypes || ['timeline', 'relationships'];
 		this.existingUniverses = options?.existingUniverses || [];
+		this.placeGraph = options?.placeGraph;
+		this.settings = options?.settings;
 
 		// Check for edit mode
 		if (options?.editFile && options?.editPersonData) {
@@ -144,6 +161,13 @@ export class CreatePersonModal extends Modal {
 			}
 			if (ep.adoptiveMotherId || ep.adoptiveMotherName) {
 				this.adoptiveMotherField = { crId: ep.adoptiveMotherId, name: ep.adoptiveMotherName };
+			}
+			// Place fields
+			if (ep.birthPlaceId || ep.birthPlaceName) {
+				this.birthPlaceField = { crId: ep.birthPlaceId, name: ep.birthPlaceName };
+			}
+			if (ep.deathPlaceId || ep.deathPlaceName) {
+				this.deathPlaceField = { crId: ep.deathPlaceId, name: ep.deathPlaceName };
 			}
 			// Get directory from file path
 			const pathParts = options.editFile.path.split('/');
@@ -231,6 +255,9 @@ export class CreatePersonModal extends Modal {
 					this.personData.birthDate = value || undefined;
 				}));
 
+		// Birth place (link field)
+		this.createPlaceField(form, 'Birth place', this.birthPlaceField);
+
 		// Death date
 		new Setting(form)
 			.setName('Death date')
@@ -242,27 +269,8 @@ export class CreatePersonModal extends Modal {
 					this.personData.deathDate = value || undefined;
 				}));
 
-		// Birth place
-		new Setting(form)
-			.setName('Birth place')
-			.setDesc('Place of birth')
-			.addText(text => text
-				.setPlaceholder('e.g., London, England')
-				.setValue(this.personData.birthPlace || '')
-				.onChange(value => {
-					this.personData.birthPlace = value || undefined;
-				}));
-
-		// Death place
-		new Setting(form)
-			.setName('Death place')
-			.setDesc('Place of death')
-			.addText(text => text
-				.setPlaceholder('e.g., New York, USA')
-				.setValue(this.personData.deathPlace || '')
-				.onChange(value => {
-					this.personData.deathPlace = value || undefined;
-				}));
+		// Death place (link field)
+		this.createPlaceField(form, 'Death place', this.deathPlaceField);
 
 		// Relationship fields section header
 		const relSection = form.createDiv({ cls: 'crc-relationship-section' });
@@ -540,6 +548,78 @@ export class CreatePersonModal extends Modal {
 	}
 
 	/**
+	 * Create a place field with link/unlink button
+	 */
+	private createPlaceField(
+		container: HTMLElement,
+		label: string,
+		fieldData: RelationshipField
+	): void {
+		const setting = new Setting(container)
+			.setName(label)
+			.setDesc(fieldData.name ? `Linked to: ${fieldData.name}` : `Click "Link" to select ${label.toLowerCase()}`);
+
+		// Text input (readonly, shows selected place name)
+		let inputEl: HTMLInputElement;
+
+		setting.addText(text => {
+			inputEl = text.inputEl;
+			text.setPlaceholder(`Click "Link" to select ${label.toLowerCase()}`)
+				.setValue(fieldData.name || '');
+			text.inputEl.readOnly = true;
+			if (fieldData.name) {
+				text.inputEl.addClass('crc-input--linked');
+			}
+		});
+
+		// Link/Unlink button
+		setting.addButton(btn => {
+			const updateButton = (isLinked: boolean) => {
+				btn.buttonEl.empty();
+				btn.buttonEl.addClass('crc-btn', 'crc-btn--secondary');
+				if (isLinked) {
+					const unlinkIcon = createLucideIcon('unlink', 16);
+					btn.buttonEl.appendChild(unlinkIcon);
+					btn.buttonEl.appendText(' Unlink');
+				} else {
+					const linkIcon = createLucideIcon('map-pin', 16);
+					btn.buttonEl.appendChild(linkIcon);
+					btn.buttonEl.appendText(' Link');
+				}
+			};
+
+			updateButton(!!fieldData.name);
+
+			btn.onClick(() => {
+				if (fieldData.name) {
+					// Unlink
+					fieldData.crId = undefined;
+					fieldData.name = undefined;
+					inputEl.value = '';
+					inputEl.removeClass('crc-input--linked');
+					setting.setDesc(`Click "Link" to select ${label.toLowerCase()}`);
+					updateButton(false);
+				} else {
+					// Open place picker
+					const picker = new PlacePickerModal(this.app, (place: SelectedPlaceInfo) => {
+						fieldData.name = place.name;
+						fieldData.crId = place.crId;
+						inputEl.value = place.name;
+						inputEl.addClass('crc-input--linked');
+						setting.setDesc(`Linked to: ${place.name}`);
+						updateButton(true);
+					}, {
+						placeGraph: this.placeGraph,
+						settings: this.settings,
+						directory: this.directory
+					});
+					picker.open();
+				}
+			});
+		});
+	}
+
+	/**
 	 * Create the person note
 	 */
 	private async createPerson(): Promise<void> {
@@ -606,6 +686,18 @@ export class CreatePersonModal extends Modal {
 				data.adoptiveMotherName = this.adoptiveMotherField.name;
 			}
 
+			// Add birth place
+			if (this.birthPlaceField.crId && this.birthPlaceField.name) {
+				data.birthPlaceCrId = this.birthPlaceField.crId;
+				data.birthPlaceName = this.birthPlaceField.name;
+			}
+
+			// Add death place
+			if (this.deathPlaceField.crId && this.deathPlaceField.name) {
+				data.deathPlaceCrId = this.deathPlaceField.crId;
+				data.deathPlaceName = this.deathPlaceField.name;
+			}
+
 			// Add collection and universe
 			data.collection = this.getCollectionValue();
 			data.universe = this.getUniverseValue();
@@ -653,8 +745,6 @@ export class CreatePersonModal extends Modal {
 				birthDate: this.personData.birthDate,
 				deathDate: this.personData.deathDate,
 				sex: this.personData.sex,
-				birthPlace: this.personData.birthPlace,
-				deathPlace: this.personData.deathPlace,
 				occupation: this.personData.occupation
 			};
 
@@ -722,6 +812,26 @@ export class CreatePersonModal extends Modal {
 			} else {
 				data.adoptiveMotherCrId = undefined;
 				data.adoptiveMotherName = undefined;
+			}
+
+			// Add birth place
+			if (this.birthPlaceField.crId || this.birthPlaceField.name) {
+				data.birthPlaceCrId = this.birthPlaceField.crId;
+				data.birthPlaceName = this.birthPlaceField.name;
+			} else {
+				// Explicitly clear birth place if unlinked
+				data.birthPlaceCrId = undefined;
+				data.birthPlaceName = undefined;
+			}
+
+			// Add death place
+			if (this.deathPlaceField.crId || this.deathPlaceField.name) {
+				data.deathPlaceCrId = this.deathPlaceField.crId;
+				data.deathPlaceName = this.deathPlaceField.name;
+			} else {
+				// Explicitly clear death place if unlinked
+				data.deathPlaceCrId = undefined;
+				data.deathPlaceName = undefined;
 			}
 
 			// Add collection and universe
