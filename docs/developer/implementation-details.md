@@ -10,6 +10,7 @@ This document covers technical implementation specifics for Canvas Roots feature
 - [Privacy and Gender Identity Protection](#privacy-and-gender-identity-protection)
   - [Sex vs Gender Data Model](#sex-vs-gender-data-model)
   - [Living Person Privacy](#living-person-privacy)
+  - [Log Export Obfuscation](#log-export-obfuscation)
   - [Planned Features](#planned-features-not-yet-implemented)
 
 ---
@@ -287,6 +288,40 @@ The `PrivacyService` (`src/core/privacy-service.ts`) protects living individuals
 - Reports (markdown output)
 
 For user-facing documentation, see [Privacy & Security](../../wiki-content/Privacy-And-Security.md).
+
+### Log Export Obfuscation
+
+The logging system (`src/core/logging.ts`) includes built-in PII obfuscation for log exports, protecting personal data when sharing logs for debugging.
+
+**Setting:** `settings.obfuscateLogExports` (default: `true` - secure by default)
+
+**What gets obfuscated:**
+
+| Pattern | Replacement | Example |
+|---------|-------------|---------|
+| Names (capitalized multi-word) | `[NAME-1]`, `[NAME-2]`, etc. | "John Smith" → `[NAME-1]` |
+| ISO dates | `[DATE]` | "1985-03-15" → `[DATE]` |
+| Years (1000-2029) | `[YEAR]` | "born in 1952" → "born in `[YEAR]`" |
+| File paths (`.md`) | `/[FILE].md` | "/People/John Smith.md" → `/[FILE].md` |
+| UUIDs/cr_ids | `[ID]` | "abc12345-..." → `[ID]` |
+
+**Implementation functions:**
+- `obfuscateString(str)` - Replaces PII patterns in a string
+- `obfuscateData(data)` - Recursively obfuscates objects/arrays
+- `obfuscateLogEntry(entry)` - Obfuscates a single log entry (preserves technical fields like component, category, level)
+- `obfuscateLogs(logs)` - Obfuscates an array of log entries
+
+**Usage in settings UI** (`src/settings.ts`):
+```typescript
+const logsToExport = this.plugin.settings.obfuscateLogExports
+  ? obfuscateLogs(logs)
+  : logs;
+```
+
+**Design notes:**
+- Names are replaced with consistent numbered tokens (`[NAME-1]`, `[NAME-2]`) within each log entry to preserve reference relationships
+- Numbers and booleans pass through unchanged (safe technical data)
+- Component and category names are preserved (technical identifiers, not PII)
 
 ### Planned Features (Not Yet Implemented)
 

@@ -10,6 +10,7 @@ Canvas Roots handles sensitive genealogical data including names, dates, relatio
 - [What Data is Stored](#what-data-is-stored)
 - [Network Privacy](#network-privacy)
 - [Privacy-Aware Export](#privacy-aware-export)
+- [Log Export Privacy](#log-export-privacy)
 - [Vault Security](#vault-security)
 - [Sharing Family Trees](#sharing-family-trees)
 - [Recommendations](#recommendations)
@@ -129,6 +130,44 @@ Privacy protection also works with:
 - GEDCOM X (JSON format for modern applications)
 - Gramps XML (for Gramps genealogy software)
 
+## Log Export Privacy
+
+When troubleshooting issues, you may need to export logs and share them with developers or support. Canvas Roots protects your family's privacy in log exports.
+
+### Automatic Obfuscation
+
+By default, log exports automatically replace personal information with placeholder tokens:
+
+| Data Type | Replacement | Example |
+|-----------|-------------|---------|
+| Names | `[NAME-1]`, `[NAME-2]` | "John Smith" → `[NAME-1]` |
+| Dates | `[DATE]` | "1985-03-15" → `[DATE]` |
+| Years | `[YEAR]` | "1952" → `[YEAR]` |
+| File paths | `/[FILE].md` | "/People/John.md" → `/[FILE].md` |
+| Record IDs | `[ID]` | UUIDs are replaced |
+
+### Configuring Log Privacy
+
+1. Open **Settings** → **Canvas Roots**
+2. Expand the **Logging** section
+3. Toggle **Obfuscate log exports** (enabled by default)
+
+### Exporting Logs
+
+1. Open **Settings** → **Canvas Roots** → **Logging**
+2. Click **Export** to save logs to your vault
+3. Logs are saved to the configured log folder (default: `.canvas-roots/logs`)
+4. If obfuscation is enabled, personal data is replaced before saving
+
+### When to Disable Obfuscation
+
+You may want to disable obfuscation if:
+- You're debugging your own data privately
+- You need to see exact names/dates to trace an issue
+- You're sharing logs with trusted family members who already have access
+
+> **Tip:** Keep obfuscation enabled when sharing logs publicly (GitHub issues, forums, etc.)
+
 ## Securing Your Vault
 
 Since Canvas Roots stores data locally, vault security is your responsibility.
@@ -213,6 +252,8 @@ If your family tree includes EU residents:
 | Mark someone as living | (Planned) Add `cr_living: true` to their frontmatter |
 | Export with privacy | Control Center → Export → Enable privacy options |
 | Exclude living from export | Choose "Exclude living persons" in export dialog |
+| Toggle log obfuscation | Settings → Canvas Roots → Logging → Obfuscate log exports |
+| Export logs | Settings → Canvas Roots → Logging → Export button |
 
 ## See Also
 
