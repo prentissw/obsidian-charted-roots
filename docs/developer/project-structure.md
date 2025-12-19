@@ -15,6 +15,11 @@ This document describes the Canvas Roots plugin directory layout and component s
   - [Relationships Module](#relationships-module-srcrelationships)
   - [Dates Module](#dates-module-srcdates)
   - [Schemas Module](#schemas-module-srcschemas)
+  - [Statistics Module](#statistics-module-srcstatistics)
+  - [Reports Module](#reports-module-srcreports)
+  - [Universes Module](#universes-module-srcuniverses)
+  - [Enhancement Module](#enhancement-module-srcenhancement)
+  - [Dynamic Content Module](#dynamic-content-module-srcdynamic-content)
   - [UI Components](#ui-components-srcui)
   - [Data Models](#data-models-srcmodels)
 - [Commands](#commands-maints)
@@ -52,9 +57,10 @@ canvas-roots/
 │   │   ├── types/                # Event type definitions
 │   │   └── ui/                   # Event modals and timeline views
 │   ├── gedcom/                # GEDCOM 5.5.1 support
-│   │   ├── gedcom-importer.ts    # Import from GEDCOM
-│   │   ├── gedcom-importer-v2.ts # V2 importer with quality preview
-│   │   └── gedcom-exporter.ts    # Export to GEDCOM
+│   │   ├── gedcom-importer.ts    # Import from GEDCOM with quality preview
+│   │   ├── gedcom-parser.ts      # GEDCOM parsing
+│   │   ├── gedcom-exporter.ts    # Export to GEDCOM
+│   │   └── gedcom-quality-analyzer.ts # Pre-import quality analysis
 │   ├── gedcomx/               # GEDCOM X (FamilySearch) support
 │   │   ├── gedcomx-importer.ts   # Import from GEDCOM X JSON
 │   │   ├── gedcomx-exporter.ts   # Export to GEDCOM X JSON
@@ -98,6 +104,26 @@ canvas-roots/
 │   │   ├── services/             # Source-related services
 │   │   ├── types/                # Type definitions
 │   │   └── ui/                   # Source UI components
+│   ├── statistics/            # Statistics and analytics
+│   │   ├── services/             # Statistics computation
+│   │   ├── types/                # Statistics type definitions
+│   │   ├── constants/            # Section IDs, limits
+│   │   └── ui/                   # Statistics tab and view
+│   ├── reports/               # Report generation
+│   │   ├── services/             # Report generators
+│   │   ├── types/                # Report type definitions
+│   │   └── ui/                   # Report generation modal
+│   ├── universes/             # Fictional world management
+│   │   ├── services/             # Universe service
+│   │   ├── types/                # Universe type definitions
+│   │   └── ui/                   # Universe UI components
+│   ├── enhancement/           # Data enhancement tools
+│   │   ├── services/             # Place generator service
+│   │   └── ui/                   # Place generator modal
+│   ├── dynamic-content/       # Live content rendering
+│   │   ├── processors/           # Code block processors
+│   │   ├── renderers/            # Content renderers
+│   │   └── services/             # Dynamic content service
 │   ├── excalidraw/            # Excalidraw export
 │   │   └── excalidraw-exporter.ts # Export to Excalidraw format
 │   ├── models/                # TypeScript interfaces
@@ -297,6 +323,72 @@ canvas-roots/
 | **Types** | | |
 | `schema-types.ts` | ✅ Complete | Schema type definitions |
 
+### Statistics Module (src/statistics/)
+
+| Component | Status | Purpose |
+|-----------|--------|---------|
+| **Services** | | |
+| `statistics-service.ts` | ✅ Complete | Core statistics computation with caching and drill-down methods |
+| **Types** | | |
+| `statistics-types.ts` | ✅ Complete | Statistics type definitions |
+| **Constants** | | |
+| `statistics-constants.ts` | ✅ Complete | Section IDs, display limits |
+| **UI Components** | | |
+| `statistics-tab.ts` | ✅ Complete | Statistics tab in Control Center |
+| `statistics-view.ts` | ✅ Complete | Workspace dashboard view |
+
+### Reports Module (src/reports/)
+
+| Component | Status | Purpose |
+|-----------|--------|---------|
+| **Services** | | |
+| `report-generation-service.ts` | ✅ Complete | Report orchestration and output |
+| `ahnentafel-generator.ts` | ✅ Complete | Ahnentafel ancestor report |
+| `family-group-sheet-generator.ts` | ✅ Complete | Family group sheet report |
+| `individual-summary-generator.ts` | ✅ Complete | Individual person summary |
+| `gaps-report-generator.ts` | ✅ Complete | Missing data report |
+| `register-report-generator.ts` | ✅ Complete | NGSQ-style descendant report |
+| `pedigree-chart-generator.ts` | ✅ Complete | Markdown pedigree chart |
+| `descendant-chart-generator.ts` | ✅ Complete | Markdown descendant chart |
+| **Types** | | |
+| `report-types.ts` | ✅ Complete | Report type definitions |
+| **UI Components** | | |
+| `report-generator-modal.ts` | ✅ Complete | Report generation modal with options |
+
+### Universes Module (src/universes/)
+
+| Component | Status | Purpose |
+|-----------|--------|---------|
+| **Services** | | |
+| `universe-service.ts` | ✅ Complete | Universe note management |
+| **Types** | | |
+| `universe-types.ts` | ✅ Complete | Universe type definitions |
+| **UI Components** | | |
+| `universes-tab.ts` | ✅ Complete | Universes tab in Control Center |
+| `create-universe-modal.ts` | ✅ Complete | Modal for creating universe notes |
+
+### Enhancement Module (src/enhancement/)
+
+| Component | Status | Purpose |
+|-----------|--------|---------|
+| **Services** | | |
+| `place-generator.ts` | ✅ Complete | Generate place notes from person data |
+| **UI Components** | | |
+| `place-generator-modal.ts` | ✅ Complete | Bulk place generation modal |
+
+### Dynamic Content Module (src/dynamic-content/)
+
+| Component | Status | Purpose |
+|-----------|--------|---------|
+| **Services** | | |
+| `dynamic-content-service.ts` | ✅ Complete | Code block processor registration |
+| **Processors** | | |
+| `timeline-processor.ts` | ✅ Complete | Timeline code block processor |
+| `relationships-processor.ts` | ✅ Complete | Relationships code block processor |
+| **Renderers** | | |
+| `timeline-renderer.ts` | ✅ Complete | Timeline content renderer |
+| `relationships-renderer.ts` | ✅ Complete | Relationships content renderer |
+
 ### UI Components (src/ui/)
 
 | Component | Status | Purpose |
@@ -417,7 +509,9 @@ canvas-roots/
 | Schemas | ✅ Complete | Validation schemas for note type consistency |
 | Relationships | ✅ Complete | Custom relationship type definitions and management |
 | Organizations | ✅ Complete | Organization notes, membership tracking, organization types |
+| Universes | ✅ Complete | Manage fictional universes and worlds |
 | Collections | ✅ Complete | Family components and user collections with cross-collection detection |
 | Data Quality | ✅ Complete | Comprehensive data quality analysis: orphan refs, duplicates, date issues, bidirectional sync |
+| Statistics | ✅ Complete | Vault statistics, data completeness, quality metrics, drill-down lists |
 | Tree Output | ✅ Complete | Tree generation with layout options, color schemes, interactive preview, export to Canvas/Excalidraw/PNG/SVG |
 | Preferences | ✅ Complete | Property aliases, folder locations, canvas styling, logging settings |
