@@ -1636,11 +1636,11 @@ export class ControlCenterModal extends Modal {
 					text: universe.name,
 					cls: 'crc-link'
 				});
-				nameLink.addEventListener('click', async (e) => {
+				nameLink.addEventListener('click', (e) => {
 					e.preventDefault();
 					this.close();
 					const leaf = this.app.workspace.getLeaf(false);
-					await leaf.openFile(universe.file);
+					void leaf.openFile(universe.file);
 				});
 				if (countParts.length > 0) {
 					li.createSpan({
@@ -1684,7 +1684,7 @@ export class ControlCenterModal extends Modal {
 				cls: 'crc-link crc-mt-2'
 			});
 			wikiLink.setAttr('target', '_blank');
-			wikiLink.style.display = 'block';
+			wikiLink.addClass('crc-block');
 		} else {
 			// No universes - show explanation
 			universesContent.createEl('p', {
@@ -8664,20 +8664,22 @@ export class ControlCenterModal extends Modal {
 					text: 'Create note',
 					cls: 'crc-btn crc-btn--small'
 				});
-				createNoteBtn.addEventListener('click', async () => {
-					try {
-						// Create universe from orphan value, using the orphan value as cr_id
-						// so existing entity references will match
-						await universeService.createUniverse({
-							name: orphan.value.charAt(0).toUpperCase() + orphan.value.slice(1).replace(/-/g, ' '),
-							crId: orphan.value
-						});
-						new Notice(`Created universe: ${orphan.value}`);
-						// Refresh the tab
-						this.showUniversesTab();
-					} catch (err) {
-						new Notice(`Failed to create universe: ${getErrorMessage(err)}`);
-					}
+				createNoteBtn.addEventListener('click', () => {
+					void (async () => {
+						try {
+							// Create universe from orphan value, using the orphan value as cr_id
+							// so existing entity references will match
+							await universeService.createUniverse({
+								name: orphan.value.charAt(0).toUpperCase() + orphan.value.slice(1).replace(/-/g, ' '),
+								crId: orphan.value
+							});
+							new Notice(`Created universe: ${orphan.value}`);
+							// Refresh the tab
+							this.showUniversesTab();
+						} catch (err) {
+							new Notice(`Failed to create universe: ${getErrorMessage(err)}`);
+						}
+					})();
 				});
 			});
 
@@ -8687,19 +8689,21 @@ export class ControlCenterModal extends Modal {
 					text: 'Create all',
 					cls: 'crc-btn crc-btn--secondary crc-mt-3'
 				});
-				createAllBtn.addEventListener('click', async () => {
-					for (const orphan of orphans) {
-						try {
-							await universeService.createUniverse({
-								name: orphan.value.charAt(0).toUpperCase() + orphan.value.slice(1).replace(/-/g, ' '),
-								crId: orphan.value
-							});
-						} catch (err) {
-							logger.error('createOrphanUniverse', `Failed: ${orphan.value}`, err);
+				createAllBtn.addEventListener('click', () => {
+					void (async () => {
+						for (const orphan of orphans) {
+							try {
+								await universeService.createUniverse({
+									name: orphan.value.charAt(0).toUpperCase() + orphan.value.slice(1).replace(/-/g, ' '),
+									crId: orphan.value
+								});
+							} catch (err) {
+								logger.error('createOrphanUniverse', `Failed: ${orphan.value}`, err);
+							}
 						}
-					}
-					new Notice(`Created ${orphans.length} universe notes`);
-					this.showUniversesTab();
+						new Notice(`Created ${orphans.length} universe notes`);
+						this.showUniversesTab();
+					})();
 				});
 			}
 
@@ -8764,7 +8768,7 @@ export class ControlCenterModal extends Modal {
 
 		// Status cell
 		const statusCell = row.createEl('td', { cls: 'crc-person-table__td' });
-		const statusBadge = statusCell.createSpan({
+		const _statusBadge = statusCell.createSpan({
 			text: universe.status || 'active',
 			cls: `crc-badge crc-badge--${universe.status || 'active'}`
 		});
@@ -8850,7 +8854,7 @@ export class ControlCenterModal extends Modal {
 			.onClick(async () => {
 				const confirmed = await this.plugin.confirmDeleteUniverse(universe.name);
 				if (confirmed) {
-					await this.app.vault.delete(universe.file);
+					await this.app.fileManager.trashFile(universe.file);
 					new Notice(`Deleted universe: ${universe.name}`);
 					this.showUniversesTab();
 				}

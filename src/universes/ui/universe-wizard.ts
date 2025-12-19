@@ -888,7 +888,7 @@ export class UniverseWizardModal extends Modal {
 		const step = WIZARD_STEPS[this.currentStep];
 
 		switch (step.id) {
-			case 'universe':
+			case 'universe': {
 				if (!this.universeData.name.trim()) {
 					new Notice('Please enter a universe name');
 					return false;
@@ -900,6 +900,7 @@ export class UniverseWizardModal extends Modal {
 					return false;
 				}
 				return true;
+			}
 
 			case 'calendar':
 				if (this.calendarData.enabled) {

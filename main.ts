@@ -2907,7 +2907,7 @@ export default class CanvasRootsPlugin extends Plugin {
 									subItem
 										.setTitle('Import GEDCOM')
 										.setIcon('upload')
-										.onClick(async () => {
+										.onClick(() => {
 											const modal = new ControlCenterModal(this.app, this);
 											modal.openToTab('gedcom');
 										});
@@ -3412,7 +3412,7 @@ export default class CanvasRootsPlugin extends Plugin {
 								item
 									.setTitle('Canvas Roots: Import GEDCOM')
 									.setIcon('upload')
-									.onClick(async () => {
+									.onClick(() => {
 										const modal = new ControlCenterModal(this.app, this);
 										modal.openToTab('gedcom');
 									});

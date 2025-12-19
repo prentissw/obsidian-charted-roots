@@ -919,12 +919,15 @@ export class DataQualityService {
 		let str: string;
 		if (typeof dateStr === 'string') {
 			str = dateStr;
-		} else {
-			// Try to convert to string
+		} else if (typeof dateStr === 'number') {
+			// Handle numeric dates (e.g., born: 1845)
 			str = String(dateStr);
-			if (str === '[object Object]' || str === 'undefined' || str === 'null') {
-				return null;
-			}
+		} else if (dateStr instanceof Date) {
+			// Handle Date objects
+			str = dateStr.toISOString().split('T')[0];
+		} else {
+			// Unknown type - can't extract year
+			return null;
 		}
 
 		// Try YYYY-MM-DD format
