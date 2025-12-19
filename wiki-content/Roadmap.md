@@ -14,6 +14,15 @@ This document outlines planned features for Canvas Roots. For completed features
   - [Universe Management Enhancements](#universe-management-enhancements) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
 - [Future Considerations](#future-considerations)
+  - [Ghost Nodes for Unresolved Links](#ghost-nodes-for-unresolved-links)
+  - [Research Tracking](#research-tracking)
+  - [Dynasty Management](#dynasty-management)
+  - [Sensitive Field Redaction](#sensitive-field-redaction)
+  - [Inclusive Identity & Privacy Enhancements](#inclusive-identity--privacy-enhancements)
+  - [Data Analysis Scope Expansion](#data-analysis-scope-expansion)
+  - [Person Note Templates](#person-note-templates)
+  - [Accessibility](#accessibility)
+  - [Obsidian Publish Support](#obsidian-publish-support)
 - [Known Limitations](#known-limitations)
 - [Contributing](#contributing)
 
@@ -380,6 +389,20 @@ Tools for tracking succession and inheritance in worldbuilding:
 ### Sensitive Field Redaction
 
 Automatically redact sensitive personal information (SSN, identity numbers) from exports, regardless of living/deceased status. Currently, sensitive fields imported via GEDCOM v2 are stored but should never appear in exports.
+
+### Inclusive Identity & Privacy Enhancements
+
+Extend the privacy system to better support inclusive identity management:
+
+- **Pronouns field** - Add `pronouns` property (e.g., "she/her", "they/them") for respectful communication in reports and UI
+- **Underscore-prefix privacy convention** - Treat fields prefixed with `_` (e.g., `_previous_names`, `_medical_notes`) as private/sensitive:
+  - Exclude from person picker and search results
+  - Exclude from canvas labels
+  - Require confirmation before including in exports
+- **Deadname protection** - Automatic suppression of `_previous_names` in display contexts while preserving for historical research
+- **Export privacy warnings** - Show confirmation dialog when exporting data containing private fields
+
+This builds on the existing `sex`/`gender`/`gender_identity` data model documented in [Implementation Details](../docs/developer/implementation-details.md#privacy-and-gender-identity-protection).
 
 ### Data Analysis Scope Expansion
 
