@@ -54,6 +54,7 @@ interface FamilyChartViewState {
 	showBirthDates?: boolean;
 	showDeathDates?: boolean;
 	showKinshipLabels?: boolean;
+	isHorizontal?: boolean;
 	[key: string]: unknown;  // Index signature for Record<string, unknown> compatibility
 }
 
@@ -72,6 +73,7 @@ export class FamilyChartView extends ItemView {
 	private showBirthDates: boolean = true;
 	private showDeathDates: boolean = false;
 	private showKinshipLabels: boolean = false;
+	private isHorizontal: boolean = false; // Tree orientation: false = vertical (top-to-bottom), true = horizontal (left-to-right)
 
 	// family-chart instances
 	private f3Chart: ReturnType<typeof f3.createChart> | null = null;
@@ -792,6 +794,11 @@ export class FamilyChartView extends ItemView {
 				.setTransitionTime(800)
 				.setCardXSpacing(this.nodeSpacing)
 				.setCardYSpacing(this.levelSpacing);
+
+			// Apply tree orientation
+			if (this.isHorizontal) {
+				this.f3Chart.setOrientationHorizontal();
+			}
 
 			// Configure SVG cards with current display options
 			const displayFields: string[][] = [['first name', 'last name']];
@@ -1683,6 +1690,24 @@ export class FamilyChartView extends ItemView {
 	private showLayoutMenu(e: MouseEvent): void {
 		const menu = new Menu();
 
+		// Tree orientation
+		menu.addItem((item) => {
+			item.setTitle('Tree orientation')
+				.setIcon('layout')
+				.setDisabled(true);
+		});
+
+		menu.addItem((item) => {
+			item.setTitle(`${!this.isHorizontal ? '✓ ' : ''}Vertical (top to bottom)`)
+				.onClick(() => this.setOrientation(false));
+		});
+		menu.addItem((item) => {
+			item.setTitle(`${this.isHorizontal ? '✓ ' : ''}Horizontal (left to right)`)
+				.onClick(() => this.setOrientation(true));
+		});
+
+		menu.addSeparator();
+
 		// Node spacing (horizontal)
 		menu.addItem((item) => {
 			item.setTitle(`Node spacing: ${this.nodeSpacing}px`)
@@ -1780,6 +1805,22 @@ export class FamilyChartView extends ItemView {
 		this.showKinshipLabels = !this.showKinshipLabels;
 		this.renderKinshipLabels();
 		new Notice(`Kinship labels ${this.showKinshipLabels ? 'shown' : 'hidden'}`);
+	}
+
+	/**
+	 * Set tree orientation (vertical or horizontal)
+	 */
+	private setOrientation(horizontal: boolean): void {
+		if (this.isHorizontal === horizontal) return; // No change
+
+		this.isHorizontal = horizontal;
+
+		// Re-initialize chart with new orientation
+		if (this.f3Chart && this.rootPersonId) {
+			this.initializeChart();
+		}
+
+		new Notice(`Tree orientation: ${horizontal ? 'horizontal' : 'vertical'}`);
 	}
 
 	/**
@@ -2505,6 +2546,7 @@ export class FamilyChartView extends ItemView {
 			showBirthDates: this.showBirthDates,
 			showDeathDates: this.showDeathDates,
 			showKinshipLabels: this.showKinshipLabels,
+			isHorizontal: this.isHorizontal,
 		};
 	}
 
@@ -2535,6 +2577,9 @@ export class FamilyChartView extends ItemView {
 		}
 		if (state.showKinshipLabels !== undefined) {
 			this.showKinshipLabels = state.showKinshipLabels;
+		}
+		if (state.isHorizontal !== undefined) {
+			this.isHorizontal = state.isHorizontal;
 		}
 
 		// Re-initialize chart if the view is already open (chartContainerEl exists)
