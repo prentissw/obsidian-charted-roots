@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Family Chart toolbar reorganization** - Split the Layout menu into three focused menus: Layout (orientation, spacing), Display (card options, visibility), and Depth (generation limits).
 
+### Improved
+
+- **Reference numbers modal polish** - Redesigned the "Assign reference numbers" modal with icons, clearer descriptions explaining what each system is best for, person count preview, and Learn more link to documentation.
+
 ### Fixed
 
 - **Family Chart info panel not resetting** - Fixed bug where the info panel continued showing the previous person's details when switching root person via context menu.
