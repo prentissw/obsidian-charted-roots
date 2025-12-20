@@ -57,7 +57,7 @@ filters:
 formulas:
   display_name: '${name} || file.name'
   coordinates: 'if(${coordinates_lat}, ${coordinates_lat} + ", " + ${coordinates_long}, "")'
-  map_link: 'if(${coordinates_lat}, link("obsidian://canvas-roots-map?lat=" + ${coordinates_lat} + "&lng=" + ${coordinates_long} + "&zoom=12", "📍"), "")'
+  map_link: 'if(${coordinates_lat}, link("obsidian://canvas-roots-map?lat=" + ${coordinates_lat} + "&lng=" + ${coordinates_long} + "&zoom=12", "📌"), "")'
   has_coords: 'if(${coordinates_lat}, "Yes", "No")'
   hierarchy_path: 'if(${parent_place}, ${parent_place} + " → " + ${name}, ${name})'
 properties:
