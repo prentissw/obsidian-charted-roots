@@ -1258,13 +1258,31 @@ export default class CanvasRootsPlugin extends Plugin {
 										});
 								});
 
-								// Open in map view
+								// Open in map view (zoom to place coordinates if available)
 								submenu.addItem((subItem) => {
 									subItem
 										.setTitle('Open in map view')
 										.setIcon('map')
 										.onClick(async () => {
-											await this.activateMapView();
+											// Extract coordinates from frontmatter if available
+											let focusCoordinates: { lat: number; lng: number; zoom?: number } | undefined;
+											if (fm?.coordinates_lat !== undefined && fm?.coordinates_long !== undefined) {
+												focusCoordinates = {
+													lat: Number(fm.coordinates_lat),
+													lng: Number(fm.coordinates_long),
+													zoom: 12
+												};
+											} else if (fm?.coordinates && typeof fm.coordinates === 'object') {
+												// Legacy nested format
+												if (fm.coordinates.lat !== undefined && fm.coordinates.long !== undefined) {
+													focusCoordinates = {
+														lat: Number(fm.coordinates.lat),
+														lng: Number(fm.coordinates.long),
+														zoom: 12
+													};
+												}
+											}
+											await this.activateMapView(undefined, false, undefined, focusCoordinates);
 										});
 								});
 
@@ -1360,7 +1378,25 @@ export default class CanvasRootsPlugin extends Plugin {
 									.setTitle('Canvas Roots: Open in map view')
 									.setIcon('map')
 									.onClick(async () => {
-										await this.activateMapView();
+										// Extract coordinates from frontmatter if available
+										let focusCoordinates: { lat: number; lng: number; zoom?: number } | undefined;
+										if (fm?.coordinates_lat !== undefined && fm?.coordinates_long !== undefined) {
+											focusCoordinates = {
+												lat: Number(fm.coordinates_lat),
+												lng: Number(fm.coordinates_long),
+												zoom: 12
+											};
+										} else if (fm?.coordinates && typeof fm.coordinates === 'object') {
+											// Legacy nested format
+											if (fm.coordinates.lat !== undefined && fm.coordinates.long !== undefined) {
+												focusCoordinates = {
+													lat: Number(fm.coordinates.lat),
+													lng: Number(fm.coordinates.long),
+													zoom: 12
+												};
+											}
+										}
+										await this.activateMapView(undefined, false, undefined, focusCoordinates);
 									});
 							});
 
