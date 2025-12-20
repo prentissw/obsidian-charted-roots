@@ -197,7 +197,7 @@ function generatePersonId(): string {
 - Use BEM naming with `cr-` prefix
 - Prefer CSS variables over hard-coded values
 - Use Obsidian's CSS variables for theme compatibility
-- See [docs/css-system.md](docs/css-system.md) for details
+- See [docs/developer/css-system.md](docs/developer/css-system.md) for details
 
 **Example:**
 ```css

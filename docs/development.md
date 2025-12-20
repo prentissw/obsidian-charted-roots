@@ -34,7 +34,7 @@ Copy `main.js`, `manifest.json`, and `styles.css` to your vault's `.obsidian/plu
 | Document | Description |
 |----------|-------------|
 | [Changelog Details](developer/changelog-details.md) | Detailed implementation notes for major features |
-| [CSS System](css-system.md) | CSS variables, component styling, theme integration |
+| [CSS System](developer/css-system.md) | CSS variables, component styling, theme integration |
 | [ESLint Setup](eslint-setup.md) | Linting configuration and rules |
 
 ## Architecture Documentation
