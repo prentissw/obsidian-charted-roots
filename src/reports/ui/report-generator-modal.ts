@@ -746,7 +746,11 @@ export class ReportGeneratorModal extends Modal {
 				new Notice(`Warnings: ${result.warnings.join(', ')}`);
 			}
 
-			this.close();
+			// Only close modal when saving to vault; keep open for downloads
+			// so user can generate multiple reports with same person selection
+			if (this.outputMethod === 'vault') {
+				this.close();
+			}
 
 		} catch (error) {
 			console.error('Report generation error:', error);
