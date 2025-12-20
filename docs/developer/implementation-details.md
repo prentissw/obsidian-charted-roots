@@ -80,6 +80,14 @@ This document covers technical implementation specifics for Canvas Roots feature
   - [Built-in Types and Categories](#built-in-types-and-categories)
   - [RelationshipService](#relationshipservice)
   - [Frontmatter Storage](#frontmatter-storage)
+- [Collections and Family Groups](#collections-and-family-groups)
+  - [Two Organization Systems](#two-organization-systems)
+  - [PersonNode Collection Properties](#personnode-collection-properties)
+  - [FamilyGraphService Methods](#familygraphservice-methods)
+  - [Collection Analytics](#collection-analytics)
+  - [Control Center Collections Tab](#control-center-collections-tab)
+  - [Collection-Filtered Tree Generation](#collection-filtered-tree-generation)
+  - [Collection Overview Canvas Generation](#collection-overview-canvas-generation)
 - [Privacy and Gender Identity Protection](#privacy-and-gender-identity-protection)
   - [Sex vs Gender Data Model](#sex-vs-gender-data-model)
   - [Living Person Privacy](#living-person-privacy)
@@ -3337,6 +3345,191 @@ A.relationships = [{ type: 'mentor', target: '[[B]]' }]
 ```
 
 This allows querying all relationships for a person without requiring both sides to be explicitly defined.
+
+---
+
+## Collections and Family Groups
+
+Collections and family groups provide organizational structures for people in the vault, enabling filtering, browsing, and canvas generation based on user-defined groupings.
+
+### Two Organization Systems
+
+Canvas Roots provides complementary organization systems (defined in `src/core/family-graph.ts`):
+
+**Detected Families (Automatic)**
+- Auto-discovered through relationship graph traversal (BFS)
+- Based on biological/marital relationships (father, mother, spouse, children)
+- Always up-to-date (computed on demand)
+- Optional custom naming via `group_name` frontmatter property
+
+**User Collections (Manual)**
+- Explicitly assigned via `collection` frontmatter property
+- Independent of biological relationships
+- Use cases: lineages, generations, world-building factions, research categories
+
+### PersonNode Collection Properties
+
+```typescript
+// From src/core/family-graph.ts
+export interface PersonNode {
+  // ... other properties ...
+
+  // Collection naming (for detected families)
+  collectionName?: string;
+
+  // User-defined collection
+  collection?: string;
+
+  // Fictional universe (optional)
+  universe?: string;
+}
+```
+
+Frontmatter properties:
+
+```yaml
+---
+collection: "Paternal Line"    # User-defined collection
+group_name: "Smith Family"     # Custom name for detected family group
+universe: "Middle-earth"       # Fictional universe for world-building
+---
+```
+
+### FamilyGraphService Methods
+
+**`findAllFamilyComponents()`** - Detects disconnected family groups:
+
+```typescript
+findAllFamilyComponents(): Array<{
+  representative: PersonNode;  // Oldest person by birth date
+  size: number;
+  people: PersonNode[];
+  collectionName?: string;     // From group_name or most common in group
+}>
+```
+
+Algorithm:
+1. BFS traversal starting from each unvisited person
+2. Follows relationships: fatherCrId, motherCrId, spouseCrIds, childrenCrIds
+3. Groups all connected people into a single component
+4. Selects representative (oldest by birth date, or first alphabetically)
+5. Resolves collection name using `getCollectionName()` (most common `group_name` wins)
+
+**`getUserCollections()`** - Returns user-defined collections:
+
+```typescript
+getUserCollections(): Array<{
+  name: string;
+  people: PersonNode[];
+  size: number;
+}>
+```
+
+Groups people by their `collection` property, sorted by size (largest first).
+
+**`detectCollectionConnections()`** - Finds cross-collection relationships:
+
+```typescript
+interface CollectionConnection {
+  fromCollection: string;
+  toCollection: string;
+  bridgePeople: PersonNode[];  // People connecting the collections
+  relationshipCount: number;
+}
+
+detectCollectionConnections(): CollectionConnection[]
+```
+
+Detects "bridge people" who have family relationships with people in other collections.
+
+### Collection Analytics
+
+The `calculateCollectionAnalytics()` method provides comprehensive statistics:
+
+```typescript
+interface CollectionAnalytics {
+  totalPeople: number;
+  totalFamilies: number;
+  totalUserCollections: number;
+  totalCollections: number;
+  averageCollectionSize: number;
+  largestCollection: { name: string; size: number } | null;
+  smallestCollection: { name: string; size: number } | null;
+  dataCompleteness: {
+    birthDatePercent: number;
+    deathDatePercent: number;
+    sexPercent: number;
+  };
+  relationshipMetrics: {
+    peopleWithParents: number;
+    peopleWithSpouses: number;
+    peopleWithChildren: number;
+    orphanedPeople: number;
+  };
+  crossCollectionMetrics: {
+    totalConnections: number;
+    totalBridgePeople: number;
+    topConnections: Array<{ from: string; to: string; bridgeCount: number }>;
+  };
+  dateRange: { earliest?: number; latest?: number };
+}
+```
+
+### Control Center Collections Tab
+
+The Collections tab (`showCollectionsTab()` in `control-center.ts`) provides:
+
+**Browse Modes** (dropdown selector):
+- "All people" - Complete vault listing
+- "Detected families" - Auto-detected family groups with paginated table
+- "My collections" - User-defined collections with connection detection
+
+**Analytics Card**:
+- Total people count
+- Collection counts (families + user collections)
+- Average collection size
+- Bridge people count
+- Data completeness percentages (birth dates, death dates, sex)
+- Collection highlights (largest/smallest)
+
+**Collection Overview Canvas**:
+- Generates master canvas showing all collections
+- Grid layout (3 columns) with text nodes
+- Edges connecting related collections
+- Color-coded by collection name (hash-based)
+
+### Collection-Filtered Tree Generation
+
+Trees can be filtered by collection (in `TreeOptions`):
+
+```typescript
+interface TreeOptions {
+  // ... other options ...
+  collectionFilter?: string;  // Only include people in this collection
+  placeFilter?: { placeName: string; types: string[] };
+}
+```
+
+The `shouldIncludePerson()` method checks collection membership during tree generation.
+
+### Collection Overview Canvas Generation
+
+The `CanvasGenerator.generateCollectionOverviewCanvas()` method creates a visual representation:
+
+```typescript
+generateCollectionOverviewCanvas(
+  collections: Array<{ name: string; size: number; representative?: PersonNode }>,
+  connections?: CollectionConnection[],
+  options: { nodeWidth?: number; nodeHeight?: number }
+): CanvasData
+```
+
+Features:
+- Legend node explaining the canvas
+- Text nodes for each collection with size and representative
+- Edges connecting collections that share relationships
+- Hash-based color assignment for consistent collection colors
+- Grid layout (3 columns) with automatic row wrapping
 
 ---
 
