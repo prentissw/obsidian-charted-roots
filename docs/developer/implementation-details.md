@@ -88,6 +88,14 @@ This document covers technical implementation specifics for Canvas Roots feature
   - [Control Center Collections Tab](#control-center-collections-tab)
   - [Collection-Filtered Tree Generation](#collection-filtered-tree-generation)
   - [Collection Overview Canvas Generation](#collection-overview-canvas-generation)
+- [Fictional Date Systems](#fictional-date-systems)
+  - [Date System Architecture](#date-system-architecture)
+  - [FictionalDateSystem and Era Types](#fictionaldatesystem-and-era-types)
+  - [Built-in Calendar Presets](#built-in-calendar-presets)
+  - [DateService](#dateservice)
+  - [FictionalDateParser](#fictionaldateparser)
+  - [Calendarium Integration](#calendarium-integration)
+  - [Control Center UI](#control-center-ui)
 - [Privacy and Gender Identity Protection](#privacy-and-gender-identity-protection)
   - [Sex vs Gender Data Model](#sex-vs-gender-data-model)
   - [Living Person Privacy](#living-person-privacy)
@@ -3530,6 +3538,273 @@ Features:
 - Edges connecting collections that share relationships
 - Hash-based color assignment for consistent collection colors
 - Grid layout (3 columns) with automatic row wrapping
+
+---
+
+## Fictional Date Systems
+
+The dates module (`src/dates/`) provides support for fictional calendar systems used in world-building, historical fiction, and alternate history research. This enables parsing, display, and age calculation for dates like "TA 2941" (Third Age) or "AC 283" (After Conquest).
+
+### Date System Architecture
+
+The fictional dates system consists of:
+
+```
+src/dates/
+├── types/
+│   └── date-types.ts          # Core type definitions
+├── constants/
+│   └── default-date-systems.ts # Built-in calendar presets
+├── parser/
+│   └── fictional-date-parser.ts # Date string parsing
+├── services/
+│   └── date-service.ts        # Unified date handling
+├── ui/
+│   └── date-systems-card.ts   # Control Center UI
+└── index.ts                   # Module exports
+```
+
+Integration with Calendarium plugin:
+```
+src/integrations/
+└── calendarium-bridge.ts      # Import calendars from Calendarium
+```
+
+### FictionalDateSystem and Era Types
+
+Core types defined in `src/dates/types/date-types.ts`:
+
+```typescript
+interface FictionalEra {
+  id: string;           // Unique identifier (e.g., "third_age")
+  name: string;         // Full display name (e.g., "Third Age")
+  abbrev: string;       // Abbreviation for parsing (e.g., "TA")
+  epoch: number;        // Year offset from system's epoch (year 0)
+  direction?: 'forward' | 'backward';  // Count direction (backward for BC-style)
+}
+
+interface FictionalDateSystem {
+  id: string;           // Unique identifier (e.g., "middle_earth")
+  name: string;         // Display name (e.g., "Middle-earth Calendar")
+  universe?: string;    // Optional universe scope
+  eras: FictionalEra[]; // Eras in chronological order
+  defaultEra?: string;  // Default era ID for new dates
+  builtIn?: boolean;    // Whether this is a read-only preset
+  source?: 'custom' | 'calendarium';  // Origin of the definition
+  calendariumName?: string;           // Original name if from Calendarium
+}
+
+interface ParsedFictionalDate {
+  system: FictionalDateSystem;
+  era: FictionalEra;
+  year: number;         // Year within the era
+  raw: string;          // Original date string
+  canonicalYear: number; // Absolute timeline position for sorting
+}
+```
+
+**Canonical Year Calculation:**
+
+The `canonicalYear` enables comparison across eras:
+- Forward eras: `canonicalYear = epoch + year`
+- Backward eras: `canonicalYear = epoch - year`
+
+Example for Middle-earth:
+- TA 2941 → canonical year 2941 (epoch 0 + 2941)
+- SA 3441 → canonical year 0 (epoch -3441 + 3441)
+- FoA 1 → canonical year 3022 (epoch 3021 + 1)
+
+### Built-in Calendar Presets
+
+Four built-in calendars in `src/dates/constants/default-date-systems.ts`:
+
+**Middle-earth Calendar** (`middle_earth`):
+| Era | Abbreviation | Epoch | Direction |
+|-----|--------------|-------|-----------|
+| First Age | FA | -6500 | forward |
+| Second Age | SA | -3441 | forward |
+| Third Age | TA | 0 | forward |
+| Fourth Age | FoA | 3021 | forward |
+
+**Westeros Calendar** (`westeros`):
+| Era | Abbreviation | Epoch | Direction |
+|-----|--------------|-------|-----------|
+| Before Conquest | BC | 0 | backward |
+| After Conquest | AC | 0 | forward |
+
+**Star Wars Calendar** (`star_wars`):
+| Era | Abbreviation | Epoch | Direction |
+|-----|--------------|-------|-----------|
+| Before the Battle of Yavin | BBY | 0 | backward |
+| After the Battle of Yavin | ABY | 0 | forward |
+
+**Generic Fantasy Calendar** (`generic_fantasy`):
+- Four numbered ages (A1, A2, A3, A4) with 1000-year intervals
+
+### DateService
+
+The `DateService` class (`src/dates/services/date-service.ts`) provides unified handling for both standard ISO dates and fictional dates:
+
+```typescript
+interface DateServiceSettings {
+  enableFictionalDates: boolean;
+  showBuiltInDateSystems: boolean;
+  fictionalDateSystems: FictionalDateSystem[];
+}
+
+class DateService {
+  constructor(settings: DateServiceSettings);
+
+  // Parse any date string (tries fictional first, then standard)
+  parseDate(dateStr: string, universe?: string): ParsedDate | null;
+
+  // Calculate age between dates
+  calculateAge(birthDateStr: string, deathDateStr?: string, universe?: string): AgeCalculation | null;
+
+  // Format a date for display
+  formatDate(dateStr: string, universe?: string): string;
+
+  // Quick check if string looks like fictional date
+  looksLikeFictionalDate(dateStr: string): boolean;
+
+  // Get canonical year for sorting
+  getCanonicalYear(dateStr: string, universe?: string): number | null;
+}
+```
+
+**Parse Priority:**
+1. If fictional dates enabled, try `FictionalDateParser` first
+2. Fall back to standard date extraction (handles YYYY-MM-DD, "about 1920", date ranges, etc.)
+
+**Standard Date Patterns Recognized:**
+- ISO format: `YYYY-MM-DD`, `YYYY`
+- Approximate: `about 1920`, `circa 1850`, `c. 1900`, `~1920`
+- Ranges: `1920-1930`, `between 1920 and 1930`
+- Relative: `before 1920`, `after 1920`
+
+### FictionalDateParser
+
+The parser (`src/dates/parser/fictional-date-parser.ts`) handles era-based date strings:
+
+```typescript
+class FictionalDateParser {
+  constructor(systems: FictionalDateSystem[]);
+
+  // Parse date string with optional universe context
+  parse(dateStr: string, universe?: string): DateParseResult;
+
+  // Format parsed date back to string
+  format(date: ParsedFictionalDate, options?: DateFormatOptions): string;
+
+  // Calculate age between two fictional dates
+  calculateAge(birth: ParsedFictionalDate, death: ParsedFictionalDate | null): AgeCalculation;
+
+  // Quick check without full parsing
+  looksLikeFictionalDate(dateStr: string): boolean;
+}
+```
+
+**Supported Date Formats:**
+- `TA 2941` - Abbreviation space year
+- `TA2941` - Abbreviation directly followed by year
+- `2941 TA` - Year space abbreviation
+- `2941TA` - Year directly followed by abbreviation
+
+**Era Abbreviation Index:**
+The parser builds a case-insensitive index mapping abbreviations to (system, era) pairs. First system wins for duplicate abbreviations, but universe-specific matching takes priority when a `universe` parameter is provided.
+
+**Age Calculation:**
+```typescript
+calculateAge(birth, death): AgeCalculation {
+  const years = death.canonicalYear - birth.canonicalYear;
+  return {
+    years,
+    isExact: true,
+    display: `${years} years`
+  };
+}
+```
+
+### Calendarium Integration
+
+The `CalendariumBridge` (`src/integrations/calendarium-bridge.ts`) imports calendar definitions from the Calendarium plugin:
+
+```typescript
+class CalendariumBridge {
+  constructor(app: App);
+
+  // Check if Calendarium is installed and enabled
+  isAvailable(): boolean;
+
+  // Initialize and wait for Calendarium settings to load
+  async initialize(): Promise<boolean>;
+
+  // Get list of calendar names from Calendarium
+  getCalendarNames(): string[];
+
+  // Import all calendars as FictionalDateSystem objects
+  importCalendars(): FictionalDateSystem[];
+
+  // Parse/format using Calendarium's API
+  parseDate(calendarName: string, dateString: string): CalendariumDate | null;
+  formatDate(calendarName: string, date: CalendariumDate): string | null;
+}
+```
+
+**Calendar Conversion:**
+
+Calendarium calendars are converted to `FictionalDateSystem` format:
+- Era names become era IDs (lowercased, special chars replaced with underscores)
+- Abbreviations extracted from format strings or generated from era names
+- `isStartingEra` eras get epoch 0; others use their `date.year` value
+- `endsYear` eras get `direction: 'backward'`
+
+**Singleton Access:**
+```typescript
+const bridge = getCalendariumBridge(app);
+await bridge.initialize();
+const systems = bridge.importCalendars();
+```
+
+### Control Center UI
+
+The date systems card (`src/dates/ui/date-systems-card.ts`) provides management UI:
+
+**Enable Toggle:**
+- Master toggle for fictional date parsing
+- Stored in `settings.enableFictionalDates`
+
+**Built-in Systems Toggle:**
+- Show/hide preset calendars (Middle-earth, Westeros, Star Wars, Generic Fantasy)
+- Stored in `settings.showBuiltInDateSystems`
+
+**System Sources Display:**
+Three groups shown in the list:
+1. **Built-in systems** - Read-only table with view button
+2. **From Calendarium** - Imported calendars (read-only)
+3. **Custom systems** - User-defined with edit/delete actions
+
+**Add/Edit Modal (`DateSystemModal`):**
+- Name and auto-generated ID fields
+- Optional universe scope
+- Eras table with name, abbreviation, epoch, direction
+- Default era dropdown
+- Validation: unique ID, at least one era, unique abbreviations
+
+**Test Parsing Input:**
+Live validation input that shows:
+- Era name and year
+- System name
+- Canonical year for sorting
+
+**Settings Storage:**
+```typescript
+// In CanvasRootsSettings
+enableFictionalDates: boolean;
+showBuiltInDateSystems: boolean;
+fictionalDateSystems: FictionalDateSystem[];
+calendariumIntegration: 'off' | 'read';
+```
 
 ---
 
