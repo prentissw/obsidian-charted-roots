@@ -1375,10 +1375,11 @@ export class ControlCenterModal extends Modal {
 			content.createEl('p', { text: step.desc, cls: 'crc-text-muted' });
 		});
 
-		const wikiLink = welcomeContent.createEl('a', {
+		const wikiLinkWrapper = welcomeContent.createDiv({ cls: 'cr-stats-link' });
+		const wikiLink = wikiLinkWrapper.createEl('a', {
 			text: 'Read the full Getting Started guide →',
 			href: `${WIKI_BASE}/Getting-Started`,
-			cls: 'crc-link crc-mt-3 cr-inline-block'
+			cls: 'crc-text-muted'
 		});
 		wikiLink.setAttr('target', '_blank');
 
@@ -1611,10 +1612,11 @@ export class ControlCenterModal extends Modal {
 			});
 		});
 
-		const schemaLink = propsContent.createEl('a', {
+		const schemaLinkWrapper = propsContent.createDiv({ cls: 'cr-stats-link' });
+		const schemaLink = schemaLinkWrapper.createEl('a', {
 			text: 'Full frontmatter reference →',
 			href: `${WIKI_BASE}/Frontmatter-Reference`,
-			cls: 'crc-link crc-mt-3 cr-inline-block'
+			cls: 'crc-text-muted'
 		});
 		schemaLink.setAttr('target', '_blank');
 
@@ -1752,13 +1754,13 @@ export class ControlCenterModal extends Modal {
 			});
 
 			// Wiki link
-			const wikiLink = universesContent.createEl('a', {
+			const wikiLinkWrapper = universesContent.createDiv({ cls: 'cr-stats-link' });
+			const wikiLink = wikiLinkWrapper.createEl('a', {
 				text: 'Learn more about universes →',
 				href: `${WIKI_BASE}/Universe-Notes`,
-				cls: 'crc-link crc-mt-2'
+				cls: 'crc-text-muted'
 			});
 			wikiLink.setAttr('target', '_blank');
-			wikiLink.addClass('crc-block');
 		} else {
 			// No universes - show explanation
 			universesContent.createEl('p', {
