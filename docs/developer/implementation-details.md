@@ -70,6 +70,11 @@ This document covers technical implementation specifics for Canvas Roots feature
   - [Image Filename Parser](#image-filename-parser)
   - [Source Image Import Wizard](#source-image-import-wizard)
   - [Source Media Linker Wizard](#source-media-linker-wizard)
+- [Schema Validation](#schema-validation)
+  - [Schema Note Format](#schema-note-format)
+  - [SchemaService](#schemaservice)
+  - [ValidationService](#validationservice)
+  - [Property Types and Validation](#property-types-and-validation)
 - [Privacy and Gender Identity Protection](#privacy-and-gender-identity-protection)
   - [Sex vs Gender Data Model](#sex-vs-gender-data-model)
   - [Living Person Privacy](#living-person-privacy)
@@ -2814,6 +2819,298 @@ media_3: "[[Attachments/smith_census_1900_p3.jpg]]"
 ```
 
 The linker only shows sources without existing media (`getSourcesWithoutMedia()`).
+
+---
+
+## Schema Validation
+
+Schema validation allows defining data consistency rules for person notes. Schemas ensure properties exist, have correct types, and satisfy custom constraints.
+
+### Schema Note Format
+
+Schemas are stored as markdown notes with `cr_type: schema` frontmatter and a JSON definition in a code block.
+
+**File structure:**
+
+```
+src/schemas/
+├── index.ts                    # Public exports
+├── types/
+│   └── schema-types.ts         # Type definitions
+└── services/
+    ├── schema-service.ts       # Schema loading and management
+    └── validation-service.ts   # Validation logic
+```
+
+**Schema note structure:**
+
+````markdown
+---
+cr_type: schema
+cr_id: schema-example-001
+name: Example Schema
+applies_to_type: collection
+applies_to_value: "House Stark"
+---
+
+# Example Schema
+
+```json schema
+{
+  "requiredProperties": ["name", "born"],
+  "properties": {
+    "sex": {
+      "type": "enum",
+      "values": ["M", "F", "X", "U"]
+    }
+  },
+  "constraints": [
+    {
+      "rule": "!died || !born || died >= born",
+      "message": "Death date must be after birth date"
+    }
+  ]
+}
+```
+````
+
+**Frontmatter properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `cr_type` | `"schema"` | Note type identifier |
+| `cr_id` | `string` | Unique identifier |
+| `name` | `string` | Display name |
+| `description` | `string?` | Optional description |
+| `applies_to_type` | `SchemaAppliesTo` | Scope: `collection`, `folder`, `universe`, `all` |
+| `applies_to_value` | `string?` | Target for scoped schemas |
+
+**SchemaDefinition structure:**
+
+```typescript
+interface SchemaDefinition {
+  requiredProperties: string[];           // Properties that must exist
+  properties: Record<string, PropertyDefinition>;
+  constraints: SchemaConstraint[];        // Cross-property rules
+}
+```
+
+### SchemaService
+
+`SchemaService` (`src/schemas/services/schema-service.ts`) loads and manages schema notes.
+
+**Key methods:**
+
+```typescript
+class SchemaService {
+  // Get all schemas (with caching)
+  async getAllSchemas(forceRefresh?: boolean): Promise<SchemaNote[]>;
+
+  // Get schema by cr_id
+  async getSchemaById(crId: string): Promise<SchemaNote | undefined>;
+
+  // Find schemas that apply to a person note
+  async getSchemasForPerson(file: TFile): Promise<SchemaNote[]>;
+
+  // Scoped queries
+  async getSchemasForCollection(name: string): Promise<SchemaNote[]>;
+  async getSchemasForFolder(path: string): Promise<SchemaNote[]>;
+  async getSchemasForUniverse(name: string): Promise<SchemaNote[]>;
+  async getGlobalSchemas(): Promise<SchemaNote[]>;
+
+  // CRUD operations
+  async createSchema(schema: Omit<SchemaNote, 'filePath'>): Promise<TFile>;
+  async getStats(): Promise<SchemaStats>;
+}
+```
+
+**Schema resolution for a person:**
+
+```typescript
+async getSchemasForPerson(file: TFile): Promise<SchemaNote[]> {
+  const fm = cache.frontmatter;
+  const collection = fm.collection;
+  const universe = fm.universe;
+  const folderPath = file.parent?.path || '';
+
+  return schemas.filter(schema => this.schemaAppliesToPerson(schema, {
+    collection,
+    universe,
+    folderPath
+  }));
+}
+
+// A schema applies if:
+// - appliesToType === 'all', OR
+// - appliesToType === 'collection' && appliesToValue === person.collection, OR
+// - appliesToType === 'folder' && folderPath.startsWith(appliesToValue), OR
+// - appliesToType === 'universe' && appliesToValue === person.universe
+```
+
+**JSON code block parsing:**
+
+```typescript
+const JSON_CODE_BLOCK_REGEX = /```(?:json(?:\s+schema)?)\s*\n([\s\S]*?)\n```/;
+
+// Matches both:
+// ```json
+// ```json schema
+```
+
+### ValidationService
+
+`ValidationService` (`src/schemas/services/validation-service.ts`) validates person notes against schemas.
+
+**Key methods:**
+
+```typescript
+class ValidationService {
+  // Validate one person against all applicable schemas
+  async validatePerson(file: TFile): Promise<ValidationResult[]>;
+
+  // Validate entire vault with progress callback
+  async validateVault(
+    onProgress?: (progress: ValidationProgress) => void
+  ): Promise<ValidationResult[]>;
+
+  // Summarize results
+  getSummary(results: ValidationResult[]): ValidationSummary;
+}
+```
+
+**ValidationResult structure:**
+
+```typescript
+interface ValidationResult {
+  filePath: string;
+  personName: string;
+  schemaCrId: string;
+  schemaName: string;
+  isValid: boolean;
+  errors: ValidationError[];
+  warnings: ValidationWarning[];
+}
+
+interface ValidationError {
+  type: ValidationErrorType;
+  property?: string;
+  message: string;
+  expectedType?: PropertyType;
+  expectedValues?: string[];
+}
+```
+
+**Error types:**
+
+| Type | Description |
+|------|-------------|
+| `missing_required` | Required property not present |
+| `invalid_type` | Value doesn't match expected type |
+| `invalid_enum` | Value not in allowed enum values |
+| `out_of_range` | Number outside min/max bounds |
+| `constraint_failed` | Custom constraint rule failed |
+| `conditional_required` | Conditionally required property missing |
+| `invalid_wikilink_target` | Linked note doesn't exist or wrong type |
+
+**Vault-wide validation flow:**
+
+```mermaid
+flowchart TD
+    A[validateVault] --> B[Scan all markdown files]
+    B --> C[Filter to person notes]
+    C --> D{For each person}
+    D --> E[getSchemasForPerson]
+    E --> F{For each schema}
+    F --> G[validateAgainstSchema]
+    G --> H[Check required properties]
+    H --> I[Validate property types]
+    I --> J[Evaluate constraints]
+    J --> K[Collect errors/warnings]
+    K --> F
+    F --> D
+    D --> L[Return all results]
+    L --> M[getSummary]
+```
+
+**Progress reporting:**
+
+```typescript
+interface ValidationProgress {
+  phase: 'scanning' | 'validating' | 'complete';
+  current: number;
+  total: number;
+  currentFile?: string;
+}
+
+// Used by SchemaValidationProgressModal for UI feedback
+```
+
+### Property Types and Validation
+
+**Supported property types:**
+
+| Type | Description | Validation |
+|------|-------------|------------|
+| `string` | Plain text | Non-empty string |
+| `number` | Numeric | Valid number, optional min/max |
+| `date` | Date string | Parseable date format |
+| `wikilink` | Note link | `[[Target]]` format, optional target type check |
+| `array` | Array of values | Is array |
+| `enum` | Predefined values | Value in `values` array |
+| `boolean` | true/false | Boolean type |
+| `sourced_facts` | Fact-level sourcing | Validates `SourcedFacts` structure |
+
+**PropertyDefinition structure:**
+
+```typescript
+interface PropertyDefinition {
+  type: PropertyType;
+  values?: string[];           // For enum type
+  default?: unknown;           // Default if missing
+  requiredIf?: ConditionalRequirement;
+  min?: number;                // For number type
+  max?: number;                // For number type
+  targetType?: string;         // For wikilink (place, person, etc.)
+  description?: string;        // UI help text
+}
+```
+
+**Conditional requirements:**
+
+```typescript
+interface ConditionalRequirement {
+  property: string;
+  equals?: unknown;      // Required if property === value
+  notEquals?: unknown;   // Required if property !== value
+  exists?: boolean;      // Required if property exists
+}
+
+// Example: birth_place required if born exists
+{
+  "birth_place": {
+    "type": "wikilink",
+    "targetType": "place",
+    "requiredIf": { "property": "born", "exists": true }
+  }
+}
+```
+
+**Constraint evaluation:**
+
+Constraints use JavaScript expressions evaluated against frontmatter:
+
+```typescript
+interface SchemaConstraint {
+  rule: string;     // JavaScript expression
+  message: string;  // Error message if false
+}
+
+// Example constraints:
+{ "rule": "!died || !born || died >= born", "message": "Death after birth" }
+{ "rule": "!age_at_death || age_at_death <= 150", "message": "Unrealistic age" }
+```
+
+The expression has access to all frontmatter properties as variables.
 
 ---
 
