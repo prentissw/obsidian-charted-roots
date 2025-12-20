@@ -12,6 +12,7 @@ This document outlines planned features for Canvas Roots. For completed features
   - [Calendarium Integration](#calendarium-integration) ⚡ High
   - [Post-Import Cleanup Wizard](#post-import-cleanup-wizard) 📋 Medium
   - [Report Wizard Enhancements](#report-wizard-enhancements) 📋 Medium
+  - [Control Center Dashboard](#control-center-dashboard) 📋 Medium
   - [Universe Management Enhancements](#universe-management-enhancements) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
 - [Future Considerations](#future-considerations)
@@ -374,6 +375,69 @@ This creates cognitive overload for new users and makes adding more options diff
 - Recent reports stored in `plugin.settings.recentReports`
 
 See [Report Wizard Enhancements Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/report-wizard-enhancements.md) for full implementation details.
+
+---
+
+### Control Center Dashboard
+
+**Priority:** 📋 Medium — Mobile-friendly quick actions for common operations
+
+**Summary:** Transform the Control Center's Status tab into a Dashboard with quick-action tiles, providing mobile-friendly access to common operations. The current Status tab shows metrics but lacks actionable shortcuts. A tile-based interface surfaces high-frequency actions that are currently buried in menus.
+
+**Problem Statement:**
+
+- Status tab displays entity counts and vault health but no actions
+- Common operations require navigating to other tabs or Command Palette
+- Mobile users face extra friction due to limited screen space
+- No quick access to frequently-used operations
+
+**Proposed Solution: Dashboard with Quick Actions**
+
+Rename "Status" tab to "Dashboard" and add a tile grid of quick actions above existing metrics.
+
+**Core Tiles:**
+
+| Tile | Action | Description |
+|------|--------|-------------|
+| **Person** | Create Person | Opens person creation modal |
+| **Event** | Create Event | Opens event creation modal |
+| **Source** | Create Source | Opens source creation modal |
+| **Report** | Generate Report | Opens Report Generator modal |
+| **Statistics** | Open Dashboard | Opens Statistics Dashboard view |
+| **Import** | Import Data | Opens Import Wizard |
+
+**Dashboard Layout:**
+
+| Section | Description |
+|---------|-------------|
+| **Quick Actions** | 6-tile grid with core operations |
+| **Vault Health** | Collapsible section with entity counts and completeness metrics |
+| **Recent** | Recently accessed genealogical files with quick access |
+
+**Responsive Grid:**
+
+| Screen Size | Layout |
+|-------------|--------|
+| Desktop (>800px) | 3-column grid |
+| Tablet (500-800px) | 3-column grid, smaller tiles |
+| Mobile (<500px) | 2-column grid, larger tap targets |
+
+**Phased Implementation:**
+
+| Phase | Scope |
+|-------|-------|
+| 1 | Dashboard tab with tile grid, wire up existing modals |
+| 2 | Collapsible Vault Health section with existing metrics |
+| 3 | Recent Files tracking and section |
+| 4 | Responsive polish, mobile optimization, accessibility |
+
+**Technical Notes:**
+- Create `DashboardTab` component replacing `StatusTab`
+- Fixed tile configuration (configurability deferred to future release)
+- Recent files stored in `plugin.settings.recentFiles`
+- Collapsible section state persisted in settings
+
+See [Control Center Dashboard Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/control-center-dashboard.md) for full implementation details.
 
 ---
 
