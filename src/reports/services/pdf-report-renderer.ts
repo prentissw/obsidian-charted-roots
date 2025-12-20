@@ -21,6 +21,12 @@ import type {
 	RegisterReportResult,
 	PedigreeChartResult,
 	DescendantChartResult,
+	SourceSummaryResult,
+	TimelineReportResult,
+	PlaceSummaryResult,
+	MediaInventoryResult,
+	UniverseOverviewResult,
+	CollectionOverviewResult,
 	ReportPerson
 } from '../types/report-types';
 
@@ -1022,5 +1028,667 @@ export class PdfReportRenderer {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Render Source Summary to PDF
+	 */
+	async renderSourceSummary(
+		result: SourceSummaryResult,
+		options: PdfOptions = DEFAULT_PDF_OPTIONS
+	): Promise<void> {
+		await this.ensurePdfMake();
+
+		const defaultFont = this.getDefaultFont(options.fontStyle);
+		const reportTitle = 'Source Summary';
+		const subtitle = result.person.name;
+
+		const content: Content[] = [];
+
+		// Cover page (if enabled)
+		if (options.includeCoverPage) {
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
+		}
+
+		// Title
+		content.push({ text: reportTitle, style: 'title' });
+		content.push({ text: subtitle, style: 'subtitle' });
+
+		// Summary
+		content.push(this.buildSectionHeader('Summary'));
+		content.push(this.buildKeyValueTable([
+			{ label: 'Total sources', value: result.summary.totalSources.toString() },
+			{ label: 'Primary sources', value: result.summary.primaryCount.toString() },
+			{ label: 'Secondary sources', value: result.summary.secondaryCount.toString() },
+			{ label: 'Derivative sources', value: result.summary.derivativeCount.toString() },
+			{ label: 'Unsourced facts', value: result.summary.unsourcedFactCount.toString() }
+		]));
+
+		// Sources by fact type
+		const factTypes = Object.keys(result.sourcesByFactType);
+		if (factTypes.length > 0) {
+			content.push(this.buildSectionHeader('Sources by Fact'));
+
+			for (const factType of factTypes) {
+				const entries = result.sourcesByFactType[factType];
+				content.push({
+					text: factType,
+					bold: true,
+					margin: [0, 10, 0, 5],
+					fontSize: 10
+				});
+				content.push(this.buildDataTable(
+					['Source', 'Type', 'Quality'],
+					entries.map(e => [e.title, e.sourceType || '', e.quality || '']),
+					['*', 100, 80]
+				));
+			}
+		}
+
+		// Unsourced facts (gaps)
+		if (result.unsourcedFacts.length > 0) {
+			content.push(this.buildSectionHeader('Research Gaps'));
+			content.push({
+				text: 'The following facts have no source citations:',
+				style: 'note',
+				margin: [0, 0, 0, 8]
+			});
+			content.push({
+				ul: result.unsourcedFacts,
+				margin: [20, 0, 0, 10]
+			});
+		}
+
+		// Repository summary
+		if (result.repositories.length > 0) {
+			content.push(this.buildSectionHeader('Repositories'));
+			content.push(this.buildDataTable(
+				['Repository', 'Sources'],
+				result.repositories.map(r => [r.name, r.sourceCount.toString()]),
+				['*', 80]
+			));
+		}
+
+		const docDefinition: TDocumentDefinitions = {
+			pageSize: options.pageSize,
+			pageMargins: [40, 60, 40, 60],
+			defaultStyle: {
+				font: defaultFont,
+				fontSize: 10
+			},
+			header: this.createHeader(reportTitle),
+			footer: this.createFooter(),
+			content,
+			styles: this.getStyles(options.fontStyle)
+		};
+
+		const filename = `Source-Summary-${result.person.name.replace(/\s+/g, '-')}.pdf`;
+		this.pdfMake.createPdf(docDefinition).download(filename);
+
+		new Notice('PDF downloaded');
+	}
+
+	/**
+	 * Render Timeline Report to PDF
+	 */
+	async renderTimelineReport(
+		result: TimelineReportResult,
+		options: PdfOptions = DEFAULT_PDF_OPTIONS
+	): Promise<void> {
+		await this.ensurePdfMake();
+
+		const defaultFont = this.getDefaultFont(options.fontStyle);
+		const reportTitle = 'Timeline Report';
+		const subtitle = result.dateRange.from && result.dateRange.to
+			? `${result.dateRange.from} to ${result.dateRange.to}`
+			: 'All events';
+
+		const content: Content[] = [];
+
+		// Cover page (if enabled)
+		if (options.includeCoverPage) {
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
+		}
+
+		// Title
+		content.push({ text: reportTitle, style: 'title' });
+		content.push({ text: subtitle, style: 'subtitle' });
+
+		// Summary
+		content.push(this.buildSectionHeader('Summary'));
+		content.push(this.buildKeyValueTable([
+			{ label: 'Total events', value: result.summary.eventCount.toString() },
+			{ label: 'Participants', value: result.summary.participantCount.toString() },
+			{ label: 'Places', value: result.summary.placeCount.toString() }
+		]));
+
+		// Events (grouped or flat)
+		if (result.groupedEntries) {
+			const keys = Object.keys(result.groupedEntries).sort();
+			for (const key of keys) {
+				const groupEntries = result.groupedEntries[key];
+				content.push(this.buildSectionHeader(key));
+				content.push(this.buildDataTable(
+					['Date', 'Event', 'Participants', 'Place'],
+					groupEntries.map(e => [
+						e.date,
+						e.type,
+						e.participants.map(p => p.name).join(', '),
+						this.stripWikilinks(e.place)
+					]),
+					[70, 80, '*', '*']
+				));
+			}
+		} else {
+			content.push(this.buildSectionHeader('Events'));
+			content.push(this.buildDataTable(
+				['Date', 'Event', 'Participants', 'Place'],
+				result.entries.map(e => [
+					e.date,
+					e.type,
+					e.participants.map(p => p.name).join(', '),
+					this.stripWikilinks(e.place)
+				]),
+				[70, 80, '*', '*']
+			));
+		}
+
+		const docDefinition: TDocumentDefinitions = {
+			pageSize: options.pageSize,
+			pageMargins: [40, 60, 40, 60],
+			defaultStyle: {
+				font: defaultFont,
+				fontSize: 10
+			},
+			header: this.createHeader(reportTitle),
+			footer: this.createFooter(),
+			content,
+			styles: this.getStyles(options.fontStyle)
+		};
+
+		const filename = `Timeline-Report-${new Date().toISOString().split('T')[0]}.pdf`;
+		this.pdfMake.createPdf(docDefinition).download(filename);
+
+		new Notice('PDF downloaded');
+	}
+
+	/**
+	 * Render Place Summary to PDF
+	 */
+	async renderPlaceSummary(
+		result: PlaceSummaryResult,
+		options: PdfOptions = DEFAULT_PDF_OPTIONS
+	): Promise<void> {
+		await this.ensurePdfMake();
+
+		const defaultFont = this.getDefaultFont(options.fontStyle);
+		const reportTitle = 'Place Summary';
+		const subtitle = result.place.name;
+
+		const content: Content[] = [];
+
+		// Cover page (if enabled)
+		if (options.includeCoverPage) {
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
+		}
+
+		// Title
+		content.push({ text: reportTitle, style: 'title' });
+		content.push({ text: subtitle, style: 'subtitle' });
+
+		// Place info
+		const placeData: Array<{ label: string; value: string }> = [];
+		if (result.place.hierarchy.length > 0) {
+			placeData.push({ label: 'Location', value: [...result.place.hierarchy, result.place.name].join(' > ') });
+		}
+		if (result.place.type) {
+			placeData.push({ label: 'Type', value: result.place.type });
+		}
+		if (result.place.coordinates) {
+			placeData.push({ label: 'Coordinates', value: `${result.place.coordinates.lat}, ${result.place.coordinates.lng}` });
+		}
+		if (placeData.length > 0) {
+			content.push(this.buildKeyValueTable(placeData));
+		}
+
+		// Summary
+		content.push(this.buildSectionHeader('Summary'));
+		const summaryData: Array<{ label: string; value: string }> = [
+			{ label: 'Total events', value: result.summary.eventCount.toString() },
+			{ label: 'People associated', value: result.summary.personCount.toString() }
+		];
+		if (result.summary.dateRange.earliest || result.summary.dateRange.latest) {
+			const range = [result.summary.dateRange.earliest, result.summary.dateRange.latest].filter(Boolean).join(' to ');
+			summaryData.push({ label: 'Date range', value: range });
+		}
+		content.push(this.buildKeyValueTable(summaryData));
+
+		// Births
+		if (result.births.length > 0) {
+			content.push(this.buildSectionHeader(`Births (${result.births.length})`));
+			content.push(this.buildDataTable(
+				['Person', 'Date'],
+				result.births.map(b => [b.person.name, b.date || '']),
+				['*', 100]
+			));
+		}
+
+		// Deaths
+		if (result.deaths.length > 0) {
+			content.push(this.buildSectionHeader(`Deaths (${result.deaths.length})`));
+			content.push(this.buildDataTable(
+				['Person', 'Date'],
+				result.deaths.map(d => [d.person.name, d.date || '']),
+				['*', 100]
+			));
+		}
+
+		// Marriages
+		if (result.marriages.length > 0) {
+			content.push(this.buildSectionHeader(`Marriages (${result.marriages.length})`));
+			content.push(this.buildDataTable(
+				['Couple', 'Date'],
+				result.marriages.map(m => [m.couple, m.date || '']),
+				['*', 100]
+			));
+		}
+
+		// Residences
+		if (result.residences.length > 0) {
+			content.push(this.buildSectionHeader(`Residences (${result.residences.length})`));
+			content.push(this.buildDataTable(
+				['Person', 'Period'],
+				result.residences.map(r => [r.person.name, r.period || '']),
+				['*', 100]
+			));
+		}
+
+		// Other events
+		if (result.otherEvents.length > 0) {
+			content.push(this.buildSectionHeader(`Other Events (${result.otherEvents.length})`));
+			content.push(this.buildDataTable(
+				['Date', 'Event', 'Participants'],
+				result.otherEvents.map(e => [
+					e.date,
+					e.type,
+					e.participants.map(p => p.name).join(', ')
+				]),
+				[80, 80, '*']
+			));
+		}
+
+		const docDefinition: TDocumentDefinitions = {
+			pageSize: options.pageSize,
+			pageMargins: [40, 60, 40, 60],
+			defaultStyle: {
+				font: defaultFont,
+				fontSize: 10
+			},
+			header: this.createHeader(reportTitle),
+			footer: this.createFooter(),
+			content,
+			styles: this.getStyles(options.fontStyle)
+		};
+
+		const filename = `Place-Summary-${result.place.name.replace(/\s+/g, '-')}.pdf`;
+		this.pdfMake.createPdf(docDefinition).download(filename);
+
+		new Notice('PDF downloaded');
+	}
+
+	/**
+	 * Render Media Inventory to PDF
+	 */
+	async renderMediaInventory(
+		result: MediaInventoryResult,
+		options: PdfOptions = DEFAULT_PDF_OPTIONS
+	): Promise<void> {
+		await this.ensurePdfMake();
+
+		const defaultFont = this.getDefaultFont(options.fontStyle);
+		const reportTitle = 'Media Inventory';
+		const subtitle = `${result.summary.totalFiles} files`;
+
+		const content: Content[] = [];
+
+		// Cover page (if enabled)
+		if (options.includeCoverPage) {
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
+		}
+
+		// Title
+		content.push({ text: reportTitle, style: 'title' });
+		content.push({ text: subtitle, style: 'subtitle' });
+
+		// Summary
+		content.push(this.buildSectionHeader('Summary'));
+		const summaryData: Array<{ label: string; value: string }> = [
+			{ label: 'Total files', value: result.summary.totalFiles.toString() },
+			{ label: 'Linked files', value: result.summary.linkedCount.toString() },
+			{ label: 'Orphaned files', value: result.summary.orphanedCount.toString() }
+		];
+		if (result.summary.totalSize) {
+			summaryData.push({ label: 'Total size', value: this.formatFileSize(result.summary.totalSize) });
+		}
+		content.push(this.buildKeyValueTable(summaryData));
+
+		// File type breakdown
+		const fileTypes = Object.entries(result.byFileType);
+		if (fileTypes.length > 0) {
+			content.push(this.buildSectionHeader('By File Type'));
+			content.push(this.buildDataTable(
+				['Type', 'Count'],
+				fileTypes.map(([type, count]) => [type, count.toString()]),
+				['*', 80]
+			));
+		}
+
+		// Entity type breakdown
+		const entityTypes = Object.entries(result.byEntityType);
+		if (entityTypes.length > 0) {
+			content.push(this.buildSectionHeader('By Entity Type'));
+			content.push(this.buildDataTable(
+				['Entity Type', 'Count'],
+				entityTypes.map(([type, count]) => [type, count.toString()]),
+				['*', 80]
+			));
+		}
+
+		// Linked media
+		if (result.linkedMedia.length > 0) {
+			content.push(this.buildSectionHeader(`Linked Media (${result.linkedMedia.length})`));
+			content.push(this.buildDataTable(
+				['File', 'Type', 'Linked To'],
+				result.linkedMedia.slice(0, 50).map(m => [
+					m.name,
+					m.extension,
+					m.linkedEntities.map(e => e.name).join(', ')
+				]),
+				['*', 50, '*']
+			));
+			if (result.linkedMedia.length > 50) {
+				content.push({
+					text: `... and ${result.linkedMedia.length - 50} more files`,
+					style: 'note',
+					margin: [0, 5, 0, 10]
+				});
+			}
+		}
+
+		// Orphaned media
+		if (result.orphanedMedia.length > 0) {
+			content.push(this.buildSectionHeader(`Orphaned Media (${result.orphanedMedia.length})`));
+			content.push(this.buildDataTable(
+				['File', 'Type', 'Path'],
+				result.orphanedMedia.slice(0, 50).map(m => [
+					m.name,
+					m.extension,
+					m.path
+				]),
+				['*', 50, '*']
+			));
+			if (result.orphanedMedia.length > 50) {
+				content.push({
+					text: `... and ${result.orphanedMedia.length - 50} more files`,
+					style: 'note',
+					margin: [0, 5, 0, 10]
+				});
+			}
+		}
+
+		const docDefinition: TDocumentDefinitions = {
+			pageSize: options.pageSize,
+			pageMargins: [40, 60, 40, 60],
+			defaultStyle: {
+				font: defaultFont,
+				fontSize: 10
+			},
+			header: this.createHeader(reportTitle),
+			footer: this.createFooter(),
+			content,
+			styles: this.getStyles(options.fontStyle)
+		};
+
+		const filename = `Media-Inventory-${new Date().toISOString().split('T')[0]}.pdf`;
+		this.pdfMake.createPdf(docDefinition).download(filename);
+
+		new Notice('PDF downloaded');
+	}
+
+	/**
+	 * Render Universe Overview to PDF
+	 */
+	async renderUniverseOverview(
+		result: UniverseOverviewResult,
+		options: PdfOptions = DEFAULT_PDF_OPTIONS
+	): Promise<void> {
+		await this.ensurePdfMake();
+
+		const defaultFont = this.getDefaultFont(options.fontStyle);
+		const reportTitle = 'Universe Overview';
+		const subtitle = result.universe.name;
+
+		const content: Content[] = [];
+
+		// Cover page (if enabled)
+		if (options.includeCoverPage) {
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
+		}
+
+		// Title
+		content.push({ text: reportTitle, style: 'title' });
+		content.push({ text: subtitle, style: 'subtitle' });
+
+		// Description
+		if (result.universe.description) {
+			content.push({
+				text: result.universe.description,
+				italics: true,
+				alignment: 'center',
+				margin: [0, 0, 0, 20]
+			});
+		}
+
+		// Summary
+		content.push(this.buildSectionHeader('Summary'));
+		const summaryData: Array<{ label: string; value: string }> = [
+			{ label: 'Total entities', value: result.summary.totalEntities.toString() }
+		];
+		if (result.summary.dateRange?.earliest || result.summary.dateRange?.latest) {
+			const range = [result.summary.dateRange.earliest, result.summary.dateRange.latest].filter(Boolean).join(' to ');
+			summaryData.push({ label: 'Date range', value: range });
+		}
+		content.push(this.buildKeyValueTable(summaryData));
+
+		// Entity breakdown
+		const entityTypes = Object.entries(result.summary.byType).filter(([_, count]) => count > 0);
+		if (entityTypes.length > 0) {
+			content.push(this.buildSectionHeader('Entity Breakdown'));
+			content.push(this.buildDataTable(
+				['Type', 'Count'],
+				entityTypes.map(([type, count]) => [type, count.toString()]),
+				['*', 80]
+			));
+		}
+
+		// Date systems
+		if (result.dateSystems.length > 0) {
+			content.push(this.buildSectionHeader('Date Systems'));
+			content.push({
+				ul: result.dateSystems,
+				margin: [20, 0, 0, 10]
+			});
+		}
+
+		// Geographic summary
+		if (result.geographicSummary) {
+			content.push(this.buildSectionHeader('Geographic Summary'));
+			const coverage = result.geographicSummary.totalPlaces > 0
+				? Math.round((result.geographicSummary.placesWithCoordinates / result.geographicSummary.totalPlaces) * 100)
+				: 0;
+			content.push(this.buildKeyValueTable([
+				{ label: 'Total places', value: result.geographicSummary.totalPlaces.toString() },
+				{ label: 'With coordinates', value: result.geographicSummary.placesWithCoordinates.toString() },
+				{ label: 'Coverage', value: `${coverage}%` }
+			]));
+		}
+
+		// Entity lists
+		if (result.entityLists) {
+			for (const [type, entities] of Object.entries(result.entityLists)) {
+				if (entities.length > 0) {
+					content.push(this.buildSectionHeader(type.charAt(0).toUpperCase() + type.slice(1)));
+					content.push({
+						ul: entities.map(e => e.name),
+						margin: [20, 0, 0, 10]
+					});
+				}
+			}
+		}
+
+		// Recent activity
+		if (result.recentActivity && result.recentActivity.length > 0) {
+			content.push(this.buildSectionHeader('Recent Activity'));
+			content.push(this.buildDataTable(
+				['Entity', 'Type', 'Modified'],
+				result.recentActivity.map(a => [a.name, a.type, a.modified]),
+				['*', 80, 80]
+			));
+		}
+
+		const docDefinition: TDocumentDefinitions = {
+			pageSize: options.pageSize,
+			pageMargins: [40, 60, 40, 60],
+			defaultStyle: {
+				font: defaultFont,
+				fontSize: 10
+			},
+			header: this.createHeader(reportTitle),
+			footer: this.createFooter(),
+			content,
+			styles: this.getStyles(options.fontStyle)
+		};
+
+		const filename = `Universe-Overview-${result.universe.name.replace(/\s+/g, '-')}.pdf`;
+		this.pdfMake.createPdf(docDefinition).download(filename);
+
+		new Notice('PDF downloaded');
+	}
+
+	/**
+	 * Render Collection Overview to PDF
+	 */
+	async renderCollectionOverview(
+		result: CollectionOverviewResult,
+		options: PdfOptions = DEFAULT_PDF_OPTIONS
+	): Promise<void> {
+		await this.ensurePdfMake();
+
+		const defaultFont = this.getDefaultFont(options.fontStyle);
+		const reportTitle = 'Collection Overview';
+		const subtitle = result.collection.name;
+
+		const content: Content[] = [];
+
+		// Cover page (if enabled)
+		if (options.includeCoverPage) {
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
+		}
+
+		// Title
+		content.push({ text: reportTitle, style: 'title' });
+		content.push({ text: subtitle, style: 'subtitle' });
+
+		// Collection type note
+		const typeLabel = result.collection.type === 'user' ? 'User-defined collection' : 'Auto-detected family group';
+		content.push({
+			text: typeLabel,
+			italics: true,
+			alignment: 'center',
+			margin: [0, 0, 0, 20]
+		});
+
+		// Summary
+		content.push(this.buildSectionHeader('Summary'));
+		const summaryData: Array<{ label: string; value: string }> = [
+			{ label: 'Members', value: result.summary.memberCount.toString() },
+			{ label: 'Generations', value: result.summary.generationDepth.toString() }
+		];
+		if (result.summary.dateRange.earliest || result.summary.dateRange.latest) {
+			const range = [result.summary.dateRange.earliest, result.summary.dateRange.latest].filter(Boolean).join(' to ');
+			summaryData.push({ label: 'Date range', value: range });
+		}
+		content.push(this.buildKeyValueTable(summaryData));
+
+		// Generation analysis
+		if (result.generationAnalysis) {
+			content.push(this.buildSectionHeader('Generation Analysis'));
+			const gens = Object.entries(result.generationAnalysis)
+				.map(([gen, count]) => [gen, count.toString()])
+				.sort((a, b) => parseInt(a[0], 10) - parseInt(b[0], 10));
+			content.push(this.buildDataTable(
+				['Generation', 'Count'],
+				gens,
+				['*', 80]
+			));
+		}
+
+		// Surname distribution
+		if (result.surnameDistribution && result.surnameDistribution.length > 0) {
+			content.push(this.buildSectionHeader('Surname Distribution'));
+			content.push(this.buildDataTable(
+				['Surname', 'Count'],
+				result.surnameDistribution.map(s => [s.surname, s.count.toString()]),
+				['*', 80]
+			));
+		}
+
+		// Geographic distribution
+		if (result.geographicDistribution && result.geographicDistribution.length > 0) {
+			content.push(this.buildSectionHeader('Geographic Distribution'));
+			content.push(this.buildDataTable(
+				['Place', 'Count'],
+				result.geographicDistribution.map(g => [g.place, g.count.toString()]),
+				['*', 80]
+			));
+		}
+
+		// Member list
+		if (result.members.length > 0) {
+			content.push(this.buildSectionHeader(`Members (${result.members.length})`));
+			content.push(this.buildDataTable(
+				['Name', 'Birth', 'Death'],
+				result.members.map(m => [m.name, m.birthDate || '', m.deathDate || '']),
+				['*', 80, 80]
+			));
+		}
+
+		const docDefinition: TDocumentDefinitions = {
+			pageSize: options.pageSize,
+			pageMargins: [40, 60, 40, 60],
+			defaultStyle: {
+				font: defaultFont,
+				fontSize: 10
+			},
+			header: this.createHeader(reportTitle),
+			footer: this.createFooter(),
+			content,
+			styles: this.getStyles(options.fontStyle)
+		};
+
+		const filename = `Collection-Overview-${result.collection.name.replace(/\s+/g, '-')}.pdf`;
+		this.pdfMake.createPdf(docDefinition).download(filename);
+
+		new Notice('PDF downloaded');
+	}
+
+	/**
+	 * Format file size for display
+	 */
+	private formatFileSize(bytes: number): string {
+		if (bytes < 1024) return `${bytes} B`;
+		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+		if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+		return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 	}
 }
