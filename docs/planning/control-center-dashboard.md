@@ -2,10 +2,12 @@
 
 Planning document for adding a tile-based Dashboard to the Control Center, replacing the Status tab with a more action-oriented interface.
 
-- **Status:** Planning
+- **Status:** Complete
 - **Priority:** Medium
 - **GitHub Issue:** #TBD
 - **Created:** 2025-12-20
+- **Completed:** 2025-12-20
+- **Version:** 0.13.6
 
 ---
 
@@ -197,20 +199,20 @@ recentFiles: RecentFileEntry[];  // Max 10, shown 5
 
 ## Implementation Architecture
 
-### Component Structure
+### Component Structure (Actual Implementation)
 
 ```
-src/ui/control-center/
-├── tabs/
-│   ├── dashboard-tab.ts          # New: replaces status-tab.ts
-│   ├── status-tab.ts             # Deprecated or removed
-│   └── ...
-├── components/
-│   ├── dashboard-tiles.ts        # Tile grid component
-│   ├── dashboard-tile.ts         # Individual tile
-│   ├── vault-health-section.ts   # Collapsible metrics
-│   └── recent-files-section.ts   # Recent files list
+src/ui/
+├── dashboard-tab.ts              # Dashboard tab with tiles, vault health, and recent files
+├── control-center.ts             # Updated to use 'dashboard' tab instead of 'status'
+src/core/
+├── recent-files-service.ts       # RecentFilesService for tracking file access
+src/settings.ts                   # Added dashboardRecentFiles to settings
+styles/
+├── dashboard.css                 # Dashboard-specific styles
 ```
+
+**Note:** The implementation consolidated all dashboard functionality into a single `dashboard-tab.ts` file rather than separate components, following the existing pattern for other Control Center tabs.
 
 ### Tab Registration
 
@@ -246,27 +248,33 @@ const DASHBOARD_TILES: DashboardTile[] = [
 
 ## Phased Implementation
 
-### Phase 1: Foundation
+### Phase 1: Foundation ✅
 - Create `DashboardTab` component
-- Implement tile grid with 6 core tiles
+- Implement tile grid with 9 tiles (3×3 grid)
 - Wire up tile actions to existing modals/commands
 - Rename tab from "Status" to "Dashboard"
 
-### Phase 2: Sections
+### Phase 2: Sections ✅
 - Add collapsible Vault Health section
 - Migrate existing Status tab metrics
 - Add expand/collapse state persistence
 
-### Phase 3: Recent Files
-- Implement recent file tracking
-- Add Recent section to Dashboard
-- File access listener integration
+### Phase 3: Recent Files ✅
+- Implement recent file tracking via `RecentFilesService`
+- Add Recent section to Dashboard (last 5 files)
+- Integrate tracking into People tab "Open" button and create modals
 
-### Phase 4: Polish
-- Responsive grid refinement
+### Phase 4: Polish ✅
+- Responsive grid refinement (3-column desktop, 2-column mobile)
 - Mobile-specific optimizations
-- Accessibility (keyboard navigation, ARIA labels)
-- Tooltip/description support
+- Accessibility (keyboard navigation, focus states)
+- First-run welcome notice for new users
+
+### Additional Features (Added during implementation)
+- **Context menu for Recent items**: Right-click for type-specific actions
+  - All types: "Open note"
+  - Place: "Open in Map View" (zooms to coordinates if available)
+  - Person: "Open in Family Chart"
 
 ---
 
@@ -347,5 +355,8 @@ These ideas are interesting but deferred to keep initial scope manageable:
 | 2025-12-20 | 9 tiles (3×3 grid) | Added Place, Tree Output, Map for complete coverage |
 | 2025-12-20 | Track CR feature opens only | Cleaner recent files data |
 | 2025-12-20 | `home` tab icon | Intuitive "starting point" metaphor |
-| 2025-12-20 | First-run tooltip for Status→Dashboard | Orient existing users to the change |
-| | | |
+| 2025-12-20 | First-run welcome notice (dismissible) | Orient existing users to the change |
+| 2025-12-20 | Context menu for Recent items | Added type-specific actions (Open in Map/Chart) |
+| 2025-12-20 | Max 5 recent files | Balance between utility and UI clutter |
+| 2025-12-20 | Consolidated dashboard-tab.ts | Single file follows existing tab patterns |
+| 2025-12-20 | Feature complete v0.13.6 | All 4 phases implemented with additional context menu feature |

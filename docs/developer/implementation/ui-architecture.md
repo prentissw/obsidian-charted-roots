@@ -212,7 +212,7 @@ export const TAB_CONFIGS: TabConfig[] = [
 
 | Tab ID | Name | Purpose |
 |--------|------|---------|
-| `status` | Status | Vault overview, health checks, quick actions |
+| `dashboard` | Dashboard | Quick-action tiles, vault health, recent files |
 | `guide` | Guide | Getting started documentation |
 | `import-export` | Import/Export | GEDCOM, Gramps, CSV import/export |
 | `people` | People | Person notes list, batch operations |
