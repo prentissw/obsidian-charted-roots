@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.13.x](#v013x)
+  - [PDF Report Export](#pdf-report-export-v0134)
   - [Universe Management](#universe-management-v0130)
 - [v0.12.x](#v012x)
   - [Configurable Normalization](#configurable-normalization-v01212)
@@ -49,6 +50,65 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.13.x
+
+### PDF Report Export (v0.13.4)
+
+Export genealogical reports as professionally styled PDF documents, generated entirely locally with no internet connection required.
+
+**Problem Solved:**
+- Reports could only be saved as markdown files or copied to clipboard
+- No way to share polished, print-ready reports with family members
+- Professional archiving required manual formatting in external tools
+
+**Features:**
+
+| Feature | Description |
+|---------|-------------|
+| **All 7 report types** | Ahnentafel, Pedigree Chart, Descendant Chart, Register Report, Family Group Sheet, Individual Summary, Gaps Report |
+| **Page size options** | A4 or Letter |
+| **Optional cover page** | Title page with report name, subject, generation date, and Canvas Roots branding |
+| **Logo/crest support** | Add custom image to cover page (automatically resized for optimal file size) |
+| **100% local generation** | PDFs created entirely on device using bundled pdfmake library |
+| **Privacy-first design** | No data sent to any server; no internet connection required |
+
+**PDF Options:**
+
+| Option | Description |
+|--------|-------------|
+| **Page size** | A4 or Letter |
+| **Include cover page** | Add a title page with report metadata |
+| **Logo or crest** | Optional image for cover page (PNG, JPEG, GIF, WebP) |
+
+**Cover Page Contents:**
+- Report title (e.g., "Ahnentafel Report")
+- Subject name (e.g., "Ancestors of John Smith")
+- Decorative separator line
+- Generation date
+- "Canvas Roots for Obsidian" branding
+- Optional logo/crest centered at top
+
+**Privacy & Security:**
+
+Genealogical data is highly personal. PDF generation is designed with privacy as a core principle:
+
+- **100% local generation** — PDFs are created entirely on your device using the pdfmake library bundled with the plugin
+- **No internet connection required** — No data is sent to any server or cloud service
+- **No external dependencies** — Fonts are embedded; no network requests are made during generation
+- **Downloads to your system** — Files save to your operating system's Downloads folder, outside your vault
+
+**Access Points:**
+- Statistics Dashboard → Reports section → Generate → Select "Download as PDF"
+- Command palette: "Canvas Roots: Open Statistics Dashboard"
+
+**Technical Details:**
+- Uses pdfmake library (~400KB) for document generation, lazy-loaded on first use
+- Renders directly from structured report data (not markdown parsing)
+- Logo images automatically resized to max 200×200px to reduce file size
+- Separate from jsPDF dependency used for Family Chart canvas export
+
+See [Statistics & Reports](Statistics-And-Reports#pdf-export) for usage documentation.
+
+---
 
 ### Universe Management (v0.13.0)
 
