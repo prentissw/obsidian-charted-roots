@@ -322,6 +322,17 @@ After a GEDCOM import (especially from a file with data quality issues), users f
 - Extend Gramps import to handle `.gpkg` media extraction
 - Add thumbnail rendering to `CanvasNodeRenderer`
 
+**Worldbuilding Use Cases:**
+
+| Entity | Use Cases |
+|--------|-----------|
+| **Person** | Character portraits, concept art, reference images for visual consistency |
+| **Place** | Location art, fantasy maps, floor plans, setting mood boards |
+| **Event** | Scene illustrations, battle maps, timeline graphics |
+| **Organization** | Faction banners, house sigils, guild logos, heraldry |
+
+Canvas thumbnails are particularly useful for writers — seeing character faces on relationship maps makes it easier to visualize story dynamics.
+
 **Phased Implementation:**
 
 | Phase | Scope |
