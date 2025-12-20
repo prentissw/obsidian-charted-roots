@@ -3009,8 +3009,9 @@ export class ControlCenterModal extends Modal {
 		});
 		const fileIcon = createLucideIcon('file-text', 14);
 		openBtn.appendChild(fileIcon);
-		openBtn.addEventListener('click', (e) => {
+		openBtn.addEventListener('click', async (e) => {
 			e.stopPropagation();
+			await this.plugin.trackRecentFile(person.file, 'person');
 			void this.app.workspace.getLeaf(false).openFile(person.file);
 		});
 
