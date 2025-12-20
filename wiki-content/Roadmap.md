@@ -481,7 +481,7 @@ Extend the privacy system to better support inclusive identity management:
 - **Deadname protection** - Automatic suppression of `_previous_names` in display contexts while preserving for historical research
 - **Export privacy warnings** - Show confirmation dialog when exporting data containing private fields
 
-This builds on the existing `sex`/`gender`/`gender_identity` data model documented in [Implementation Details](../docs/developer/implementation-details.md#privacy-and-gender-identity-protection).
+This builds on the existing `sex`/`gender`/`gender_identity` data model documented in [Specialized Features](../docs/developer/implementation/specialized-features.md#privacy-and-gender-identity-protection).
 
 ### Data Analysis Scope Expansion
 
