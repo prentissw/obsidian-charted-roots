@@ -31,6 +31,8 @@ export interface PdfOptions {
 	pageSize: 'A4' | 'LETTER';
 	fontStyle: 'serif' | 'sans-serif';
 	includeCoverPage: boolean;
+	/** Logo/crest image as base64 data URL (displayed on cover page) */
+	logoDataUrl?: string;
 }
 
 /**
@@ -360,12 +362,25 @@ export class PdfReportRenderer {
 	/**
 	 * Build a cover page for the report
 	 */
-	private buildCoverPage(reportTitle: string, subtitle?: string): Content[] {
+	private buildCoverPage(reportTitle: string, subtitle?: string, logoDataUrl?: string): Content[] {
 		const generatedDate = new Date().toLocaleDateString();
 		const content: Content[] = [];
 
-		// Vertical spacer to center content
-		content.push({ text: '', margin: [0, 150, 0, 0] });
+		// Logo/crest at top (if provided)
+		if (logoDataUrl) {
+			content.push({ text: '', margin: [0, 60, 0, 0] });
+			content.push({
+				image: logoDataUrl,
+				width: 100,
+				alignment: 'center',
+				margin: [0, 0, 0, 40]
+			});
+			// Less vertical spacer when logo is present
+			content.push({ text: '', margin: [0, 30, 0, 0] });
+		} else {
+			// Vertical spacer to center content (no logo)
+			content.push({ text: '', margin: [0, 150, 0, 0] });
+		}
 
 		// Report title
 		content.push({
@@ -448,7 +463,7 @@ export class PdfReportRenderer {
 
 		// Cover page (if enabled)
 		if (options.includeCoverPage) {
-			content.push(...this.buildCoverPage(reportTitle, subtitle));
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
 		}
 
 		// Title
@@ -540,7 +555,7 @@ export class PdfReportRenderer {
 
 		// Cover page (if enabled)
 		if (options.includeCoverPage) {
-			content.push(...this.buildCoverPage(reportTitle, subtitle));
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
 		}
 
 		// Title
@@ -620,7 +635,7 @@ export class PdfReportRenderer {
 
 		// Cover page (if enabled)
 		if (options.includeCoverPage) {
-			content.push(...this.buildCoverPage(reportTitle, subtitle));
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
 		}
 
 		// Title
@@ -690,7 +705,7 @@ export class PdfReportRenderer {
 
 		// Cover page (if enabled)
 		if (options.includeCoverPage) {
-			content.push(...this.buildCoverPage(reportTitle, subtitle));
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
 		}
 
 		// Title
@@ -787,7 +802,7 @@ export class PdfReportRenderer {
 
 		// Cover page (if enabled)
 		if (options.includeCoverPage) {
-			content.push(...this.buildCoverPage(reportTitle, subtitle));
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
 		}
 
 		// Title
@@ -886,7 +901,7 @@ export class PdfReportRenderer {
 
 		// Cover page (if enabled)
 		if (options.includeCoverPage) {
-			content.push(...this.buildCoverPage(reportTitle, subtitle));
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
 		}
 
 		// Title
@@ -938,7 +953,7 @@ export class PdfReportRenderer {
 
 		// Cover page (if enabled)
 		if (options.includeCoverPage) {
-			content.push(...this.buildCoverPage(reportTitle, subtitle));
+			content.push(...this.buildCoverPage(reportTitle, subtitle, options.logoDataUrl));
 		}
 
 		// Title

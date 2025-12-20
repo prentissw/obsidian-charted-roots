@@ -115,7 +115,8 @@ export class ReportGeneratorModal extends Modal {
 	// PDF-specific options
 	private pdfOptions = {
 		pageSize: 'A4' as 'A4' | 'LETTER',
-		includeCoverPage: false
+		includeCoverPage: false,
+		logoDataUrl: undefined as string | undefined
 	};
 
 	// UI elements
@@ -298,8 +299,97 @@ export class ReportGeneratorModal extends Modal {
 				toggle.setValue(this.pdfOptions.includeCoverPage);
 				toggle.onChange(value => {
 					this.pdfOptions.includeCoverPage = value;
+					this.updateLogoVisibility();
 				});
 			});
+
+		// Logo/crest (only shown when cover page is enabled)
+		this.renderLogoSetting();
+	}
+
+	/**
+	 * Render logo picker setting (shown only when cover page is enabled)
+	 */
+	private renderLogoSetting(): void {
+		if (!this.pdfOptionsContainer) return;
+
+		// Create container for logo setting
+		const logoContainer = this.pdfOptionsContainer.createDiv({ cls: 'cr-report-modal__logo-setting' });
+
+		const logoSetting = new Setting(logoContainer)
+			.setName('Logo or crest')
+			.setDesc(this.pdfOptions.logoDataUrl ? 'Image selected' : 'Optional image to display on cover page');
+
+		// Add file input button
+		logoSetting.addButton(button => {
+			button
+				.setButtonText(this.pdfOptions.logoDataUrl ? 'Change...' : 'Select image...')
+				.onClick(() => {
+					const input = document.createElement('input');
+					input.type = 'file';
+					input.accept = 'image/png,image/jpeg,image/gif,image/webp';
+					input.onchange = async () => {
+						const file = input.files?.[0];
+						if (file) {
+							try {
+								const dataUrl = await this.fileToDataUrl(file);
+								this.pdfOptions.logoDataUrl = dataUrl;
+								button.setButtonText('Change...');
+								logoSetting.setDesc('Image selected');
+								// Add remove button if not already present
+								this.renderPdfOptions();
+							} catch (error) {
+								new Notice('Failed to load image');
+								console.error('Logo load error:', error);
+							}
+						}
+					};
+					input.click();
+				});
+		});
+
+		// Add remove button if logo is selected
+		if (this.pdfOptions.logoDataUrl) {
+			logoSetting.addButton(button => {
+				button
+					.setButtonText('Remove')
+					.onClick(() => {
+						this.pdfOptions.logoDataUrl = undefined;
+						this.renderPdfOptions();
+					});
+			});
+		}
+
+		// Set initial visibility
+		logoContainer.style.display = this.pdfOptions.includeCoverPage ? '' : 'none';
+	}
+
+	/**
+	 * Update logo setting visibility based on cover page toggle
+	 */
+	private updateLogoVisibility(): void {
+		const logoContainer = this.pdfOptionsContainer?.querySelector('.cr-report-modal__logo-setting') as HTMLElement | null;
+		if (logoContainer) {
+			logoContainer.style.display = this.pdfOptions.includeCoverPage ? '' : 'none';
+		}
+	}
+
+	/**
+	 * Convert a File to a data URL
+	 */
+	private fileToDataUrl(file: File): Promise<string> {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.onload = () => {
+				if (typeof reader.result === 'string') {
+					resolve(reader.result);
+				} else {
+					reject(new Error('Failed to read file as data URL'));
+				}
+			};
+			reader.onerror = () => reject(reader.error);
+			reader.readAsDataURL(file);
+		});
 	}
 
 	/**
@@ -813,7 +903,8 @@ export class ReportGeneratorModal extends Modal {
 		const pdfOptions = {
 			pageSize: this.pdfOptions.pageSize,
 			fontStyle: 'serif' as const,
-			includeCoverPage: this.pdfOptions.includeCoverPage
+			includeCoverPage: this.pdfOptions.includeCoverPage,
+			logoDataUrl: this.pdfOptions.logoDataUrl
 		};
 
 		switch (this.selectedReportType) {
