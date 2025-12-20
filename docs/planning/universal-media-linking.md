@@ -1,0 +1,858 @@
+# Universal Media Linking
+
+Planning document for extending media attachment support to all entity types.
+
+- **Status:** Planning
+- **Priority:** High
+- **GitHub Issue:** [#21](https://github.com/banisterious/obsidian-canvas-roots/issues/21)
+- **Created:** 2025-12-20
+- **Updated:** 2025-12-20
+
+---
+
+## Overview
+
+Extend the `media` property (currently only supported on Source notes) to Person, Event, Place, and Organization notes. This enables linking images, documents, and other media files to any entity type, provides foundation for Gramps Package (`.gpkg`) import support, and displays person thumbnails on Family Chart nodes.
+
+---
+
+## Problem Statement
+
+Currently, media attachment is only available for Source notes. This limits users who want to:
+
+1. **Attach photos to people** — Character portraits, historical photographs, scanned documents
+2. **Document events visually** — Ceremony photos, certificates, newspaper clippings
+3. **Illustrate places** — Location photos, historical maps, property records
+4. **Brand organizations** — Logos, heraldry, group photos
+
+Additionally, Gramps exports as `.gpkg` packages bundle media files with XML data, but Canvas Roots cannot import these because other entity types don't support media.
+
+---
+
+## Current State
+
+### Source Notes Only
+
+The `media` property is currently defined only in `SourceNote`:
+
+```typescript
+// src/sources/types/source-types.ts
+export interface SourceNote {
+  // ...
+  /** Media file wikilinks (aggregated from media, media_2, etc.) */
+  media: string[];
+  // ...
+}
+```
+
+### Existing Infrastructure
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| `SourceNote.media` | `src/sources/types/source-types.ts` | Array of wikilink strings |
+| `MediaGallery` | `src/sources/ui/media-gallery.ts` | Thumbnail grid with lightbox |
+| `MediaItem` interface | `src/sources/ui/media-gallery.ts` | Resolved media file info |
+| Image extensions | `src/sources/ui/media-gallery.ts` | `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.svg`, `.bmp`, `.tiff`, `.tif` |
+| Document extensions | `src/sources/ui/media-gallery.ts` | `.pdf`, `.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx` |
+| Indexed property parsing | `src/core/family-graph.ts` | Parses `media`, `media_2`, `media_3`, etc. |
+| Bulk Source-Image Linking | `src/sources/ui/bulk-media-link-modal.ts` | Links images to sources in batch |
+
+### Entity Types Without Media
+
+| Entity | Type File | Needs `media` Added |
+|--------|-----------|---------------------|
+| **Person** | `src/core/family-graph.ts` → `PersonNode` | Yes |
+| **Event** | `src/events/types/event-types.ts` → `EventNote` | Yes |
+| **Place** | `src/places/types/place-types.ts` | Yes (needs interface) |
+| **Organization** | `src/organizations/types/organization-types.ts` → `OrganizationInfo` | Yes |
+
+---
+
+## Solution Design
+
+### Schema Changes
+
+Add `media: string[]` to all entity type interfaces, using the same indexed property convention as Sources:
+
+```yaml
+# Person note
+---
+cr_type: person
+cr_id: john-smith
+name: John Smith
+media: "[[photos/john-smith-portrait.jpg]]"
+media_2: "[[documents/john-smith-birth-cert.pdf]]"
+---
+
+# Event note
+---
+cr_type: event
+cr_id: wedding-1902
+event_type: marriage
+media: "[[photos/wedding-ceremony.jpg]]"
+---
+
+# Place note
+---
+cr_type: place
+cr_id: dublin-ireland
+name: Dublin, Ireland
+media: "[[photos/dublin-1920s.jpg]]"
+media_2: "[[maps/dublin-historical.png]]"
+---
+
+# Organization note
+---
+cr_type: organization
+cr_id: house-stark
+name: House Stark
+media: "[[images/stark-sigil.png]]"
+---
+```
+
+### Thumbnail Selection
+
+The first media item serves as the display thumbnail by default. Users control which item is the thumbnail by reordering the media list via drag-and-drop UI.
+
+**Design Principle:** First-is-thumbnail rule with UI-based reordering provides the best UX:
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| ~~Explicit `thumbnail` field~~ | Clear intent | Schema bloat, orphan risk |
+| ~~`thumbnail_index` field~~ | Non-destructive | Fragile if list changes |
+| **Drag-and-drop reorder** ✓ | No new fields, intuitive, WYSIWYG | Requires UI component |
+
+**Where thumbnails appear:**
+
+- **Person nodes** on Family Chart display thumbnail in corner
+- **Place markers** on map could show thumbnail on hover
+- **Organization hierarchy** could show logo/sigil
+
+**Reorder UI locations:**
+
+| Location | Description |
+|----------|-------------|
+| Control Center entity tables | Click entity row → media panel with drag handles |
+| Context menu | "Manage media..." opens reorder modal |
+| Dynamic Note Content | `<!-- cr:media-gallery editable -->` with inline reordering |
+
+**Optional override:** For edge cases (e.g., using a cropped version not in the media list), an explicit `thumbnail` field can override the first-media default:
+
+```yaml
+thumbnail: "[[cropped-portrait.jpg]]"  # Optional override
+media: "[[full-portrait.jpg]]"
+media_2: "[[document.pdf]]"
+```
+
+Resolution order:
+1. If `thumbnail` is set → use it
+2. Else if `media` exists → use first media item
+3. Else → show fallback (initials/icon)
+
+### MediaService Architecture
+
+Create entity-agnostic `MediaService` for shared functionality:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       MediaService                           │
+│  (Entity-agnostic media linking, resolution, galleries)      │
+├─────────────────────────────────────────────────────────────┤
+│  - getMediaForEntity(entityType, crId)                       │
+│  - linkMediaToEntity(entityType, crId, mediaPath)            │
+│  - unlinkMediaFromEntity(entityType, crId, mediaPath)        │
+│  - resolveMediaItem(mediaRef): MediaItem                     │
+│  - getFirstMedia(entity): TFile | null  // thumbnail         │
+│  - getAllMediaItems(): MediaItem[]  // for gallery           │
+└─────────────────────────────────────────────────────────────┘
+         │                    │                    │
+         ▼                    ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│ FamilyGraph     │  │ EventService    │  │ PlaceGraph      │
+│ PersonNode      │  │ EventNote       │  │ PlaceNode       │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+         │                    │                    │
+         ▼                    ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│ Family Chart    │  │ Timeline View   │  │ Map View        │
+│ (thumbnails)    │  │ (event media)   │  │ (place images)  │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+---
+
+## Use Cases
+
+### Genealogy
+
+| Entity | Use Cases |
+|--------|-----------|
+| **Person** | Portrait photos, scanned vital records, family photos |
+| **Event** | Marriage certificates, baptism records, newspaper clippings |
+| **Place** | Historical photos of ancestral homes, property records, maps |
+| **Organization** | Church photos, military unit insignia, company logos |
+
+### Worldbuilding
+
+| Entity | Use Cases |
+|--------|-----------|
+| **Person** | Character portraits, concept art, reference images for visual consistency |
+| **Place** | Location art, fantasy maps, floor plans, setting mood boards |
+| **Event** | Scene illustrations, battle maps, timeline graphics |
+| **Organization** | Faction banners, house sigils, guild logos, heraldry |
+
+Canvas thumbnails are particularly useful for writers—seeing character faces on relationship maps makes it easier to visualize story dynamics.
+
+---
+
+## Phased Implementation
+
+### Phase 1: Schema Extension
+
+**Focus:** Add `media` property to all entity types.
+
+#### Scope
+
+1. **Type definitions**
+   - Add `media: string[]` to `PersonNode` interface in `src/core/family-graph.ts`
+   - Add `media: string[]` to `EventNote` interface in `src/events/types/event-types.ts`
+   - Add `PlaceNote` interface with `media: string[]` to `src/places/types/place-types.ts`
+   - Add `media: string[]` to `OrganizationInfo` interface in `src/organizations/types/organization-types.ts`
+
+2. **Property parsing**
+   - Update `extractPersonNode()` to parse `media`, `media_2`, etc.
+   - Update `extractEventNote()` to parse media properties
+   - Update `PlaceGraphService` to parse media properties
+   - Update `OrganizationService` to parse media properties
+   - Reuse indexed property parsing pattern from Sources
+
+3. **MediaService creation**
+   - Create `src/core/media-service.ts`
+   - Implement `resolveMediaItem()` (refactor from `media-gallery.ts`)
+   - Implement `getMediaForEntity(entityType, crId)`
+   - Implement `getFirstMedia(entity)` for thumbnail access
+
+4. **Property aliases**
+   - Add `media` to property alias system for all entity types
+
+#### Implementation Notes
+
+```typescript
+// src/core/media-service.ts
+export interface EntityMedia {
+  entityType: 'person' | 'event' | 'place' | 'organization' | 'source';
+  entityCrId: string;
+  entityName: string;
+  entityFile: TFile;
+  media: MediaItem[];
+}
+
+export class MediaService {
+  constructor(private app: App, private settings: CanvasRootsSettings) {}
+
+  /**
+   * Parse indexed media properties from frontmatter
+   * Handles: media, media_2, media_3, etc.
+   */
+  parseMediaProperties(frontmatter: Record<string, unknown>): string[] {
+    const media: string[] = [];
+
+    // Primary media field
+    if (frontmatter.media) {
+      media.push(...this.normalizeToArray(frontmatter.media));
+    }
+
+    // Indexed media fields (media_2, media_3, ...)
+    for (let i = 2; i <= 20; i++) {
+      const key = `media_${i}`;
+      if (frontmatter[key]) {
+        media.push(...this.normalizeToArray(frontmatter[key]));
+      }
+    }
+
+    return media;
+  }
+
+  /**
+   * Get the first media item as a thumbnail
+   */
+  getFirstMediaAsThumbnail(entity: { media: string[] }): TFile | null {
+    if (!entity.media?.length) return null;
+
+    const firstRef = entity.media[0];
+    const item = this.resolveMediaItem(firstRef);
+    return item.file;
+  }
+}
+```
+
+#### Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/core/media-service.ts` | Entity-agnostic media service |
+
+#### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/core/family-graph.ts` | Add `media` to `PersonNode`, parse in `extractPersonNode()` |
+| `src/events/types/event-types.ts` | Add `media` to `EventNote` |
+| `src/events/services/event-service.ts` | Parse media properties |
+| `src/places/types/place-types.ts` | Add `PlaceNote` interface with `media` |
+| `src/places/services/place-graph-service.ts` | Parse media properties |
+| `src/organizations/types/organization-types.ts` | Add `media` to `OrganizationInfo` |
+| `src/organizations/services/organization-service.ts` | Parse media properties |
+| `src/core/property-alias-service.ts` | Add media aliases for all entity types |
+
+---
+
+### Phase 2: UI Integration
+
+**Focus:** Context menus, bulk linking, and media indicators.
+
+#### Scope
+
+1. **Context menu actions**
+   - Add "Link Media" action to Person, Event, Place, Organization notes
+   - Opens file picker to select media file
+   - Adds wikilink to entity's `media` property
+
+2. **Bulk Media Linking tool**
+   - Extend existing bulk linking modal
+   - Add entity type selector (Person, Event, Place, Organization, Source)
+   - Show entities without media for linking
+   - Support batch linking from folder
+
+3. **Control Center integration**
+   - Add media column/indicator to entity tables in each tab
+   - Show media count or thumbnail indicator
+
+4. **Unified Media Gallery**
+   - Extend gallery to show media from all entity types
+   - Add entity type filter
+   - Group by entity type option
+
+5. **Media Order UI (Thumbnail Selection)**
+   - Drag-and-drop reorderable media list
+   - First item highlighted as "Thumbnail"
+   - Accessible from context menu ("Manage media...")
+   - Accessible from Control Center entity rows
+   - Updates frontmatter on save
+
+#### Implementation Notes
+
+**Context Menu Action:**
+
+```typescript
+// Add to context menu registration
+menu.addItem((item) => {
+  item
+    .setTitle('Link media')
+    .setIcon('image-plus')
+    .onClick(async () => {
+      const file = await this.app.vault.adapter.pick({
+        accept: [...IMAGE_EXTENSIONS, ...DOCUMENT_EXTENSIONS]
+      });
+      if (file) {
+        await this.mediaService.linkMediaToEntity(
+          entityType,
+          entity.crId,
+          file.path
+        );
+      }
+    });
+});
+```
+
+**Entity Type Filter in Gallery:**
+
+```typescript
+interface GalleryFilterOptions {
+  entityType?: 'person' | 'event' | 'place' | 'organization' | 'source' | 'all';
+  sourceType?: string;  // For sources only
+  mediaType?: 'image' | 'document' | 'all';
+  searchQuery?: string;
+}
+```
+
+**Media Order Modal (Thumbnail Selection):**
+
+```typescript
+/**
+ * Modal for reordering media items via drag-and-drop.
+ * First item becomes the thumbnail.
+ */
+class MediaOrderModal extends Modal {
+  private entity: { file: TFile; media: string[] };
+  private mediaItems: MediaItem[];
+  private sortableList: HTMLElement;
+
+  constructor(app: App, private mediaService: MediaService, entity: EntityWithMedia) {
+    super(app);
+    this.entity = entity;
+    this.mediaItems = entity.media.map(ref => mediaService.resolveMediaItem(ref));
+  }
+
+  onOpen(): void {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass('cr-media-order-modal');
+
+    // Header
+    contentEl.createEl('h2', { text: 'Manage media' });
+    contentEl.createEl('p', {
+      text: 'Drag to reorder. The first item will be used as the thumbnail.',
+      cls: 'setting-item-description'
+    });
+
+    // Sortable media list
+    this.sortableList = contentEl.createDiv({ cls: 'cr-media-order-list' });
+    this.renderSortableList();
+
+    // Footer buttons
+    const footer = contentEl.createDiv({ cls: 'modal-button-container' });
+
+    const cancelBtn = footer.createEl('button', { text: 'Cancel' });
+    cancelBtn.addEventListener('click', () => this.close());
+
+    const saveBtn = footer.createEl('button', { text: 'Save', cls: 'mod-cta' });
+    saveBtn.addEventListener('click', () => this.save());
+  }
+
+  private renderSortableList(): void {
+    this.sortableList.empty();
+
+    for (let i = 0; i < this.mediaItems.length; i++) {
+      const item = this.mediaItems[i];
+      const row = this.sortableList.createDiv({ cls: 'cr-media-order-item' });
+      row.setAttribute('draggable', 'true');
+      row.dataset.index = String(i);
+
+      // Drag handle
+      const handle = row.createSpan({ cls: 'cr-media-order-handle' });
+      setIcon(handle, 'grip-vertical');
+
+      // Thumbnail preview
+      if (item.type === 'image' && item.file) {
+        const img = row.createEl('img', {
+          cls: 'cr-media-order-thumbnail',
+          attr: { src: this.app.vault.getResourcePath(item.file) }
+        });
+      } else {
+        const icon = row.createSpan({ cls: 'cr-media-order-icon' });
+        setIcon(icon, item.type === 'document' ? 'file-text' : 'file');
+      }
+
+      // Filename
+      row.createSpan({ text: item.displayName, cls: 'cr-media-order-name' });
+
+      // Thumbnail badge (first item only)
+      if (i === 0) {
+        row.createSpan({ text: 'Thumbnail', cls: 'cr-media-order-badge' });
+      }
+
+      // Delete button
+      const deleteBtn = row.createSpan({ cls: 'cr-media-order-delete' });
+      setIcon(deleteBtn, 'trash-2');
+      deleteBtn.addEventListener('click', () => this.removeItem(i));
+
+      // Drag events
+      this.setupDragEvents(row, i);
+    }
+  }
+
+  private setupDragEvents(row: HTMLElement, index: number): void {
+    row.addEventListener('dragstart', (e) => {
+      row.addClass('is-dragging');
+      e.dataTransfer?.setData('text/plain', String(index));
+    });
+
+    row.addEventListener('dragend', () => {
+      row.removeClass('is-dragging');
+    });
+
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      row.addClass('drag-over');
+    });
+
+    row.addEventListener('dragleave', () => {
+      row.removeClass('drag-over');
+    });
+
+    row.addEventListener('drop', (e) => {
+      e.preventDefault();
+      row.removeClass('drag-over');
+      const fromIndex = parseInt(e.dataTransfer?.getData('text/plain') || '0');
+      this.moveItem(fromIndex, index);
+    });
+  }
+
+  private moveItem(fromIndex: number, toIndex: number): void {
+    if (fromIndex === toIndex) return;
+    const [item] = this.mediaItems.splice(fromIndex, 1);
+    this.mediaItems.splice(toIndex, 0, item);
+    this.renderSortableList();
+  }
+
+  private removeItem(index: number): void {
+    this.mediaItems.splice(index, 1);
+    this.renderSortableList();
+  }
+
+  private async save(): Promise<void> {
+    // Convert back to wikilink strings
+    const newMediaRefs = this.mediaItems.map(item => item.mediaRef);
+
+    // Update frontmatter with new order
+    await this.mediaService.updateMediaOrder(this.entity.file, newMediaRefs);
+
+    new Notice('Media order updated');
+    this.close();
+  }
+}
+```
+
+**MediaService.updateMediaOrder():**
+
+```typescript
+/**
+ * Update frontmatter with new media order.
+ * Rewrites media, media_2, media_3, etc. in new order.
+ */
+async updateMediaOrder(file: TFile, mediaRefs: string[]): Promise<void> {
+  await this.app.fileManager.processFrontMatter(file, (fm) => {
+    // Clear existing media fields
+    delete fm.media;
+    for (let i = 2; i <= 20; i++) {
+      delete fm[`media_${i}`];
+    }
+
+    // Write in new order
+    if (mediaRefs.length > 0) {
+      fm.media = mediaRefs[0];
+    }
+    for (let i = 1; i < mediaRefs.length; i++) {
+      fm[`media_${i + 1}`] = mediaRefs[i];
+    }
+  });
+}
+```
+
+#### Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/core/ui/link-media-modal.ts` | Modal for linking media to any entity |
+| `src/core/ui/media-order-modal.ts` | Drag-and-drop modal for reordering media (thumbnail selection) |
+
+#### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/context-menu.ts` | Add "Link Media" action for all entity types |
+| `src/sources/ui/bulk-media-link-modal.ts` | Add entity type selector |
+| `src/sources/ui/media-gallery.ts` | Extend to all entity types |
+| `src/ui/control-center.ts` | Add media indicators to entity tables |
+| `src/ui/people-tab.ts` | Add media column |
+| `src/events/ui/events-tab.ts` | Add media column |
+| `src/places/ui/places-tab.ts` | Add media column |
+| `src/organizations/ui/organizations-tab.ts` | Add media column |
+
+---
+
+### Phase 3: Family Chart Thumbnails
+
+**Focus:** Display person thumbnails on canvas nodes.
+
+#### Scope
+
+1. **Thumbnail rendering**
+   - Display first media item as thumbnail on person nodes
+   - Configurable thumbnail size (small, medium, large)
+   - Configurable position (top-left, top-right, etc.)
+
+2. **Fallback display**
+   - Show initials when no media present
+   - Optional: show placeholder icon
+
+3. **Settings**
+   - Enable/disable thumbnails globally
+   - Thumbnail size setting
+   - Thumbnail position setting
+
+4. **Performance optimization**
+   - Lazy load thumbnails
+   - Cache resolved media files
+   - Skip thumbnail loading for collapsed nodes
+
+#### Implementation Notes
+
+**Thumbnail Rendering:**
+
+```typescript
+// In canvas node rendering
+function renderPersonNodeWithThumbnail(
+  node: PersonNode,
+  ctx: CanvasRenderingContext2D,
+  options: ThumbnailOptions
+): void {
+  const thumbnail = mediaService.getFirstMediaAsThumbnail(node);
+
+  if (thumbnail) {
+    // Load and render thumbnail image
+    const img = await loadImage(thumbnail);
+    const { x, y, size } = calculateThumbnailPosition(node, options);
+    ctx.drawImage(img, x, y, size, size);
+  } else if (options.showInitials) {
+    // Render initials fallback
+    renderInitials(node.name, x, y, size);
+  }
+}
+```
+
+**Settings Interface:**
+
+```typescript
+interface ThumbnailSettings {
+  enabled: boolean;
+  size: 'small' | 'medium' | 'large';  // 32px, 48px, 64px
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  showInitialsFallback: boolean;
+}
+```
+
+#### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/canvas/canvas-renderer.ts` | Add thumbnail rendering |
+| `src/canvas/family-chart-view.ts` | Integrate thumbnails |
+| `src/settings.ts` | Add thumbnail settings |
+| `src/settings/settings-tab.ts` | Add thumbnail settings UI |
+
+---
+
+### Phase 4: Gramps Package Import
+
+**Focus:** Import `.gpkg` files with bundled media.
+
+#### Scope
+
+1. **`.gpkg` file handling**
+   - Detect `.gpkg` files in import
+   - Extract zip contents (XML + media folder)
+
+2. **Media extraction**
+   - Extract media files to configurable folder
+   - Preserve original filenames or rename with cr_id prefix
+   - Handle filename collisions
+
+3. **Media linking**
+   - Parse media references in Gramps XML
+   - Link extracted files to corresponding entity notes
+   - Preserve media ordering (first = primary)
+
+4. **Import UI**
+   - Add media folder destination setting
+   - Show media extraction progress
+   - Report on linked vs. orphaned media
+
+#### Implementation Notes
+
+**Gramps Package Structure:**
+
+```
+archive.gpkg (zip file)
+├── data.gramps (Gramps XML)
+└── media/
+    ├── photo1.jpg
+    ├── document.pdf
+    └── ...
+```
+
+**Media Reference in Gramps XML:**
+
+```xml
+<person handle="_abc123">
+  <name>
+    <first>John</first>
+    <surname>Smith</surname>
+  </name>
+  <objref hlink="_media001"/>  <!-- References media object -->
+</person>
+
+<object handle="_media001" id="O0001">
+  <file src="media/photo1.jpg" mime="image/jpeg"/>
+</object>
+```
+
+**Import Flow:**
+
+```typescript
+async importGrampsPackage(gpkgPath: string, options: GpkgImportOptions): Promise<ImportResult> {
+  // 1. Extract zip
+  const extractDir = await this.extractZip(gpkgPath);
+
+  // 2. Find XML file
+  const xmlPath = await this.findGrampsXml(extractDir);
+
+  // 3. Parse XML normally
+  const xmlData = await this.parseGrampsXml(xmlPath);
+
+  // 4. Extract media files to vault
+  const mediaMap = await this.extractMediaToVault(
+    extractDir,
+    options.mediaFolder
+  );
+
+  // 5. Create entity notes with media links
+  const result = await this.createEntitiesWithMedia(xmlData, mediaMap);
+
+  // 6. Cleanup temp directory
+  await this.cleanup(extractDir);
+
+  return result;
+}
+```
+
+#### Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/import/gpkg-importer.ts` | Gramps package import logic |
+
+#### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/import/gramps-importer.ts` | Refactor to support gpkg |
+| `src/import/import-modal.ts` | Add .gpkg file type support |
+| `src/settings.ts` | Add media import folder setting |
+
+---
+
+## Phase 5 (Future): Dynamic Note Content
+
+**Focus:** Add `<!-- cr:media-gallery -->` block for inline media display.
+
+#### Scope
+
+1. **Dynamic block registration**
+   - Add `cr:media-gallery` to dynamic content blocks
+   - Follows same pattern as `cr:timeline` and `cr:relationships`
+
+2. **Gallery rendering**
+   - Renders thumbnail grid of entity's media
+   - Click opens lightbox
+   - Respects note's media property
+
+3. **Options**
+   - `<!-- cr:media-gallery columns=3 -->` for column count
+   - `<!-- cr:media-gallery size=large -->` for thumbnail size
+
+#### Implementation Notes
+
+```typescript
+// Register dynamic block
+this.registerDynamicContentBlock('cr:media-gallery', (el, options, file) => {
+  const entity = this.resolveEntityFromFile(file);
+  if (!entity?.media?.length) {
+    this.renderEmptyState(el, 'No media linked to this note.');
+    return;
+  }
+
+  const mediaItems = entity.media.map(ref =>
+    this.mediaService.resolveMediaItem(ref)
+  );
+
+  this.renderThumbnailGrid(el, mediaItems, options);
+});
+```
+
+---
+
+## Technical Considerations
+
+### Indexed Property Convention
+
+All entity types use the same indexed property pattern:
+
+```yaml
+media: "[[file1.jpg]]"        # Primary (also thumbnail)
+media_2: "[[file2.jpg]]"      # Additional
+media_3: "[[file3.pdf]]"      # Additional
+```
+
+This matches the existing pattern used for:
+- `spouse`, `spouse_2`, etc.
+- `source`, `source_2`, etc.
+- Media on sources
+
+### Media Resolution
+
+Media references can be:
+
+1. **Wikilinks:** `[[path/to/file.jpg]]`
+2. **Wikilinks with alias:** `[[path/to/file.jpg|Portrait]]`
+3. **Plain paths:** `path/to/file.jpg` (for import compatibility)
+
+The `resolveMediaItem()` function handles all formats.
+
+### File Type Detection
+
+Reuse existing constants:
+
+```typescript
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif'];
+const DOCUMENT_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'];
+```
+
+### Performance
+
+For large vaults with many media:
+
+1. **Lazy thumbnail loading** — Only load visible thumbnails
+2. **Media index cache** — Cache entity → media mappings
+3. **Image resize for thumbnails** — Don't load full-res for tiny thumbnails
+
+---
+
+## Success Criteria
+
+### Phase 1
+- [ ] `media` property parseable on Person, Event, Place, Organization notes
+- [ ] `MediaService` provides unified media access across entity types
+- [ ] Property aliases work for all entity types
+- [ ] Existing Source media functionality continues working
+
+### Phase 2
+- [ ] "Link Media" context menu action works for all entity types
+- [ ] "Manage media..." context menu opens reorder modal
+- [ ] Drag-and-drop reordering updates frontmatter correctly
+- [ ] First item displays "Thumbnail" badge in reorder UI
+- [ ] Bulk media linking supports all entity types
+- [ ] Unified media gallery shows media from all sources
+- [ ] Media indicators visible in Control Center entity tables
+
+### Phase 3
+- [ ] Person thumbnails display on Family Chart nodes
+- [ ] Thumbnails are configurable (size, position, enable/disable)
+- [ ] Fallback to initials works correctly
+- [ ] Performance acceptable with 100+ visible nodes
+
+### Phase 4
+- [ ] `.gpkg` files import correctly
+- [ ] Media files extracted to configurable folder
+- [ ] Media linked to corresponding entities
+- [ ] Import progress shows media extraction status
+
+---
+
+## Related Documents
+
+- [Roadmap: Universal Media Linking](../../wiki-content/Roadmap.md#universal-media-linking)
+- [Source Media Gallery](../../wiki-content/Statistics-And-Reports.md#media-gallery)
+- [Bulk Source-Image Linking](../../wiki-content/Release-History.md#bulk-source-image-linking-v0125)
+- [Gramps Import](../../wiki-content/Import.md#gramps-xml)
