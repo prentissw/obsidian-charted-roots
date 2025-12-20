@@ -155,10 +155,10 @@
 
 *Real-time family tree visualization with pan/zoom, person details panel, and direct editing with bidirectional sync.*
 
-### Control Center Dashboard
+### Control Center
 <img src="docs/images/canvas-roots-control-center-status-tab.png" alt="Control Center Status Tab" width="700">
 
-*Status tab showing comprehensive vault statistics: people, relationships, places, custom maps, canvases, vault health, and recent GEDCOM imports.*
+*Central hub for all Canvas Roots operations: vault statistics, import/export, tree generation, data quality tools, and quick actions.*
 
 ### Maps Tab & Custom Maps Gallery
 <img src="docs/images/canvas-roots-control-center-maps-tab.png" alt="Maps Tab" width="700">
@@ -241,8 +241,8 @@ died: 1952-08-20
 ### 3. Explore Further
 
 - **Map View:** Visualize birth/death locations geographically
-- **Statistics:** Control Center → Status tab for vault health and metrics
-- **Reports:** Generate Ahnentafel, family group sheets, and more
+- **Statistics:** Open Statistics Dashboard view for vault health, metrics, and data quality analysis
+- **Reports:** Generate 13 report types including Ahnentafel, family group sheets, timelines, and more—export as PDF or Markdown
 
 See the [Wiki](https://github.com/banisterious/obsidian-canvas-roots/wiki) for complete documentation.
 
