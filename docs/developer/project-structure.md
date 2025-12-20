@@ -191,6 +191,7 @@ canvas-roots/
 | `relationship-validator.ts` | ✅ Complete | Validates relationship data integrity and detects orphaned links |
 | `timeline-layout.ts` | ✅ Complete | Chronological positioning by birth year layout |
 | `uuid.ts` | ✅ Complete | UUID v4 generation for `cr_id` fields |
+| `recent-files-service.ts` | ✅ Complete | Tracks recently accessed files for Dashboard recent section |
 | `vault-stats.ts` | ✅ Complete | Calculates vault-wide statistics |
 
 ### Sources Module (src/sources/)
@@ -393,7 +394,8 @@ canvas-roots/
 
 | Component | Status | Purpose |
 |-----------|--------|---------|
-| `control-center.ts` | ✅ Complete | Main Control Center modal with 15 tabs for all plugin functionality |
+| `control-center.ts` | ✅ Complete | Main Control Center modal with 17 tabs for all plugin functionality |
+| `dashboard-tab.ts` | ✅ Complete | Dashboard tab with quick-action tiles, vault health, and recent files |
 | `settings-tab.ts` | ✅ Complete | Plugin settings tab in Obsidian settings |
 | `canvas-style-modal.ts` | ✅ Complete | Modal for canvas styling options |
 | `find-on-canvas-modal.ts` | ✅ Complete | Find person across all canvases |
@@ -498,7 +500,7 @@ canvas-roots/
 
 | Tab | Status | Purpose |
 |-----|--------|---------|
-| Status | ✅ Complete | Vault statistics, recent trees, health metrics |
+| Dashboard | ✅ Complete | Quick-action tiles (9), vault health section, recent files with context menu |
 | Guide | ✅ Complete | In-app documentation and getting started guide |
 | Import/Export | ✅ Complete | Import/export GEDCOM, GEDCOM X, Gramps XML, CSV with pre-import quality preview |
 | People | ✅ Complete | Person notes table, parent claim conflicts, batch operations, data entry |

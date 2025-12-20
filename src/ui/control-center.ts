@@ -50,6 +50,7 @@ import { AddPersonTypePreviewModal } from './add-person-type-modal';
 import { renderFamilyTimeline, getFamilyTimelineSummary } from '../events/ui/family-timeline';
 import { renderPlaceTimelineCard } from '../events/ui/place-timeline';
 import { renderPreferencesTab } from './preferences-tab';
+import { renderDashboardTab } from './dashboard-tab';
 import { renderPlacesTab } from './places-tab';
 import { PropertyAliasService } from '../core/property-alias-service';
 import { CreateEventModal } from '../events/ui/create-event-modal';
@@ -110,7 +111,7 @@ interface RelationshipField {
  */
 export class ControlCenterModal extends Modal {
 	plugin: CanvasRootsPlugin;
-	private activeTab: string = 'status';
+	private activeTab: string = 'dashboard';
 	private drawer: HTMLElement;
 	private contentContainer: HTMLElement;
 	private appBar: HTMLElement;
@@ -379,8 +380,8 @@ export class ControlCenterModal extends Modal {
 		this.contentContainer.empty();
 
 		switch (tabId) {
-			case 'status':
-				void this.showStatusTab();
+			case 'dashboard':
+				this.showDashboardTab();
 				break;
 			case 'guide':
 				this.showGuideTab();
@@ -861,7 +862,21 @@ export class ControlCenterModal extends Modal {
 	// ==========================================================================
 
 	/**
-	 * Show Status tab
+	 * Show Dashboard tab with quick actions and vault overview
+	 */
+	private showDashboardTab(): void {
+		renderDashboardTab({
+			container: this.contentContainer,
+			plugin: this.plugin,
+			app: this.app,
+			createCard: this.createCard.bind(this),
+			switchTab: this.switchTab.bind(this),
+			closeModal: () => this.close()
+		});
+	}
+
+	/**
+	 * Show Status tab (legacy - kept for reference during migration)
 	 */
 	private async showStatusTab(): Promise<void> {
 		const container = this.contentContainer;
@@ -2994,8 +3009,9 @@ export class ControlCenterModal extends Modal {
 		});
 		const fileIcon = createLucideIcon('file-text', 14);
 		openBtn.appendChild(fileIcon);
-		openBtn.addEventListener('click', (e) => {
+		openBtn.addEventListener('click', async (e) => {
 			e.stopPropagation();
+			await this.plugin.trackRecentFile(person.file, 'person');
 			void this.app.workspace.getLeaf(false).openFile(person.file);
 		});
 
@@ -3108,7 +3124,8 @@ export class ControlCenterModal extends Modal {
 			item
 				.setTitle('Open note')
 				.setIcon('file')
-				.onClick(() => {
+				.onClick(async () => {
+					await this.plugin.trackRecentFile(person.file, 'person');
 					void this.app.workspace.getLeaf(false).openFile(person.file);
 				});
 		});
@@ -3117,7 +3134,8 @@ export class ControlCenterModal extends Modal {
 			item
 				.setTitle('Open in new tab')
 				.setIcon('file-plus')
-				.onClick(() => {
+				.onClick(async () => {
+					await this.plugin.trackRecentFile(person.file, 'person');
 					void this.app.workspace.getLeaf('tab').openFile(person.file);
 				});
 		});
@@ -3222,7 +3240,8 @@ export class ControlCenterModal extends Modal {
 			item
 				.setTitle('Open')
 				.setIcon('file')
-				.onClick(() => {
+				.onClick(async () => {
+					await this.plugin.trackRecentFile(file, 'person');
 					void this.app.workspace.getLeaf(false).openFile(file);
 				});
 		});
@@ -3231,7 +3250,8 @@ export class ControlCenterModal extends Modal {
 			item
 				.setTitle('Open in new tab')
 				.setIcon('file-plus')
-				.onClick(() => {
+				.onClick(async () => {
+					await this.plugin.trackRecentFile(file, 'person');
 					void this.app.workspace.getLeaf('tab').openFile(file);
 				});
 		});
@@ -3240,7 +3260,8 @@ export class ControlCenterModal extends Modal {
 			item
 				.setTitle('Open in new window')
 				.setIcon('external-link')
-				.onClick(() => {
+				.onClick(async () => {
+					await this.plugin.trackRecentFile(file, 'person');
 					void this.app.workspace.getLeaf('window').openFile(file);
 				});
 		});

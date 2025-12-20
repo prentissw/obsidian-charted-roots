@@ -11,6 +11,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.13.6] - 2025-12-20
+
+### Added
+
+- **Control Center Dashboard** - Transformed the Status tab into a Dashboard with quick-action tiles for mobile-friendly access to common operations. Features 9 tiles (Person, Event, Source, Place, Report, Statistics, Import, Tree Output, Map), collapsible Vault Health section, and Recent Files list.
+
+- **Dashboard quick-action tiles** - One-tap access to create entities and open views. 3×3 grid on desktop, 2×2 on mobile for touch-friendly tap targets.
+
+- **Recent Files section** - Shows last 5 accessed genealogical files with entity type badges. Click to open, right-click for context menu with type-specific actions.
+
+- **Recent Files context menu** - Right-click recent items for type-specific actions:
+  - All types: "Open note"
+  - Place: "Open in Map View" (zooms to coordinates if available)
+  - Person: "Open in Family Chart"
+
+- **First-run welcome notice** - Dismissible welcome message for new users orienting them to the renamed Dashboard tab (formerly Status).
+
+- **Recent file tracking service** - New `RecentFilesService` tracks file access via Canvas Roots features (People tab "Open" button, create modals). Stores up to 5 recent files in settings.
+
+---
+
 ## [0.13.5] - 2025-12-20
 
 ### Added

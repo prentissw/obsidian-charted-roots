@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.13.x](#v013x)
+  - [Control Center Dashboard](#control-center-dashboard-v0136)
   - [Extended Report Types](#extended-report-types-v0135)
   - [PDF Report Export](#pdf-report-export-v0134)
   - [Universe Management](#universe-management-v0130)
@@ -51,6 +52,69 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.13.x
+
+### Control Center Dashboard (v0.13.6)
+
+Transform the Control Center's Status tab into a Dashboard with quick-action tiles, providing mobile-friendly access to common operations.
+
+**Problem Solved:**
+- Status tab displayed entity counts and vault health but no actions
+- Common operations required navigating to other tabs or Command Palette
+- Mobile users faced extra friction due to limited screen space
+- No quick access to frequently-used operations
+
+**Features:**
+
+| Feature | Description |
+|---------|-------------|
+| **Dashboard tab** | Replaces Status tab as the Control Center's home screen |
+| **9 quick-action tiles** | One-tap access to Person, Event, Source, Place, Report, Statistics, Import, Tree Output, and Map |
+| **Vault Health section** | Collapsible section with entity counts and completeness metrics |
+| **Recent Files** | Last 5 accessed files with type badges and click-to-open |
+| **Context menu** | Right-click Recent items for type-specific actions |
+| **First-run notice** | Dismissible welcome message for new users |
+| **Responsive grid** | 3-column on desktop, 2-column on mobile |
+
+**Quick Action Tiles:**
+
+| Tile | Icon | Action |
+|------|------|--------|
+| **Person** | `user` | Opens Create Person modal |
+| **Event** | `calendar` | Opens Create Event modal |
+| **Source** | `file-text` | Opens Create Source modal |
+| **Place** | `map-pin` | Opens Create Place modal |
+| **Report** | `file-chart-pie` | Opens Report Generator modal |
+| **Statistics** | `bar-chart-3` | Opens Statistics Dashboard view |
+| **Import** | `upload` | Opens Import/Export tab |
+| **Tree Output** | `git-branch` | Opens Tree Output tab |
+| **Map** | `map` | Opens Map View |
+
+**Recent Files Context Menu:**
+
+| Entity Type | Actions |
+|-------------|---------|
+| All types | Open note |
+| Place | Open in Map View (zooms to coordinates if available) |
+| Person | Open in Family Chart |
+
+**Vault Health Section:**
+
+| Metric | Description |
+|--------|-------------|
+| **Entity counts** | People, Events, Sources, Places, Organizations, Canvases |
+| **Completeness** | Percentage of people with key data (birth, death, parents) |
+| **Issues** | Count of data quality warnings with "View details" link |
+
+**Technical Details:**
+- New `DashboardTab` component in `src/ui/dashboard-tab.ts`
+- New `RecentFilesService` in `src/core/recent-files-service.ts`
+- Recent files stored in `plugin.settings.dashboardRecentFiles`
+- Dashboard styles in `styles/dashboard.css`
+- Vault Health section collapse state persisted in settings
+
+See [Control Center Dashboard Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/control-center-dashboard.md) for implementation details.
+
+---
 
 ### Extended Report Types (v0.13.5)
 

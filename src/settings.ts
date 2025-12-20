@@ -27,6 +27,21 @@ export interface RecentImportInfo {
 }
 
 /**
+ * Recent file entry for Dashboard
+ * Tracks files accessed via Canvas Roots features
+ */
+export interface RecentFileEntry {
+	/** File path */
+	path: string;
+	/** Display name (file basename without extension) */
+	name: string;
+	/** Entity type (person, event, source, place, canvas, map) */
+	type: 'person' | 'event' | 'source' | 'place' | 'canvas' | 'map' | 'organization';
+	/** Timestamp of last access */
+	timestamp: number;
+}
+
+/**
  * Information about the last export performed for a specific format
  */
 export interface LastExportInfo {
@@ -273,6 +288,12 @@ export interface CanvasRootsSettings {
 	reportsFolder: string;
 	// Sex value normalization
 	sexNormalizationMode: SexNormalizationMode;
+	// Dashboard settings
+	dashboardVaultHealthCollapsed: boolean;
+	/** Recent files accessed via CR features (max 5) */
+	dashboardRecentFiles: RecentFileEntry[];
+	/** Whether the user has seen the Dashboard first-run notice */
+	dashboardFirstVisitDone: boolean;
 }
 
 /**
@@ -497,7 +518,11 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	// Reports settings
 	reportsFolder: 'Canvas Roots/Reports',     // Default folder for generated reports
 	// Sex value normalization
-	sexNormalizationMode: 'standard'           // Default: normalize to GEDCOM M/F
+	sexNormalizationMode: 'standard',          // Default: normalize to GEDCOM M/F
+	// Dashboard settings
+	dashboardVaultHealthCollapsed: false,      // Default: expanded on first visit
+	dashboardRecentFiles: [],                  // Empty by default
+	dashboardFirstVisitDone: false             // Show welcome notice on first visit
 };
 
 export class CanvasRootsSettingTab extends PluginSettingTab {
