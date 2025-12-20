@@ -375,18 +375,53 @@ export class ReportGeneratorModal extends Modal {
 	}
 
 	/**
-	 * Convert a File to a data URL
+	 * Convert a File to a resized data URL
+	 * Resizes image to max 200px width to reduce PDF file size
 	 */
 	private fileToDataUrl(file: File): Promise<string> {
 		return new Promise((resolve, reject) => {
+			const img = new Image();
 			const reader = new FileReader();
+
 			reader.onload = () => {
-				if (typeof reader.result === 'string') {
-					resolve(reader.result);
-				} else {
-					reject(new Error('Failed to read file as data URL'));
+				if (typeof reader.result !== 'string') {
+					reject(new Error('Failed to read file'));
+					return;
 				}
+				img.src = reader.result;
 			};
+
+			img.onload = () => {
+				// Max width for logo in PDF (renders at 100pt, use 200px for retina quality)
+				const maxWidth = 200;
+				const maxHeight = 200;
+
+				let { width, height } = img;
+
+				// Only resize if larger than max dimensions
+				if (width > maxWidth || height > maxHeight) {
+					const ratio = Math.min(maxWidth / width, maxHeight / height);
+					width = Math.round(width * ratio);
+					height = Math.round(height * ratio);
+				}
+
+				// Draw to canvas at new size
+				const canvas = document.createElement('canvas');
+				canvas.width = width;
+				canvas.height = height;
+				const ctx = canvas.getContext('2d');
+				if (!ctx) {
+					reject(new Error('Failed to get canvas context'));
+					return;
+				}
+				ctx.drawImage(img, 0, 0, width, height);
+
+				// Convert to data URL (use PNG for transparency support)
+				const dataUrl = canvas.toDataURL('image/png');
+				resolve(dataUrl);
+			};
+
+			img.onerror = () => reject(new Error('Failed to load image'));
 			reader.onerror = () => reject(reader.error);
 			reader.readAsDataURL(file);
 		});
