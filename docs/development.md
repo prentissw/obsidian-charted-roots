@@ -39,8 +39,8 @@ Copy `main.js`, `manifest.json`, and `styles.css` to your vault's `.obsidian/plu
 
 ## Architecture Documentation
 
-- [Architecture Overview](architecture/overview.md) - System design and component interactions
-- [Collections Architecture](architecture/collections.md) - Family components and user collections ADR
+- [Collections Architecture](developer/architecture/collections.md) - Family components and user collections ADR
+- [Interactive Family Chart](developer/architecture/interactive-family-chart-view.md) - Chart view architecture
 
 ## Related Resources
 

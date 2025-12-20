@@ -136,7 +136,7 @@ export class PdfReportRenderer {
 - **Power user flexibility:** Optional user collections provide custom organization
 - **World-building support:** Same architecture serves both genealogy and fiction writing use cases
 
-**Architecture:** See [docs/architecture/collections.md](../architecture/collections.md) for complete ADR
+**Architecture:** See [architecture/collections.md](architecture/collections.md) for complete ADR
 
 **Options Evaluated:**
 

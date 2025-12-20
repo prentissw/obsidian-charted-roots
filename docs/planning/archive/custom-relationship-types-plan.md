@@ -408,4 +408,4 @@ The `relationships` array is new - no migration needed. Existing person notes wi
 
 - [Roadmap - Custom Relationship Types](../../wiki-content/Roadmap.md#custom-relationship-types)
 - [Frontmatter Reference](../../wiki-content/Frontmatter-Reference.md)
-- [Architecture Overview](../architecture/overview.md)
+- [Collections Architecture](../developer/architecture/collections.md)
