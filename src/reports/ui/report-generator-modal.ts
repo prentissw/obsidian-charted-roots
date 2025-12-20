@@ -891,6 +891,16 @@ export class ReportGeneratorModal extends Modal {
 					includeSpouses: this.descendantChartOptions.includeSpouses
 				};
 				break;
+
+			// Extended report types - to be implemented
+			case 'source-summary':
+			case 'timeline-report':
+			case 'place-summary':
+			case 'media-inventory':
+			case 'universe-overview':
+			case 'collection-overview':
+				new Notice('This report type is not yet implemented');
+				return;
 		}
 
 		try {
