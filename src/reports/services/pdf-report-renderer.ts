@@ -304,6 +304,14 @@ export class PdfReportRenderer {
 	}
 
 	/**
+	 * Strip wikilink brackets from text (e.g., [[Place Name]] -> Place Name)
+	 */
+	private stripWikilinks(text: string | undefined): string {
+		if (!text) return '';
+		return text.replace(/\[\[([^\]]+)\]\]/g, '$1');
+	}
+
+	/**
 	 * Format a person's name for display
 	 */
 	private formatPersonName(person: ReportPerson): string {
@@ -375,9 +383,9 @@ export class PdfReportRenderer {
 			content.push(this.buildKeyValueTable([
 				{ label: 'Name', value: husband.name },
 				{ label: 'Birth date', value: husband.birthDate || '' },
-				{ label: 'Birth place', value: husband.birthPlace || '' },
+				{ label: 'Birth place', value: this.stripWikilinks(husband.birthPlace) },
 				{ label: 'Death date', value: husband.deathDate || '' },
-				{ label: 'Death place', value: husband.deathPlace || '' },
+				{ label: 'Death place', value: this.stripWikilinks(husband.deathPlace) },
 				{ label: 'Occupation', value: husband.occupation || '' }
 			]));
 		}
@@ -389,9 +397,9 @@ export class PdfReportRenderer {
 			content.push(this.buildKeyValueTable([
 				{ label: 'Name', value: wife.name },
 				{ label: 'Birth date', value: wife.birthDate || '' },
-				{ label: 'Birth place', value: wife.birthPlace || '' },
+				{ label: 'Birth place', value: this.stripWikilinks(wife.birthPlace) },
 				{ label: 'Death date', value: wife.deathDate || '' },
-				{ label: 'Death place', value: wife.deathPlace || '' },
+				{ label: 'Death place', value: this.stripWikilinks(wife.deathPlace) },
 				{ label: 'Occupation', value: wife.occupation || '' }
 			]));
 		}
@@ -534,9 +542,9 @@ export class PdfReportRenderer {
 			{ label: 'Name', value: result.person.name },
 			{ label: 'Sex', value: result.person.sex || 'Unknown' },
 			{ label: 'Birth date', value: result.person.birthDate || '' },
-			{ label: 'Birth place', value: result.person.birthPlace || '' },
+			{ label: 'Birth place', value: this.stripWikilinks(result.person.birthPlace) },
 			{ label: 'Death date', value: result.person.deathDate || '' },
-			{ label: 'Death place', value: result.person.deathPlace || '' },
+			{ label: 'Death place', value: this.stripWikilinks(result.person.deathPlace) },
 			{ label: 'Occupation', value: result.person.occupation || '' }
 		]));
 
@@ -548,7 +556,7 @@ export class PdfReportRenderer {
 				result.events.map(event => [
 					event.type,
 					event.date || '',
-					event.place || '',
+					this.stripWikilinks(event.place),
 					event.description || ''
 				]),
 				[80, 80, '*', '*']
@@ -700,13 +708,13 @@ export class PdfReportRenderer {
 			if (entry.person.birthDate || entry.person.birthPlace) {
 				vitalsData.push({
 					label: 'Born',
-					value: [entry.person.birthDate, entry.person.birthPlace].filter(Boolean).join(', ')
+					value: [entry.person.birthDate, this.stripWikilinks(entry.person.birthPlace)].filter(Boolean).join(', ')
 				});
 			}
 			if (entry.person.deathDate || entry.person.deathPlace) {
 				vitalsData.push({
 					label: 'Died',
-					value: [entry.person.deathDate, entry.person.deathPlace].filter(Boolean).join(', ')
+					value: [entry.person.deathDate, this.stripWikilinks(entry.person.deathPlace)].filter(Boolean).join(', ')
 				});
 			}
 			if (vitalsData.length > 0) {
