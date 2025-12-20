@@ -2,6 +2,23 @@
 
 This document covers canvas generation and family chart layout systems.
 
+## Table of Contents
+
+- [Canvas Generation Implementation](#canvas-generation-implementation)
+  - [Canvas Node ID Format](#canvas-node-id-format)
+  - [Canvas JSON Format](#canvas-json-format)
+  - [Known Issues & Solutions](#known-issues--solutions)
+- [Family Chart Layout System](#family-chart-layout-system)
+  - [Architecture Overview](#architecture-overview)
+  - [Layout Engines](#layout-engines)
+  - [Layout Selection](#layout-selection)
+  - [Tree Generation Flow](#tree-generation-flow)
+  - [Key Data Structures](#key-data-structures)
+  - [Interactive Preview](#interactive-preview)
+  - [Canvas Metadata](#canvas-metadata)
+
+---
+
 ## Canvas Generation Implementation
 
 ### Canvas Node ID Format

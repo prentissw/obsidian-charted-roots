@@ -2,6 +2,25 @@
 
 This document covers the user interface implementation including context menus, Control Center, and settings.
 
+## Table of Contents
+
+- [Context Menu Implementation](#context-menu-implementation)
+  - [File Menu Integration](#file-menu-integration)
+  - [Mobile Adaptations](#mobile-adaptations)
+- [Control Center Architecture](#control-center-architecture)
+  - [Modal Structure](#modal-structure)
+  - [Tab System](#tab-system)
+  - [Navigation and Routing](#navigation-and-routing)
+  - [Public API](#public-api)
+  - [Mobile Adaptations](#mobile-adaptations-1)
+- [Settings and Configuration](#settings-and-configuration)
+  - [Settings Interface](#settings-interface)
+  - [Type Definitions](#type-definitions)
+  - [Settings Tab vs Preferences Tab](#settings-tab-vs-preferences-tab)
+  - [Default Values](#default-values)
+
+---
+
 ## Context Menu Implementation
 
 ### File Menu Integration

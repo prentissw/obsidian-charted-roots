@@ -2,6 +2,31 @@
 
 This document covers fictional date systems, privacy protection, and Obsidian Bases integration.
 
+## Table of Contents
+
+- [Fictional Date Systems](#fictional-date-systems)
+  - [Date System Architecture](#date-system-architecture)
+  - [FictionalDateSystem and Era Types](#fictionaldatesystem-and-era-types)
+  - [Built-in Calendar Presets](#built-in-calendar-presets)
+  - [DateService](#dateservice)
+  - [FictionalDateParser](#fictionaldateparser)
+  - [Calendarium Integration](#calendarium-integration)
+  - [Control Center UI](#control-center-ui)
+- [Privacy and Gender Identity Protection](#privacy-and-gender-identity-protection)
+  - [Sex vs Gender Data Model](#sex-vs-gender-data-model)
+  - [Living Person Privacy](#living-person-privacy)
+  - [Log Export Obfuscation](#log-export-obfuscation)
+  - [Planned Features](#planned-features-not-yet-implemented)
+  - [Design Rationale](#design-rationale)
+- [Obsidian Bases Integration](#obsidian-bases-integration)
+  - [Base Templates](#base-templates)
+  - [Computed Formulas](#computed-formulas)
+  - [Property Aliases](#property-aliases)
+  - [Base Creation Flow](#base-creation-flow)
+  - [Control Center Integration](#control-center-integration)
+
+---
+
 ## Fictional Date Systems
 
 The dates module (`src/dates/`) provides support for fictional calendar systems used in world-building, historical fiction, and alternate history research. This enables parsing, display, and age calculation for dates like "TA 2941" (Third Age) or "AC 283" (After Conquest).

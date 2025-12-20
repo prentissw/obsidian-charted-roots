@@ -2,6 +2,17 @@
 
 Canvas Roots depends on several external libraries for specialized functionality. This section documents how each is used.
 
+## Table of Contents
+
+- [pdfmake](#pdfmake)
+- [family-chart](#family-chart)
+- [Leaflet](#leaflet)
+- [D3](#d3)
+- [jsPDF](#jspdf)
+- [Dependency Management](#dependency-management)
+
+---
+
 ## pdfmake
 
 **Purpose:** PDF document generation for reports.

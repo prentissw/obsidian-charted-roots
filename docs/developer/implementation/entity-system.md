@@ -2,6 +2,31 @@
 
 This document covers the core entity system including note types, dual storage, schema validation, and custom relationship types.
 
+## Table of Contents
+
+- [Note Types and Entity System](#note-types-and-entity-system)
+  - [Core Entity Types](#core-entity-types)
+  - [Type Detection](#type-detection)
+  - [Person Note Structure](#person-note-structure)
+  - [Place Note Structure](#place-note-structure)
+  - [Event Note Structure](#event-note-structure)
+  - [Source Note Structure](#source-note-structure)
+  - [Organization Note Structure](#organization-note-structure)
+  - [Cross-References Between Types](#cross-references-between-types)
+- [Dual Storage System](#dual-storage-system)
+- [Schema Validation](#schema-validation)
+  - [Schema Note Format](#schema-note-format)
+  - [SchemaService](#schemaservice)
+  - [ValidationService](#validationservice)
+  - [Property Types and Validation](#property-types-and-validation)
+- [Custom Relationship Types](#custom-relationship-types)
+  - [Relationship Type Definition](#relationship-type-definition)
+  - [Built-in Types and Categories](#built-in-types-and-categories)
+  - [RelationshipService](#relationshipservice)
+  - [Frontmatter Storage](#frontmatter-storage)
+
+---
+
 ## Note Types and Entity System
 
 Canvas Roots uses a structured entity system with typed notes identified by frontmatter properties.

@@ -2,6 +2,18 @@
 
 The maps module (`src/maps/`) provides interactive geographic visualization using Leaflet, supporting both real-world maps and custom fictional/historical image maps.
 
+## Table of Contents
+
+- [Architecture](#architecture)
+- [Coordinate Systems](#coordinate-systems)
+- [Data Flow](#data-flow)
+- [Layer Management](#layer-management)
+- [Custom Image Maps](#custom-image-maps)
+- [Geocoding](#geocoding)
+- [Time Slider](#time-slider)
+
+---
+
 ## Architecture
 
 ```

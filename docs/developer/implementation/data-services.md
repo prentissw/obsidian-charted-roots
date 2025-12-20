@@ -2,6 +2,31 @@
 
 This document covers data normalization, quality checking, and organizational services.
 
+## Table of Contents
+
+- [Property and Value Alias System](#property-and-value-alias-system)
+  - [Property Aliases](#property-aliases)
+  - [Value Aliases](#value-aliases)
+  - [Built-in Synonyms](#built-in-synonyms)
+  - [Integration Points](#integration-points)
+- [Data Quality and Batch Operations](#data-quality-and-batch-operations)
+  - [DataQualityService Architecture](#dataqualityservice-architecture)
+  - [Issue Types and Categories](#issue-types-and-categories)
+  - [Batch Operation Pattern](#batch-operation-pattern)
+  - [Bidirectional Relationship Sync](#bidirectional-relationship-sync)
+  - [Schema-Aware Normalization](#schema-aware-normalization)
+  - [Place Batch Operations](#place-batch-operations)
+- [Collections and Family Groups](#collections-and-family-groups)
+  - [Two Organization Systems](#two-organization-systems)
+  - [PersonNode Collection Properties](#personnode-collection-properties)
+  - [FamilyGraphService Methods](#familygraphservice-methods)
+  - [Collection Analytics](#collection-analytics)
+  - [Control Center Collections Tab](#control-center-collections-tab)
+  - [Collection-Filtered Tree Generation](#collection-filtered-tree-generation)
+  - [Collection Overview Canvas Generation](#collection-overview-canvas-generation)
+
+---
+
 ## Property and Value Alias System
 
 The alias system normalizes data from various sources (GEDCOM imports, user input, existing notes) to canonical forms while respecting user preferences for property naming.

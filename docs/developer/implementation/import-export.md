@@ -2,6 +2,18 @@
 
 This document covers data import/export and source image management.
 
+## Table of Contents
+
+- [Supported Formats](#supported-formats)
+- [Two-Pass Import Architecture](#two-pass-import-architecture)
+- [Export Pipeline](#export-pipeline)
+- [Data Transformations](#data-transformations)
+- [Source Image Management](#source-image-management)
+  - [Image Filename Parser](#image-filename-parser)
+  - [Source Image Import Wizard](#source-image-import-wizard)
+
+---
+
 ## Supported Formats
 
 Canvas Roots supports multiple genealogical data formats for interoperability with other genealogy software.
