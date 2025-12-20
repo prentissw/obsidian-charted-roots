@@ -765,7 +765,7 @@ export const REPORT_METADATA: Record<ReportType, ReportMetadata> = {
 		description: 'Events and people associated with a location',
 		icon: 'map-pin',
 		category: 'geographic',
-		requiresPerson: true,
+		requiresPerson: false,
 		entityType: 'place'
 	},
 
