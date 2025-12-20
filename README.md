@@ -280,9 +280,13 @@ If you find this plugin useful, please consider supporting its development!
 - [Roadmap](https://github.com/banisterious/obsidian-canvas-roots/wiki/Roadmap) - Planned features
 
 ### For Developers
-- [Contributing Guide](CONTRIBUTING.md) - Development setup
-- [Development Guide](docs/development.md) - Architecture and testing
-- [Coding Standards](docs/developer/coding-standards.md) - Style guidelines
+- [Getting Started](docs/developer/getting-started.md) - Development environment setup
+- [Project Structure](docs/developer/project-structure.md) - Directory layout and component map
+- [Implementation Details](docs/developer/implementation-details.md) - Technical deep-dive into all features
+- [Coding Standards](docs/developer/coding-standards.md) - TypeScript and CSS style guidelines
+- [Design Decisions](docs/developer/design-decisions.md) - Architecture decision records
+- [Styling Guide](docs/developer/styling.md) - CSS architecture and theming
+- [Contributing Guide](CONTRIBUTING.md) - How to contribute
 
 ---
 
