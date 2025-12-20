@@ -4,7 +4,7 @@
  * Provides quick-action tiles for common operations and vault overview.
  */
 
-import { App, TFile } from 'obsidian';
+import { App, Menu, TFile } from 'obsidian';
 import CanvasRootsPlugin from '../../main';
 import { LucideIconName, setLucideIcon } from './lucide-icons';
 import { VaultStatsService, FullVaultStats } from '../core/vault-stats';
@@ -15,6 +15,7 @@ import { CreateEventModal } from '../events/ui/create-event-modal';
 import { CreateSourceModal } from '../sources/ui/create-source-modal';
 import { ReportGeneratorModal } from '../reports/ui/report-generator-modal';
 import { FamilyGraphService } from '../core/family-graph';
+import { PlaceGraphService } from '../core/place-graph';
 import { EventService } from '../events/services/event-service';
 import type { RecentFileEntry } from '../settings';
 
@@ -322,6 +323,12 @@ function renderRecentSection(
 			}
 		});
 
+		// Context menu for type-specific actions
+		item.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+			showRecentItemContextMenu(e, entry, plugin, app, closeModal);
+		});
+
 		// Keyboard accessibility
 		item.setAttribute('tabindex', '0');
 		item.setAttribute('role', 'button');
@@ -335,6 +342,114 @@ function renderRecentSection(
 				}
 			}
 		});
+	}
+}
+
+/**
+ * Show context menu for a recent item with type-specific actions
+ */
+function showRecentItemContextMenu(
+	event: MouseEvent,
+	entry: RecentFileEntry,
+	plugin: CanvasRootsPlugin,
+	app: App,
+	closeModal: () => void
+): void {
+	const menu = new Menu();
+
+	// Always show "Open note" option
+	menu.addItem((item) =>
+		item
+			.setTitle('Open note')
+			.setIcon('file-text')
+			.onClick(() => {
+				const file = app.vault.getAbstractFileByPath(entry.path);
+				if (file instanceof TFile) {
+					closeModal();
+					void app.workspace.getLeaf().openFile(file);
+				}
+			})
+	);
+
+	// Type-specific actions
+	if (entry.type === 'place') {
+		menu.addItem((item) =>
+			item
+				.setTitle('Open in Map View')
+				.setIcon('map')
+				.onClick(() => {
+					closeModal();
+					openPlaceInMapView(entry.path, plugin, app);
+				})
+		);
+	}
+
+	if (entry.type === 'person') {
+		menu.addItem((item) =>
+			item
+				.setTitle('Open in Family Chart')
+				.setIcon('git-branch')
+				.onClick(() => {
+					closeModal();
+					openPersonInFamilyChart(entry.path, plugin, app);
+				})
+		);
+	}
+
+	menu.showAtMouseEvent(event);
+}
+
+/**
+ * Open a place in Map View, zooming to its coordinates if available
+ */
+function openPlaceInMapView(
+	placePath: string,
+	plugin: CanvasRootsPlugin,
+	app: App
+): void {
+	// Load place data to get coordinates
+	const placeGraph = new PlaceGraphService(app);
+	const folderFilter = plugin.getFolderFilter();
+	if (folderFilter) {
+		placeGraph.setFolderFilter(folderFilter);
+	}
+	placeGraph.setSettings(plugin.settings);
+
+	const allPlaces = placeGraph.getAllPlaces();
+	const place = allPlaces.find(p => p.filePath === placePath);
+
+	if (place?.coordinates) {
+		// Open map view centered on this place
+		void plugin.activateMapView(undefined, false, undefined, {
+			lat: place.coordinates.lat,
+			lng: place.coordinates.long,
+			zoom: 12
+		});
+	} else {
+		// No coordinates, just open map view
+		void plugin.activateMapView();
+	}
+}
+
+/**
+ * Open a person in Family Chart view
+ */
+function openPersonInFamilyChart(
+	personPath: string,
+	plugin: CanvasRootsPlugin,
+	app: App
+): void {
+	const file = app.vault.getAbstractFileByPath(personPath);
+	if (!(file instanceof TFile)) return;
+
+	const cache = app.metadataCache.getFileCache(file);
+	const crId = cache?.frontmatter?.cr_id;
+
+	if (crId) {
+		void plugin.activateFamilyChartView(crId);
+	} else {
+		// No cr_id, just open the chart without a specific root
+		void plugin.activateFamilyChartView();
 	}
 }
 
