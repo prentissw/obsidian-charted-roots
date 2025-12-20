@@ -229,6 +229,11 @@ export class ReportGeneratorModal extends Modal {
 		// Apply pre-selected options
 		if (options.reportType) {
 			this.selectedReportType = options.reportType;
+			// Set category to match the pre-selected report type
+			const metadata = REPORT_METADATA[options.reportType];
+			if (metadata) {
+				this.selectedCategory = metadata.category;
+			}
 		}
 		if (options.personCrId) {
 			this.selectedPersonCrId = options.personCrId;
