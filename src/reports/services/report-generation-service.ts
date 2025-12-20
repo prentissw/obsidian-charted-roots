@@ -16,7 +16,13 @@ import type {
 	GapsReportOptions,
 	RegisterReportOptions,
 	PedigreeChartOptions,
-	DescendantChartOptions
+	DescendantChartOptions,
+	SourceSummaryOptions,
+	TimelineReportOptions,
+	PlaceSummaryOptions,
+	MediaInventoryOptions,
+	UniverseOverviewOptions,
+	CollectionOverviewOptions
 } from '../types/report-types';
 import { FamilyGroupSheetGenerator } from './family-group-sheet-generator';
 import { IndividualSummaryGenerator } from './individual-summary-generator';
@@ -25,6 +31,12 @@ import { GapsReportGenerator } from './gaps-report-generator';
 import { RegisterReportGenerator } from './register-report-generator';
 import { PedigreeChartGenerator } from './pedigree-chart-generator';
 import { DescendantChartGenerator } from './descendant-chart-generator';
+import { SourceSummaryGenerator } from './source-summary-generator';
+import { TimelineGenerator } from './timeline-generator';
+import { PlaceSummaryGenerator } from './place-summary-generator';
+import { MediaInventoryGenerator } from './media-inventory-generator';
+import { UniverseOverviewGenerator } from './universe-overview-generator';
+import { CollectionOverviewGenerator } from './collection-overview-generator';
 import { getLogger } from '../../core/logging';
 
 const logger = getLogger('ReportGenerationService');
@@ -44,6 +56,12 @@ export class ReportGenerationService {
 	private registerReportGenerator: RegisterReportGenerator;
 	private pedigreeChartGenerator: PedigreeChartGenerator;
 	private descendantChartGenerator: DescendantChartGenerator;
+	private sourceSummaryGenerator: SourceSummaryGenerator;
+	private timelineGenerator: TimelineGenerator;
+	private placeSummaryGenerator: PlaceSummaryGenerator;
+	private mediaInventoryGenerator: MediaInventoryGenerator;
+	private universeOverviewGenerator: UniverseOverviewGenerator;
+	private collectionOverviewGenerator: CollectionOverviewGenerator;
 
 	constructor(app: App, settings: CanvasRootsSettings) {
 		this.app = app;
@@ -57,6 +75,12 @@ export class ReportGenerationService {
 		this.registerReportGenerator = new RegisterReportGenerator(app, settings);
 		this.pedigreeChartGenerator = new PedigreeChartGenerator(app, settings);
 		this.descendantChartGenerator = new DescendantChartGenerator(app, settings);
+		this.sourceSummaryGenerator = new SourceSummaryGenerator(app, settings);
+		this.timelineGenerator = new TimelineGenerator(app, settings);
+		this.placeSummaryGenerator = new PlaceSummaryGenerator(app, settings);
+		this.mediaInventoryGenerator = new MediaInventoryGenerator(app, settings);
+		this.universeOverviewGenerator = new UniverseOverviewGenerator(app, settings);
+		this.collectionOverviewGenerator = new CollectionOverviewGenerator(app, settings);
 	}
 
 	/**
@@ -64,7 +88,7 @@ export class ReportGenerationService {
 	 */
 	async generateReport(
 		type: ReportType,
-		options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions | RegisterReportOptions | PedigreeChartOptions | DescendantChartOptions
+		options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions | RegisterReportOptions | PedigreeChartOptions | DescendantChartOptions | SourceSummaryOptions | TimelineReportOptions | PlaceSummaryOptions | MediaInventoryOptions | UniverseOverviewOptions | CollectionOverviewOptions
 	): Promise<ReportResult> {
 		logger.info('generate', `Generating ${type} report`);
 
@@ -91,6 +115,24 @@ export class ReportGenerationService {
 				break;
 			case 'descendant-chart':
 				result = await this.descendantChartGenerator.generate(options as DescendantChartOptions);
+				break;
+			case 'source-summary':
+				result = await this.sourceSummaryGenerator.generate(options as SourceSummaryOptions);
+				break;
+			case 'timeline-report':
+				result = await this.timelineGenerator.generate(options as TimelineReportOptions);
+				break;
+			case 'place-summary':
+				result = await this.placeSummaryGenerator.generate(options as PlaceSummaryOptions);
+				break;
+			case 'media-inventory':
+				result = await this.mediaInventoryGenerator.generate(options as MediaInventoryOptions);
+				break;
+			case 'universe-overview':
+				result = await this.universeOverviewGenerator.generate(options as UniverseOverviewOptions);
+				break;
+			case 'collection-overview':
+				result = await this.collectionOverviewGenerator.generate(options as CollectionOverviewOptions);
 				break;
 			default:
 				return {

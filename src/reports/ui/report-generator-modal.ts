@@ -15,13 +15,25 @@ import type {
 	RegisterReportOptions,
 	PedigreeChartOptions,
 	DescendantChartOptions,
+	SourceSummaryOptions,
+	TimelineReportOptions,
+	PlaceSummaryOptions,
+	MediaInventoryOptions,
+	UniverseOverviewOptions,
+	CollectionOverviewOptions,
 	FamilyGroupSheetResult,
 	IndividualSummaryResult,
 	AhnentafelResult,
 	GapsReportResult,
 	RegisterReportResult,
 	PedigreeChartResult,
-	DescendantChartResult
+	DescendantChartResult,
+	SourceSummaryResult,
+	TimelineReportResult,
+	PlaceSummaryResult,
+	MediaInventoryResult,
+	UniverseOverviewResult,
+	CollectionOverviewResult
 } from '../types/report-types';
 import { REPORT_METADATA } from '../types/report-types';
 import { ReportGenerationService } from '../services/report-generation-service';
@@ -111,6 +123,78 @@ export class ReportGeneratorModal extends Modal {
 		includeSpouses: true,
 		includeSources: true
 	};
+
+	// Extended report type options
+	private sourceSummaryOptions = {
+		includeChildrenSources: false,
+		groupBy: 'fact_type' as 'fact_type' | 'source_type' | 'quality' | 'chronological',
+		showQualityRatings: true,
+		includeCitationDetails: true,
+		showRepositoryInfo: true,
+		highlightGaps: true,
+		includeSources: true
+	};
+
+	private timelineReportOptions = {
+		dateFrom: '',
+		dateTo: '',
+		eventTypes: [] as string[],
+		personFilter: [] as string[],
+		placeFilter: [] as string[],
+		includeChildPlaces: false,
+		grouping: 'none' as 'none' | 'by_year' | 'by_decade' | 'by_person' | 'by_place',
+		includeDescriptions: true,
+		includeSources: true
+	};
+
+	private placeSummaryOptions = {
+		includeChildPlaces: true,
+		dateFrom: '',
+		dateTo: '',
+		eventTypes: [] as string[],
+		showCoordinates: true,
+		showHierarchy: true,
+		includeMapReference: false,
+		includeSources: true
+	};
+
+	private mediaInventoryOptions = {
+		scope: 'all' as 'all' | 'sources_only' | 'by_folder',
+		folderPath: '',
+		showOrphanedFiles: true,
+		showCoverageGaps: true,
+		groupBy: 'entity_type' as 'entity_type' | 'folder' | 'file_type',
+		includeFileSizes: true,
+		includeSources: false
+	};
+
+	private universeOverviewOptions = {
+		includeEntityList: true,
+		showGeographicSummary: true,
+		showDateSystems: true,
+		showRecentActivity: true,
+		maxEntitiesPerType: 20,
+		includeSources: false
+	};
+
+	private collectionOverviewOptions = {
+		collectionType: 'component' as 'user' | 'component',
+		includeMemberList: true,
+		showGenerationAnalysis: true,
+		showGeographicDistribution: true,
+		showSurnameDistribution: true,
+		sortMembersBy: 'birth_date' as 'birth_date' | 'name' | 'death_date',
+		maxMembers: 100,
+		includeSources: false
+	};
+
+	// Additional entity selection for new report types
+	private selectedPlaceCrId: string = '';
+	private selectedPlaceName: string = '';
+	private selectedUniverseCrId: string = '';
+	private selectedUniverseName: string = '';
+	private selectedCollectionId: string = '';
+	private selectedCollectionName: string = '';
 
 	// PDF-specific options
 	private pdfOptions = {
@@ -468,6 +552,24 @@ export class ReportGeneratorModal extends Modal {
 			case 'descendant-chart':
 				this.renderDescendantChartOptions();
 				break;
+			case 'source-summary':
+				this.renderSourceSummaryOptions();
+				break;
+			case 'timeline-report':
+				this.renderTimelineReportOptions();
+				break;
+			case 'place-summary':
+				this.renderPlaceSummaryOptions();
+				break;
+			case 'media-inventory':
+				this.renderMediaInventoryOptions();
+				break;
+			case 'universe-overview':
+				this.renderUniverseOverviewOptions();
+				break;
+			case 'collection-overview':
+				this.renderCollectionOverviewOptions();
+				break;
 		}
 	}
 
@@ -795,6 +897,391 @@ export class ReportGeneratorModal extends Modal {
 	}
 
 	/**
+	 * Render Source Summary options
+	 */
+	private renderSourceSummaryOptions(): void {
+		if (!this.optionsContainer) return;
+
+		new Setting(this.optionsContainer)
+			.setName('Include children\'s sources')
+			.setDesc('Include sources from children\'s records')
+			.addToggle(toggle => {
+				toggle.setValue(this.sourceSummaryOptions.includeChildrenSources)
+					.onChange(value => {
+						this.sourceSummaryOptions.includeChildrenSources = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Show quality ratings')
+			.setDesc('Display primary/secondary/derivative classification')
+			.addToggle(toggle => {
+				toggle.setValue(this.sourceSummaryOptions.showQualityRatings)
+					.onChange(value => {
+						this.sourceSummaryOptions.showQualityRatings = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Highlight research gaps')
+			.setDesc('Show unsourced facts as research opportunities')
+			.addToggle(toggle => {
+				toggle.setValue(this.sourceSummaryOptions.highlightGaps)
+					.onChange(value => {
+						this.sourceSummaryOptions.highlightGaps = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Show repository info')
+			.setDesc('Include repository summary')
+			.addToggle(toggle => {
+				toggle.setValue(this.sourceSummaryOptions.showRepositoryInfo)
+					.onChange(value => {
+						this.sourceSummaryOptions.showRepositoryInfo = value;
+					});
+			});
+	}
+
+	/**
+	 * Render Timeline Report options
+	 */
+	private renderTimelineReportOptions(): void {
+		if (!this.optionsContainer) return;
+
+		new Setting(this.optionsContainer)
+			.setName('Grouping')
+			.setDesc('How to group events in the report')
+			.addDropdown(dropdown => {
+				dropdown.addOption('none', 'No grouping (chronological)');
+				dropdown.addOption('by_year', 'By year');
+				dropdown.addOption('by_decade', 'By decade');
+				dropdown.addOption('by_person', 'By person');
+				dropdown.addOption('by_place', 'By place');
+				dropdown.setValue(this.timelineReportOptions.grouping);
+				dropdown.onChange(value => {
+					this.timelineReportOptions.grouping = value as typeof this.timelineReportOptions.grouping;
+				});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Include descriptions')
+			.setDesc('Include event descriptions in the report')
+			.addToggle(toggle => {
+				toggle.setValue(this.timelineReportOptions.includeDescriptions)
+					.onChange(value => {
+						this.timelineReportOptions.includeDescriptions = value;
+					});
+			});
+	}
+
+	/**
+	 * Render Place Summary options
+	 */
+	private renderPlaceSummaryOptions(): void {
+		if (!this.optionsContainer) return;
+
+		// Place picker
+		this.renderPlacePicker();
+
+		new Setting(this.optionsContainer)
+			.setName('Include child places')
+			.setDesc('Include events from subordinate locations')
+			.addToggle(toggle => {
+				toggle.setValue(this.placeSummaryOptions.includeChildPlaces)
+					.onChange(value => {
+						this.placeSummaryOptions.includeChildPlaces = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Show hierarchy')
+			.setDesc('Display place hierarchy path')
+			.addToggle(toggle => {
+				toggle.setValue(this.placeSummaryOptions.showHierarchy)
+					.onChange(value => {
+						this.placeSummaryOptions.showHierarchy = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Show coordinates')
+			.setDesc('Display geographic coordinates if available')
+			.addToggle(toggle => {
+				toggle.setValue(this.placeSummaryOptions.showCoordinates)
+					.onChange(value => {
+						this.placeSummaryOptions.showCoordinates = value;
+					});
+			});
+	}
+
+	/**
+	 * Render place picker for place-based reports
+	 */
+	private renderPlacePicker(): void {
+		if (!this.optionsContainer) return;
+
+		const placeContainer = this.optionsContainer.createDiv({ cls: 'cr-report-modal__place' });
+
+		new Setting(placeContainer)
+			.setName('Select place')
+			.setDesc(this.selectedPlaceName || 'Click to select a place')
+			.addText(text => {
+				text.setPlaceholder('Enter place name or CR ID')
+					.setValue(this.selectedPlaceName || this.selectedPlaceCrId)
+					.onChange(value => {
+						this.selectedPlaceCrId = value;
+						this.selectedPlaceName = value;
+					});
+			});
+	}
+
+	/**
+	 * Render Media Inventory options
+	 */
+	private renderMediaInventoryOptions(): void {
+		if (!this.optionsContainer) return;
+
+		new Setting(this.optionsContainer)
+			.setName('Scope')
+			.setDesc('Which media files to include')
+			.addDropdown(dropdown => {
+				dropdown.addOption('all', 'All media files');
+				dropdown.addOption('sources_only', 'Source-linked only');
+				dropdown.addOption('by_folder', 'Specific folder');
+				dropdown.setValue(this.mediaInventoryOptions.scope);
+				dropdown.onChange(value => {
+					this.mediaInventoryOptions.scope = value as typeof this.mediaInventoryOptions.scope;
+				});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Group by')
+			.setDesc('How to organize the inventory')
+			.addDropdown(dropdown => {
+				dropdown.addOption('entity_type', 'Entity type');
+				dropdown.addOption('folder', 'Folder');
+				dropdown.addOption('file_type', 'File type');
+				dropdown.setValue(this.mediaInventoryOptions.groupBy);
+				dropdown.onChange(value => {
+					this.mediaInventoryOptions.groupBy = value as typeof this.mediaInventoryOptions.groupBy;
+				});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Show orphaned files')
+			.setDesc('Include files not linked to any entity')
+			.addToggle(toggle => {
+				toggle.setValue(this.mediaInventoryOptions.showOrphanedFiles)
+					.onChange(value => {
+						this.mediaInventoryOptions.showOrphanedFiles = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Include file sizes')
+			.setDesc('Show file size information')
+			.addToggle(toggle => {
+				toggle.setValue(this.mediaInventoryOptions.includeFileSizes)
+					.onChange(value => {
+						this.mediaInventoryOptions.includeFileSizes = value;
+					});
+			});
+	}
+
+	/**
+	 * Render Universe Overview options
+	 */
+	private renderUniverseOverviewOptions(): void {
+		if (!this.optionsContainer) return;
+
+		// Universe picker
+		this.renderUniversePicker();
+
+		new Setting(this.optionsContainer)
+			.setName('Include entity list')
+			.setDesc('Show lists of entities by type')
+			.addToggle(toggle => {
+				toggle.setValue(this.universeOverviewOptions.includeEntityList)
+					.onChange(value => {
+						this.universeOverviewOptions.includeEntityList = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Show geographic summary')
+			.setDesc('Include place coordinate coverage')
+			.addToggle(toggle => {
+				toggle.setValue(this.universeOverviewOptions.showGeographicSummary)
+					.onChange(value => {
+						this.universeOverviewOptions.showGeographicSummary = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Show date systems')
+			.setDesc('List calendar systems used in this universe')
+			.addToggle(toggle => {
+				toggle.setValue(this.universeOverviewOptions.showDateSystems)
+					.onChange(value => {
+						this.universeOverviewOptions.showDateSystems = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Show recent activity')
+			.setDesc('List recently modified entities')
+			.addToggle(toggle => {
+				toggle.setValue(this.universeOverviewOptions.showRecentActivity)
+					.onChange(value => {
+						this.universeOverviewOptions.showRecentActivity = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Max entities per type')
+			.setDesc('Limit for entity lists')
+			.addSlider(slider => {
+				slider
+					.setLimits(5, 50, 5)
+					.setValue(this.universeOverviewOptions.maxEntitiesPerType)
+					.setDynamicTooltip()
+					.onChange(value => {
+						this.universeOverviewOptions.maxEntitiesPerType = value;
+					});
+			});
+	}
+
+	/**
+	 * Render universe picker
+	 */
+	private renderUniversePicker(): void {
+		if (!this.optionsContainer) return;
+
+		const universeContainer = this.optionsContainer.createDiv({ cls: 'cr-report-modal__universe' });
+
+		new Setting(universeContainer)
+			.setName('Select universe')
+			.setDesc(this.selectedUniverseName || 'Enter universe name or CR ID')
+			.addText(text => {
+				text.setPlaceholder('Universe name or CR ID')
+					.setValue(this.selectedUniverseName || this.selectedUniverseCrId)
+					.onChange(value => {
+						this.selectedUniverseCrId = value;
+						this.selectedUniverseName = value;
+					});
+			});
+	}
+
+	/**
+	 * Render Collection Overview options
+	 */
+	private renderCollectionOverviewOptions(): void {
+		if (!this.optionsContainer) return;
+
+		// Collection picker
+		this.renderCollectionPicker();
+
+		new Setting(this.optionsContainer)
+			.setName('Collection type')
+			.setDesc('Type of collection to analyze')
+			.addDropdown(dropdown => {
+				dropdown.addOption('component', 'Auto-detected family group');
+				dropdown.addOption('user', 'User-defined collection');
+				dropdown.setValue(this.collectionOverviewOptions.collectionType);
+				dropdown.onChange(value => {
+					this.collectionOverviewOptions.collectionType = value as 'user' | 'component';
+				});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Include member list')
+			.setDesc('Show list of all collection members')
+			.addToggle(toggle => {
+				toggle.setValue(this.collectionOverviewOptions.includeMemberList)
+					.onChange(value => {
+						this.collectionOverviewOptions.includeMemberList = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Show generation analysis')
+			.setDesc('Analyze generation depth and distribution')
+			.addToggle(toggle => {
+				toggle.setValue(this.collectionOverviewOptions.showGenerationAnalysis)
+					.onChange(value => {
+						this.collectionOverviewOptions.showGenerationAnalysis = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Show surname distribution')
+			.setDesc('Analyze surname frequency')
+			.addToggle(toggle => {
+				toggle.setValue(this.collectionOverviewOptions.showSurnameDistribution)
+					.onChange(value => {
+						this.collectionOverviewOptions.showSurnameDistribution = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Show geographic distribution')
+			.setDesc('Analyze location frequency')
+			.addToggle(toggle => {
+				toggle.setValue(this.collectionOverviewOptions.showGeographicDistribution)
+					.onChange(value => {
+						this.collectionOverviewOptions.showGeographicDistribution = value;
+					});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Sort members by')
+			.addDropdown(dropdown => {
+				dropdown.addOption('birth_date', 'Birth date');
+				dropdown.addOption('name', 'Name');
+				dropdown.addOption('death_date', 'Death date');
+				dropdown.setValue(this.collectionOverviewOptions.sortMembersBy);
+				dropdown.onChange(value => {
+					this.collectionOverviewOptions.sortMembersBy = value as typeof this.collectionOverviewOptions.sortMembersBy;
+				});
+			});
+
+		new Setting(this.optionsContainer)
+			.setName('Max members')
+			.setDesc('Limit for member list')
+			.addSlider(slider => {
+				slider
+					.setLimits(10, 200, 10)
+					.setValue(this.collectionOverviewOptions.maxMembers)
+					.setDynamicTooltip()
+					.onChange(value => {
+						this.collectionOverviewOptions.maxMembers = value;
+					});
+			});
+	}
+
+	/**
+	 * Render collection picker
+	 */
+	private renderCollectionPicker(): void {
+		if (!this.optionsContainer) return;
+
+		const collectionContainer = this.optionsContainer.createDiv({ cls: 'cr-report-modal__collection' });
+
+		new Setting(collectionContainer)
+			.setName('Select collection')
+			.setDesc(this.selectedCollectionName || 'Enter collection name or representative CR ID')
+			.addText(text => {
+				text.setPlaceholder('Collection name or CR ID')
+					.setValue(this.selectedCollectionName || this.selectedCollectionId)
+					.onChange(value => {
+						this.selectedCollectionId = value;
+						this.selectedCollectionName = value;
+					});
+			});
+	}
+
+	/**
 	 * Generate the report
 	 */
 	private async generateReport(): Promise<void> {
@@ -806,8 +1293,22 @@ export class ReportGeneratorModal extends Modal {
 			return;
 		}
 
+		// Validate entity selection based on report type
+		if (metadata.entityType === 'place' && !this.selectedPlaceCrId) {
+			new Notice('Please select a place first');
+			return;
+		}
+		if (metadata.entityType === 'universe' && !this.selectedUniverseCrId) {
+			new Notice('Please select a universe first');
+			return;
+		}
+		if (metadata.entityType === 'collection' && !this.selectedCollectionId) {
+			new Notice('Please select a collection first');
+			return;
+		}
+
 		// Build options based on report type
-		let options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions | RegisterReportOptions | PedigreeChartOptions | DescendantChartOptions;
+		let options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions | RegisterReportOptions | PedigreeChartOptions | DescendantChartOptions | SourceSummaryOptions | TimelineReportOptions | PlaceSummaryOptions | MediaInventoryOptions | UniverseOverviewOptions | CollectionOverviewOptions;
 
 		switch (this.selectedReportType) {
 			case 'family-group-sheet':
@@ -892,15 +1393,96 @@ export class ReportGeneratorModal extends Modal {
 				};
 				break;
 
-			// Extended report types - to be implemented
 			case 'source-summary':
+				options = {
+					personCrId: this.selectedPersonCrId,
+					outputMethod: this.outputMethod,
+					outputFolder: this.outputFolder || undefined,
+					includeSources: this.sourceSummaryOptions.includeSources,
+					includeChildrenSources: this.sourceSummaryOptions.includeChildrenSources,
+					groupBy: this.sourceSummaryOptions.groupBy,
+					showQualityRatings: this.sourceSummaryOptions.showQualityRatings,
+					includeCitationDetails: this.sourceSummaryOptions.includeCitationDetails,
+					showRepositoryInfo: this.sourceSummaryOptions.showRepositoryInfo,
+					highlightGaps: this.sourceSummaryOptions.highlightGaps
+				};
+				break;
+
 			case 'timeline-report':
+				options = {
+					outputMethod: this.outputMethod,
+					outputFolder: this.outputFolder || undefined,
+					includeSources: this.timelineReportOptions.includeSources,
+					dateFrom: this.timelineReportOptions.dateFrom || undefined,
+					dateTo: this.timelineReportOptions.dateTo || undefined,
+					eventTypes: this.timelineReportOptions.eventTypes,
+					personFilter: this.timelineReportOptions.personFilter,
+					placeFilter: this.timelineReportOptions.placeFilter,
+					includeChildPlaces: this.timelineReportOptions.includeChildPlaces,
+					grouping: this.timelineReportOptions.grouping,
+					includeDescriptions: this.timelineReportOptions.includeDescriptions
+				};
+				break;
+
 			case 'place-summary':
+				options = {
+					placeCrId: this.selectedPlaceCrId,
+					outputMethod: this.outputMethod,
+					outputFolder: this.outputFolder || undefined,
+					includeSources: this.placeSummaryOptions.includeSources,
+					includeChildPlaces: this.placeSummaryOptions.includeChildPlaces,
+					dateFrom: this.placeSummaryOptions.dateFrom || undefined,
+					dateTo: this.placeSummaryOptions.dateTo || undefined,
+					eventTypes: this.placeSummaryOptions.eventTypes,
+					showCoordinates: this.placeSummaryOptions.showCoordinates,
+					showHierarchy: this.placeSummaryOptions.showHierarchy,
+					includeMapReference: this.placeSummaryOptions.includeMapReference
+				};
+				break;
+
 			case 'media-inventory':
+				options = {
+					outputMethod: this.outputMethod,
+					outputFolder: this.outputFolder || undefined,
+					includeSources: this.mediaInventoryOptions.includeSources,
+					scope: this.mediaInventoryOptions.scope,
+					folderPath: this.mediaInventoryOptions.folderPath || undefined,
+					showOrphanedFiles: this.mediaInventoryOptions.showOrphanedFiles,
+					showCoverageGaps: this.mediaInventoryOptions.showCoverageGaps,
+					groupBy: this.mediaInventoryOptions.groupBy,
+					includeFileSizes: this.mediaInventoryOptions.includeFileSizes
+				};
+				break;
+
 			case 'universe-overview':
+				options = {
+					universeCrId: this.selectedUniverseCrId,
+					outputMethod: this.outputMethod,
+					outputFolder: this.outputFolder || undefined,
+					includeSources: this.universeOverviewOptions.includeSources,
+					includeEntityList: this.universeOverviewOptions.includeEntityList,
+					showGeographicSummary: this.universeOverviewOptions.showGeographicSummary,
+					showDateSystems: this.universeOverviewOptions.showDateSystems,
+					showRecentActivity: this.universeOverviewOptions.showRecentActivity,
+					maxEntitiesPerType: this.universeOverviewOptions.maxEntitiesPerType
+				};
+				break;
+
 			case 'collection-overview':
-				new Notice('This report type is not yet implemented');
-				return;
+				options = {
+					collectionId: this.selectedCollectionId,
+					collectionType: this.collectionOverviewOptions.collectionType,
+					outputMethod: this.outputMethod,
+					outputFolder: this.outputFolder || undefined,
+					includeSources: this.collectionOverviewOptions.includeSources,
+					includeMemberList: this.collectionOverviewOptions.includeMemberList,
+					showGenerationAnalysis: this.collectionOverviewOptions.showGenerationAnalysis,
+					showGeographicDistribution: this.collectionOverviewOptions.showGeographicDistribution,
+					showSurnameDistribution: this.collectionOverviewOptions.showSurnameDistribution,
+					sortMembersBy: this.collectionOverviewOptions.sortMembersBy,
+					maxMembers: this.collectionOverviewOptions.maxMembers
+				};
+				break;
 		}
 
 		try {
@@ -973,6 +1555,24 @@ export class ReportGeneratorModal extends Modal {
 				break;
 			case 'descendant-chart':
 				await this.pdfRenderer.renderDescendantChart(result as DescendantChartResult, pdfOptions);
+				break;
+			case 'source-summary':
+				await this.pdfRenderer.renderSourceSummary(result as SourceSummaryResult, pdfOptions);
+				break;
+			case 'timeline-report':
+				await this.pdfRenderer.renderTimelineReport(result as TimelineReportResult, pdfOptions);
+				break;
+			case 'place-summary':
+				await this.pdfRenderer.renderPlaceSummary(result as PlaceSummaryResult, pdfOptions);
+				break;
+			case 'media-inventory':
+				await this.pdfRenderer.renderMediaInventory(result as MediaInventoryResult, pdfOptions);
+				break;
+			case 'universe-overview':
+				await this.pdfRenderer.renderUniverseOverview(result as UniverseOverviewResult, pdfOptions);
+				break;
+			case 'collection-overview':
+				await this.pdfRenderer.renderCollectionOverview(result as CollectionOverviewResult, pdfOptions);
 				break;
 		}
 	}
