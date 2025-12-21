@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-21 20:04:12 UTC
+ * - Generated: 2025-12-21 20:26:00 UTC
  * - Components: 35 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -21497,7 +21497,7 @@ body:has(.cr-media-linker) .suggestion-container {
    COMPONENT: TREE-OUTPUT.CSS
    ========================================================================== */
 
-/* Component Size: 1049 lines, 20.36 KB */
+/* Component Size: 1191 lines, 23.16 KB */
 
 /* Tree Output Tab - Two-Panel Layout */
 
@@ -22007,91 +22007,24 @@ body:has(.cr-media-linker) .suggestion-container {
 }
 
 /* ========================================
-   Canvas Trees Tab Styles
+   Intro Row with New Tree Button
    ======================================== */
 
-/* Intro text */
-.crc-tree-intro {
-  margin: 0 0 var(--cr-spacing-md) 0;
-}
-
-/* Stats row */
-.crc-tree-stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--cr-spacing-sm);
-  margin-bottom: var(--cr-spacing-md);
-  padding: var(--cr-spacing-md);
-  background: var(--background-secondary);
-  border-radius: var(--cr-radius-md);
-  border: 1px solid var(--background-modifier-border);
-}
-
-.crc-tree-stat {
-  text-align: center;
-}
-
-.crc-tree-stat__value {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-normal);
-  line-height: 1.2;
-}
-
-.crc-tree-stat__label {
-  font-size: var(--cr-font-sm);
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-/* Actions row */
-.crc-tree-actions-row {
+.crc-tree-intro-row {
   display: flex;
-  gap: var(--cr-spacing-sm);
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--cr-spacing-md);
   margin-bottom: var(--cr-spacing-md);
-  flex-wrap: wrap;
 }
 
-/* Empty state */
-.crc-tree-empty-state {
-  text-align: center;
-  padding: var(--cr-spacing-xl) var(--cr-spacing-md);
-  margin: var(--cr-spacing-md) 0;
-  background: var(--background-secondary);
-  border-radius: var(--cr-radius-md);
-  border: 1px solid var(--background-modifier-border);
-}
-
-.crc-tree-empty-icon {
-  margin-bottom: var(--cr-spacing-md);
-  color: var(--text-muted);
-  opacity: 0.5;
-}
-
-.crc-tree-empty-state h3 {
-  margin: 0 0 var(--cr-spacing-xs) 0;
-  font-size: var(--cr-font-lg);
-  font-weight: 600;
-  color: var(--text-normal);
-}
-
-.crc-tree-empty-state p {
-  margin: 0 0 var(--cr-spacing-md) 0;
-  max-width: 300px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Tips list */
-.crc-tree-tips-list {
+.crc-tree-intro-row p {
   margin: 0;
-  padding-left: 20px;
-  font-size: var(--cr-font-sm);
-  color: var(--text-muted);
+  flex: 1;
 }
 
-.crc-tree-tips-list li {
-  padding: 4px 0;
+.crc-new-tree-btn {
+  flex-shrink: 0;
 }
 
 /* ========================================
@@ -22615,6 +22548,148 @@ body:has(.cr-media-linker) .suggestion-container {
   line-height: 1.3;
 }
 
+/* ========================================
+   Canvas Trees Tab - Card Styles
+   ======================================== */
+
+/* Base card */
+.crc-tree-card {
+  background: var(--background-secondary);
+  border-radius: var(--cr-radius-md);
+  border: 1px solid var(--background-modifier-border);
+  margin-bottom: var(--cr-spacing-md);
+  overflow: hidden;
+}
+
+.crc-tree-card--muted {
+  background: var(--background-primary-alt);
+}
+
+/* Card header */
+.crc-tree-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--cr-spacing-md);
+  border-bottom: 1px solid var(--background-modifier-border);
+  gap: var(--cr-spacing-md);
+  flex-wrap: wrap;
+}
+
+.crc-tree-card__header--simple {
+  justify-content: flex-start;
+  gap: var(--cr-spacing-sm);
+  padding: var(--cr-spacing-sm) var(--cr-spacing-md);
+}
+
+.crc-tree-card__title-section {
+  display: flex;
+  align-items: center;
+  gap: var(--cr-spacing-sm);
+  color: var(--text-accent);
+}
+
+.crc-tree-card__title {
+  font-size: var(--cr-font-md);
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.crc-tree-card__badge {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: auto;
+}
+
+.crc-tree-card__actions {
+  display: flex;
+  gap: var(--cr-spacing-sm);
+  flex-wrap: wrap;
+}
+
+/* Stats grid */
+.crc-tree-card__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--background-modifier-border);
+}
+
+.crc-tree-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cr-spacing-md);
+  background: var(--background-secondary);
+  text-align: center;
+}
+
+.crc-tree-stat-box__icon {
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.crc-tree-stat-box__value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-normal);
+  line-height: 1.2;
+}
+
+.crc-tree-stat-box__label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* Card content */
+.crc-tree-card__content {
+  padding: var(--cr-spacing-sm);
+}
+
+/* Recent tree items */
+.crc-recent-tree-item--bordered {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: var(--cr-spacing-sm);
+  margin-top: var(--cr-spacing-sm);
+}
+
+/* Empty state */
+.crc-tree-empty-state {
+  text-align: center;
+  padding: var(--cr-spacing-lg) var(--cr-spacing-md);
+}
+
+.crc-tree-empty-icon {
+  color: var(--text-muted);
+  opacity: 0.4;
+  margin-bottom: var(--cr-spacing-sm);
+}
+
+.crc-tree-empty-state p {
+  margin: 0;
+  font-size: var(--cr-font-sm);
+}
+
+/* Tips list */
+.crc-tree-tips-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: var(--cr-font-sm);
+  color: var(--text-muted);
+}
+
+.crc-tree-tips-list li {
+  padding: 3px 0;
+}
+
 
 /* End of tree-output.css */
 
@@ -22885,10 +22960,10 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-21 20:04:12 UTC
+ * Build completed: 2025-12-21 20:26:00 UTC
  * Components processed: 35
- * Total lines: 22480
- * Total size: 445.34 KB
+ * Total lines: 22622
+ * Total size: 448.14 KB
  * Build duration: 0.03 seconds
  *
  * Component breakdown:
@@ -22922,7 +22997,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - dashboard.css: 366 lines, 7.11 KB
  * - universe-wizard.css: 621 lines, 11.05 KB
  * - preferences.css: 242 lines, 5.29 KB
- * - tree-output.css: 1049 lines, 20.36 KB
+ * - tree-output.css: 1191 lines, 23.16 KB
  * - dynamic-content.css: 190 lines, 4.08 KB
  * - animations.css: 16 lines, 0.18 KB
  * - responsive.css: 9 lines, 0.13 KB

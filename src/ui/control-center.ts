@@ -4030,64 +4030,37 @@ export class ControlCenterModal extends Modal {
 	private showTreeGenerationTab(): void {
 		const container = this.contentContainer;
 
-		// Title
-		container.createEl('h2', { text: 'Canvas Trees', cls: 'cr-card-title--no-margin' });
-
-		// Intro text
-		container.createEl('p', {
-			text: 'Generate visual family trees on the Obsidian Canvas.',
-			cls: 'crc-text-muted crc-tree-intro'
-		});
-
-		// Get data for stats
+		// Get data
 		const graphService = this.plugin.createFamilyGraphService();
 		const familyComponents = graphService.findAllFamilyComponents();
 		const recentTrees = this.plugin.settings.recentTrees?.slice(0, 10) || [];
 		const totalPeopleInTrees = recentTrees.reduce((sum, t) => sum + (t.peopleCount || 0), 0);
 		const totalPeopleInVault = familyComponents.reduce((sum, c) => sum + c.size, 0);
 
-		// Stats row
-		const statsRow = container.createDiv({ cls: 'crc-tree-stats-row' });
+		// === Overview Card ===
+		const overviewCard = container.createDiv({ cls: 'crc-tree-card' });
 
-		const treeStat = statsRow.createDiv({ cls: 'crc-tree-stat' });
-		treeStat.createDiv({ cls: 'crc-tree-stat__value', text: String(recentTrees.length) });
-		treeStat.createDiv({ cls: 'crc-tree-stat__label', text: 'Trees' });
+		// Card header with title and actions
+		const cardHeader = overviewCard.createDiv({ cls: 'crc-tree-card__header' });
+		const titleSection = cardHeader.createDiv({ cls: 'crc-tree-card__title-section' });
+		titleSection.appendChild(createLucideIcon('git-branch', 20));
+		titleSection.createSpan({ text: 'Canvas Trees', cls: 'crc-tree-card__title' });
 
-		const peopleStat = statsRow.createDiv({ cls: 'crc-tree-stat' });
-		peopleStat.createDiv({ cls: 'crc-tree-stat__value', text: String(totalPeopleInTrees) });
-		peopleStat.createDiv({ cls: 'crc-tree-stat__label', text: 'People in trees' });
+		// Quick actions in header
+		const actionsSection = cardHeader.createDiv({ cls: 'crc-tree-card__actions' });
 
-		const familyStat = statsRow.createDiv({ cls: 'crc-tree-stat' });
-		familyStat.createDiv({ cls: 'crc-tree-stat__value', text: String(familyComponents.length) });
-		familyStat.createDiv({ cls: 'crc-tree-stat__label', text: 'Family groups' });
-
-		const vaultStat = statsRow.createDiv({ cls: 'crc-tree-stat' });
-		vaultStat.createDiv({ cls: 'crc-tree-stat__value', text: String(totalPeopleInVault) });
-		vaultStat.createDiv({ cls: 'crc-tree-stat__label', text: 'People in vault' });
-
-		// Quick actions row
-		const actionsRow = container.createDiv({ cls: 'crc-tree-actions-row' });
-
-		// New Tree button (opens wizard)
-		const newTreeBtn = actionsRow.createEl('button', {
-			cls: 'cr-btn cr-btn--primary'
-		});
+		const newTreeBtn = actionsSection.createEl('button', { cls: 'cr-btn cr-btn--primary' });
 		newTreeBtn.appendChild(createLucideIcon('plus', 16));
 		newTreeBtn.appendText('New Tree');
 		newTreeBtn.addEventListener('click', () => {
 			const wizard = new TreeGenerationWizardModal(this.plugin, {
-				onComplete: () => {
-					this.showTab(this.activeTab);
-				}
+				onComplete: () => this.showTab(this.activeTab)
 			});
 			wizard.open();
 		});
 
-		// Open Latest button (if we have trees)
 		if (recentTrees.length > 0) {
-			const openLatestBtn = actionsRow.createEl('button', {
-				cls: 'cr-btn cr-btn--secondary'
-			});
+			const openLatestBtn = actionsSection.createEl('button', { cls: 'cr-btn cr-btn--secondary' });
 			openLatestBtn.appendChild(createLucideIcon('external-link', 16));
 			openLatestBtn.appendText('Open Latest');
 			openLatestBtn.addEventListener('click', () => {
@@ -4095,11 +4068,8 @@ export class ControlCenterModal extends Modal {
 			});
 		}
 
-		// Generate all trees button (if multiple family groups)
 		if (familyComponents.length > 1) {
-			const allTreesBtn = actionsRow.createEl('button', {
-				cls: 'cr-btn cr-btn--secondary'
-			});
+			const allTreesBtn = actionsSection.createEl('button', { cls: 'cr-btn cr-btn--secondary' });
 			allTreesBtn.appendChild(createLucideIcon('network', 16));
 			allTreesBtn.appendText(`Generate All (${familyComponents.length})`);
 			allTreesBtn.addEventListener('click', () => {
@@ -4107,60 +4077,63 @@ export class ControlCenterModal extends Modal {
 			});
 		}
 
-		// Recent Canvas Trees section
-		if (recentTrees.length > 0) {
-			const recentSection = this.createAccordionSection(
-				container,
-				'Recent canvas trees',
-				'clock',
-				true,
-				`${recentTrees.length}`
-			);
-			const recentContent = recentSection.content;
+		// Stats grid
+		const statsGrid = overviewCard.createDiv({ cls: 'crc-tree-card__stats' });
 
+		const stats = [
+			{ value: recentTrees.length, label: 'Trees', icon: 'file' as const },
+			{ value: totalPeopleInTrees, label: 'In Trees', icon: 'users' as const },
+			{ value: familyComponents.length, label: 'Families', icon: 'home' as const },
+			{ value: totalPeopleInVault, label: 'In Vault', icon: 'user' as const }
+		];
+
+		stats.forEach(stat => {
+			const statBox = statsGrid.createDiv({ cls: 'crc-tree-stat-box' });
+			const iconEl = statBox.createDiv({ cls: 'crc-tree-stat-box__icon' });
+			iconEl.appendChild(createLucideIcon(stat.icon, 16));
+			const valueEl = statBox.createDiv({ cls: 'crc-tree-stat-box__value', text: String(stat.value) });
+			const labelEl = statBox.createDiv({ cls: 'crc-tree-stat-box__label', text: stat.label });
+		});
+
+		// === Recent Trees Card ===
+		const recentCard = container.createDiv({ cls: 'crc-tree-card' });
+		const recentHeader = recentCard.createDiv({ cls: 'crc-tree-card__header crc-tree-card__header--simple' });
+		recentHeader.appendChild(createLucideIcon('clock', 18));
+		recentHeader.createSpan({ text: 'Recent Trees', cls: 'crc-tree-card__title' });
+		if (recentTrees.length > 0) {
+			recentHeader.createSpan({ text: String(recentTrees.length), cls: 'crc-tree-card__badge' });
+		}
+
+		const recentContent = recentCard.createDiv({ cls: 'crc-tree-card__content' });
+
+		if (recentTrees.length > 0) {
 			recentTrees.forEach((tree, index) => {
-				// Create a card-like container for each tree
 				const treeItem = recentContent.createDiv({
-					cls: `crc-recent-tree-item ${index > 0 ? 'crc-mt-2' : ''}`
+					cls: `crc-recent-tree-item ${index > 0 ? 'crc-recent-tree-item--bordered' : ''}`
 				});
 
-				// Left side: icon and info
 				const treeInfo = treeItem.createDiv({ cls: 'crc-recent-tree-info' });
 
-				// Title row with icon
 				const titleRow = treeInfo.createDiv({ cls: 'crc-recent-tree-title' });
-				const treeIcon = createLucideIcon('git-branch', 16);
-				titleRow.appendChild(treeIcon);
+				titleRow.appendChild(createLucideIcon('git-branch', 16));
 				titleRow.createSpan({
 					text: tree.canvasName.replace('.canvas', ''),
 					cls: 'crc-recent-tree-name'
 				});
 
-				// Metadata row
 				const metaRow = treeInfo.createDiv({ cls: 'crc-recent-tree-meta' });
-				metaRow.createSpan({
-					text: `${tree.peopleCount} people`,
-					cls: 'crc-badge crc-badge--small'
-				});
+				metaRow.createSpan({ text: `${tree.peopleCount} people`, cls: 'crc-badge crc-badge--small' });
 				if (tree.rootPerson) {
 					metaRow.createSpan({ text: ' · ', cls: 'crc-text-muted' });
-					metaRow.createSpan({
-						text: `Root: ${tree.rootPerson}`,
-						cls: 'crc-text-muted crc-text-sm'
-					});
+					metaRow.createSpan({ text: `Root: ${tree.rootPerson}`, cls: 'crc-text-muted crc-text-sm' });
 				}
 				if (tree.timestamp) {
 					metaRow.createSpan({ text: ' · ', cls: 'crc-text-muted' });
-					metaRow.createSpan({
-						text: this.formatTimeAgo(tree.timestamp),
-						cls: 'crc-text-muted crc-text-sm'
-					});
+					metaRow.createSpan({ text: this.formatTimeAgo(tree.timestamp), cls: 'crc-text-muted crc-text-sm' });
 				}
 
-				// Right side: action buttons
 				const actionRow = treeItem.createDiv({ cls: 'crc-recent-tree-actions' });
 
-				// Open button
 				const openBtn = actionRow.createEl('button', {
 					cls: 'crc-btn crc-btn--icon crc-btn--ghost',
 					attr: { 'aria-label': 'Open canvas' }
@@ -4171,7 +4144,6 @@ export class ControlCenterModal extends Modal {
 					void this.openCanvasTree(tree.canvasPath);
 				});
 
-				// More actions button (context menu)
 				const moreBtn = actionRow.createEl('button', {
 					cls: 'crc-btn crc-btn--icon crc-btn--ghost',
 					attr: { 'aria-label': 'More actions' }
@@ -4182,56 +4154,35 @@ export class ControlCenterModal extends Modal {
 					this.showRecentTreeContextMenu(e, tree);
 				});
 
-				// Click on the whole item to open
 				treeItem.addEventListener('click', () => {
 					void this.openCanvasTree(tree.canvasPath);
 				});
 			});
 		} else {
-			// Empty state when no recent trees
-			const emptyState = container.createDiv({ cls: 'crc-tree-empty-state' });
+			// Empty state
+			const emptyState = recentContent.createDiv({ cls: 'crc-tree-empty-state' });
 			const emptyIcon = emptyState.createDiv({ cls: 'crc-tree-empty-icon' });
-			emptyIcon.appendChild(createLucideIcon('git-branch', 48));
-			emptyState.createEl('h3', { text: 'No trees yet' });
+			emptyIcon.appendChild(createLucideIcon('git-branch', 40));
 			emptyState.createEl('p', {
-				text: 'Create your first family tree canvas to visualize your genealogy research.',
+				text: 'No trees yet. Click "New Tree" to create your first canvas.',
 				cls: 'crc-text-muted'
-			});
-			const emptyBtn = emptyState.createEl('button', {
-				cls: 'cr-btn cr-btn--primary'
-			});
-			emptyBtn.appendChild(createLucideIcon('plus', 16));
-			emptyBtn.appendText('Create Your First Tree');
-			emptyBtn.addEventListener('click', () => {
-				const wizard = new TreeGenerationWizardModal(this.plugin, {
-					onComplete: () => {
-						this.showTab(this.activeTab);
-					}
-				});
-				wizard.open();
 			});
 		}
 
-		// Tips section (collapsed by default)
-		const tipsSection = this.createAccordionSection(
-			container,
-			'Tips',
-			'lightbulb',
-			false
-		);
-		const tipsContent = tipsSection.content;
+		// === Tips Card ===
+		const tipsCard = container.createDiv({ cls: 'crc-tree-card crc-tree-card--muted' });
+		const tipsHeader = tipsCard.createDiv({ cls: 'crc-tree-card__header crc-tree-card__header--simple' });
+		tipsHeader.appendChild(createLucideIcon('lightbulb', 18));
+		tipsHeader.createSpan({ text: 'Tips', cls: 'crc-tree-card__title' });
 
+		const tipsContent = tipsCard.createDiv({ cls: 'crc-tree-card__content' });
 		const tipsList = tipsContent.createEl('ul', { cls: 'crc-tree-tips-list' });
 		const tips = [
-			'Use "Ancestors" or "Descendants" layouts for focused views of a single lineage.',
-			'The "Combined" layout shows both ancestors and descendants from your selected person.',
-			'Filter by collection to generate trees for specific family branches.',
-			'Canvas trees include embedded metadata so you can regenerate them later.',
-			'Right-click a recent tree for options like regenerate, reveal in explorer, or delete.'
+			'Use "Ancestors" or "Descendants" for focused lineage views.',
+			'Filter by collection to generate trees for specific branches.',
+			'Right-click recent trees for regenerate, reveal, or delete options.'
 		];
-		tips.forEach(tip => {
-			tipsList.createEl('li', { text: tip });
-		});
+		tips.forEach(tip => tipsList.createEl('li', { text: tip }));
 	}
 
 	/**
