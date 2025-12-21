@@ -350,8 +350,9 @@ export class UnifiedTreeWizardModal extends Modal {
 			const rawName = fm.name;
 			const name = typeof rawName === 'string' ? rawName : (Array.isArray(rawName) ? rawName.join(' ') : file.basename);
 
-			const birthDate = fm.birth_date instanceof Date ? fm.birth_date.toISOString().split('T')[0] : fm.birth_date;
-			const deathDate = fm.death_date instanceof Date ? fm.death_date.toISOString().split('T')[0] : fm.death_date;
+			// Note: Frontmatter uses 'born'/'died' properties
+			const birthDate = fm.born instanceof Date ? fm.born.toISOString().split('T')[0] : fm.born;
+			const deathDate = fm.died instanceof Date ? fm.died.toISOString().split('T')[0] : fm.died;
 
 			this.allPeople.push({
 				name,
