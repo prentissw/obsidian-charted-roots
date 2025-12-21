@@ -778,17 +778,24 @@ export class UnifiedTreeWizardModal extends Modal {
 			}
 		}
 
-		// Direction (canvas only)
-		new Setting(form)
-			.setName('Direction')
-			.setDesc('Primary flow direction of the tree')
-			.addDropdown(dropdown => dropdown
-				.addOption('vertical', 'Vertical (top to bottom)')
-				.addOption('horizontal', 'Horizontal (left to right)')
-				.setValue(this.formData.direction)
-				.onChange(value => {
-					this.formData.direction = value as 'vertical' | 'horizontal';
-				}));
+		// Direction - only show for canvas, or for PDF pedigree/descendant (not hourglass/fan)
+		const showDirection = this.formData.outputFormat === 'canvas' ||
+			(this.formData.outputFormat === 'pdf' &&
+				this.formData.treeType !== 'full' &&
+				this.formData.treeType !== 'fan');
+
+		if (showDirection) {
+			new Setting(form)
+				.setName('Direction')
+				.setDesc('Primary flow direction of the tree')
+				.addDropdown(dropdown => dropdown
+					.addOption('vertical', 'Vertical (top to bottom)')
+					.addOption('horizontal', 'Horizontal (left to right)')
+					.setValue(this.formData.direction)
+					.onChange(value => {
+						this.formData.direction = value as 'vertical' | 'horizontal';
+					}));
+		}
 
 		// Generation limits
 		if (this.formData.treeType !== 'descendants') {
