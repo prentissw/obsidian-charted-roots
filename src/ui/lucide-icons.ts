@@ -221,9 +221,9 @@ export const TAB_CONFIGS: TabConfig[] = [
 	},
 	{
 		id: 'tree-generation',
-		name: 'Tree output',
+		name: 'Canvas Trees',
 		icon: 'git-branch',
-		description: 'Generate trees and export to various formats'
+		description: 'Generate interactive tree canvases'
 	},
 	{
 		id: 'preferences',

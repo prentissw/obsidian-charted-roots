@@ -236,9 +236,9 @@ function renderQuickActionsSection(
 		},
 		{
 			id: 'tree-output',
-			label: 'Tree Output',
+			label: 'Canvas Trees',
 			icon: 'git-branch',
-			description: 'Generate a family tree',
+			description: 'Generate interactive tree canvases',
 			action: () => {
 				switchTab('tree-generation');
 			}
