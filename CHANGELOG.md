@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Recent Files tracks created notes** - Notes created via Dashboard quick-action tiles (Person, Event, Source, Place) now immediately appear in the Recent Files section.
+
 ---
 
 ## [0.13.6] - 2025-12-20
