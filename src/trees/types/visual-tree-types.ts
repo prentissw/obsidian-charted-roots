@@ -116,6 +116,9 @@ export interface VisualTreeNode {
 
 	/** Sosa-Stradonitz number for pedigree charts (1 = root, 2 = father, 3 = mother, etc.) */
 	sosaNumber?: number;
+
+	/** Angular position in radians (for fan charts) */
+	angle?: number;
 }
 
 /**

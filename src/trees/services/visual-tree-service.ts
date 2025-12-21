@@ -336,29 +336,514 @@ export class VisualTreeService {
 	 * Root person at top, descendants branching downward
 	 */
 	buildDescendantLayout(options: VisualTreeOptions): VisualTreeLayout | null {
-		// TODO: Implement in Phase 2.2
-		console.warn('Descendant tree layout not yet implemented');
-		return null;
+		// Generate family tree data
+		const familyTree = this.familyGraphService.generateTree({
+			rootCrId: options.rootPersonCrId,
+			treeType: 'descendants',
+			maxGenerations: options.maxGenerations,
+			includeSpouses: options.includeSpouses
+		});
+
+		if (!familyTree) {
+			return null;
+		}
+
+		// Get page dimensions
+		const pageSize = PAGE_SIZES[options.pageSize];
+		const isLandscape = options.orientation === 'landscape';
+		const page = isLandscape
+			? { width: pageSize.height, height: pageSize.width }
+			: { ...pageSize };
+
+		// Calculate usable area
+		const usableWidth = page.width - DEFAULT_MARGINS.left - DEFAULT_MARGINS.right;
+		const usableHeight = page.height - DEFAULT_MARGINS.top - DEFAULT_MARGINS.bottom;
+
+		// Collect descendants with generation info
+		const descendantData = this.collectDescendantsWithGeneration(familyTree);
+
+		if (descendantData.length === 0) {
+			return null;
+		}
+
+		// Group by generation
+		const generationMap = new Map<number, Array<{ person: PersonNode; index: number }>>();
+		for (const d of descendantData) {
+			const gen = generationMap.get(d.generation) || [];
+			gen.push({ person: d.person, index: gen.length });
+			generationMap.set(d.generation, gen);
+		}
+
+		const generationsCount = generationMap.size;
+		const maxNodesInGeneration = Math.max(...Array.from(generationMap.values()).map(g => g.length));
+
+		// Calculate node dimensions
+		const MIN_NODE_WIDTH = 100;
+		const MIN_NODE_HEIGHT = 40;
+		const TARGET_ASPECT_RATIO = 2.5;
+
+		const availableHeightPerGen = usableHeight / generationsCount;
+		let nodeHeight = Math.min(
+			DEFAULT_NODE_DIMENSIONS.height,
+			availableHeightPerGen - DEFAULT_NODE_DIMENSIONS.spacingY
+		);
+		nodeHeight = Math.max(nodeHeight, MIN_NODE_HEIGHT);
+
+		const availableWidthPerNode = usableWidth / maxNodesInGeneration;
+		let nodeWidth = Math.min(
+			DEFAULT_NODE_DIMENSIONS.width,
+			availableWidthPerNode - DEFAULT_NODE_DIMENSIONS.spacingX
+		);
+		nodeWidth = Math.max(nodeWidth, MIN_NODE_WIDTH, nodeHeight * TARGET_ASPECT_RATIO);
+
+		const nodeSpacingX = Math.max(DEFAULT_NODE_DIMENSIONS.spacingX, nodeWidth * 0.15);
+		const totalWidthNeeded = maxNodesInGeneration * (nodeWidth + nodeSpacingX) - nodeSpacingX;
+
+		const nodes: VisualTreeNode[] = [];
+		const connections: VisualTreeConnection[] = [];
+		const nodeMap = new Map<string, VisualTreeNode>();
+
+		// Position nodes by generation (root at top, descendants below)
+		for (const [generation, people] of generationMap) {
+			const nodesInGen = people.length;
+			const genSlotWidth = totalWidthNeeded / nodesInGen;
+
+			for (let i = 0; i < people.length; i++) {
+				const { person } = people[i];
+
+				const x = genSlotWidth * (i + 0.5);
+				const y = generation * (nodeHeight + DEFAULT_NODE_DIMENSIONS.spacingY);
+
+				const node: VisualTreeNode = {
+					person,
+					x,
+					y,
+					width: nodeWidth,
+					height: nodeHeight,
+					generation
+				};
+
+				nodes.push(node);
+				nodeMap.set(person.crId, node);
+			}
+		}
+
+		// Create connections (parent to child)
+		for (const node of nodes) {
+			const person = node.person;
+
+			// Find parent in tree
+			if (person.fatherCrId) {
+				const parentNode = nodeMap.get(person.fatherCrId);
+				if (parentNode) {
+					connections.push({
+						from: parentNode,
+						to: node,
+						type: 'parent'
+					});
+				}
+			}
+			if (person.motherCrId) {
+				const parentNode = nodeMap.get(person.motherCrId);
+				if (parentNode) {
+					connections.push({
+						from: parentNode,
+						to: node,
+						type: 'parent'
+					});
+				}
+			}
+		}
+
+		const bounds = this.calculateBounds(nodes);
+
+		return {
+			type: 'descendant',
+			rootPerson: {
+				crId: familyTree.root.crId,
+				name: familyTree.root.name
+			},
+			nodes,
+			connections,
+			bounds,
+			page,
+			orientation: options.orientation,
+			margins: DEFAULT_MARGINS,
+			stats: {
+				peopleCount: nodes.length,
+				generationsCount
+			}
+		};
 	}
 
 	/**
 	 * Build hourglass tree layout
 	 * Both ancestors and descendants from root person
+	 * Ancestors above the root, descendants below
 	 */
 	buildHourglassLayout(options: VisualTreeOptions): VisualTreeLayout | null {
-		// TODO: Implement in Phase 2.2
-		console.warn('Hourglass tree layout not yet implemented');
-		return null;
+		// Generate ancestor tree
+		const ancestorTree = this.familyGraphService.generateTree({
+			rootCrId: options.rootPersonCrId,
+			treeType: 'ancestors',
+			maxGenerations: options.maxGenerations,
+			includeSpouses: options.includeSpouses
+		});
+
+		// Generate descendant tree
+		const descendantTree = this.familyGraphService.generateTree({
+			rootCrId: options.rootPersonCrId,
+			treeType: 'descendants',
+			maxGenerations: options.maxGenerations,
+			includeSpouses: options.includeSpouses
+		});
+
+		if (!ancestorTree && !descendantTree) {
+			return null;
+		}
+
+		// Get page dimensions
+		const pageSize = PAGE_SIZES[options.pageSize];
+		const isLandscape = options.orientation === 'landscape';
+		const page = isLandscape
+			? { width: pageSize.height, height: pageSize.width }
+			: { ...pageSize };
+
+		const usableWidth = page.width - DEFAULT_MARGINS.left - DEFAULT_MARGINS.right;
+		const usableHeight = page.height - DEFAULT_MARGINS.top - DEFAULT_MARGINS.bottom;
+
+		// Collect data from both trees
+		const ancestorData = ancestorTree ? this.collectAncestorsWithSosa(ancestorTree) : [];
+		const descendantData = descendantTree ? this.collectDescendantsWithGeneration(descendantTree) : [];
+
+		// Count generations in each direction (excluding root which is gen 0)
+		const ancestorGens = ancestorData.length > 0
+			? Math.max(...ancestorData.map(a => a.generation))
+			: 0;
+		const descendantGens = descendantData.length > 1
+			? Math.max(...descendantData.filter(d => d.generation > 0).map(d => d.generation))
+			: 0;
+
+		const totalGenerations = ancestorGens + 1 + descendantGens; // ancestors + root + descendants
+
+		// Calculate max width needed
+		const maxAncestorWidth = ancestorGens > 0 ? Math.pow(2, ancestorGens) : 1;
+		const descendantsByGen = new Map<number, number>();
+		for (const d of descendantData) {
+			if (d.generation > 0) {
+				descendantsByGen.set(d.generation, (descendantsByGen.get(d.generation) || 0) + 1);
+			}
+		}
+		const maxDescendantWidth = descendantsByGen.size > 0
+			? Math.max(...Array.from(descendantsByGen.values()))
+			: 1;
+		const maxNodesInGeneration = Math.max(maxAncestorWidth, maxDescendantWidth, 1);
+
+		// Calculate node dimensions
+		const MIN_NODE_WIDTH = 100;
+		const MIN_NODE_HEIGHT = 40;
+		const TARGET_ASPECT_RATIO = 2.5;
+
+		const availableHeightPerGen = usableHeight / totalGenerations;
+		let nodeHeight = Math.min(
+			DEFAULT_NODE_DIMENSIONS.height,
+			availableHeightPerGen - DEFAULT_NODE_DIMENSIONS.spacingY
+		);
+		nodeHeight = Math.max(nodeHeight, MIN_NODE_HEIGHT);
+
+		const availableWidthPerNode = usableWidth / maxNodesInGeneration;
+		let nodeWidth = Math.min(
+			DEFAULT_NODE_DIMENSIONS.width,
+			availableWidthPerNode - DEFAULT_NODE_DIMENSIONS.spacingX
+		);
+		nodeWidth = Math.max(nodeWidth, MIN_NODE_WIDTH, nodeHeight * TARGET_ASPECT_RATIO);
+
+		const nodeSpacingX = Math.max(DEFAULT_NODE_DIMENSIONS.spacingX, nodeWidth * 0.15);
+		const totalWidthNeeded = maxNodesInGeneration * (nodeWidth + nodeSpacingX) - nodeSpacingX;
+
+		const nodes: VisualTreeNode[] = [];
+		const connections: VisualTreeConnection[] = [];
+		const nodeMap = new Map<string, VisualTreeNode>();
+
+		// Root row is at the "center" - ancestors above, descendants below
+		const rootRowIndex = ancestorGens;
+
+		// Position ancestors (generations above root)
+		for (const ancestor of ancestorData) {
+			const { person, generation, sosaNumber } = ancestor;
+
+			if (generation === 0) continue; // Skip root, will add separately
+
+			const nodesInGeneration = Math.pow(2, generation);
+			const positionInGeneration = sosaNumber - Math.pow(2, generation);
+
+			const genNodeSlotWidth = totalWidthNeeded / nodesInGeneration;
+			const x = genNodeSlotWidth * (positionInGeneration + 0.5);
+
+			// Y position: ancestors go upward from root row
+			const rowIndex = rootRowIndex - generation;
+			const y = rowIndex * (nodeHeight + DEFAULT_NODE_DIMENSIONS.spacingY);
+
+			const node: VisualTreeNode = {
+				person,
+				x,
+				y,
+				width: nodeWidth,
+				height: nodeHeight,
+				generation: -generation, // Negative for ancestors
+				sosaNumber
+			};
+
+			nodes.push(node);
+			nodeMap.set(person.crId, node);
+		}
+
+		// Position root
+		if (ancestorTree) {
+			const rootPerson = ancestorTree.root;
+			const rootX = totalWidthNeeded / 2;
+			const rootY = rootRowIndex * (nodeHeight + DEFAULT_NODE_DIMENSIONS.spacingY);
+
+			const rootNode: VisualTreeNode = {
+				person: rootPerson,
+				x: rootX,
+				y: rootY,
+				width: nodeWidth,
+				height: nodeHeight,
+				generation: 0,
+				sosaNumber: 1
+			};
+
+			nodes.push(rootNode);
+			nodeMap.set(rootPerson.crId, rootNode);
+		}
+
+		// Group descendants by generation
+		const descGenMap = new Map<number, PersonNode[]>();
+		for (const d of descendantData) {
+			if (d.generation === 0) continue; // Skip root
+			const gen = descGenMap.get(d.generation) || [];
+			gen.push(d.person);
+			descGenMap.set(d.generation, gen);
+		}
+
+		// Position descendants
+		for (const [generation, people] of descGenMap) {
+			const nodesInGen = people.length;
+			const genSlotWidth = totalWidthNeeded / nodesInGen;
+
+			for (let i = 0; i < people.length; i++) {
+				const person = people[i];
+
+				const x = genSlotWidth * (i + 0.5);
+				const rowIndex = rootRowIndex + generation;
+				const y = rowIndex * (nodeHeight + DEFAULT_NODE_DIMENSIONS.spacingY);
+
+				const node: VisualTreeNode = {
+					person,
+					x,
+					y,
+					width: nodeWidth,
+					height: nodeHeight,
+					generation // Positive for descendants
+				};
+
+				nodes.push(node);
+				nodeMap.set(person.crId, node);
+			}
+		}
+
+		// Create ancestor connections (using Sosa numbering)
+		for (const node of nodes) {
+			if (node.sosaNumber && node.sosaNumber > 1) {
+				const childSosa = Math.floor(node.sosaNumber / 2);
+				const childNode = nodes.find(n => n.sosaNumber === childSosa);
+				if (childNode) {
+					connections.push({
+						from: childNode,
+						to: node,
+						type: 'parent'
+					});
+				}
+			}
+		}
+
+		// Create descendant connections
+		for (const node of nodes) {
+			if (node.generation !== undefined && node.generation > 0) {
+				const person = node.person;
+				if (person.fatherCrId) {
+					const parentNode = nodeMap.get(person.fatherCrId);
+					if (parentNode) {
+						connections.push({
+							from: parentNode,
+							to: node,
+							type: 'parent'
+						});
+					}
+				}
+				if (person.motherCrId) {
+					const parentNode = nodeMap.get(person.motherCrId);
+					if (parentNode) {
+						connections.push({
+							from: parentNode,
+							to: node,
+							type: 'parent'
+						});
+					}
+				}
+			}
+		}
+
+		const bounds = this.calculateBounds(nodes);
+		const rootPerson = ancestorTree?.root || descendantTree?.root;
+
+		return {
+			type: 'hourglass',
+			rootPerson: rootPerson ? {
+				crId: rootPerson.crId,
+				name: rootPerson.name
+			} : { crId: '', name: '' },
+			nodes,
+			connections,
+			bounds,
+			page,
+			orientation: options.orientation,
+			margins: DEFAULT_MARGINS,
+			stats: {
+				peopleCount: nodes.length,
+				generationsCount: totalGenerations
+			}
+		};
 	}
 
 	/**
 	 * Build fan chart layout
 	 * Semicircular pedigree with radiating ancestor segments
+	 * Each generation forms a ring, with ancestors spreading outward
 	 */
 	buildFanLayout(options: VisualTreeOptions): VisualTreeLayout | null {
-		// TODO: Implement in Phase 2.3
-		console.warn('Fan chart layout not yet implemented');
-		return null;
+		// Generate ancestor tree
+		const familyTree = this.familyGraphService.generateTree({
+			rootCrId: options.rootPersonCrId,
+			treeType: 'ancestors',
+			maxGenerations: options.maxGenerations,
+			includeSpouses: options.includeSpouses
+		});
+
+		if (!familyTree) {
+			return null;
+		}
+
+		// Get page dimensions
+		const pageSize = PAGE_SIZES[options.pageSize];
+		const isLandscape = options.orientation === 'landscape';
+		const page = isLandscape
+			? { width: pageSize.height, height: pageSize.width }
+			: { ...pageSize };
+
+		const usableWidth = page.width - DEFAULT_MARGINS.left - DEFAULT_MARGINS.right;
+		const usableHeight = page.height - DEFAULT_MARGINS.top - DEFAULT_MARGINS.bottom;
+
+		// Collect ancestors with Sosa numbering
+		const ancestorData = this.collectAncestorsWithSosa(familyTree);
+
+		if (ancestorData.length === 0) {
+			return null;
+		}
+
+		const generationsCount = Math.max(...ancestorData.map(a => a.generation)) + 1;
+
+		// Fan chart parameters
+		const centerX = usableWidth / 2;
+		const centerY = usableHeight; // Bottom center for semicircle
+		const maxRadius = Math.min(usableWidth / 2, usableHeight) * 0.95;
+		const innerRadius = maxRadius * 0.15; // Small inner circle for root
+		const ringWidth = (maxRadius - innerRadius) / generationsCount;
+
+		// Calculate node dimensions based on ring width
+		const nodeHeight = Math.max(ringWidth * 0.7, 30);
+		const nodeWidth = nodeHeight * 2.5;
+
+		const nodes: VisualTreeNode[] = [];
+		const connections: VisualTreeConnection[] = [];
+
+		// Position nodes in semicircular rings
+		for (const ancestor of ancestorData) {
+			const { person, generation, sosaNumber } = ancestor;
+
+			// Ring radius (center of this generation's ring)
+			const ringRadius = innerRadius + (generation + 0.5) * ringWidth;
+
+			// Angular position within the semicircle (180 degrees = PI radians)
+			// Generation 0 has 1 person at center
+			// Generation 1 has 2 people (father left, mother right)
+			// Generation N has 2^N people spread across the semicircle
+			const nodesInGeneration = Math.pow(2, generation);
+			const positionInGeneration = sosaNumber - Math.pow(2, generation);
+
+			// Spread nodes evenly across semicircle (PI radians)
+			// Add small padding at edges
+			const padding = Math.PI * 0.05;
+			const availableAngle = Math.PI - (2 * padding);
+			const anglePerNode = availableAngle / nodesInGeneration;
+			const angle = padding + (positionInGeneration + 0.5) * anglePerNode;
+
+			// Convert polar to cartesian (0 angle = left, PI = right)
+			// Flip to make it more intuitive (father on left like traditional charts)
+			const x = centerX - ringRadius * Math.cos(angle);
+			const y = centerY - ringRadius * Math.sin(angle);
+
+			const node: VisualTreeNode = {
+				person,
+				x,
+				y,
+				width: nodeWidth,
+				height: nodeHeight,
+				generation,
+				sosaNumber,
+				// Store angle for potential use by renderer
+				angle
+			};
+
+			nodes.push(node);
+		}
+
+		// Create connections between nodes
+		for (const node of nodes) {
+			if (!node.sosaNumber || node.sosaNumber === 1) continue;
+
+			const childSosa = Math.floor(node.sosaNumber / 2);
+			const childNode = nodes.find(n => n.sosaNumber === childSosa);
+
+			if (childNode) {
+				connections.push({
+					from: childNode,
+					to: node,
+					type: 'parent'
+				});
+			}
+		}
+
+		const bounds = this.calculateBounds(nodes);
+
+		return {
+			type: 'fan',
+			rootPerson: {
+				crId: familyTree.root.crId,
+				name: familyTree.root.name
+			},
+			nodes,
+			connections,
+			bounds,
+			page,
+			orientation: options.orientation,
+			margins: DEFAULT_MARGINS,
+			stats: {
+				peopleCount: nodes.length,
+				generationsCount
+			}
+		};
 	}
 
 	/**
@@ -580,6 +1065,47 @@ export class VisualTreeService {
 					sosaNumber: sosaNumber * 2 + 1,
 					generation: generation + 1
 				});
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Collect descendants from family tree with generation info
+	 * Uses BFS traversal from root through children
+	 */
+	private collectDescendantsWithGeneration(
+		familyTree: FamilyTree
+	): Array<{ person: PersonNode; generation: number }> {
+		const result: Array<{ person: PersonNode; generation: number }> = [];
+
+		// BFS traversal through children
+		const queue: Array<{ crId: string; generation: number }> = [
+			{ crId: familyTree.root.crId, generation: 0 }
+		];
+
+		const visited = new Set<string>();
+
+		while (queue.length > 0) {
+			const { crId, generation } = queue.shift()!;
+
+			if (visited.has(crId)) continue;
+			visited.add(crId);
+
+			const person = familyTree.nodes.get(crId);
+			if (!person) continue;
+
+			result.push({ person, generation });
+
+			// Add children
+			for (const childCrId of person.childrenCrIds) {
+				if (familyTree.nodes.has(childCrId) && !visited.has(childCrId)) {
+					queue.push({
+						crId: childCrId,
+						generation: generation + 1
+					});
+				}
 			}
 		}
 
