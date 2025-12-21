@@ -48,6 +48,7 @@ import { GeocodingService } from './src/maps/services/geocoding-service';
 import { TimelineProcessor, RelationshipsProcessor } from './src/dynamic-content';
 import { UniverseService, EditUniverseModal } from './src/universes';
 import { RecentFilesService, RecentEntityType } from './src/core/recent-files-service';
+import { registerCustomIcons } from './src/ui/lucide-icons';
 
 const logger = getLogger('CanvasRootsPlugin');
 
@@ -223,6 +224,9 @@ export default class CanvasRootsPlugin extends Plugin {
 
 	async onload() {
 		console.debug('Loading Canvas Roots plugin');
+
+		// Register custom icons for visual tree reports
+		registerCustomIcons();
 
 		await this.loadSettings();
 

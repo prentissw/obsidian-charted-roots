@@ -29,6 +29,11 @@ import type {
 	CollectionOverviewResult,
 	ReportPerson
 } from '../types/report-types';
+import type {
+	VisualTreeLayout,
+	VisualTreeOptions
+} from '../../trees/types/visual-tree-types';
+import { VisualTreeSvgRenderer } from '../../trees/services/visual-tree-svg-renderer';
 
 /**
  * PDF generation options
@@ -1821,5 +1826,183 @@ export class PdfReportRenderer {
 		if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
 		if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 		return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+	}
+
+	/**
+	 * Render Visual Tree to PDF
+	 *
+	 * Generates a graphical tree diagram by rendering to SVG first,
+	 * converting to a PNG image, and embedding in the PDF.
+	 * This approach is more reliable than pdfmake's canvas primitives.
+	 */
+	async renderVisualTree(
+		layout: VisualTreeLayout,
+		options: VisualTreeOptions
+	): Promise<void> {
+		await this.ensurePdfMake();
+
+		const defaultFont = this.getDefaultFont('sans-serif');
+
+		// Use SVG renderer to generate the tree image
+		const svgRenderer = new VisualTreeSvgRenderer();
+		const svgString = svgRenderer.renderToSvg(layout, options);
+		const imageDataUrl = await svgRenderer.svgToDataUrl(svgString, layout.page.width, layout.page.height);
+
+		// Build document content
+		const content: Content[] = [];
+
+		// Title
+		content.push({
+			text: options.title || `${layout.rootPerson.name} - ${this.getChartTypeTitle(layout.type)}`,
+			style: 'title',
+			margin: [0, 0, 0, 10]
+		});
+
+		// Stats line
+		content.push({
+			text: `${layout.stats.peopleCount} people across ${layout.stats.generationsCount} generations`,
+			alignment: 'center',
+			fontSize: 10,
+			color: COLORS.mutedText,
+			margin: [0, 0, 0, 20]
+		});
+
+		// Add the tree image
+		const imageWidth = layout.page.width - layout.margins.left - layout.margins.right;
+		const imageHeight = layout.page.height - layout.margins.top - layout.margins.bottom - 80; // Reserve space for title
+
+		content.push({
+			image: imageDataUrl,
+			width: imageWidth,
+			height: imageHeight,
+			alignment: 'center'
+		});
+
+		const docDefinition: TDocumentDefinitions = {
+			pageSize: {
+				width: layout.page.width,
+				height: layout.page.height
+			},
+			pageOrientation: layout.orientation,
+			pageMargins: [layout.margins.left, layout.margins.top + 40, layout.margins.right, layout.margins.bottom],
+			defaultStyle: {
+				font: defaultFont,
+				fontSize: 10
+			},
+			content,
+			styles: this.getStyles('sans-serif')
+		};
+
+		const filename = `${layout.rootPerson.name.replace(/\s+/g, '-')}-${layout.type}-tree.pdf`;
+		this.pdfMake.createPdf(docDefinition).download(filename);
+
+		new Notice('PDF downloaded');
+	}
+
+	/**
+	 * Render multiple Visual Tree layouts to a single multi-page PDF
+	 *
+	 * Used for large trees that are split across multiple pages.
+	 */
+	async renderVisualTrees(
+		layouts: VisualTreeLayout[],
+		options: VisualTreeOptions
+	): Promise<void> {
+		if (layouts.length === 0) {
+			new Notice('No layouts to render');
+			return;
+		}
+
+		// Single layout - use simpler method
+		if (layouts.length === 1) {
+			return this.renderVisualTree(layouts[0], options);
+		}
+
+		await this.ensurePdfMake();
+
+		const defaultFont = this.getDefaultFont('sans-serif');
+		const svgRenderer = new VisualTreeSvgRenderer();
+
+		// Build document content with multiple pages
+		const content: Content[] = [];
+
+		for (let i = 0; i < layouts.length; i++) {
+			const layout = layouts[i];
+
+			// Page break before all pages except the first
+			if (i > 0) {
+				content.push({ text: '', pageBreak: 'before' });
+			}
+
+			// Title with page info
+			const pageInfo = layout.generationRange
+				? `Generations ${layout.generationRange.from + 1}-${layout.generationRange.to + 1}`
+				: `Page ${i + 1}`;
+
+			content.push({
+				text: options.title || `${layout.rootPerson.name} - ${this.getChartTypeTitle(layout.type)}`,
+				style: 'title',
+				margin: [0, 0, 0, 5]
+			});
+
+			// Page/generation info
+			content.push({
+				text: `${pageInfo} (${layout.stats.peopleCount} people) — Page ${i + 1} of ${layouts.length}`,
+				alignment: 'center',
+				fontSize: 10,
+				color: COLORS.mutedText,
+				margin: [0, 0, 0, 15]
+			});
+
+			// Render SVG for this page
+			const svgString = svgRenderer.renderToSvg(layout, options);
+			const imageDataUrl = await svgRenderer.svgToDataUrl(svgString, layout.page.width, layout.page.height);
+
+			// Add the tree image
+			const imageWidth = layout.page.width - layout.margins.left - layout.margins.right;
+			const imageHeight = layout.page.height - layout.margins.top - layout.margins.bottom - 80;
+
+			content.push({
+				image: imageDataUrl,
+				width: imageWidth,
+				height: imageHeight,
+				alignment: 'center'
+			});
+		}
+
+		// Use first layout's page settings
+		const firstLayout = layouts[0];
+
+		const docDefinition: TDocumentDefinitions = {
+			pageSize: {
+				width: firstLayout.page.width,
+				height: firstLayout.page.height
+			},
+			pageOrientation: firstLayout.orientation,
+			pageMargins: [firstLayout.margins.left, firstLayout.margins.top + 40, firstLayout.margins.right, firstLayout.margins.bottom],
+			defaultStyle: {
+				font: defaultFont,
+				fontSize: 10
+			},
+			content,
+			styles: this.getStyles('sans-serif')
+		};
+
+		const filename = `${firstLayout.rootPerson.name.replace(/\s+/g, '-')}-${firstLayout.type}-tree.pdf`;
+		this.pdfMake.createPdf(docDefinition).download(filename);
+
+		new Notice('PDF downloaded');
+	}
+
+	/**
+	 * Get chart type display title
+	 */
+	private getChartTypeTitle(type: VisualTreeLayout['type']): string {
+		switch (type) {
+			case 'pedigree': return 'Pedigree Chart';
+			case 'descendant': return 'Descendant Chart';
+			case 'hourglass': return 'Hourglass Chart';
+			case 'fan': return 'Fan Chart';
+		}
 	}
 }

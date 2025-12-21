@@ -3,7 +3,64 @@
  * Obsidian provides Lucide icons via setIcon API
  */
 
-import { setIcon } from 'obsidian';
+import { addIcon, setIcon } from 'obsidian';
+
+/**
+ * Custom SVG icons for visual tree reports (V2 designs from planning doc)
+ * Following Lucide design guidelines: 24x24 canvas, 2px stroke, round caps/joins
+ */
+const CUSTOM_ICONS: Record<string, string> = {
+	'pedigree-tree': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="20" r="2.5"/>
+  <circle cx="5" cy="11" r="2"/>
+  <circle cx="19" cy="11" r="2"/>
+  <circle cx="5" cy="3" r="1.5"/>
+  <circle cx="19" cy="3" r="1.5"/>
+  <line x1="10" y1="18" x2="6.5" y2="13"/>
+  <line x1="14" y1="18" x2="17.5" y2="13"/>
+  <line x1="5" y1="9" x2="5" y2="4.5"/>
+  <line x1="19" y1="9" x2="19" y2="4.5"/>
+</svg>`,
+	'descendant-tree': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="4" r="2.5"/>
+  <circle cx="5" cy="13" r="2"/>
+  <circle cx="19" cy="13" r="2"/>
+  <circle cx="5" cy="21" r="1.5"/>
+  <circle cx="19" cy="21" r="1.5"/>
+  <line x1="10" y1="6" x2="6.5" y2="11"/>
+  <line x1="14" y1="6" x2="17.5" y2="11"/>
+  <line x1="5" y1="15" x2="5" y2="19.5"/>
+  <line x1="19" y1="15" x2="19" y2="19.5"/>
+</svg>`,
+	'hourglass-tree': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="2.5"/>
+  <circle cx="4" cy="4" r="2"/>
+  <circle cx="20" cy="4" r="2"/>
+  <circle cx="4" cy="20" r="2"/>
+  <circle cx="20" cy="20" r="2"/>
+  <line x1="10" y1="10" x2="5.5" y2="5.5"/>
+  <line x1="14" y1="10" x2="18.5" y2="5.5"/>
+  <line x1="10" y1="14" x2="5.5" y2="18.5"/>
+  <line x1="14" y1="14" x2="18.5" y2="18.5"/>
+</svg>`,
+	'fan-chart': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M 2 20 A 12 12 0 0 1 22 20"/>
+  <path d="M 6 20 A 8 8 0 0 1 18 20"/>
+  <line x1="12" y1="20" x2="12" y2="8"/>
+  <line x1="12" y1="20" x2="4" y2="12"/>
+  <line x1="12" y1="20" x2="20" y2="12"/>
+</svg>`
+};
+
+/**
+ * Register custom icons with Obsidian
+ * Should be called once during plugin initialization
+ */
+export function registerCustomIcons(): void {
+	for (const [name, svg] of Object.entries(CUSTOM_ICONS)) {
+		addIcon(name, svg);
+	}
+}
 
 /**
  * Lucide icon names used in Control Center
@@ -114,7 +171,17 @@ export type LucideIconName =
 	| 'sparkles' // Enhancement/magic
 	| 'plus-circle' // Add/create new
 	// Statistics
-	| 'briefcase'; // Occupation/work
+	| 'briefcase' // Occupation/work
+	// Visual tree reports
+	| 'file-image' // PDF/image export
+	| 'git-fork' // Descendant tree fallback
+	| 'hourglass' // Hourglass tree fallback
+	| 'pie-chart' // Fan chart fallback
+	// Custom icons (registered via addIcon)
+	| 'pedigree-tree' // Pedigree tree icon
+	| 'descendant-tree' // Descendant tree icon
+	| 'hourglass-tree' // Hourglass tree icon
+	| 'fan-chart'; // Fan chart icon
 
 /**
  * Tab configuration for Control Center navigation

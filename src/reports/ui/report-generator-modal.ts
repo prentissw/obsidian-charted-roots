@@ -43,6 +43,8 @@ import { PersonPickerModal, PersonInfo } from '../../ui/person-picker';
 import { PlacePickerModal, SelectedPlaceInfo } from '../../ui/place-picker';
 import { FolderFilterService } from '../../core/folder-filter';
 import { createLucideIcon } from '../../ui/lucide-icons';
+import { VisualTreeWizardModal } from '../../trees/ui/visual-tree-wizard-modal';
+import type { VisualTreeChartType } from '../../trees/types/visual-tree-types';
 
 /**
  * Options for opening the report generator modal
@@ -1495,6 +1497,12 @@ export class ReportGeneratorModal extends Modal {
 	private async generateReport(): Promise<void> {
 		const metadata = REPORT_METADATA[this.selectedReportType];
 
+		// Handle visual tree reports - open dedicated wizard instead
+		if (this.isVisualTreeType(this.selectedReportType)) {
+			this.openVisualTreeWizard();
+			return;
+		}
+
 		// Validate person selection for person-based reports
 		if (metadata.requiresPerson && !this.selectedPersonCrId) {
 			new Notice('Please select a person first');
@@ -1691,6 +1699,12 @@ export class ReportGeneratorModal extends Modal {
 					maxMembers: this.collectionOverviewOptions.maxMembers
 				};
 				break;
+
+			default:
+				// Visual tree types are handled above and return early
+				// This should never be reached
+				new Notice(`Unsupported report type: ${this.selectedReportType}`);
+				return;
 		}
 
 		try {
@@ -1788,5 +1802,40 @@ export class ReportGeneratorModal extends Modal {
 				await this.pdfRenderer.renderCollectionOverview(result as CollectionOverviewResult, pdfOptions);
 				break;
 		}
+	}
+
+	/**
+	 * Check if the report type is a visual tree type
+	 */
+	private isVisualTreeType(reportType: ReportType): boolean {
+		return reportType === 'pedigree-tree-pdf' ||
+			reportType === 'descendant-tree-pdf' ||
+			reportType === 'hourglass-tree-pdf' ||
+			reportType === 'fan-chart-pdf';
+	}
+
+	/**
+	 * Open the visual tree wizard modal
+	 */
+	private openVisualTreeWizard(): void {
+		// Map report type to chart type
+		const chartTypeMap: Record<string, VisualTreeChartType> = {
+			'pedigree-tree-pdf': 'pedigree',
+			'descendant-tree-pdf': 'descendant',
+			'hourglass-tree-pdf': 'hourglass',
+			'fan-chart-pdf': 'fan'
+		};
+
+		const chartType = chartTypeMap[this.selectedReportType] || 'pedigree';
+
+		// Close this modal and open the wizard
+		this.close();
+
+		const wizard = new VisualTreeWizardModal(this.plugin, {
+			chartType,
+			personCrId: this.selectedPersonCrId || undefined,
+			personName: this.selectedPersonName || undefined
+		});
+		wizard.open();
 	}
 }

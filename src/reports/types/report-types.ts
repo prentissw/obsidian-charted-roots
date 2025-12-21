@@ -20,7 +20,12 @@ export type ReportType =
 	| 'place-summary'
 	| 'media-inventory'
 	| 'universe-overview'
-	| 'collection-overview';
+	| 'collection-overview'
+	// Visual tree reports (graphical PDF output)
+	| 'pedigree-tree-pdf'
+	| 'descendant-tree-pdf'
+	| 'hourglass-tree-pdf'
+	| 'fan-chart-pdf';
 
 /**
  * Report categories for UI organization
@@ -30,7 +35,8 @@ export type ReportCategory =
 	| 'research'
 	| 'timeline'
 	| 'geographic'
-	| 'summary';
+	| 'summary'
+	| 'visual-trees';
 
 /**
  * Base options for all reports
@@ -787,6 +793,44 @@ export const REPORT_METADATA: Record<ReportType, ReportMetadata> = {
 		category: 'summary',
 		requiresPerson: true,
 		entityType: 'collection'
+	},
+
+	// Visual tree reports (graphical PDF output)
+	'pedigree-tree-pdf': {
+		type: 'pedigree-tree-pdf',
+		name: 'Pedigree tree PDF',
+		description: 'Graphical ancestor tree with positioned boxes and lines',
+		icon: 'pedigree-tree',
+		category: 'visual-trees',
+		requiresPerson: true,
+		entityType: 'person'
+	},
+	'descendant-tree-pdf': {
+		type: 'descendant-tree-pdf',
+		name: 'Descendant tree PDF',
+		description: 'Graphical descendant tree branching downward',
+		icon: 'descendant-tree',
+		category: 'visual-trees',
+		requiresPerson: true,
+		entityType: 'person'
+	},
+	'hourglass-tree-pdf': {
+		type: 'hourglass-tree-pdf',
+		name: 'Hourglass tree PDF',
+		description: 'Both ancestors and descendants from a root person',
+		icon: 'hourglass-tree',
+		category: 'visual-trees',
+		requiresPerson: true,
+		entityType: 'person'
+	},
+	'fan-chart-pdf': {
+		type: 'fan-chart-pdf',
+		name: 'Fan chart PDF',
+		description: 'Semicircular pedigree with radiating ancestor segments',
+		icon: 'fan-chart',
+		category: 'visual-trees',
+		requiresPerson: true,
+		entityType: 'person'
 	}
 };
 
@@ -813,6 +857,10 @@ export const REPORT_CATEGORY_METADATA: Record<ReportCategory, { name: string; de
 	summary: {
 		name: 'Summary',
 		description: 'Collection and universe overviews'
+	},
+	'visual-trees': {
+		name: 'Visual Trees',
+		description: 'Graphical PDF tree diagrams'
 	}
 };
 

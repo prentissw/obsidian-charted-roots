@@ -1188,3 +1188,193 @@
 .crc-tree-tips-list li {
   padding: 3px 0;
 }
+
+/* ==========================================================================
+   Visual Tree Wizard Modal
+   ========================================================================== */
+
+.cr-visual-tree-wizard {
+  width: 500px;
+  max-width: 90vw;
+}
+
+.cr-visual-tree-wizard .modal-content {
+  padding: 16px;
+}
+
+/* Visual tree type cards - vertical layout with more info */
+.crc-visual-tree-types {
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.crc-visual-tree-types .crc-wizard-type-card {
+  flex-direction: row;
+  justify-content: flex-start;
+  padding: 10px 12px;
+  gap: 10px;
+}
+
+.crc-visual-tree-types .crc-wizard-type-card svg {
+  width: 20px;
+  height: 20px;
+}
+
+.crc-wizard-type-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.crc-visual-tree-types .crc-wizard-type-desc {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.crc-visual-tree-types .crc-wizard-type-card--selected .crc-wizard-type-desc {
+  color: var(--text-on-accent);
+  opacity: 0.85;
+}
+
+.crc-wizard-type-badge {
+  font-size: 9px;
+  padding: 1px 6px;
+  background: var(--background-modifier-border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.crc-wizard-type-card--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.crc-wizard-type-card--disabled:hover {
+  border-color: var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+/* Modal header */
+.cr-visual-tree-wizard .cr-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cr-visual-tree-wizard .cr-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--cr-font-lg);
+  font-weight: 600;
+}
+
+.cr-visual-tree-wizard .cr-modal-desc {
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* Form elements */
+.cr-visual-tree-wizard .cr-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cr-visual-tree-wizard .cr-form-group {
+  margin-bottom: 8px;
+}
+
+/* Footer */
+.cr-visual-tree-wizard .cr-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.cr-visual-tree-wizard .cr-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  font-size: var(--cr-font-sm);
+}
+
+.cr-visual-tree-wizard .cr-btn--primary {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.cr-visual-tree-wizard .cr-btn--primary:hover {
+  background: var(--interactive-accent-hover);
+}
+
+/* Large tree warning */
+.cr-large-tree-warning {
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--background-modifier-error-rgb, rgba(255, 100, 100, 0.1));
+  border: 1px solid var(--text-warning);
+  border-radius: var(--radius-m);
+}
+
+.cr-large-tree-warning-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-warning);
+  margin-bottom: 8px;
+}
+
+.cr-large-tree-warning-header svg {
+  color: var(--text-warning);
+}
+
+.cr-large-tree-warning-info p {
+  margin: 0 0 12px 0;
+  color: var(--text-muted);
+  font-size: var(--cr-font-sm);
+  line-height: 1.5;
+}
+
+.cr-large-tree-warning-options p {
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.cr-large-tree-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.cr-large-tree-option input[type="radio"] {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.cr-large-tree-option label {
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.cr-large-tree-option label strong {
+  color: var(--text-normal);
+}
+
+.cr-large-tree-option label span {
+  color: var(--text-muted);
+  font-size: var(--cr-font-sm);
+}
