@@ -1226,7 +1226,7 @@ export class UnifiedTreeWizardModal extends Modal {
 			rootPersonCrId: this.formData.rootPerson.crId,
 			chartType: this.formData.treeType === 'full' ? 'hourglass' :
 				this.formData.treeType === 'ancestors' ? 'pedigree' :
-					this.formData.treeType === 'descendants' ? 'descendant' : 'pedigree',
+					this.formData.treeType === 'descendants' ? 'descendant' : 'fan',
 			maxGenerations,
 			pageSize: this.formData.pageSize,
 			orientation: this.formData.orientation,
@@ -1592,7 +1592,7 @@ export class UnifiedTreeWizardModal extends Modal {
 			rootPersonCrId: this.formData.rootPerson.crId,
 			chartType: this.formData.treeType === 'full' ? 'hourglass' :
 				this.formData.treeType === 'ancestors' ? 'pedigree' :
-					this.formData.treeType === 'descendants' ? 'descendant' : 'pedigree',
+					this.formData.treeType === 'descendants' ? 'descendant' : 'fan',
 			maxGenerations,
 			pageSize: this.formData.pageSize,
 			orientation: this.formData.orientation,
