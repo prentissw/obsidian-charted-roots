@@ -101,7 +101,7 @@ children: ["[[Bob Smith]]", "[[Alice Smith]]"]
 
 - [Data Entry](Data-Entry) - Learn about all the frontmatter fields for person notes
 - [Bases Integration](Bases-Integration) - Use spreadsheet-like tables for bulk data entry
-- [Tree Generation](Tree-Generation) - Explore generation options and layout settings
+- [Canvas Trees](Canvas-Trees) - Explore generation options and layout settings
 - [Import & Export](Import-Export) - Import existing family data from GEDCOM files
 
 ### For Worldbuilders

@@ -72,5 +72,5 @@ Export the preview as an image file for use outside Obsidian:
 
 ## Next Steps
 
-- [Tree Generation](Tree-Generation) - Generate the full canvas
+- [Canvas Trees](Canvas-Trees) - Generate the full canvas
 - [Family Chart View](Family-Chart-View) - Interactive exploration view

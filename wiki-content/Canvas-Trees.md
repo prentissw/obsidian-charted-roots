@@ -1,13 +1,15 @@
-# Tree Generation
+# Canvas Trees
 
-This page covers how to generate family tree visualizations on the Obsidian Canvas.
+Generate interactive family tree visualizations on the Obsidian Canvas for exploration, annotation, and sharing.
+
+> **Note:** In the next release, the "Tree Output" tab in Control Center will be renamed to "Canvas Trees" to better reflect its purpose. This documentation uses the new name.
 
 ---
 
 ## Table of Contents
 
 - [Step 1: Open Control Center](#step-1-open-control-center)
-- [Step 2: Navigate to Tree Generation Tab](#step-2-navigate-to-tree-generation-tab)
+- [Step 2: Navigate to Canvas Trees Tab](#step-2-navigate-to-canvas-trees-tab)
 - [Step 3: Select Root Person](#step-3-select-root-person)
 - [Step 4: Configure Tree Options](#step-4-configure-tree-options)
 - [Step 5: Generate](#step-5-generate)
@@ -26,9 +28,9 @@ This page covers how to generate family tree visualizations on the Obsidian Canv
 **Method 2: Ribbon Icon (if enabled)**
 - Click the Canvas Roots icon in the left sidebar
 
-## Step 2: Navigate to Tree Generation Tab
+## Step 2: Navigate to Canvas Trees Tab
 
-Click the **Tree Generation** tab at the top of the Control Center modal.
+Click the **Canvas Trees** tab at the top of the Control Center modal.
 
 ## Step 3: Select Root Person
 

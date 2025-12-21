@@ -4,48 +4,50 @@
 
 ### Getting Started
 - [Installation & Setup](Getting-Started)
+- [Control Center](Control-Center)
 - [Data Entry](Data-Entry)
+- [Import & Export](Import-Export)
 - [Templater Integration](Templater-Integration)
 - [Bases Integration](Bases-Integration)
 
-### Tree Features
-- [Tree Generation](Tree-Generation)
-- [Tree Preview](Tree-Preview)
-- [Family Chart View](Family-Chart-View)
-
-### Data Management
+### Data & Research
+- [Evidence & Sources](Evidence-And-Sources)
+- [Events & Timelines](Events-And-Timelines)
 - [Managing Data](Data-Management)
-- [Import & Export](Import-Export)
 - [Data Quality](Data-Quality)
 - [Staging & Cleanup](Staging-And-Cleanup)
 
-### Tools & Features
-- [Control Center](Control-Center)
-- [Context Menus](Context-Menus)
-- [Dynamic Note Content](Dynamic-Note-Content)
-- [Statistics & Reports](Statistics-And-Reports)
+### Exploration
+- [Family Chart View](Family-Chart-View)
+- [Geographic Features](Geographic-Features)
 - [Relationship Tools](Relationship-Tools)
 - [Custom Relationships](Custom-Relationships)
+- [Context Menus](Context-Menus)
+- [Dynamic Note Content](Dynamic-Note-Content)
+
+### Visualization & Output
+- [Canvas Trees](Canvas-Trees)
+- [Tree Preview](Tree-Preview)
+- [Statistics & Reports](Statistics-And-Reports)
+
+### World-Building
+- [Fictional Date Systems](Fictional-Date-Systems)
 - [Organization Notes](Organization-Notes)
 - [Universe Notes](Universe-Notes)
-- [Events & Timelines](Events-And-Timelines)
-- [Evidence & Sources](Evidence-And-Sources)
-- [Fictional Date Systems](Fictional-Date-Systems)
-- [Geographic Features](Geographic-Features)
-- [Schema Validation](Schema-Validation)
-- [Advanced Features](Advanced-Features)
-- [Styling & Theming](Styling-And-Theming)
-
-### Project
-- [Roadmap](Roadmap)
-- [Release History](Release-History)
 
 ### Reference
 - [Frontmatter Reference](Frontmatter-Reference)
 - [Settings & Configuration](Settings-And-Configuration)
+- [Schema Validation](Schema-Validation)
+- [Styling & Theming](Styling-And-Theming)
 - [Privacy & Security](Privacy-And-Security)
+- [Advanced Features](Advanced-Features)
 - [FAQ](FAQ)
 - [Troubleshooting](Troubleshooting)
+
+### Project
+- [Roadmap](Roadmap)
+- [Release History](Release-History)
 
 ### For Developers
 - [Developer Guide](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/development.md)
