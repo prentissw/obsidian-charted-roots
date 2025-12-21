@@ -173,7 +173,7 @@
 ### Tree Generation
 | Tree Output Interface | Generated Family Tree |
 |:---------------------:|:---------------------:|
-| ![Tree Output interface](docs/images/tree-output-ui.png) | ![Family tree canvas](docs/images/family-tree-canvas.png) |
+| ![Tree Output interface](docs/images/canvas-roots-control-center-tree-output-tab.png) | ![Family tree canvas](docs/images/family-tree-canvas.png) |
 | Person browser, layout selection, interactive preview | Automated genealogical layout with spouse and parent-child connections |
 
 ---
