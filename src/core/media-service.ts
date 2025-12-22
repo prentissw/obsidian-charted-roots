@@ -114,24 +114,36 @@ export class MediaService {
 	 */
 	resolveMediaItem(mediaRef: string): MediaItem {
 		// Parse wikilink or path
-		let path = mediaRef;
+		let linkPath = mediaRef;
 
 		// Handle wikilinks: [[path]] or [[path|alias]]
 		const wikilinkMatch = mediaRef.match(/^\[\[([^\]|]+)(?:\|[^\]]+)?\]\]$/);
 		if (wikilinkMatch) {
-			path = wikilinkMatch[1];
+			linkPath = wikilinkMatch[1];
 		}
 
-		// Try to find the file
-		const abstractFile = this.app.vault.getAbstractFileByPath(path);
-		const file = abstractFile instanceof TFile ? abstractFile : null;
+		// Try to find the file using Obsidian's link resolution
+		// This handles relative paths and files without full paths
+		let file: TFile | null = null;
+
+		// First try direct path lookup
+		const abstractFile = this.app.vault.getAbstractFileByPath(linkPath);
+		if (abstractFile instanceof TFile) {
+			file = abstractFile;
+		} else {
+			// Use Obsidian's link resolution (handles partial paths)
+			const resolved = this.app.metadataCache.getFirstLinkpathDest(linkPath, '');
+			if (resolved instanceof TFile) {
+				file = resolved;
+			}
+		}
 
 		// Determine type from extension
-		const ext = path.substring(path.lastIndexOf('.')).toLowerCase();
+		const ext = linkPath.substring(linkPath.lastIndexOf('.')).toLowerCase();
 		const type = this.getMediaType(ext);
 
 		// Get display name (filename without path)
-		const displayName = path.substring(path.lastIndexOf('/') + 1);
+		const displayName = linkPath.substring(linkPath.lastIndexOf('/') + 1);
 
 		return {
 			mediaRef,
