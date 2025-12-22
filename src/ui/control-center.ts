@@ -56,6 +56,7 @@ import { CreateEventModal } from '../events/ui/create-event-modal';
 import { ExportOptionsBuilder } from './export-options-builder';
 import { FlattenNestedPropertiesModal } from './flatten-nested-properties-modal';
 import { PlaceGeneratorModal } from '../enhancement/ui/place-generator-modal';
+import { BulkMediaLinkModal } from '../core/ui/bulk-media-link-modal';
 import {
 	renderSourcesTab,
 	EvidenceService,
@@ -11628,6 +11629,17 @@ export class ControlCenterModal extends Modal {
 				.onClick(() => {
 					this.close();
 					this.app.commands.executeCommandById(selectedBaseType.command);
+				})
+			);
+
+		// Bulk media linking
+		new Setting(toolsContent)
+			.setName('Bulk link media')
+			.setDesc('Link media files to multiple entities (people, events, places, etc.) at once')
+			.addButton(btn => btn
+				.setButtonText('Open')
+				.onClick(() => {
+					new BulkMediaLinkModal(this.app, this.plugin).open();
 				})
 			);
 

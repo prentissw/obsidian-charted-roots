@@ -1243,7 +1243,7 @@ For large vaults with many media:
 - [x] "Manage media..." context menu opens reorder modal
 - [x] Drag-and-drop reordering updates frontmatter correctly
 - [x] First item displays "Thumbnail" badge in reorder UI
-- [ ] Bulk media linking supports all entity types
+- [x] Bulk media linking supports all entity types
 - [ ] Unified media gallery shows media from all sources
 - [x] Media indicators visible in Control Center entity tables
 
