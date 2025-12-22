@@ -1,6 +1,6 @@
 # Canvas Roots: Genealogical Family Tree Plugin for Obsidian
 
-[![Version](https://img.shields.io/badge/version-0.13.6-blue.svg)](https://github.com/banisterious/obsidian-canvas-roots/releases) [![Status](https://img.shields.io/badge/status-stable-green.svg)](docs/roadmap.md)
+[![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](https://github.com/banisterious/obsidian-canvas-roots/releases) [![Status](https://img.shields.io/badge/status-stable-green.svg)](docs/roadmap.md)
 
 **Canvas Roots** brings professional genealogical tools to Obsidian—import, organize, visualize, and share family histories and fictional worlds without leaving your vault. From GEDCOM imports to PDF reports, interactive charts to map views, manage your research with the power of linked Markdown notes. Built for genealogists, historians, writers, and world-builders.
 
@@ -99,9 +99,10 @@
 | **Data Quality Analysis** | Severity-coded alerts for date issues, missing data, orphaned people; expandable drill-down lists |
 | **Top Lists** | Interactive lists for surnames, locations, occupations, sources with drill-down to matching people |
 | **Extended Statistics** | Longevity analysis, family size patterns, marriage patterns, migration flows, timeline density |
+| **Visual Tree Charts** | Printable PDF tree diagrams: Pedigree, Descendant, Hourglass, and Fan Chart with custom icons |
 | **Genealogical Reports** | Family Group Sheet, Individual Summary, Ahnentafel, Gaps Report, Register Report, Pedigree/Descendant Charts |
 | **Extended Reports** | Source Summary, Timeline Report, Place Summary, Media Inventory, Universe Overview, Collection Overview |
-| **PDF Export** | All 13 report types exportable as styled PDFs with customizable cover pages, logos, and date formats |
+| **PDF Export** | All 17 report types exportable as styled PDFs with customizable cover pages, logos, and date formats |
 
 ### [Evidence & Sources](https://github.com/banisterious/obsidian-canvas-roots/wiki/Evidence-And-Sources)
 

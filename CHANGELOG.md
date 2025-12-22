@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.14.0] - 2025-12-21
+
+### Added
+
+- **Visual Tree Charts** - Generate printable PDF tree diagrams with positioned boxes and connecting lines. Four chart types available: Pedigree (ancestors), Descendant, Hourglass (both directions), and Fan Chart (semicircular).
+
+- **Unified Tree Wizard** - Single wizard for both Canvas and PDF tree generation. Dynamic step flow branches based on output format selection. Replaces the previous separate wizards for a streamlined experience.
+
+- **Visual Trees section in Statistics Dashboard** - Dedicated section for visual tree PDF generation, separate from text-based reports. Features card-based UI with custom tree icons for each chart type.
+
+- **Custom tree icons** - Four new SVG icons registered with Obsidian: `cr-pedigree-tree`, `cr-descendant-tree`, `cr-hourglass-tree`, `cr-fan-chart`. Used across Statistics View, Report Generator, and Tree Wizard.
+
+- **Visual Tree PDF options** - Page size (Letter, A4, Legal, Tabloid, A3), orientation (portrait/landscape), node content (name only, with dates, with dates and places), color schemes (default, grayscale, generational), and large tree handling (auto-scale, auto-page-size, limit-generations).
+
+- **Tree type badges in wizard** - Chart type shown as badge in step headers after selection for clear context during wizard navigation.
+
+### Changed
+
+- **Statistics Dashboard reorganized** - Visual Trees now has its own expandable section at the top, separate from the Generate Reports section. Clearer separation between graphical tree outputs and text-based reports.
+
+- **Report categories updated** - Added `visual-trees` category to report metadata. Visual tree reports filtered from main Reports section and moved to dedicated Visual Trees section.
+
+---
+
 ## [0.13.6] - 2025-12-20
 
 ### Added
