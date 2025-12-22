@@ -1385,18 +1385,16 @@ Challenges:
 - May need to modify card rendering to always include `<image>` element
 - Need to handle image loading when initially hidden
 
-**SVG Export with Avatars (Known Issue)**
+**SVG Export with Avatars (Improved)**
 
-Exporting large trees with avatars to SVG may cause performance issues or crashes. The export process converts avatar images to base64 data URIs, which for large trees with many images can:
-- Create very large SVG files
-- Block the main thread during image encoding
-- Potentially exhaust memory
+Exporting large trees with avatars to SVG can be resource-intensive due to base64 encoding of images. Improvements:
 
-Potential solutions:
-1. **Progressive encoding** — Encode images in batches with `setTimeout` breaks
-2. **Web Worker** — Move base64 encoding to a worker thread
-3. **External image refs** — Option to keep image URLs instead of embedding
-4. **Size limits** — Warn user when export would be very large
+1. **Sequential image processing** — Images are now processed one at a time to reduce memory pressure
+2. **UI thread yielding** — `setTimeout(10)` breaks every 3 images prevent UI freezing and allow garbage collection
+3. **User notification** — Shows notice for exports with 50+ images: "Embedding N images... This may take a moment."
+4. **No-avatar export option** — Export menu now includes "Export as SVG (no avatars)" for faster/smaller exports
+
+For very large trees (100+ avatars), use "Export as SVG (no avatars)" if the full export causes issues.
 
 ---
 

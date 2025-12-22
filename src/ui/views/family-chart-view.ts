@@ -1464,7 +1464,13 @@ export class FamilyChartView extends ItemView {
 		menu.addItem((item) => {
 			item.setTitle('Export as SVG')
 				.setIcon('file-code')
-				.onClick(() => void this.exportAsSvg());
+				.onClick(() => void this.exportAsSvg(true));
+		});
+
+		menu.addItem((item) => {
+			item.setTitle('Export as SVG (no avatars)')
+				.setIcon('file-code')
+				.onClick(() => void this.exportAsSvg(false));
 		});
 
 		menu.addItem((item) => {
@@ -1843,29 +1849,49 @@ export class FamilyChartView extends ItemView {
 	private async embedImagesAsBase64(svgClone: SVGSVGElement): Promise<void> {
 		const imageElements = svgClone.querySelectorAll('image[href]');
 
-		const conversionPromises: Promise<void>[] = [];
-
+		// Filter to only app:// URLs that need conversion
+		const imagesToConvert: { element: Element; href: string }[] = [];
 		imageElements.forEach((imgEl) => {
 			const href = imgEl.getAttribute('href') || imgEl.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
 			if (!href) return;
-
 			// Only convert app:// URLs (Obsidian internal)
 			if (!href.startsWith('app://')) return;
-
-			const promise = this.convertImageToBase64(href).then((base64) => {
-				if (base64) {
-					imgEl.setAttribute('href', base64);
-					// Also set xlink:href for older SVG viewers
-					imgEl.setAttributeNS('http://www.w3.org/1999/xlink', 'href', base64);
-				}
-			}).catch((error) => {
-				logger.warn('export', 'Failed to convert image to base64', { href, error });
-			});
-
-			conversionPromises.push(promise);
+			imagesToConvert.push({ element: imgEl, href });
 		});
 
-		await Promise.all(conversionPromises);
+		if (imagesToConvert.length === 0) return;
+
+		const totalImages = imagesToConvert.length;
+
+		// Warn user about large exports
+		if (totalImages > 50) {
+			new Notice(`Embedding ${totalImages} images... This may take a moment.`, 5000);
+		}
+
+		logger.debug('export', 'Embedding images as base64', { totalImages });
+
+		// Process images ONE AT A TIME to prevent memory pressure
+		// Each image creates temporary Image + Canvas objects that need GC
+		for (let i = 0; i < totalImages; i++) {
+			const { element, href } = imagesToConvert[i];
+
+			try {
+				const base64 = await this.convertImageToBase64(href);
+				if (base64) {
+					element.setAttribute('href', base64);
+					// Also set xlink:href for older SVG viewers
+					element.setAttributeNS('http://www.w3.org/1999/xlink', 'href', base64);
+				}
+			} catch (error) {
+				logger.warn('export', 'Failed to convert image to base64', { href, error });
+			}
+
+			// Yield to UI thread every few images to prevent freezing
+			// and allow garbage collection
+			if (i % 3 === 0) {
+				await new Promise(resolve => setTimeout(resolve, 10));
+			}
+		}
 	}
 
 	/**
@@ -2379,8 +2405,9 @@ export class FamilyChartView extends ItemView {
 
 	/**
 	 * Export the chart as SVG
+	 * @param includeAvatars Whether to embed avatar images as base64
 	 */
-	private async exportAsSvg(): Promise<void> {
+	private async exportAsSvg(includeAvatars: boolean = true): Promise<void> {
 		if (!this.f3Chart) return;
 
 		const svg = this.f3Chart.svg;
@@ -2393,8 +2420,19 @@ export class FamilyChartView extends ItemView {
 			// Prepare SVG for export using shared helper
 			const { svgClone } = this.prepareSvgForExport(svg as SVGSVGElement);
 
-			// Embed avatar images as base64 for export
-			await this.embedImagesAsBase64(svgClone);
+			if (includeAvatars) {
+				// Embed avatar images as base64 for export
+				await this.embedImagesAsBase64(svgClone);
+			} else {
+				// Remove avatar images entirely for faster/smaller export
+				const imageElements = svgClone.querySelectorAll('image[href]');
+				imageElements.forEach((imgEl) => {
+					const href = imgEl.getAttribute('href') || imgEl.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+					if (href?.startsWith('app://')) {
+						imgEl.remove();
+					}
+				});
+			}
 
 			// Serialize
 			const serializer = new XMLSerializer();
