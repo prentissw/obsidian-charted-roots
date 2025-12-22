@@ -2,12 +2,18 @@
 
 Planning document for extending media attachment support to all entity types.
 
-- **Status:** In Progress (Phases 1, 2 & 3 Complete)
+- **Status:** Complete (Phases 1, 2 & 3)
 - **Priority:** High
-- **GitHub Issue:** [#21](https://github.com/banisterious/obsidian-canvas-roots/issues/21)
+- **GitHub Issue:** [#20](https://github.com/banisterious/obsidian-canvas-roots/issues/20)
 - **Branch:** `feature/universal-media-linking`
 - **Created:** 2025-12-20
 - **Updated:** 2025-12-22
+
+### Recent Changes (2025-12-22)
+
+- Fixed Media Gallery and Unlinked Media modals not finding linked media (missing `ensureCacheLoaded()` call)
+- Added YAML array format support for `media` property in SourceService
+- Fixed Unlinked Media modal styling (CSS `:has()` selector pattern, search field styling)
 
 ---
 
@@ -1233,10 +1239,10 @@ For large vaults with many media:
 ## Success Criteria
 
 ### Phase 1
-- [ ] `media` property parseable on Person, Event, Place, Organization notes
-- [ ] `MediaService` provides unified media access across entity types
-- [ ] Property aliases work for all entity types
-- [ ] Existing Source media functionality continues working
+- [x] `media` property parseable on Person, Event, Place, Organization notes
+- [x] `MediaService` provides unified media access across entity types
+- [x] Property aliases work for all entity types
+- [x] Existing Source media functionality continues working
 
 ### Phase 2
 - [x] "Link Media" context menu action works for all entity types
@@ -1244,8 +1250,10 @@ For large vaults with many media:
 - [x] Drag-and-drop reordering updates frontmatter correctly
 - [x] First item displays "Thumbnail" badge in reorder UI
 - [x] Bulk media linking supports all entity types
-- [ ] Unified media gallery shows media from all sources
+- [x] Unified media gallery shows media from all sources
 - [x] Media indicators visible in Control Center entity tables
+- [x] Media Manager hub with Browse Gallery, Bulk Link, Find Unlinked, Source Media Linker
+- [x] Find Unlinked modal discovers orphaned media files
 
 ### Phase 3
 - [x] Person thumbnails display on Family Chart nodes (avatar field populated from first media)
