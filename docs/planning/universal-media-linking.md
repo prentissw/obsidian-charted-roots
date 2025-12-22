@@ -1390,10 +1390,11 @@ Challenges:
 Exporting large trees with avatars to SVG can be resource-intensive due to base64 encoding of images. Improvements:
 
 1. **Sequential image processing** — Images are now processed one at a time to reduce memory pressure
-2. **UI thread yielding** — `setTimeout(10)` breaks every 3 images to prevent UI freezing and allow garbage collection
+2. **UI thread yielding** — `setTimeout(50)` after each image for large exports to allow garbage collection
 3. **User notification** — Shows notice for exports with 50+ images: "Embedding N images... This may take a moment."
 4. **No-avatar export option** — Export menu now includes "Export as SVG (no avatars)" for faster/smaller exports
 5. **Depth limit guidance** — Warning for large exports suggests using tree depth limits to reduce visible nodes
+6. **Avatar downscaling** — Avatars scaled to 150px max and converted to JPEG (85% quality) to reduce base64 size
 
 **Workaround for large trees (100+ avatars):**
 
@@ -1402,6 +1403,23 @@ For very large trees where avatar export causes memory exhaustion:
 1. **Use tree depth limits** — Click the branch icon in toolbar to limit ancestry/progeny depth (e.g., 3-4 generations)
 2. **Export smaller sections** — Navigate to different root people to export focused subtrees
 3. **Use no-avatar export** — "Export as SVG (no avatars)" always works regardless of tree size
+
+**Export Modal (Planned)**
+
+Replace the current export dropdown menu with a dedicated Export Modal/Wizard that provides:
+
+1. **Format selection** — PNG, SVG, PDF with visual previews/icons
+2. **Avatar options** — Include/exclude avatars with size/quality controls
+3. **Scope options** — Export visible tree, full tree, or custom depth limits
+4. **Size estimation** — Show estimated file size before export
+5. **Progress display** — Real-time progress bar for large exports with cancel option
+6. **Presets** — Quick options like "Print quality", "Web sharing", "Compact"
+
+Benefits:
+- Better discoverability of export options
+- Prevents accidental large exports that may crash
+- Allows users to tune quality vs size tradeoffs
+- Progress feedback for long-running exports
 
 ---
 
