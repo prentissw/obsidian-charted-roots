@@ -292,4 +292,23 @@ export class MediaService {
 		const match = wikilink.match(/^\[\[([^\]|]+)(?:\|[^\]]+)?\]\]$/);
 		return match ? match[1] : wikilink;
 	}
+
+	/**
+	 * Check if a file path is within the configured media folders.
+	 * Returns true if filter is disabled, folders are empty, or file is in a media folder.
+	 */
+	isInMediaFolders(filePath: string): boolean {
+		const { enableMediaFolderFilter, mediaFolders } = this.settings;
+
+		// If filter is disabled or no folders configured, accept all files
+		if (!enableMediaFolderFilter || mediaFolders.length === 0) {
+			return true;
+		}
+
+		// Check if file is in any of the configured folders
+		return mediaFolders.some(folder => {
+			const normalizedFolder = folder.endsWith('/') ? folder : `${folder}/`;
+			return filePath.startsWith(normalizedFolder) || filePath.startsWith(folder + '/');
+		});
+	}
 }

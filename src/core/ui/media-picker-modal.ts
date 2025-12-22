@@ -136,6 +136,11 @@ export class MediaPickerModal extends Modal {
 				continue;
 			}
 
+			// Apply media folder filter
+			if (!this.mediaService.isInMediaFolders(file.path)) {
+				continue;
+			}
+
 			const type = this.mediaService.getMediaType(ext);
 
 			// Filter by allowed types if specified
