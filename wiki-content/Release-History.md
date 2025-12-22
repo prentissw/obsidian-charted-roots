@@ -121,7 +121,7 @@ The Family Chart view produces superior visual output (orthogonal connectors, pr
 - `src/trees/ui/tree-generation-wizard.ts` (1500+ lines, replaced by unified wizard)
 - `src/trees/ui/visual-tree-wizard-modal.ts` (570+ lines, replaced by unified wizard)
 
-See [Canvas Trees](Canvas-Trees) for user documentation and [Tree Visualization Overhaul Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/tree-visualization-overhaul.md) for implementation details.
+See [Canvas Trees](Canvas-Trees) for user documentation and [Tree Visualization Overhaul Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/tree-visualization-overhaul.md) for implementation details.
 
 ---
 
@@ -186,7 +186,7 @@ Transform the Control Center's Status tab into a Dashboard with quick-action til
 - Dashboard styles in `styles/dashboard.css`
 - Vault Health section collapse state persisted in settings
 
-See [Control Center Dashboard Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/control-center-dashboard.md) for implementation details.
+See [Control Center Dashboard Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/control-center-dashboard.md) for implementation details.
 
 ---
 
@@ -307,7 +307,7 @@ The Report Generator modal now includes a category selector that groups all 13 r
 - Report options stored in modal state and passed to generators
 - Same output options: Save to vault, Download as MD, Download as PDF
 
-See [Extended Report Types Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/extended-report-types.md) for implementation details.
+See [Extended Report Types Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/extended-report-types.md) for implementation details.
 
 ---
 

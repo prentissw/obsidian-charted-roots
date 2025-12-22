@@ -522,7 +522,7 @@ This could be combined with the wizard for advanced options.
 
 ## Related Documents
 
-- [Extended Report Types](extended-report-types.md) — Current report types
+- [Extended Report Types](archive/extended-report-types.md) — Current report types
 - [PDF Report Export](pdf-report-export.md) — PDF infrastructure
 - [Statistics and Reports](../../wiki-content/Statistics-And-Reports.md) — User documentation
 

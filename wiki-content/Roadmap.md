@@ -232,7 +232,7 @@ This becomes higher priority when:
 - Bundle size becomes a concern
 - Major updates to either library require maintenance
 
-See [Tree Visualization Overhaul Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/tree-visualization-overhaul.md) for technical details.
+See [Tree Visualization Overhaul Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/tree-visualization-overhaul.md) for technical details.
 
 ---
 
