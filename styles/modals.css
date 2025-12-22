@@ -7699,3 +7699,77 @@
     gap: 12px;
   }
 }
+
+
+/* ==========================================================================
+   Media Folder Filter Toggle (shared by gallery and unlinked modals)
+   ========================================================================== */
+
+.crc-media-folder-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.crc-media-folder-filter-toggle:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
+.crc-media-folder-filter-toggle--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.crc-media-folder-filter-toggle--disabled:hover {
+  background: var(--background-secondary);
+  border-color: var(--background-modifier-border);
+}
+
+.crc-media-folder-filter-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.crc-media-folder-filter-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.crc-media-folder-filter-checkbox {
+  margin: 0;
+  cursor: pointer;
+}
+
+.crc-media-folder-filter-toggle--disabled .crc-media-folder-filter-checkbox {
+  cursor: not-allowed;
+}
+
+.crc-media-folder-filter-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* When filter is active, highlight the toggle */
+.crc-media-folder-filter-toggle:has(.crc-media-folder-filter-checkbox:checked) {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+.crc-media-folder-filter-toggle:has(.crc-media-folder-filter-checkbox:checked) .crc-media-folder-filter-icon,
+.crc-media-folder-filter-toggle:has(.crc-media-folder-filter-checkbox:checked) .crc-media-folder-filter-label {
+  color: var(--text-on-accent);
+}
+
+.crc-media-folder-filter-toggle:has(.crc-media-folder-filter-checkbox:checked):hover {
+  background: var(--interactive-accent-hover);
+}

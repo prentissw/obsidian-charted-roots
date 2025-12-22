@@ -274,6 +274,9 @@ export class MediaGalleryModal extends Modal {
 			});
 		}
 
+		// Media folder filter toggle
+		this.renderFolderFilterToggle(controls);
+
 		// Count display
 		this.countEl = contentEl.createDiv({ cls: 'crc-media-gallery-count' });
 		this.updateCount();
@@ -303,6 +306,11 @@ export class MediaGalleryModal extends Modal {
 				if (!matchesFilename && !matchesEntity) {
 					return false;
 				}
+			}
+
+			// Media folder filter - filters linked media to only show those within configured folders
+			if (!this.isInMediaFolders(item.file.path)) {
+				return false;
 			}
 
 			return true;
@@ -545,5 +553,81 @@ export class MediaGalleryModal extends Modal {
 			case 'source': return 'file-text';
 			default: return 'file';
 		}
+	}
+
+	/**
+	 * Check if a file path is within the configured media folders.
+	 * Returns true if filter is disabled, folders are empty, or file is in a media folder.
+	 */
+	private isInMediaFolders(filePath: string): boolean {
+		const { enableMediaFolderFilter, mediaFolders } = this.plugin.settings;
+
+		// If filter is disabled or no folders configured, accept all files
+		if (!enableMediaFolderFilter || mediaFolders.length === 0) {
+			return true;
+		}
+
+		// Check if file is in any of the configured folders
+		return mediaFolders.some(folder => {
+			const normalizedFolder = folder.endsWith('/') ? folder : `${folder}/`;
+			return filePath.startsWith(normalizedFolder) || filePath.startsWith(folder + '/');
+		});
+	}
+
+	/**
+	 * Render the folder filter toggle in the controls area
+	 */
+	private renderFolderFilterToggle(container: HTMLElement): void {
+		const { enableMediaFolderFilter, mediaFolders } = this.plugin.settings;
+		const hasFolders = mediaFolders.length > 0;
+
+		const toggleWrapper = container.createDiv({ cls: 'crc-media-folder-filter-toggle' });
+
+		// Folder icon
+		const iconEl = toggleWrapper.createSpan({ cls: 'crc-media-folder-filter-icon' });
+		setIcon(iconEl, 'folder');
+
+		// Toggle checkbox
+		const checkbox = toggleWrapper.createEl('input', {
+			type: 'checkbox',
+			cls: 'crc-media-folder-filter-checkbox'
+		});
+		checkbox.checked = enableMediaFolderFilter;
+		checkbox.disabled = !hasFolders;
+
+		// Label
+		const label = toggleWrapper.createSpan({
+			cls: 'crc-media-folder-filter-label',
+			text: 'Media folders only'
+		});
+
+		// Tooltip/hint for no folders configured
+		if (!hasFolders) {
+			toggleWrapper.addClass('crc-media-folder-filter-toggle--disabled');
+			toggleWrapper.setAttribute('aria-label', 'No media folders configured. Set up in Preferences > Folder locations.');
+			toggleWrapper.setAttribute('title', 'No media folders configured. Set up in Preferences > Folder locations.');
+		} else {
+			const folderList = mediaFolders.length === 1
+				? mediaFolders[0]
+				: `${mediaFolders.length} folders`;
+			toggleWrapper.setAttribute('title', `Filter to: ${folderList}`);
+		}
+
+		// Handle toggle change
+		checkbox.addEventListener('change', async () => {
+			this.plugin.settings.enableMediaFolderFilter = checkbox.checked;
+			await this.plugin.saveSettings();
+			// Re-apply filters with new setting
+			this.applyFilters();
+		});
+
+		// Clicking the wrapper also toggles (except on checkbox itself)
+		toggleWrapper.addEventListener('click', async (e) => {
+			if (e.target === checkbox || !hasFolders) return;
+			checkbox.checked = !checkbox.checked;
+			this.plugin.settings.enableMediaFolderFilter = checkbox.checked;
+			await this.plugin.saveSettings();
+			this.applyFilters();
+		});
 	}
 }

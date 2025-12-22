@@ -285,6 +285,9 @@ export class UnlinkedMediaModal extends Modal {
 			});
 		}
 
+		// Media folder filter toggle
+		this.renderFolderFilterToggle(controls);
+
 		// Selection controls and count
 		const selectionBar = contentEl.createDiv({ cls: 'crc-unlinked-media-selection-bar' });
 
@@ -638,5 +641,62 @@ export class UnlinkedMediaModal extends Modal {
 		});
 
 		menu.showAtMouseEvent(e);
+	}
+
+	/**
+	 * Render the folder filter toggle in the controls area
+	 */
+	private renderFolderFilterToggle(container: HTMLElement): void {
+		const { enableMediaFolderFilter, mediaFolders } = this.plugin.settings;
+		const hasFolders = mediaFolders.length > 0;
+
+		const toggleWrapper = container.createDiv({ cls: 'crc-media-folder-filter-toggle' });
+
+		// Folder icon
+		const iconEl = toggleWrapper.createSpan({ cls: 'crc-media-folder-filter-icon' });
+		setIcon(iconEl, 'folder');
+
+		// Toggle checkbox
+		const checkbox = toggleWrapper.createEl('input', {
+			type: 'checkbox',
+			cls: 'crc-media-folder-filter-checkbox'
+		});
+		checkbox.checked = enableMediaFolderFilter;
+		checkbox.disabled = !hasFolders;
+
+		// Label
+		const label = toggleWrapper.createSpan({
+			cls: 'crc-media-folder-filter-label',
+			text: 'Media folders only'
+		});
+
+		// Tooltip/hint for no folders configured
+		if (!hasFolders) {
+			toggleWrapper.addClass('crc-media-folder-filter-toggle--disabled');
+			toggleWrapper.setAttribute('aria-label', 'No media folders configured. Set up in Preferences > Folder locations.');
+			toggleWrapper.setAttribute('title', 'No media folders configured. Set up in Preferences > Folder locations.');
+		} else {
+			const folderList = mediaFolders.length === 1
+				? mediaFolders[0]
+				: `${mediaFolders.length} folders`;
+			toggleWrapper.setAttribute('title', `Filter to: ${folderList}`);
+		}
+
+		// Handle toggle change
+		checkbox.addEventListener('change', async () => {
+			this.plugin.settings.enableMediaFolderFilter = checkbox.checked;
+			await this.plugin.saveSettings();
+			// Reload data with new filter setting
+			this.loadUnlinkedMedia();
+		});
+
+		// Clicking the wrapper also toggles (except on checkbox itself)
+		toggleWrapper.addEventListener('click', async (e) => {
+			if (e.target === checkbox || !hasFolders) return;
+			checkbox.checked = !checkbox.checked;
+			this.plugin.settings.enableMediaFolderFilter = checkbox.checked;
+			await this.plugin.saveSettings();
+			this.loadUnlinkedMedia();
+		});
 	}
 }
