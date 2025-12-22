@@ -1346,6 +1346,58 @@ For large vaults with many media:
 2. **Media index cache** — Cache entity → media mappings
 3. **Image resize for thumbnails** — Don't load full-res for tiny thumbnails
 
+#### Implemented Optimizations
+
+**Avatar URL Caching (2025-12-22)**
+
+The Family Chart now caches resolved avatar URLs in a `Map<string, string>` keyed by person crId. This provides:
+
+- **Faster avatar toggle** — When toggling avatars on/off, cached URLs are reused instead of re-resolving from MediaService
+- **Faster re-initialization** — Chart re-initializations (e.g., orientation changes) don't need to re-resolve URLs
+- **Cache invalidation** — Cache is cleared on `refreshChart()` when vault changes occur
+
+Implementation in `family-chart-view.ts`:
+- `avatarUrlCache: Map<string, string>` — Persists across chart re-initializations
+- `preResolveAvatars()` — Pre-populates cache before data transformation
+- `transformPersonNode()` — Uses cached URLs via simple Map lookup
+
+#### Future Optimizations
+
+**CSS-Based Avatar Toggle (Planned)**
+
+Currently, toggling avatars requires full chart re-initialization because:
+1. Avatar URLs are only passed to family-chart when `showAvatars` is true
+2. The family-chart library renders SVG cards with or without `<image>` elements based on the `avatar` field
+
+A CSS-based approach would:
+1. **Always pass avatar URLs** to the chart data (even when "hidden")
+2. **Add a CSS class** to the chart container: `.cr-fcv-avatars-hidden`
+3. **Use CSS to hide avatars**: `.cr-fcv-avatars-hidden .card image { display: none; }`
+4. **Toggle the class** instead of re-initializing
+
+Benefits:
+- Instant avatar toggle (no chart rebuild)
+- Smoother user experience
+- Preserves zoom/pan state
+
+Challenges:
+- Requires investigation of family-chart SVG structure
+- May need to modify card rendering to always include `<image>` element
+- Need to handle image loading when initially hidden
+
+**SVG Export with Avatars (Known Issue)**
+
+Exporting large trees with avatars to SVG may cause performance issues or crashes. The export process converts avatar images to base64 data URIs, which for large trees with many images can:
+- Create very large SVG files
+- Block the main thread during image encoding
+- Potentially exhaust memory
+
+Potential solutions:
+1. **Progressive encoding** — Encode images in batches with `setTimeout` breaks
+2. **Web Worker** — Move base64 encoding to a worker thread
+3. **External image refs** — Option to keep image URLs instead of embedding
+4. **Size limits** — Warn user when export would be very large
+
 ---
 
 ## Success Criteria

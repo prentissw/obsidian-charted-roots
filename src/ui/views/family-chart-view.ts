@@ -123,6 +123,9 @@ export class FamilyChartView extends ItemView {
 
 	// Data cache
 	private chartData: FamilyChartPerson[] = [];
+	// Avatar URL cache - maps crId to resolved avatar URL
+	// Persists across chart re-initializations to avoid repeated file lookups
+	private avatarUrlCache: Map<string, string> = new Map();
 
 	constructor(leaf: WorkspaceLeaf, plugin: CanvasRootsPlugin) {
 		super(leaf);
@@ -966,19 +969,68 @@ export class FamilyChartView extends ItemView {
 		const peopleMap = new Map(people.map(p => [p.crId, p]));
 		const buildMapsTime = performance.now();
 
+		// Pre-resolve avatar URLs for people not already cached
+		// This allows the cache to persist across chart re-initializations
+		if (this.showAvatars) {
+			this.preResolveAvatars(people);
+		}
+		const avatarResolveTime = performance.now();
+
 		// Transform to family-chart format, filtering relationship IDs to only valid ones
 		this.chartData = people.map(person => this.transformPersonNode(person, validIds, peopleMap));
 		const transformTime = performance.now();
 
 		logger.debug('data-load', 'Loaded chart data', {
 			count: this.chartData.length,
+			avatarsCached: this.avatarUrlCache.size,
 			timing: {
 				cacheLoad: `${(cacheLoadTime - startTime).toFixed(1)}ms`,
 				getAllPeople: `${(getAllPeopleTime - cacheLoadTime).toFixed(1)}ms`,
 				buildMaps: `${(buildMapsTime - getAllPeopleTime).toFixed(1)}ms`,
-				transform: `${(transformTime - buildMapsTime).toFixed(1)}ms`,
+				avatarResolve: `${(avatarResolveTime - buildMapsTime).toFixed(1)}ms`,
+				transform: `${(transformTime - avatarResolveTime).toFixed(1)}ms`,
 				total: `${(transformTime - startTime).toFixed(1)}ms`
 			}
+		});
+	}
+
+	/**
+	 * Pre-resolve avatar URLs for all people with media.
+	 * Only resolves URLs not already in the cache, making subsequent
+	 * chart initializations faster (e.g., when toggling avatars).
+	 */
+	private preResolveAvatars(people: PersonNode[]): void {
+		const mediaService = this.plugin.getMediaService();
+		if (!mediaService) return;
+
+		let newlyResolved = 0;
+		let cachedHits = 0;
+
+		for (const person of people) {
+			// Skip if already cached
+			if (this.avatarUrlCache.has(person.crId)) {
+				cachedHits++;
+				continue;
+			}
+
+			// Skip if no media
+			if (!person.media || person.media.length === 0) {
+				continue;
+			}
+
+			// Resolve and cache the avatar URL
+			const thumbnailFile = mediaService.getFirstThumbnailFile(person.media);
+			if (thumbnailFile) {
+				const avatarUrl = this.app.vault.getResourcePath(thumbnailFile);
+				this.avatarUrlCache.set(person.crId, avatarUrl);
+				newlyResolved++;
+			}
+		}
+
+		logger.debug('avatar-cache', 'Pre-resolved avatar URLs', {
+			newlyResolved,
+			cachedHits,
+			totalCached: this.avatarUrlCache.size
 		});
 	}
 
@@ -1053,16 +1105,11 @@ export class FamilyChartView extends ItemView {
 			return false;
 		});
 
-		// Resolve avatar from person's media (first thumbnailable image/video)
+		// Get avatar from cache (pre-resolved in loadChartData)
+		// The cache persists across re-initializations, making avatar toggle fast
 		let avatar: string | undefined;
-		if (this.showAvatars && person.media && person.media.length > 0) {
-			const mediaService = this.plugin.getMediaService();
-			if (mediaService) {
-				const thumbnailFile = mediaService.getFirstThumbnailFile(person.media);
-				if (thumbnailFile) {
-					avatar = this.app.vault.getResourcePath(thumbnailFile);
-				}
-			}
+		if (this.showAvatars) {
+			avatar = this.avatarUrlCache.get(person.crId);
 		}
 
 		return {
@@ -1197,8 +1244,10 @@ export class FamilyChartView extends ItemView {
 	 *                             If false, reloads immediately (suitable for live updates triggered by file change events).
 	 */
 	async refreshChart(waitForMetadataCache: boolean = false): Promise<void> {
-		// Clear and reload the cache
+		// Clear and reload the caches
 		this.familyGraphService.clearCache();
+		// Also clear avatar cache so we pick up any media changes
+		this.avatarUrlCache.clear();
 
 		if (waitForMetadataCache) {
 			// Wait for Obsidian's metadata cache to finish processing (needed after batch operations)

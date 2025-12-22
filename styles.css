@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-22 20:21:29 UTC
+ * - Generated: 2025-12-22 22:12:22 UTC
  * - Components: 35 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -620,7 +620,7 @@ settings:
    COMPONENT: MODALS.CSS
    ========================================================================== */
 
-/* Component Size: 7702 lines, 142.6 KB */
+/* Component Size: 7787 lines, 144.64 KB */
 
 /* ==========================================================================
    Canvas Roots Control Center - Styling
@@ -8114,7 +8114,8 @@ settings:
 /* Grid */
 .crc-unlinked-media-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, 160px);
+  justify-content: center;
   gap: 16px;
   padding: 4px;
   overflow-y: auto;
@@ -8174,7 +8175,8 @@ settings:
 /* Grid items */
 .crc-unlinked-media-item {
   position: relative;
-  aspect-ratio: 1;
+  width: 160px;
+  height: 160px;
   border-radius: 10px;
   overflow: hidden;
   background: var(--background-secondary);
@@ -8211,8 +8213,11 @@ settings:
 }
 
 .crc-unlinked-media-item-thumbnail {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -8319,9 +8324,89 @@ settings:
   }
 
   .crc-unlinked-media-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, 120px);
     gap: 12px;
   }
+
+  .crc-unlinked-media-item {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+/* ==========================================================================
+   Media Folder Filter Toggle (shared by gallery and unlinked modals)
+   ========================================================================== */
+
+.crc-media-folder-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.crc-media-folder-filter-toggle:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
+.crc-media-folder-filter-toggle--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.crc-media-folder-filter-toggle--disabled:hover {
+  background: var(--background-secondary);
+  border-color: var(--background-modifier-border);
+}
+
+.crc-media-folder-filter-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.crc-media-folder-filter-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.crc-media-folder-filter-checkbox {
+  margin: 0;
+  cursor: pointer;
+}
+
+.crc-media-folder-filter-toggle--disabled .crc-media-folder-filter-checkbox {
+  cursor: not-allowed;
+}
+
+.crc-media-folder-filter-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* When filter is active, highlight the toggle */
+.crc-media-folder-filter-toggle:has(.crc-media-folder-filter-checkbox:checked) {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+.crc-media-folder-filter-toggle:has(.crc-media-folder-filter-checkbox:checked)
+  .crc-media-folder-filter-icon,
+.crc-media-folder-filter-toggle:has(.crc-media-folder-filter-checkbox:checked)
+  .crc-media-folder-filter-label {
+  color: var(--text-on-accent);
+}
+
+.crc-media-folder-filter-toggle:has(.crc-media-folder-filter-checkbox:checked):hover {
+  background: var(--interactive-accent-hover);
 }
 
 
@@ -22644,7 +22729,7 @@ body:has(.cr-media-linker) .suggestion-container {
    COMPONENT: PREFERENCES.CSS
    ========================================================================== */
 
-/* Component Size: 242 lines, 5.29 KB */
+/* Component Size: 315 lines, 6.86 KB */
 
 /* ==========================================================================
    Preferences Tab Styles
@@ -22886,6 +22971,79 @@ body:has(.cr-media-linker) .suggestion-container {
 
 .cr-settings-callout a:hover {
   text-decoration: underline;
+}
+
+/* ==========================================================================
+   Media Folders List
+   ========================================================================== */
+
+.cr-media-folders-list {
+  margin-top: var(--cr-spacing-sm);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+
+.cr-media-folder-row {
+  display: flex;
+  align-items: center;
+  gap: var(--cr-spacing-sm);
+  padding: var(--cr-spacing-sm) var(--cr-spacing-md);
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.cr-media-folder-row:hover {
+  background: var(--background-modifier-hover);
+}
+
+.cr-media-folder-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.cr-media-folder-path {
+  flex: 1;
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+}
+
+.cr-media-folder-remove {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.cr-media-folder-remove:hover {
+  color: var(--text-error);
+  background: var(--background-modifier-error);
+}
+
+.cr-media-folder-add-row {
+  padding: var(--cr-spacing-xs) var(--cr-spacing-sm);
+  background: var(--background-primary);
+}
+
+.cr-media-folder-add-setting {
+  border: none !important;
+  padding: 0 !important;
+}
+
+.cr-media-folder-add-setting .setting-item-info {
+  display: none;
+}
+
+.cr-media-folder-add-setting .setting-item-control {
+  width: 100%;
+}
+
+.cr-media-folder-add-setting input[type="text"] {
+  width: 100%;
 }
 
 
@@ -24671,10 +24829,10 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-22 20:21:29 UTC
+ * Build completed: 2025-12-22 22:12:23 UTC
  * Components processed: 35
- * Total lines: 24333
- * Total size: 480.92 KB
+ * Total lines: 24491
+ * Total size: 484.53 KB
  * Build duration: 0.04 seconds
  *
  * Component breakdown:
@@ -24686,7 +24844,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - nodes.css: 12 lines, 0.3 KB
  * - edges.css: 4 lines, 0.07 KB
  * - settings.css: 131 lines, 3.53 KB
- * - modals.css: 7702 lines, 142.6 KB
+ * - modals.css: 7787 lines, 144.64 KB
  * - duplicate-detection.css: 163 lines, 2.82 KB
  * - tree-statistics.css: 41 lines, 0.6 KB
  * - validation.css: 84 lines, 1.47 KB
@@ -24707,7 +24865,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - statistics.css: 1518 lines, 30.21 KB
  * - dashboard.css: 366 lines, 7.11 KB
  * - universe-wizard.css: 621 lines, 11.05 KB
- * - preferences.css: 242 lines, 5.29 KB
+ * - preferences.css: 315 lines, 6.86 KB
  * - tree-output.css: 1504 lines, 29.36 KB
  * - dynamic-content.css: 190 lines, 4.08 KB
  * - animations.css: 16 lines, 0.18 KB

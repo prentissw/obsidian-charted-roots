@@ -16,6 +16,7 @@ import { App, Modal, TFile, setIcon, Notice, Setting } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import { MediaService, type MediaEntityType } from '../media-service';
 import { MediaPickerModal } from './media-picker-modal';
+import { BulkMediaLinkProgressModal } from './bulk-media-link-progress-modal';
 import { FamilyGraphService, type PersonNode } from '../family-graph';
 import { PlaceGraphService } from '../place-graph';
 import type { PlaceNode } from '../../models/place';
@@ -505,27 +506,64 @@ export class BulkMediaLinkModal extends Modal {
 		const selectedEntities = this.entities.filter(e => this.selectedEntities.has(e.crId));
 		if (selectedEntities.length === 0) return;
 
+		// For small operations (< 5 entities), skip the progress modal
+		const showProgress = selectedEntities.length >= 5;
+
+		let progressModal: BulkMediaLinkProgressModal | null = null;
+		if (showProgress) {
+			progressModal = new BulkMediaLinkProgressModal(this.app, files.length);
+			progressModal.open();
+		}
+
 		let successCount = 0;
 		let errorCount = 0;
 
-		for (const entity of selectedEntities) {
+		for (let i = 0; i < selectedEntities.length; i++) {
+			const entity = selectedEntities[i];
+
+			// Check for cancellation
+			if (progressModal?.wasCancelled()) {
+				break;
+			}
+
+			// Update progress
+			if (progressModal) {
+				progressModal.updateProgress({
+					current: i + 1,
+					total: selectedEntities.length,
+					currentEntityName: entity.name
+				});
+			}
+
 			try {
 				for (const file of files) {
 					const wikilink = this.mediaService.pathToWikilink(file.path);
 					await this.mediaService.addMediaToEntity(entity.file, wikilink);
 				}
 				successCount++;
+				progressModal?.recordSuccess();
 			} catch (error) {
 				console.error(`Failed to link media to ${entity.name}:`, error);
 				errorCount++;
+				progressModal?.recordError();
+			}
+
+			// Small delay to allow UI updates and prevent blocking
+			if (showProgress && i % 10 === 0) {
+				await new Promise(resolve => setTimeout(resolve, 0));
 			}
 		}
 
-		// Show result notification
-		if (errorCount === 0) {
-			new Notice(`Linked ${files.length} media file(s) to ${successCount} entities`);
+		// Mark complete and show results
+		if (progressModal) {
+			progressModal.markComplete();
 		} else {
-			new Notice(`Linked media to ${successCount} entities, ${errorCount} failed`);
+			// Show result notification for small operations
+			if (errorCount === 0) {
+				new Notice(`Linked ${files.length} media file(s) to ${successCount} entities`);
+			} else {
+				new Notice(`Linked media to ${successCount} entities, ${errorCount} failed`);
+			}
 		}
 
 		// Refresh the list
