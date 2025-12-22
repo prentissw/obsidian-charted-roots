@@ -4567,7 +4567,7 @@ export default class CanvasRootsPlugin extends Plugin {
 	/**
 	 * Open media picker to link media files to an entity
 	 */
-	private openLinkMediaModal(file: TFile, entityType: string, entityName: string): void {
+	openLinkMediaModal(file: TFile, entityType: string, entityName: string): void {
 		if (!this.mediaService) {
 			new Notice('Media service not available');
 			return;
@@ -4603,7 +4603,7 @@ export default class CanvasRootsPlugin extends Plugin {
 	/**
 	 * Open media manage modal to view, reorder, and remove media from an entity
 	 */
-	private openManageMediaModal(file: TFile, entityType: string, entityName: string): void {
+	openManageMediaModal(file: TFile, entityType: string, entityName: string): void {
 		if (!this.mediaService) {
 			new Notice('Media service not available');
 			return;

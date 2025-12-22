@@ -1021,6 +1021,11 @@
   color: var(--color-pink);
 }
 
+.crc-person-list-badge--media {
+  background-color: rgba(var(--color-cyan-rgb), 0.15);
+  color: var(--color-cyan);
+}
+
 /* Small inline badge for hint text */
 .crc-person-list-badge--hint {
   vertical-align: middle;

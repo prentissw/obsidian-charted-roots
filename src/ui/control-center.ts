@@ -2651,6 +2651,7 @@ export class ControlCenterModal extends Modal {
 		deathPlace?: PlaceInfo;
 		burialPlace?: PlaceInfo;
 		file: TFile;
+		mediaCount: number;
 	}[] = [];
 
 	/**
@@ -2697,7 +2698,8 @@ export class ControlCenterModal extends Modal {
 				birthPlace: extractPlaceInfo(fm.birth_place),
 				deathPlace: extractPlaceInfo(fm.death_place),
 				burialPlace: extractPlaceInfo(fm.burial_place),
-				file: p.file
+				file: p.file,
+				mediaCount: p.media?.length || 0
 			};
 		});
 
@@ -2859,6 +2861,7 @@ export class ControlCenterModal extends Modal {
 			deathPlace?: PlaceInfo;
 			burialPlace?: PlaceInfo;
 			file: TFile;
+			mediaCount: number;
 		}[]
 	): void {
 		container.empty();
@@ -2883,6 +2886,7 @@ export class ControlCenterModal extends Modal {
 		headerRow.createEl('th', { text: 'Name', cls: 'crc-person-table__th' });
 		headerRow.createEl('th', { text: 'Born', cls: 'crc-person-table__th' });
 		headerRow.createEl('th', { text: 'Died', cls: 'crc-person-table__th' });
+		headerRow.createEl('th', { text: 'Media', cls: 'crc-person-table__th crc-person-table__th--center' });
 		headerRow.createEl('th', { text: '', cls: 'crc-person-table__th crc-person-table__th--icon' }); // For badges
 
 		const tbody = table.createEl('tbody');
@@ -2934,6 +2938,7 @@ export class ControlCenterModal extends Modal {
 			deathPlace?: PlaceInfo;
 			burialPlace?: PlaceInfo;
 			file: TFile;
+			mediaCount: number;
 		}
 	): void {
 		const row = tbody.createEl('tr', { cls: 'crc-person-table__row' });
@@ -2955,6 +2960,28 @@ export class ControlCenterModal extends Modal {
 			text: person.deathDate || '—',
 			cls: 'crc-person-table__td crc-person-table__td--date'
 		});
+
+		// Media count cell
+		const mediaCell = row.createEl('td', {
+			cls: 'crc-person-table__td crc-person-table__td--media'
+		});
+		if (person.mediaCount > 0) {
+			const mediaBadge = mediaCell.createEl('span', {
+				cls: 'crc-person-list-badge crc-person-list-badge--media',
+				attr: { title: `${person.mediaCount} media file${person.mediaCount !== 1 ? 's' : ''}` }
+			});
+			const mediaIcon = createLucideIcon('image', 12);
+			mediaBadge.appendChild(mediaIcon);
+			mediaBadge.appendText(person.mediaCount.toString());
+
+			// Click to open manage media modal
+			mediaBadge.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.plugin.openManageMediaModal(person.file, 'person', person.name);
+			});
+		} else {
+			mediaCell.createEl('span', { text: '—', cls: 'crc-text-muted' });
+		}
 
 		// Actions cell (unlinked places badge + open note button)
 		const actionsCell = row.createEl('td', { cls: 'crc-person-table__td crc-person-table__td--actions' });
