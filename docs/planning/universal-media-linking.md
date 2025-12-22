@@ -2,7 +2,7 @@
 
 Planning document for extending media attachment support to all entity types.
 
-- **Status:** Complete (Phases 1, 2, 3 & 3.5)
+- **Status:** Complete (Phases 1, 2, 3, 3.5 & 4)
 - **Priority:** High
 - **GitHub Issue:** [#20](https://github.com/banisterious/obsidian-canvas-roots/issues/20)
 - **Branch:** `feature/universal-media-linking`
@@ -22,6 +22,17 @@ Planning document for extending media attachment support to all entity types.
   - Converted to JPEG at 85% quality (much smaller than PNG)
   - 50ms delay between images for garbage collection
   - Warning with depth limit suggestion for large exports
+- **Phase 4: Gramps Package (.gpkg) Import**:
+  - Added JSZip dependency for archive extraction
+  - Created `gpkg-extractor.ts` with support for multiple archive formats:
+    - ZIP archives (via JSZip)
+    - Gzip-compressed tar archives (.tar.gz) — implemented native tar parser
+    - Gzip-compressed XML (plain gzip without tar)
+  - Updated control-center to accept .gpkg files
+  - Added GrampsMedia type and media object parsing
+  - Media files extracted to vault during import
+  - Added 'media' phase to import progress modal
+  - Media linked to source notes via mediaRefs
 
 ---
 
@@ -827,102 +838,155 @@ function isInMediaFolders(filePath: string, settings: CanvasRootsSettings): bool
 
 ---
 
-### Phase 4: Gramps Package Import
+### Phase 4: Gramps Package Import ✅
 
 **Focus:** Import `.gpkg` files with bundled media.
 
-#### Scope
+**Status:** Complete
 
-1. **`.gpkg` file handling**
-   - Detect `.gpkg` files in import
-   - Extract zip contents (XML + media folder)
+#### Implementation Summary
 
-2. **Media extraction**
-   - Extract media files to configurable folder
-   - Preserve original filenames or rename with cr_id prefix
-   - Handle filename collisions
+The `.gpkg` import was implemented directly in the existing Gramps import flow, extending the control center to accept `.gpkg` files and extracting media alongside XML parsing.
 
-3. **Media linking**
-   - Parse media references in Gramps XML
-   - Link extracted files to corresponding entity notes
-   - Preserve media ordering (first = primary)
+**Key Discovery:** Gramps exports `.gpkg` files as **gzip-compressed tar archives** (`.tar.gz`), not ZIP files. The implementation supports all three formats:
 
-4. **Import UI**
-   - Add media folder destination setting
-   - Show media extraction progress
-   - Report on linked vs. orphaned media
+1. **ZIP archives** — Handled via JSZip library
+2. **Gzip-compressed tar archives** — Native tar parser implementation (no external dependency)
+3. **Plain gzip-compressed XML** — For exports without bundled media
 
-#### Implementation Notes
-
-**Gramps Package Structure:**
-
-```
-archive.gpkg (zip file)
-├── data.gramps (Gramps XML)
-└── media/
-    ├── photo1.jpg
-    ├── document.pdf
-    └── ...
-```
-
-**Media Reference in Gramps XML:**
-
-```xml
-<person handle="_abc123">
-  <name>
-    <first>John</first>
-    <surname>Smith</surname>
-  </name>
-  <objref hlink="_media001"/>  <!-- References media object -->
-</person>
-
-<object handle="_media001" id="O0001">
-  <file src="media/photo1.jpg" mime="image/jpeg"/>
-</object>
-```
-
-**Import Flow:**
-
-```typescript
-async importGrampsPackage(gpkgPath: string, options: GpkgImportOptions): Promise<ImportResult> {
-  // 1. Extract zip
-  const extractDir = await this.extractZip(gpkgPath);
-
-  // 2. Find XML file
-  const xmlPath = await this.findGrampsXml(extractDir);
-
-  // 3. Parse XML normally
-  const xmlData = await this.parseGrampsXml(xmlPath);
-
-  // 4. Extract media files to vault
-  const mediaMap = await this.extractMediaToVault(
-    extractDir,
-    options.mediaFolder
-  );
-
-  // 5. Create entity notes with media links
-  const result = await this.createEntitiesWithMedia(xmlData, mediaMap);
-
-  // 6. Cleanup temp directory
-  await this.cleanup(extractDir);
-
-  return result;
-}
-```
-
-#### Files to Create
+#### Files Created
 
 | File | Purpose |
 |------|---------|
-| `src/import/gpkg-importer.ts` | Gramps package import logic |
+| `src/gramps/gpkg-extractor.ts` | Archive extraction with format detection (ZIP, gzip+tar, gzip) |
 
-#### Files to Modify
+#### Files Modified
 
 | File | Changes |
 |------|---------|
-| `src/import/gramps-importer.ts` | Refactor to support gpkg |
-| `src/import/import-modal.ts` | Add .gpkg file type support |
-| `src/settings.ts` | Add media import folder setting |
+| `src/gramps/gramps-types.ts` | Added `GrampsMedia` interface, `media` map in `GrampsDatabase` |
+| `src/gramps/gramps-parser.ts` | Added `parseMedia()` for `<object>` elements |
+| `src/gramps/gramps-importer.ts` | Added `extractMediaToVault()`, media linking to sources |
+| `src/ui/control-center.ts` | Accept `.gpkg` files, call extractor, pass media to importer |
+| `src/ui/gedcom-import-progress-modal.ts` | Added 'media' phase to import progress |
+| `package.json` | Added `jszip` dependency |
+
+#### Archive Format Handling
+
+**gpkg-extractor.ts** detects format via magic bytes:
+
+```typescript
+// ZIP: 0x50 0x4B ("PK")
+export function isZipFile(data: ArrayBuffer): boolean {
+  const view = new Uint8Array(data);
+  return view.length >= 2 && view[0] === 0x50 && view[1] === 0x4B;
+}
+
+// Gzip: 0x1F 0x8B
+export function isGzipFile(data: ArrayBuffer): boolean {
+  const view = new Uint8Array(data);
+  return view.length >= 2 && view[0] === 0x1f && view[1] === 0x8b;
+}
+
+// Tar: "ustar" at offset 257
+function isTarFile(data: Uint8Array): boolean {
+  if (data.length < 263) return false;
+  const magic = String.fromCharCode(data[257], data[258], data[259], data[260], data[261]);
+  return magic === 'ustar';
+}
+```
+
+**Extraction Flow:**
+
+```typescript
+export async function extractGpkg(data: ArrayBuffer, filename: string): Promise<GpkgExtractionResult> {
+  if (isGzipFile(data)) {
+    const decompressed = await decompressGzipToBytes(new Uint8Array(data));
+
+    if (isTarFile(decompressed)) {
+      // Gzip-compressed tar archive (most common Gramps format)
+      const tarFiles = extractTar(decompressed);
+      // Find .gramps/.xml file and extract media files
+      return { grampsXml, mediaFiles, filename };
+    }
+
+    // Plain gzip-compressed XML (no bundled media)
+    return { grampsXml: decode(decompressed), mediaFiles: new Map(), filename };
+  }
+
+  if (isZipFile(data)) {
+    // ZIP archive via JSZip
+    const zip = await JSZip.loadAsync(data);
+    // Extract data.gramps and media files
+    return { grampsXml, mediaFiles, filename };
+  }
+
+  throw new Error('File is not a valid ZIP or gzip archive');
+}
+```
+
+#### Native Tar Parser
+
+Implemented a minimal tar parser to avoid adding another dependency:
+
+```typescript
+function extractTar(data: Uint8Array): Map<string, Uint8Array> {
+  const files = new Map<string, Uint8Array>();
+  let offset = 0;
+
+  while (offset < data.length - 512) {
+    const header = data.slice(offset, offset + 512);
+    if (header.every(b => b === 0)) break;  // End of archive
+
+    // Parse filename (bytes 0-99, null-terminated)
+    // Parse file size (bytes 124-135, octal)
+    // Parse type flag (byte 156)
+
+    offset += 512;  // Move past header
+
+    if (isRegularFile && fileSize > 0) {
+      files.set(filename, data.slice(offset, offset + fileSize));
+    }
+
+    offset += Math.ceil(fileSize / 512) * 512;  // Move past content (512-byte aligned)
+  }
+
+  return files;
+}
+```
+
+#### Media Linking
+
+Media files from the archive are:
+
+1. Written to the configured media folder in the vault
+2. Mapped by Gramps handle to vault path
+3. Linked to Source notes via the `media` YAML array property
+
+```typescript
+// In gramps-importer.ts
+async extractMediaToVault(
+  mediaFiles: Map<string, ArrayBuffer>,
+  grampsData: GrampsDatabase,
+  targetFolder: string
+): Promise<Map<string, string>> {
+  // Returns: Gramps media handle → vault file path
+}
+
+// Source notes get media wikilinks:
+// media:
+//   - "[[media/imports/photo1.jpg]]"
+//   - "[[media/imports/document.pdf]]"
+```
+
+#### Future Enhancements
+
+- [ ] Link media to Person notes (currently only Sources)
+- [ ] Link media to Event notes
+- [ ] Link media to Place notes
+- [ ] Configurable media import folder (currently uses first mediaFolders setting)
+- [ ] Filename collision handling options
+- [ ] Import summary showing linked vs. orphaned media
 
 ---
 
@@ -1467,10 +1531,11 @@ Benefits:
 - [x] Toggle syncs with global setting, disabled when no folders configured
 
 ### Phase 4
-- [ ] `.gpkg` files import correctly
-- [ ] Media files extracted to configurable folder
-- [ ] Media linked to corresponding entities
-- [ ] Import progress shows media extraction status
+- [x] `.gpkg` files import correctly (ZIP, gzip+tar, and gzip formats supported)
+- [x] Media files extracted to vault (uses first configured media folder)
+- [x] Media linked to Source notes via `media` YAML array
+- [x] Import progress shows media extraction phase
+- [ ] Media linking to Person, Event, Place notes (future enhancement)
 
 ---
 
