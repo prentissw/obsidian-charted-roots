@@ -136,6 +136,8 @@ export interface ParsedGrampsData {
 		source?: string;
 		version?: string;
 	};
+	/** Raw database for accessing media objects and other unparsed data */
+	database: GrampsDatabase;
 }
 
 /**
@@ -401,7 +403,7 @@ export class GrampsParser {
 			});
 		}
 
-		logger.info('parse', `Parsed ${persons.size} persons, ${places.size} places, ${events.size} events, ${sources.size} sources, and ${citations.size} citations from Gramps XML`);
+		logger.info('parse', `Parsed ${persons.size} persons, ${places.size} places, ${events.size} events, ${sources.size} sources, ${citations.size} citations, and ${database.media.size} media objects from Gramps XML`);
 
 		return {
 			persons,
@@ -412,7 +414,8 @@ export class GrampsParser {
 			header: {
 				source: database.header?.createdBy,
 				version: database.header?.version
-			}
+			},
+			database
 		};
 	}
 

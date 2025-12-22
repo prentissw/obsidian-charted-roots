@@ -9870,6 +9870,10 @@ export class ControlCenterModal extends Modal {
 				createEventNotes,
 				eventsFolder,
 				propertyAliases: this.plugin.settings.propertyAliases,
+				// Pass media files from .gpkg extraction if available
+				mediaFiles: this.gpkgExtractionResult?.mediaFiles,
+				mediaFolder: this.plugin.settings.mediaFolders[0] || 'Canvas Roots/Media',
+				extractMedia: this.gpkgExtractionResult !== undefined,
 				onProgress: (progress) => {
 					progressModal.updateProgress({
 						phase: progress.phase,
@@ -9878,7 +9882,9 @@ export class ControlCenterModal extends Modal {
 						message: progress.message
 					});
 					// Update running stats based on phase
-					if (progress.phase === 'places' && progress.current > 0) {
+					if (progress.phase === 'media' && progress.current > 0) {
+						progressModal.updateStats({ media: progress.current });
+					} else if (progress.phase === 'places' && progress.current > 0) {
 						progressModal.updateStats({ places: progress.current });
 					} else if (progress.phase === 'sources' && progress.current > 0) {
 						progressModal.updateStats({ sources: progress.current });
@@ -9931,6 +9937,9 @@ export class ControlCenterModal extends Modal {
 	 */
 	private showGrampsImportResults(result: GrampsImportResult): void {
 		let message = `Gramps import complete: ${result.individualsImported} people imported`;
+		if (result.mediaFilesExtracted && result.mediaFilesExtracted > 0) {
+			message += `, ${result.mediaFilesExtracted} media files`;
+		}
 		if (result.placeNotesCreated && result.placeNotesCreated > 0) {
 			message += `, ${result.placeNotesCreated} places`;
 		}
@@ -9947,6 +9956,7 @@ export class ControlCenterModal extends Modal {
 		logger.info('gramps', 'Import results:', {
 			imported: result.individualsImported,
 			created: result.notesCreated,
+			media: result.mediaFilesExtracted || 0,
 			places: result.placeNotesCreated || 0,
 			events: result.eventNotesCreated || 0,
 			errors: result.errors.length

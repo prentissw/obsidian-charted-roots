@@ -21,6 +21,7 @@ const logger = getLogger('GrampsImporter');
 export type GrampsImportPhase =
 	| 'validating'
 	| 'parsing'
+	| 'media'
 	| 'places'
 	| 'sources'
 	| 'people'
@@ -69,6 +70,12 @@ export interface GrampsImportOptions {
 	dynamicBlockTypes?: DynamicBlockType[];
 	/** Progress callback */
 	onProgress?: (progress: GrampsImportProgress) => void;
+	/** Media files extracted from .gpkg package (path → binary content) */
+	mediaFiles?: Map<string, ArrayBuffer>;
+	/** Folder to store extracted media files */
+	mediaFolder?: string;
+	/** Whether to extract and save media files from .gpkg packages */
+	extractMedia?: boolean;
 }
 
 /**
@@ -90,6 +97,9 @@ export interface GrampsImportResult {
 	eventNotesCreated?: number;
 	sourcesImported?: number;
 	sourceNotesCreated?: number;
+	mediaFilesExtracted?: number;
+	/** Mapping from Gramps media handle to vault path (for linking) */
+	mediaHandleToPath?: Map<string, string>;
 }
 
 /**
@@ -211,7 +221,9 @@ export class GrampsImporter {
 			eventsImported: 0,
 			eventNotesCreated: 0,
 			sourcesImported: 0,
-			sourceNotesCreated: 0
+			sourceNotesCreated: 0,
+			mediaFilesExtracted: 0,
+			mediaHandleToPath: new Map()
 		};
 
 		// Helper to report progress
@@ -249,6 +261,39 @@ export class GrampsImporter {
 
 			// Ensure folders exist
 			await this.ensureFolderExists(options.peopleFolder);
+
+			// Extract media files from .gpkg package if provided
+			if (options.extractMedia !== false && options.mediaFiles && options.mediaFiles.size > 0) {
+				const mediaFolder = options.mediaFolder || 'Canvas Roots/Media';
+				await this.ensureFolderExists(mediaFolder);
+
+				const mediaTotal = options.mediaFiles.size;
+				reportProgress('media', 0, mediaTotal, `Extracting ${mediaTotal} media files...`);
+
+				let mediaIndex = 0;
+				for (const [relativePath, content] of options.mediaFiles) {
+					try {
+						const vaultPath = await this.extractMediaFile(
+							relativePath,
+							content,
+							mediaFolder,
+							grampsData,
+							result.mediaHandleToPath!
+						);
+						if (vaultPath) {
+							result.mediaFilesExtracted = (result.mediaFilesExtracted || 0) + 1;
+						}
+					} catch (error: unknown) {
+						result.errors.push(
+							`Failed to extract media file ${relativePath}: ${getErrorMessage(error)}`
+						);
+					}
+					mediaIndex++;
+					reportProgress('media', mediaIndex, mediaTotal);
+				}
+
+				logger.info('importFile', `Extracted ${result.mediaFilesExtracted} media files to ${mediaFolder}`);
+			}
 
 			// Create mapping of Gramps handles to cr_ids
 			const grampsToCrId = new Map<string, string>();
@@ -814,6 +859,71 @@ export class GrampsImporter {
 
 		if (!folder) {
 			await this.app.vault.createFolder(normalizedPath);
+		}
+	}
+
+	/**
+	 * Extract a media file from .gpkg package to the vault
+	 *
+	 * @param relativePath - Relative path from the .gpkg media folder
+	 * @param content - Binary content of the file
+	 * @param mediaFolder - Target folder in the vault
+	 * @param grampsData - Parsed Gramps data to look up media handles
+	 * @param handleToPath - Map to populate with handle → vault path mappings
+	 * @returns The vault path where the file was saved, or null if skipped
+	 */
+	private async extractMediaFile(
+		relativePath: string,
+		content: ArrayBuffer,
+		mediaFolder: string,
+		grampsData: ParsedGrampsData,
+		handleToPath: Map<string, string>
+	): Promise<string | null> {
+		// Get just the filename from the path
+		const filename = relativePath.split('/').pop() || relativePath;
+
+		// Build the vault path
+		const vaultPath = normalizePath(`${mediaFolder}/${filename}`);
+
+		// Check if file already exists
+		const existing = this.app.vault.getAbstractFileByPath(vaultPath);
+		if (existing) {
+			logger.debug('extractMediaFile', `Skipping existing file: ${vaultPath}`);
+			// Still record the mapping for existing files
+			this.recordMediaMapping(relativePath, vaultPath, grampsData, handleToPath);
+			return vaultPath;
+		}
+
+		// Write the binary file to the vault
+		await this.app.vault.createBinary(vaultPath, content);
+		logger.debug('extractMediaFile', `Extracted: ${vaultPath}`);
+
+		// Record the mapping from Gramps path/handle to vault path
+		this.recordMediaMapping(relativePath, vaultPath, grampsData, handleToPath);
+
+		return vaultPath;
+	}
+
+	/**
+	 * Record media handle → vault path mappings by finding matching media objects
+	 */
+	private recordMediaMapping(
+		relativePath: string,
+		vaultPath: string,
+		grampsData: ParsedGrampsData,
+		handleToPath: Map<string, string>
+	): void {
+		// Look through all media objects to find ones that match this path
+		for (const [handle, mediaObj] of grampsData.database.media) {
+			// The media path in Gramps might be relative to mediapath or absolute
+			// Match on filename or full relative path
+			const mediaFilename = mediaObj.path.split('/').pop() || mediaObj.path;
+			const filename = relativePath.split('/').pop() || relativePath;
+
+			if (mediaFilename === filename || mediaObj.path === relativePath || mediaObj.path.endsWith(relativePath)) {
+				handleToPath.set(handle, vaultPath);
+				logger.debug('recordMediaMapping', `Mapped handle ${handle} → ${vaultPath}`);
+			}
 		}
 	}
 

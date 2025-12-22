@@ -7,6 +7,7 @@ import { createLucideIcon, LucideIconName } from './lucide-icons';
 export type ImportPhase =
 	| 'validating'
 	| 'parsing'
+	| 'media'
 	| 'places'
 	| 'sources'
 	| 'people'
@@ -30,6 +31,7 @@ export interface ImportProgress {
 const PHASE_CONFIG: Record<ImportPhase, { label: string; icon: LucideIconName }> = {
 	validating: { label: 'Validating file', icon: 'file-check' },
 	parsing: { label: 'Parsing GEDCOM', icon: 'file-code' },
+	media: { label: 'Extracting media', icon: 'image' },
 	places: { label: 'Creating places', icon: 'map-pin' },
 	sources: { label: 'Creating sources', icon: 'book-open' },
 	people: { label: 'Creating people', icon: 'users' },
@@ -51,6 +53,7 @@ export class GedcomImportProgressModal extends Modal {
 
 	// Running totals for stats display
 	private stats = {
+		media: 0,
 		places: 0,
 		sources: 0,
 		people: 0,
@@ -183,6 +186,9 @@ export class GedcomImportProgressModal extends Modal {
 
 		const items: { label: string; value: number; icon: LucideIconName }[] = [];
 
+		if (this.stats.media > 0) {
+			items.push({ label: 'Media', value: this.stats.media, icon: 'image' });
+		}
 		if (this.stats.places > 0) {
 			items.push({ label: 'Places', value: this.stats.places, icon: 'map-pin' });
 		}
