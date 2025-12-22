@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-22 18:11:27 UTC
+ * - Generated: 2025-12-22 19:09:34 UTC
  * - Components: 35 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -620,7 +620,7 @@ settings:
    COMPONENT: MODALS.CSS
    ========================================================================== */
 
-/* Component Size: 6715 lines, 124.1 KB */
+/* Component Size: 7000 lines, 129.48 KB */
 
 /* ==========================================================================
    Canvas Roots Control Center - Styling
@@ -7335,6 +7335,291 @@ settings:
 .crc-badge svg {
   width: 12px;
   height: 12px;
+}
+
+/* =============================================================================
+   Bulk Media Link Modal
+   ============================================================================= */
+
+.modal:has(.crc-bulk-media-link-modal) {
+  max-width: 700px;
+  width: 90vw;
+}
+
+.modal:has(.crc-bulk-media-link-modal) .modal-content {
+  padding: 0;
+  overflow: hidden;
+}
+
+.crc-bulk-media-link-modal {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.crc-bulk-media-selector {
+  padding: 0 16px;
+}
+
+.crc-bulk-media-selector .setting-item {
+  border-top: none;
+  padding-top: 8px;
+}
+
+.crc-bulk-media-actions {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.crc-bulk-media-list {
+  flex: 1;
+  min-height: 200px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.crc-bulk-media-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.crc-bulk-media-row:hover {
+  background: var(--background-modifier-hover);
+}
+
+.crc-bulk-media-row--selected {
+  background: var(--background-modifier-active-hover);
+}
+
+.crc-bulk-media-row--selected:hover {
+  background: var(--background-modifier-active-hover);
+}
+
+.crc-bulk-media-row__checkbox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.crc-bulk-media-row__icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  color: var(--text-muted);
+}
+
+.crc-bulk-media-row__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.crc-bulk-media-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.crc-bulk-media-row__name {
+  font-size: var(--font-ui-small);
+  font-weight: 500;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crc-bulk-media-row__subtitle {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   MEDIA MANAGER MODAL
+   ========================================================================== */
+
+.modal:has(.crc-media-manager-modal) {
+  max-width: 700px;
+  width: 90vw;
+}
+
+.modal:has(.crc-media-manager-modal) .modal-content {
+  padding: 0;
+}
+
+.crc-media-manager-modal {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.crc-media-manager-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.crc-media-manager-header-icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(var(--interactive-accent-rgb), 0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--interactive-accent);
+}
+
+.crc-media-manager-header-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.crc-media-manager-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Action cards grid */
+.crc-media-manager-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 24px;
+}
+
+@media (max-width: 500px) {
+  .crc-media-manager-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Action card */
+.crc-media-manager-card {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.crc-media-manager-card:hover {
+  border-color: var(--interactive-accent);
+  background: rgba(var(--interactive-accent-rgb), 0.08);
+}
+
+.crc-media-manager-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.crc-media-manager-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crc-media-manager-card-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.crc-media-manager-card-icon--gallery {
+  background: rgba(96, 165, 250, 0.15);
+  color: rgb(96, 165, 250);
+}
+
+.crc-media-manager-card-icon--bulk {
+  background: rgba(74, 222, 128, 0.15);
+  color: rgb(74, 222, 128);
+}
+
+.crc-media-manager-card-icon--unlinked {
+  background: rgba(251, 146, 60, 0.15);
+  color: rgb(251, 146, 60);
+}
+
+.crc-media-manager-card-icon--sources {
+  background: rgba(244, 114, 182, 0.15);
+  color: rgb(244, 114, 182);
+}
+
+.crc-media-manager-card-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.crc-media-manager-card-description {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.crc-media-manager-card-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 4px 10px;
+  background: var(--background-primary);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Stats bar */
+.crc-media-manager-stats {
+  display: flex;
+  gap: 24px;
+  padding: 16px 24px;
+  background: var(--background-secondary);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.crc-media-manager-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.crc-media-manager-stat-value {
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--text-normal);
+}
+
+.crc-media-manager-stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.crc-media-manager-stat-divider {
+  width: 1px;
+  background: var(--background-modifier-border);
 }
 
 
@@ -23684,11 +23969,11 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-22 18:11:27 UTC
+ * Build completed: 2025-12-22 19:09:34 UTC
  * Components processed: 35
- * Total lines: 23346
- * Total size: 462.42 KB
- * Build duration: 0.05 seconds
+ * Total lines: 23631
+ * Total size: 467.8 KB
+ * Build duration: 0.04 seconds
  *
  * Component breakdown:
  * - variables.css: 48 lines, 1.33 KB
@@ -23699,7 +23984,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - nodes.css: 12 lines, 0.3 KB
  * - edges.css: 4 lines, 0.07 KB
  * - settings.css: 131 lines, 3.53 KB
- * - modals.css: 6715 lines, 124.1 KB
+ * - modals.css: 7000 lines, 129.48 KB
  * - duplicate-detection.css: 163 lines, 2.82 KB
  * - tree-statistics.css: 41 lines, 0.6 KB
  * - validation.css: 84 lines, 1.47 KB

@@ -1,0 +1,336 @@
+/**
+ * Media Manager Modal
+ *
+ * Central hub for all media operations in Canvas Roots.
+ * Provides quick access to:
+ * - Browse Gallery (unified view of all linked media)
+ * - Bulk Link Media (link to multiple entities)
+ * - Find Unlinked (discover orphaned media files)
+ * - Source Media Linker (smart source-image matching)
+ */
+
+import { App, Modal, setIcon } from 'obsidian';
+import type CanvasRootsPlugin from '../../../main';
+import { MediaService, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, PDF_EXTENSIONS, DOCUMENT_EXTENSIONS } from '../media-service';
+import { BulkMediaLinkModal } from './bulk-media-link-modal';
+import { SourceMediaLinkerModal } from '../../sources/ui/source-media-linker';
+import { FamilyGraphService } from '../family-graph';
+import { PlaceGraphService } from '../place-graph';
+import { EventService } from '../../events/services/event-service';
+import { OrganizationService } from '../../organizations/services/organization-service';
+import { SourceService } from '../../sources/services/source-service';
+import { FolderFilterService } from '../folder-filter';
+
+/**
+ * All supported media extensions
+ */
+const ALL_MEDIA_EXTENSIONS = [
+	...IMAGE_EXTENSIONS,
+	...VIDEO_EXTENSIONS,
+	...AUDIO_EXTENSIONS,
+	...PDF_EXTENSIONS,
+	...DOCUMENT_EXTENSIONS
+];
+
+/**
+ * Stats about media in the vault
+ */
+interface MediaStats {
+	totalMediaFiles: number;
+	linkedFiles: number;
+	unlinkedFiles: number;
+	entitiesWithoutMedia: number;
+	sourcesToReview: number;
+}
+
+/**
+ * Media Manager Modal
+ */
+export class MediaManagerModal extends Modal {
+	private plugin: CanvasRootsPlugin;
+	private stats: MediaStats | null = null;
+
+	constructor(app: App, plugin: CanvasRootsPlugin) {
+		super(app);
+		this.plugin = plugin;
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.addClass('crc-media-manager-modal');
+
+		// Calculate stats in background
+		this.calculateStats();
+
+		this.renderContent();
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+
+	/**
+	 * Calculate media statistics
+	 */
+	private calculateStats(): void {
+		const mediaService = new MediaService(this.app, this.plugin.settings);
+
+		// Count total media files in vault
+		const allFiles = this.app.vault.getFiles();
+		const mediaFiles = allFiles.filter(f => {
+			const ext = '.' + f.extension.toLowerCase();
+			return ALL_MEDIA_EXTENSIONS.includes(ext);
+		});
+		const totalMediaFiles = mediaFiles.length;
+
+		// Get all linked media paths
+		const linkedPaths = new Set<string>();
+
+		// People
+		const folderFilter = new FolderFilterService(this.plugin.settings);
+		const familyGraph = new FamilyGraphService(this.app);
+		familyGraph.setFolderFilter(folderFilter);
+		familyGraph.setPropertyAliases(this.plugin.settings.propertyAliases);
+		familyGraph.setValueAliases(this.plugin.settings.valueAliases);
+		const people = familyGraph.getAllPeople();
+		let entitiesWithoutMedia = 0;
+
+		for (const person of people) {
+			if (person.media && person.media.length > 0) {
+				for (const ref of person.media) {
+					const item = mediaService.resolveMediaItem(ref);
+					if (item.file) linkedPaths.add(item.file.path);
+				}
+			} else {
+				entitiesWithoutMedia++;
+			}
+		}
+
+		// Events
+		const eventService = new EventService(this.app, this.plugin.settings);
+		const events = eventService.getAllEvents();
+		for (const event of events) {
+			if (event.media && event.media.length > 0) {
+				for (const ref of event.media) {
+					const item = mediaService.resolveMediaItem(ref);
+					if (item.file) linkedPaths.add(item.file.path);
+				}
+			} else {
+				entitiesWithoutMedia++;
+			}
+		}
+
+		// Places
+		const placeGraph = new PlaceGraphService(this.app);
+		placeGraph.setSettings(this.plugin.settings);
+		placeGraph.setFolderFilter(folderFilter);
+		const places = placeGraph.getAllPlaces();
+		for (const place of places) {
+			if (place.media && place.media.length > 0) {
+				for (const ref of place.media) {
+					const item = mediaService.resolveMediaItem(ref);
+					if (item.file) linkedPaths.add(item.file.path);
+				}
+			} else {
+				entitiesWithoutMedia++;
+			}
+		}
+
+		// Organizations
+		const orgService = new OrganizationService(this.plugin);
+		const orgs = orgService.getAllOrganizations();
+		for (const org of orgs) {
+			if (org.media && org.media.length > 0) {
+				for (const ref of org.media) {
+					const item = mediaService.resolveMediaItem(ref);
+					if (item.file) linkedPaths.add(item.file.path);
+				}
+			} else {
+				entitiesWithoutMedia++;
+			}
+		}
+
+		// Sources
+		const sourceService = new SourceService(this.app, this.plugin.settings);
+		const sources = sourceService.getAllSources();
+		let sourcesToReview = 0;
+		for (const source of sources) {
+			if (source.media && source.media.length > 0) {
+				for (const ref of source.media) {
+					const item = mediaService.resolveMediaItem(ref);
+					if (item.file) linkedPaths.add(item.file.path);
+				}
+			} else {
+				sourcesToReview++;
+			}
+		}
+
+		this.stats = {
+			totalMediaFiles,
+			linkedFiles: linkedPaths.size,
+			unlinkedFiles: totalMediaFiles - linkedPaths.size,
+			entitiesWithoutMedia,
+			sourcesToReview
+		};
+
+		// Re-render with stats
+		this.renderContent();
+	}
+
+	/**
+	 * Render the modal content
+	 */
+	private renderContent(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+
+		// Header
+		const header = contentEl.createDiv({ cls: 'crc-media-manager-header' });
+		const headerIcon = header.createDiv({ cls: 'crc-media-manager-header-icon' });
+		setIcon(headerIcon, 'image');
+		header.createEl('h2', { text: 'Media Manager' });
+
+		// Action cards grid
+		const grid = contentEl.createDiv({ cls: 'crc-media-manager-grid' });
+
+		// Browse Gallery card
+		this.renderActionCard(grid, {
+			icon: 'layout-grid',
+			iconClass: 'gallery',
+			title: 'Browse Gallery',
+			description: 'View all media files linked to entities. Filter by entity type, search by name.',
+			stat: this.stats ? `${this.stats.linkedFiles} linked files` : 'Loading...',
+			onClick: () => this.openBrowseGallery()
+		});
+
+		// Bulk Link Media card
+		this.renderActionCard(grid, {
+			icon: 'image-plus',
+			iconClass: 'bulk',
+			title: 'Bulk Link Media',
+			description: 'Link media files to multiple entities at once. Select people, events, places, or organizations.',
+			stat: this.stats ? `${this.stats.entitiesWithoutMedia} entities without media` : 'Loading...',
+			onClick: () => this.openBulkLinkMedia()
+		});
+
+		// Find Unlinked card
+		this.renderActionCard(grid, {
+			icon: 'unlink',
+			iconClass: 'unlinked',
+			title: 'Find Unlinked',
+			description: 'Discover media files in your vault that aren\'t linked to any entity.',
+			stat: this.stats ? `${this.stats.unlinkedFiles} orphaned files` : 'Loading...',
+			onClick: () => this.openFindUnlinked()
+		});
+
+		// Source Media Linker card
+		this.renderActionCard(grid, {
+			icon: 'file-image',
+			iconClass: 'sources',
+			title: 'Source Media Linker',
+			description: 'Smart matching to link images to sources by filename patterns.',
+			stat: this.stats ? `${this.stats.sourcesToReview} sources to review` : 'Loading...',
+			onClick: () => this.openSourceMediaLinker()
+		});
+
+		// Stats bar
+		if (this.stats) {
+			const statsBar = contentEl.createDiv({ cls: 'crc-media-manager-stats' });
+
+			this.renderStatItem(statsBar, this.stats.totalMediaFiles.toString(), 'Total files');
+			this.renderStatDivider(statsBar);
+			this.renderStatItem(statsBar, this.stats.linkedFiles.toString(), 'Linked');
+			this.renderStatDivider(statsBar);
+			this.renderStatItem(statsBar, this.stats.unlinkedFiles.toString(), 'Unlinked');
+			this.renderStatDivider(statsBar);
+
+			const coverage = this.stats.totalMediaFiles > 0
+				? Math.round((this.stats.linkedFiles / this.stats.totalMediaFiles) * 100)
+				: 0;
+			this.renderStatItem(statsBar, `${coverage}%`, 'Coverage');
+		}
+	}
+
+	/**
+	 * Render an action card
+	 */
+	private renderActionCard(
+		container: HTMLElement,
+		config: {
+			icon: string;
+			iconClass: string;
+			title: string;
+			description: string;
+			stat: string;
+			onClick: () => void;
+		}
+	): void {
+		const card = container.createDiv({ cls: 'crc-media-manager-card' });
+
+		const cardHeader = card.createDiv({ cls: 'crc-media-manager-card-header' });
+		const iconEl = cardHeader.createDiv({ cls: `crc-media-manager-card-icon crc-media-manager-card-icon--${config.iconClass}` });
+		setIcon(iconEl, config.icon);
+		cardHeader.createDiv({ cls: 'crc-media-manager-card-title', text: config.title });
+
+		card.createDiv({ cls: 'crc-media-manager-card-description', text: config.description });
+
+		const statEl = card.createDiv({ cls: 'crc-media-manager-card-stat' });
+		statEl.textContent = config.stat;
+
+		card.addEventListener('click', config.onClick);
+	}
+
+	/**
+	 * Render a stat item in the stats bar
+	 */
+	private renderStatItem(container: HTMLElement, value: string, label: string): void {
+		const item = container.createDiv({ cls: 'crc-media-manager-stat-item' });
+		item.createDiv({ cls: 'crc-media-manager-stat-value', text: value });
+		item.createDiv({ cls: 'crc-media-manager-stat-label', text: label });
+	}
+
+	/**
+	 * Render a divider in the stats bar
+	 */
+	private renderStatDivider(container: HTMLElement): void {
+		container.createDiv({ cls: 'crc-media-manager-stat-divider' });
+	}
+
+	/**
+	 * Open Browse Gallery (placeholder - will implement unified gallery)
+	 */
+	private openBrowseGallery(): void {
+		this.close();
+		// TODO: Implement unified media gallery modal
+		// For now, we'll use a notice as placeholder
+		// new UnifiedMediaGalleryModal(this.app, this.plugin).open();
+	}
+
+	/**
+	 * Open Bulk Link Media modal
+	 */
+	private openBulkLinkMedia(): void {
+		this.close();
+		new BulkMediaLinkModal(this.app, this.plugin).open();
+	}
+
+	/**
+	 * Open Find Unlinked (placeholder)
+	 */
+	private openFindUnlinked(): void {
+		this.close();
+		// TODO: Implement unlinked media finder modal
+		// For now, we'll use a notice as placeholder
+		// new UnlinkedMediaModal(this.app, this.plugin).open();
+	}
+
+	/**
+	 * Open Source Media Linker modal
+	 */
+	private openSourceMediaLinker(): void {
+		this.close();
+		new SourceMediaLinkerModal(this.app, this.plugin).open();
+	}
+}

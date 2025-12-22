@@ -13,7 +13,9 @@ import { CreatePersonModal } from './create-person-modal';
 import { CreatePlaceModal } from './create-place-modal';
 import { CreateEventModal } from '../events/ui/create-event-modal';
 import { CreateSourceModal } from '../sources/ui/create-source-modal';
+import { CreateOrganizationModal } from '../organizations/ui/create-organization-modal';
 import { ReportGeneratorModal } from '../reports/ui/report-generator-modal';
+import { MediaManagerModal } from '../core/ui/media-manager-modal';
 import { FamilyGraphService } from '../core/family-graph';
 import { PlaceGraphService } from '../core/place-graph';
 import { EventService } from '../events/services/event-service';
@@ -175,7 +177,18 @@ function renderQuickActionsSection(
 		}).open();
 	};
 
-	// Define the 9 tiles
+	// Helper to open create organization modal
+	const openCreateOrganization = () => {
+		closeModal();
+		new CreateOrganizationModal(app, plugin, {
+			onSuccess: () => {
+				// Note: We can't track the file here since the modal doesn't pass it back
+				// The file tracking could be added to the modal itself if needed
+			}
+		}).open();
+	};
+
+	// Define the 12 tiles
 	const tiles: DashboardTile[] = [
 		{
 			id: 'create-person',
@@ -251,6 +264,33 @@ function renderQuickActionsSection(
 			action: () => {
 				closeModal();
 				void plugin.activateMapView();
+			}
+		},
+		{
+			id: 'media-manager',
+			label: 'Media',
+			icon: 'image',
+			description: 'Manage media files linked to entities',
+			action: () => {
+				closeModal();
+				new MediaManagerModal(app, plugin).open();
+			}
+		},
+		{
+			id: 'create-organization',
+			label: 'Organization',
+			icon: 'building',
+			description: 'Create a new organization note',
+			action: openCreateOrganization
+		},
+		{
+			id: 'family-chart',
+			label: 'Family Chart',
+			icon: 'users',
+			description: 'Open the interactive family chart',
+			action: () => {
+				closeModal();
+				void plugin.activateFamilyChartView();
 			}
 		}
 	];
