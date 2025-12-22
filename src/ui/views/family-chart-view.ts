@@ -2420,23 +2420,38 @@ export class FamilyChartView extends ItemView {
 			// Prepare SVG for export using shared helper
 			const { svgClone } = this.prepareSvgForExport(svg as SVGSVGElement);
 
-			if (includeAvatars) {
+			// Count avatar images
+			const imageElements = svgClone.querySelectorAll('image[href]');
+			let avatarCount = 0;
+			imageElements.forEach((imgEl) => {
+				const href = imgEl.getAttribute('href') || imgEl.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+				if (href?.startsWith('app://')) {
+					avatarCount++;
+				}
+			});
+
+			if (includeAvatars && avatarCount > 0) {
+				// Warn about large exports that may crash
+				if (avatarCount > 75) {
+					new Notice(`Warning: Exporting ${avatarCount} avatars may cause issues. Consider using "Export as SVG (no avatars)" instead.`, 8000);
+				}
 				// Embed avatar images as base64 for export
 				await this.embedImagesAsBase64(svgClone);
-			} else {
+			} else if (!includeAvatars) {
 				// Remove avatar images entirely for faster/smaller export
-				const imageElements = svgClone.querySelectorAll('image[href]');
 				imageElements.forEach((imgEl) => {
 					const href = imgEl.getAttribute('href') || imgEl.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
 					if (href?.startsWith('app://')) {
 						imgEl.remove();
 					}
 				});
+				logger.debug('export-svg', 'Removed avatar images', { count: avatarCount });
 			}
 
 			// Serialize
 			const serializer = new XMLSerializer();
 			const svgString = serializer.serializeToString(svgClone);
+			logger.debug('export-svg', 'SVG serialized', { length: svgString.length });
 
 			// Download
 			const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
