@@ -13,6 +13,7 @@ import { App, Modal, setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import { MediaService, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, PDF_EXTENSIONS, DOCUMENT_EXTENSIONS } from '../media-service';
 import { BulkMediaLinkModal } from './bulk-media-link-modal';
+import { MediaGalleryModal } from './media-gallery-modal';
 import { SourceMediaLinkerModal } from '../../sources/ui/source-media-linker';
 import { FamilyGraphService } from '../family-graph';
 import { PlaceGraphService } from '../place-graph';
@@ -299,13 +300,11 @@ export class MediaManagerModal extends Modal {
 	}
 
 	/**
-	 * Open Browse Gallery (placeholder - will implement unified gallery)
+	 * Open Browse Gallery
 	 */
 	private openBrowseGallery(): void {
 		this.close();
-		// TODO: Implement unified media gallery modal
-		// For now, we'll use a notice as placeholder
-		// new UnifiedMediaGalleryModal(this.app, this.plugin).open();
+		new MediaGalleryModal(this.app, this.plugin).open();
 	}
 
 	/**
