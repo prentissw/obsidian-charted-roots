@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-23 01:06:00 UTC
+ * - Generated: 2025-12-23 01:31:18 UTC
  * - Components: 35 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -22,7 +22,7 @@
    COMPONENT: VARIABLES.CSS
    ========================================================================== */
 
-/* Component Size: 54 lines, 1.54 KB */
+/* Component Size: 56 lines, 1.61 KB */
 
 /* Canvas Roots CSS Variables */
 
@@ -76,6 +76,8 @@
   --cr-gallery-img-max-height: 200px;
   --cr-gallery-img-max-width: 250px;
   --cr-gallery-img-border-radius: 8px;
+  --cr-gallery-object-fit: cover;
+  --cr-gallery-background: transparent;
 }
 
 
@@ -85,7 +87,7 @@
    COMPONENT: STYLE-SETTINGS.CSS
    ========================================================================== */
 
-/* Component Size: 263 lines, 6.38 KB */
+/* Component Size: 281 lines, 6.81 KB */
 
 /**
  * Style Settings Integration
@@ -347,6 +349,24 @@ settings:
     description: Corner rounding for gallery images
     type: variable-text
     default: "8px"
+  -
+    id: cr-gallery-object-fit
+    title: Image fit mode
+    description: How images fill their container (cover, contain, fill, none)
+    type: variable-select
+    default: cover
+    options:
+      - cover
+      - contain
+      - fill
+      - none
+  -
+    id: cr-gallery-background
+    title: Gallery background
+    description: Background color behind the gallery
+    type: variable-color
+    format: hex
+    default: "#00000000"
 
 */
 
@@ -24603,7 +24623,7 @@ body:has(.cr-media-linker) .suggestion-container {
    COMPONENT: DYNAMIC-CONTENT.CSS
    ========================================================================== */
 
-/* Component Size: 455 lines, 9.73 KB */
+/* Component Size: 455 lines, 9.77 KB */
 
 /**
  * Dynamic Content Styles
@@ -24973,7 +24993,7 @@ body:has(.cr-media-linker) .suggestion-container {
  */
 .callout[data-callout-metadata="cr-frozen-gallery"] {
   padding: var(--cr-spacing-sm);
-  background: transparent;
+  background: var(--cr-gallery-background);
   border: none;
   box-shadow: none;
 }
@@ -25012,7 +25032,7 @@ body:has(.cr-media-linker) .suggestion-container {
   max-width: var(--cr-gallery-img-max-width);
   width: auto;
   height: auto;
-  object-fit: cover;
+  object-fit: var(--cr-gallery-object-fit);
   border-radius: var(--cr-gallery-img-border-radius);
   border: 1px solid var(--background-modifier-border);
   display: block;
@@ -25131,15 +25151,15 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-23 01:06:00 UTC
+ * Build completed: 2025-12-23 01:31:18 UTC
  * Components processed: 35
- * Total lines: 24793
- * Total size: 491.28 KB
- * Build duration: 0.05 seconds
+ * Total lines: 24813
+ * Total size: 491.82 KB
+ * Build duration: 0.04 seconds
  *
  * Component breakdown:
- * - variables.css: 54 lines, 1.54 KB
- * - style-settings.css: 263 lines, 6.38 KB
+ * - variables.css: 56 lines, 1.61 KB
+ * - style-settings.css: 281 lines, 6.81 KB
  * - base.css: 73 lines, 0.97 KB
  * - layout.css: 22 lines, 0.24 KB
  * - canvas.css: 4 lines, 0.07 KB
@@ -25169,7 +25189,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - universe-wizard.css: 621 lines, 11.05 KB
  * - preferences.css: 315 lines, 6.86 KB
  * - tree-output.css: 1504 lines, 29.36 KB
- * - dynamic-content.css: 455 lines, 9.73 KB
+ * - dynamic-content.css: 455 lines, 9.77 KB
  * - animations.css: 16 lines, 0.18 KB
  * - responsive.css: 9 lines, 0.13 KB
  * - theme.css: 11 lines, 0.19 KB

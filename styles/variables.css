@@ -50,4 +50,6 @@
   --cr-gallery-img-max-height: 200px;
   --cr-gallery-img-max-width: 250px;
   --cr-gallery-img-border-radius: 8px;
+  --cr-gallery-object-fit: cover;
+  --cr-gallery-background: transparent;
 }

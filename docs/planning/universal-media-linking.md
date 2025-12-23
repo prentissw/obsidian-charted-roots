@@ -2,7 +2,7 @@
 
 Planning document for extending media attachment support to all entity types.
 
-- **Status:** Complete (Phases 1, 2, 3, 3.5 & 4)
+- **Status:** Complete (Phases 1, 2, 3, 3.5, 4 & 5)
 - **Priority:** High
 - **GitHub Issue:** [#20](https://github.com/banisterious/obsidian-canvas-roots/issues/20)
 - **Branch:** `feature/universal-media-linking`
@@ -990,41 +990,25 @@ async extractMediaToVault(
 
 ---
 
-## Phase 5 (Future): Dynamic Note Content
+### Phase 5: Dynamic Note Content ✅
 
-**Focus:** Add `<!-- cr:media-gallery -->` block for inline media display.
+**Focus:** Add `canvas-roots-media` code block for inline media display.
 
-#### Scope
+**Status:** Complete
 
-1. **Dynamic block registration**
-   - Add `cr:media-gallery` to dynamic content blocks
-   - Follows same pattern as `cr:timeline` and `cr:relationships`
+#### Implementation Summary
 
-2. **Gallery rendering**
-   - Renders thumbnail grid of entity's media
-   - Click opens lightbox
-   - Respects note's media property
+The media gallery dynamic block was implemented using the code block pattern (consistent with `canvas-roots-timeline` and `canvas-roots-relationships`), with freeze-to-markdown support outputting styled callouts.
 
-3. **Options**
-   - `<!-- cr:media-gallery columns=3 -->` for column count
-   - `<!-- cr:media-gallery size=large -->` for thumbnail size
-   - `<!-- cr:media-gallery editable -->` for inline drag-to-reorder
-
-4. **Freeze to Markdown**
-   - ❄️ toolbar button converts live block to static markdown
-   - Outputs callout with `|cr-frozen-gallery` metadata
-   - Bundled CSS styles the gallery (no external dependencies)
-
-#### Freeze Output Format
-
-The freeze feature outputs a callout styled by bundled CSS:
-
-**Before (dynamic):**
+**Dynamic block syntax:**
 ```markdown
-<!-- cr:media-gallery -->
+```canvas-roots-media
+columns: 3
+size: medium
+```
 ```
 
-**After (frozen):**
+**Freeze output:**
 ```markdown
 > [!info|cr-frozen-gallery]
 > ![[portrait.jpg]]
@@ -1032,169 +1016,53 @@ The freeze feature outputs a callout styled by bundled CSS:
 > ![[birth-cert.pdf]]
 ```
 
-**Benefits:**
-- Bundled CSS provides styled gallery layout out of the box
-- No external snippet dependencies
-- Namespaced class (`cr-frozen-gallery`) avoids conflicts with standalone MCL
-- Users who also have MCL enabled won't see style conflicts
-- Standard Obsidian markdown, fully portable
-
-**Callout type options** (configurable in settings):
-- `[!info|cr-frozen-gallery]` - Default, subtle styling
-- `[!blank|cr-frozen-gallery]` - Invisible container
-- `[!note|cr-frozen-gallery]` - Alternative styling
-
-#### Bundled Gallery CSS
-
-Canvas Roots bundles gallery styles derived from [MCL Gallery Cards](https://github.com/efemkay/obsidian-modular-css-layout) (MIT licensed), with namespaced classes to avoid conflicts:
-
-```css
-/* styles/frozen-gallery.css */
-
-/* Frozen media gallery - derived from MCL Gallery Cards (MIT) */
-.callout[data-callout-metadata*="cr-frozen-gallery"] > .callout-content > p {
-  display: flex;
-  gap: var(--cr-gallery-gap, 5px);
-  flex-wrap: wrap;
-}
-
-.callout[data-callout-metadata*="cr-frozen-gallery"] > .callout-content > p img {
-  max-height: var(--cr-gallery-max-height, 200px);
-  object-fit: var(--cr-gallery-object-fit, cover);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--cr-gallery-border-radius, var(--radius-s));
-}
-
-/* Hide callout title/icon for cleaner appearance */
-.callout[data-callout-metadata*="cr-frozen-gallery"] > .callout-title {
-  display: none;
-}
-
-.callout[data-callout-metadata*="cr-frozen-gallery"] {
-  padding: var(--cr-gallery-padding, 0.5rem);
-  background: var(--cr-gallery-background, transparent);
-}
-```
-
-#### Style Settings Integration
-
-Gallery appearance is configurable via the [Style Settings](https://github.com/mgmeyers/obsidian-style-settings) plugin:
-
-```css
-/* In styles/style-settings.css - add to existing settings block */
-
-  -
-    id: frozen-gallery-heading
-    title: Frozen media gallery
-    description: Styling for frozen <!-- cr:media-gallery --> callouts
-    type: heading
-    level: 1
-    collapsed: true
-  -
-    id: cr-gallery-gap
-    title: Image gap
-    description: Space between gallery images
-    type: variable-number-slider
-    default: 5
-    min: 0
-    max: 20
-    step: 1
-    format: px
-  -
-    id: cr-gallery-max-height
-    title: Maximum image height
-    description: Images taller than this will be scaled down
-    type: variable-number-slider
-    default: 200
-    min: 100
-    max: 500
-    step: 25
-    format: px
-  -
-    id: cr-gallery-border-radius
-    title: Image border radius
-    description: Roundness of image corners
-    type: variable-number-slider
-    default: 4
-    min: 0
-    max: 20
-    step: 2
-    format: px
-  -
-    id: cr-gallery-object-fit
-    title: Image fit mode
-    description: How images fill their container
-    type: variable-select
-    default: cover
-    options:
-      - cover
-      - contain
-      - fill
-      - none
-  -
-    id: cr-gallery-background
-    title: Gallery background color
-    description: Background color behind the gallery
-    type: variable-color
-    format: hex
-    default: transparent
-```
-
-**Configuration Options:**
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| Image gap | Space between thumbnails | 5px |
-| Maximum image height | Height limit for gallery images | 200px |
-| Image border radius | Corner roundness | 4px |
-| Image fit mode | `cover`, `contain`, `fill`, or `none` | cover |
-| Gallery background | Background color behind images | transparent |
-
-#### Implementation Notes
-
-```typescript
-// Register dynamic block
-this.registerDynamicContentBlock('cr:media-gallery', (el, options, file) => {
-  const entity = this.resolveEntityFromFile(file);
-  if (!entity?.media?.length) {
-    this.renderEmptyState(el, 'No media linked to this note.');
-    return;
-  }
-
-  const mediaItems = entity.media.map(ref =>
-    this.mediaService.resolveMediaItem(ref)
-  );
-
-  this.renderThumbnailGrid(el, mediaItems, options);
-});
-
-// Freeze to callout format with bundled styling
-private generateFrozenMarkdown(mediaRefs: string[]): string {
-  const calloutType = this.settings.mediaGalleryCalloutType ?? 'info';
-  const lines = [`> [!${calloutType}|cr-frozen-gallery]`];
-
-  for (const ref of mediaRefs) {
-    // Convert wikilink reference to embed syntax
-    const embedRef = ref.replace(/^\[\[/, '![[');
-    lines.push(`> ${embedRef}`);
-  }
-
-  return lines.join('\n');
-}
-```
-
-#### Files to Create
+#### Files Created
 
 | File | Purpose |
 |------|---------|
-| `styles/frozen-gallery.css` | Bundled gallery styles (derived from MCL, MIT licensed) |
+| `src/core/media-block-processor.ts` | Code block processor for `canvas-roots-media` blocks |
 
-#### Files to Modify
+#### Files Modified
 
 | File | Changes |
 |------|---------|
-| `styles/style-settings.css` | Add frozen gallery settings section |
-| `build-css.js` | Include frozen-gallery.css in build |
+| `main.ts` | Register media block processor, add media to `insertDynamicBlocks()` command |
+| `src/core/person-note-writer.ts` | Add `'media'` to `DynamicBlockType`, insert media block in generated notes |
+| `styles/dynamic-content.css` | Frozen gallery callout CSS (MCL Gallery Cards-inspired styling) |
+| `styles/style-settings.css` | Style Settings integration for gallery customization |
+| `styles/variables.css` | CSS variables for gallery (gap, max-height, max-width, border-radius) |
+
+#### Frozen Gallery Features
+
+Styling inspired by [MCL Gallery Cards](https://github.com/efemkay/obsidian-modular-css-layout) by Faiz Khuzaimah:
+
+- **Flex layout** — Images wrap in responsive grid
+- **Image sizing** — Configurable max-height/max-width with object-fit cover
+- **Border radius** — Rounded corners on gallery images
+- **Hover effects** — Scale transform and accent border on hover
+- **Click-to-zoom** — `:active` state expands image to fullscreen overlay
+- **Style Settings integration** — Users can customize via Style Settings plugin
+
+#### Style Settings Options
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| Gallery gap | Space between images | 5px |
+| Image max height | Maximum height for gallery images | 200px |
+| Image max width | Maximum width for gallery images | 250px |
+| Image border radius | Corner rounding for images | 8px |
+| Image fit mode | How images fill their container (cover, contain, fill, none) | cover |
+| Gallery background | Background color behind the gallery | transparent |
+
+#### Plugin Settings
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| Frozen gallery callout type | Callout type used when freezing galleries | info |
+
+#### Future Enhancements
+
+- [ ] `editable` option for inline drag-to-reorder
 
 ---
 
@@ -1536,6 +1404,19 @@ Benefits:
 - [x] Media linked to Source notes via `media` YAML array
 - [x] Import progress shows media extraction phase
 - [ ] Media linking to Person, Event, Place notes (future enhancement)
+
+### Phase 5
+- [x] `canvas-roots-media` code block processor registered
+- [x] Media gallery renders entity's linked media
+- [x] `columns` and `size` options supported
+- [x] Freeze (❄️) toolbar button converts to `[!info|cr-frozen-gallery]` callout
+- [x] Frozen gallery CSS bundled with plugin (MCL Gallery Cards-inspired)
+- [x] Style Settings integration for gallery customization
+- [x] "Insert Dynamic Blocks" command adds media blocks to existing person notes
+- [x] New person notes include media block when dynamic blocks enabled
+- [x] Configurable callout type in plugin settings (`frozenGalleryCalloutType`)
+- [x] Additional Style Settings options (object-fit, background color)
+- [ ] `editable` option for inline drag-to-reorder (future enhancement)
 
 ---
 

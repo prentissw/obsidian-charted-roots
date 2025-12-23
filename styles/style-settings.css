@@ -258,5 +258,23 @@ settings:
     description: Corner rounding for gallery images
     type: variable-text
     default: "8px"
+  -
+    id: cr-gallery-object-fit
+    title: Image fit mode
+    description: How images fill their container (cover, contain, fill, none)
+    type: variable-select
+    default: cover
+    options:
+      - cover
+      - contain
+      - fill
+      - none
+  -
+    id: cr-gallery-background
+    title: Gallery background
+    description: Background color behind the gallery
+    type: variable-color
+    format: hex
+    default: "#00000000"
 
 */

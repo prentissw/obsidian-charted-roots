@@ -366,7 +366,7 @@
  */
 .callout[data-callout-metadata="cr-frozen-gallery"] {
   padding: var(--cr-spacing-sm);
-  background: transparent;
+  background: var(--cr-gallery-background);
   border: none;
   box-shadow: none;
 }
@@ -405,7 +405,7 @@
   max-width: var(--cr-gallery-img-max-width);
   width: auto;
   height: auto;
-  object-fit: cover;
+  object-fit: var(--cr-gallery-object-fit);
   border-radius: var(--cr-gallery-img-border-radius);
   border: 1px solid var(--background-modifier-border);
   display: block;

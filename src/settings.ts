@@ -299,6 +299,9 @@ export interface CanvasRootsSettings {
 	mediaFolders: string[];
 	/** Whether to limit media scanning to specified folders */
 	enableMediaFolderFilter: boolean;
+	// Dynamic content settings
+	/** Callout type for frozen media galleries (info, note, etc.) */
+	frozenGalleryCalloutType: string;
 }
 
 /**
@@ -530,7 +533,9 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	dashboardFirstVisitDone: false,            // Show welcome notice on first visit
 	// Media folder filtering
 	mediaFolders: [],                          // Empty = no filtering (scan entire vault)
-	enableMediaFolderFilter: false             // Disabled by default for backwards compatibility
+	enableMediaFolderFilter: false,            // Disabled by default for backwards compatibility
+	// Dynamic content settings
+	frozenGalleryCalloutType: 'info'           // Callout type for frozen media galleries
 };
 
 export class CanvasRootsSettingTab extends PluginSettingTab {

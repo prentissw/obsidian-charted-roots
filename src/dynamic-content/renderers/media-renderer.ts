@@ -404,7 +404,8 @@ export class MediaRenderer {
 	 * Generate frozen markdown representation using callout syntax
 	 */
 	private generateFrozenMarkdown(): string {
-		const lines: string[] = ['> [!info|cr-frozen-gallery]'];
+		const calloutType = this.plugin.settings.frozenGalleryCalloutType || 'info';
+		const lines: string[] = [`> [!${calloutType}|cr-frozen-gallery]`];
 
 		for (const item of this.currentItems) {
 			lines.push(`> !${item.wikilink}`);
