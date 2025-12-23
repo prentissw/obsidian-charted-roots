@@ -22,8 +22,18 @@ Canvas Roots supports multiple genealogical data formats for interoperability wi
 |--------|--------|--------|-------------|
 | **GEDCOM 5.5.1** | ✅ | ✅ | Standard genealogy interchange format |
 | **GEDCOM X** | ✅ | ✅ | Modern JSON-based FamilySearch format |
-| **Gramps XML** | ✅ | ✅ | Gramps genealogy software format |
+| **Gramps XML** | ✅ | ✅ | Gramps genealogy software (`.gramps`, `.xml`, `.gpkg` with media) |
 | **CSV** | ✅ | ✅ | Spreadsheet-compatible tabular data |
+
+**Gramps file formats:**
+
+| Extension | Description |
+|-----------|-------------|
+| `.gramps` | Gzip-compressed XML (native Gramps format) |
+| `.xml` | Uncompressed Gramps XML export |
+| `.gpkg` | Gramps Package — ZIP containing XML + bundled media files |
+
+When importing `.gpkg` files, media files are extracted to the configured media folder and linked to Person, Event, Place, and Source notes via the `media` frontmatter property.
 
 **File organization:**
 
@@ -31,7 +41,7 @@ Canvas Roots supports multiple genealogical data formats for interoperability wi
 |--------|--------|-------------|
 | GEDCOM 5.5.1 | `src/gedcom/` | `GedcomImporter`, `GedcomParser`, `GedcomExporter`, `GedcomQualityAnalyzer` |
 | GEDCOM X | `src/gedcomx/` | `GedcomxImporter`, `GedcomxParser`, `GedcomxExporter` |
-| Gramps XML | `src/gramps/` | `GrampsImporter`, `GrampsParser`, `GrampsExporter` |
+| Gramps XML | `src/gramps/` | `GrampsImporter`, `GrampsParser`, `GrampsExporter`, `GpkgExtractor` |
 | CSV | `src/csv/` | `CsvImporter`, `CsvExporter` |
 
 ## Two-Pass Import Architecture
@@ -136,6 +146,74 @@ ABT 15 MAR 1950       → 1950-03-15 (precision: estimated)
 2. Review imported data
 3. Cross-import duplicate detection
 4. Promote to main tree or delete
+
+---
+
+## Gramps Media Linking
+
+When importing Gramps Package (`.gpkg`) files, media references are resolved and linked to entity notes.
+
+**Media reference flow:**
+
+```mermaid
+flowchart TD
+    A[.gpkg file] --> B[Extract ZIP contents]
+    B --> C[Parse data.gramps XML]
+    B --> D[Extract media files to vault]
+    D --> E[Build handle→path map]
+    C --> F[Parse objref elements]
+    F --> G[Populate mediaRefs arrays]
+    E --> H[Resolve handles to wikilinks]
+    G --> H
+    H --> I[Add media property to notes]
+```
+
+**Data structures:**
+
+```typescript
+// Added to GrampsPerson, GrampsEvent, GrampsPlace interfaces
+interface GrampsPerson {
+  // ... existing fields
+  mediaRefs: string[];  // Gramps media object handles
+}
+
+// Parsed from <objref hlink="..."> elements
+function parseMediaRefs(element: Element): string[] {
+  return Array.from(element.querySelectorAll('objref'))
+    .map(ref => ref.getAttribute('hlink'))
+    .filter((h): h is string => h !== null);
+}
+```
+
+**Resolution during import:**
+
+```typescript
+// In GrampsImporter.importPerson()
+const resolvedMedia: string[] = [];
+if (person.mediaRefs && mediaHandleToPath) {
+  for (const ref of person.mediaRefs) {
+    const vaultPath = mediaHandleToPath.get(ref);
+    if (vaultPath) {
+      const filename = vaultPath.split('/').pop() || vaultPath;
+      resolvedMedia.push(`"[[${filename}]]"`);
+    }
+  }
+}
+
+const personData: PersonData = {
+  // ... other fields
+  media: resolvedMedia.length > 0 ? resolvedMedia : undefined
+};
+```
+
+**Entity types with media support:**
+
+| Entity | Interface | Frontmatter Property |
+|--------|-----------|---------------------|
+| Person | `GrampsPerson.mediaRefs` | `media` |
+| Event | `GrampsEvent.mediaRefs` | `media` |
+| Place | `GrampsPlace.mediaRefs` | `media` |
+| Source | `GrampsSource.mediaRefs` | `media` |
 
 ---
 

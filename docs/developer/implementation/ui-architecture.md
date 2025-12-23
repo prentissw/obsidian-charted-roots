@@ -230,6 +230,23 @@ export const TAB_CONFIGS: TabConfig[] = [
 | `tree-generation` | Tree Output | Canvas/chart generation |
 | `preferences` | Preferences | Aliases, folders, display settings |
 
+**Dashboard tiles:**
+
+The Dashboard tab displays quick-action tiles organized in a responsive grid:
+
+| Tile | Icon | Description |
+|------|------|-------------|
+| Create Person | `user-plus` | Opens Create Person modal |
+| Import Data | `download` | Opens Import/Export tab |
+| Generate Tree | `git-fork` | Opens Tree Output tab |
+| Family Chart | `users` | Opens interactive chart (requires people) |
+| Geocode Places | `map-pin` | Batch geocode place notes |
+| View Map | `map` | Opens map view (requires places with coords) |
+| Find Unlinked Media | `image` | Opens unlinked media finder modal |
+| Run Data Quality | `check-circle` | Opens Data Quality tab |
+
+Tiles are conditionally shown based on vault state (e.g., "Family Chart" requires person notes to exist).
+
 ### Navigation and Routing
 
 **Tab switching:**
@@ -470,6 +487,11 @@ export interface CanvasRootsSettings {
   trackFactSourcing: boolean;
   showResearchGapsInStatus: boolean;
 
+  // === Media ===
+  mediaFolders: string[];           // Folders to scan for media files
+  enableMediaFolderFilter: boolean; // Whether to limit scanning to specified folders
+  frozenGalleryCalloutType: string; // Callout type for frozen galleries (default: 'info')
+
   // === Note Detection ===
   noteTypeDetection: NoteTypeDetectionSettings;
 
@@ -629,6 +651,11 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
   // Logging
   logLevel: 'info',
   obfuscateLogExports: true,
+
+  // Media
+  mediaFolders: [],                // Empty = scan entire vault
+  enableMediaFolderFilter: false,  // Disabled by default
+  frozenGalleryCalloutType: 'info',
 
   // Type management
   customRelationshipTypes: [],

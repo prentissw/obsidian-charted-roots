@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.15.0] - 2025-12-22
+
+### Added
+
+- **Universal Media Linking** - The `media` property is now supported on Person, Event, Place, and Organization notes (previously only Source notes). Link photos, documents, and scanned records to any entity type.
+
+- **Gramps Package (.gpkg) media import** - Import `.gpkg` files with bundled media. Media files are extracted to your configured media folder and linked to corresponding Person, Event, Place, and Source notes via the `media` frontmatter property.
+
+- **Dynamic media gallery block** - New `canvas-roots-media` code block renders an inline gallery of linked media files in reading view. Configurable columns (2-6 or auto), thumbnail size (small/medium/large), and custom title.
+
+- **Editable media gallery mode** - Set `editable: true` in the media block to enable drag-and-drop reordering. First item becomes the thumbnail (used for Family Chart avatars). Frontmatter is updated automatically on drop.
+
+- **Freeze media gallery to callout** - Click the freeze button (❄️) to convert a dynamic media gallery to a static `[!info|cr-frozen-gallery]` callout with embedded image links.
+
+- **Media gallery Style Settings** - Gallery appearance (gap, max height/width, border radius, object-fit) customizable via the Style Settings plugin.
+
+- **Media folder filtering** - New settings to specify which folders to scan for media files. Used by Find Unlinked Media, Media Manager stats, and Media Picker.
+
+### Changed
+
+- **Import wizards include media blocks** - When "Include dynamic blocks" is enabled, imported person notes now include all three block types (timeline, relationships, media). Media blocks are included with `editable: true` by default.
+
+- **Insert dynamic blocks includes media** - Context menu action and bulk folder operation now add the media block alongside timeline and relationships blocks.
+
 ### Fixed
 
 - **ESLint compliance** - Fixed all non-sentence-case ESLint errors for Obsidian plugin review compliance: async functions without await, misused promises in event handlers, floating promises, unused variables, and TFile cast issues.

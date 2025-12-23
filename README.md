@@ -1,6 +1,6 @@
 # Canvas Roots: Genealogical Family Tree Plugin for Obsidian
 
-[![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](https://github.com/banisterious/obsidian-canvas-roots/releases) [![Status](https://img.shields.io/badge/status-stable-green.svg)](docs/roadmap.md)
+[![Version](https://img.shields.io/badge/version-0.15.0-blue.svg)](https://github.com/banisterious/obsidian-canvas-roots/releases) [![Status](https://img.shields.io/badge/status-stable-green.svg)](docs/roadmap.md)
 
 **Canvas Roots** brings professional genealogical tools to Obsidian—import, organize, visualize, and share family histories and fictional worlds without leaving your vault. From GEDCOM imports to PDF reports, interactive charts to map views, manage your research with the power of linked Markdown notes. Built for genealogists, historians, writers, and world-builders.
 
@@ -32,7 +32,7 @@
 | **Full Entity Export** | Export people, events, sources, places, and custom relationships to all formats |
 | **GEDCOM 5.5.1** | Full round-trip import/export with validation, UUID preservation, privacy protection, and PEDI tag parsing for step/adoptive parents |
 | **GEDCOM X** | Import/export with FamilySearch JSON format and lineage type parsing for step/adoptive parents |
-| **Gramps XML** | Import/export for Gramps genealogy software with mrel/frel parsing for step/adoptive parents |
+| **Gramps XML** | Import/export for Gramps genealogy software; `.gpkg` package import extracts bundled media files |
 | **CSV/TSV** | Import/export for spreadsheet workflows with auto-detected column mapping |
 | **Excalidraw Export** | Export canvases for manual annotation and hand-drawn styling |
 | **Enhanced Export UI** | Real-time statistics, entity toggles, format selection, and progress tracking |
@@ -61,6 +61,7 @@
 | **[Data Quality Tools](https://github.com/banisterious/obsidian-canvas-roots/wiki/Data-Quality)** | Quality scores, 15+ issue types, batch normalization |
 | **[Schema Validation](https://github.com/banisterious/obsidian-canvas-roots/wiki/Schema-Validation)** | User-defined schemas with required properties, type validation, enum constraints, and custom rules |
 | **Generate Place Notes** | Batch create place notes from references in person/event notes with hierarchy linking |
+| **[Dynamic Note Content](https://github.com/banisterious/obsidian-canvas-roots/wiki/Dynamic-Note-Content)** | Live-rendered timeline, relationships, and media gallery blocks within person notes |
 
 ### [Geographic Features](https://github.com/banisterious/obsidian-canvas-roots/wiki/Geographic-Features)
 

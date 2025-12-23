@@ -48,6 +48,15 @@ The Interactive Family Chart View is a persistent, interactive visualization pan
 
 ## Display Options
 
+### Person Card Avatars
+
+If a person note has a `media` property, the first media item is displayed as a thumbnail avatar on their card. This works with:
+- Photos linked via `media: "[[portrait.jpg]]"`
+- The first item in a media array: `media: ["[[portrait.jpg]]", "[[other.jpg]]"]`
+- Media linked during Gramps Package (`.gpkg`) import
+
+Use the `canvas-roots-media` block with `editable: true` in person notes to drag-and-reorder media items—the first item becomes the thumbnail.
+
 ### Color Schemes
 
 Access via the color scheme dropdown in the toolbar:

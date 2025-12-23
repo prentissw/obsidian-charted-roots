@@ -33,7 +33,7 @@ The Dashboard is the Control Center's home screen, providing quick access to com
 
 ### Quick Actions
 
-Nine action tiles arranged in a responsive grid (3×3 on desktop, 2×2 on mobile):
+Twelve action tiles arranged in a responsive grid (4×3 on desktop, 2×2 on mobile):
 
 | Tile | Action |
 |------|--------|
@@ -41,11 +41,14 @@ Nine action tiles arranged in a responsive grid (3×3 on desktop, 2×2 on mobile
 | **Event** | Create a new event note |
 | **Source** | Create a new source note |
 | **Place** | Create a new place note |
+| **Organization** | Create a new organization note |
 | **Report** | Open the Report Generator |
 | **Statistics** | Open the Statistics Dashboard view |
 | **Import** | Go to the Import/Export tab |
-| **Tree Output** | Go to the Tree Output tab |
+| **Canvas Trees** | Go to the Canvas Trees tab |
+| **Family Chart** | Open the interactive Family Chart view |
 | **Map** | Open the interactive Map View |
+| **Media** | Open the Find Unlinked Media tool |
 
 ### Vault Health
 
@@ -94,7 +97,7 @@ The Control Center contains 17 tabs organized by function:
 | **Collections** | Family groups and custom collections |
 | **Data Quality** | Issue detection and batch fixes |
 | **Statistics** | Vault analytics and report generation |
-| **Tree Output** | Canvas tree generation with preview |
+| **Canvas Trees** | Canvas tree generation with preview |
 | **Preferences** | Aliases, folders, and display settings |
 
 ---

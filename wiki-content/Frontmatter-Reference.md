@@ -223,6 +223,16 @@ spouses:
 | `cr_root` | `boolean` | Designates this person as root of a tree | `true` |
 | `collection` | `string` | User-defined grouping/collection name | `"Smith Family"` |
 
+### Media Files
+
+Person notes can link to media files (photos, portraits, documents) in the vault:
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `media` | `string \| string[]` | Wikilink(s) to media files | `"[[portrait.jpg]]"` or `["[[portrait.jpg]]", "[[family-photo.jpg]]"]` |
+
+**Note:** The first media item serves as the thumbnail, displayed on Family Chart person cards.
+
 ### Life Events
 
 Beyond birth, death, and marriage (which use flat properties above), additional life events can be recorded in an `events` array. These events appear as markers on the Map View.
@@ -415,6 +425,14 @@ historical_names:
 | `collection` | `string` | User-defined grouping (shared with person notes) | `"Smith Family"` |
 
 The `collection` property allows places to be grouped with related person notes. For example, a "Smith Family" collection could include both the Smith family members and the places associated with them.
+
+### Media Files
+
+Place notes can link to media files (location photos, historical maps, floor plans):
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `media` | `string \| string[]` | Wikilink(s) to media files | `"[[castle-photo.jpg]]"` |
 
 ---
 
@@ -947,6 +965,9 @@ children_id:
 cr_root: true
 collection: "Smith Family"
 ahnentafel: 1
+media:
+  - "[[john-smith-portrait.jpg]]"
+  - "[[smith-family-photo-1920.jpg]]"
 sourced_facts:
   birth_date:
     sources:
@@ -1220,6 +1241,14 @@ Canvas Roots includes built-in event types organized by category. Custom types c
 | `low` | Unverified or questionable |
 | `unknown` | Not yet assessed |
 
+### Media Files
+
+Event notes can link to media files (ceremony photos, certificates, illustrations):
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `media` | `string \| string[]` | Wikilink(s) to media files | `"[[wedding-photo.jpg]]"` |
+
 ### Relative Ordering
 
 For events without precise dates, use relative ordering to establish sequence:
@@ -1361,6 +1390,14 @@ Organization notes define non-genealogical hierarchies such as noble houses, gui
 | Property | Type | Description | Example |
 |----------|------|-------------|---------|
 | `seat` | `string` | Wikilink to primary location (place note) | `"[[Winterfell]]"` |
+
+### Media Files
+
+Organization notes can link to media files (logos, group photos, heraldry):
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `media` | `string \| string[]` | Wikilink(s) to media files | `"[[house-sigil.png]]"` |
 
 ---
 
