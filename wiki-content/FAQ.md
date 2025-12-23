@@ -99,7 +99,18 @@ Right-click the canvas → "Regenerate canvas", or use the command palette.
 | Purpose | Interactive exploration | Static documentation |
 | Editing | Direct in-chart editing | Edit source notes |
 | Persistence | View state saved | Canvas file saved |
+| Export | PNG, SVG, PDF, ODT | Canvas file |
+| Styling | Theme presets, custom colors | Style Settings only |
 | Best for | Day-to-day research | Sharing/archiving |
+
+### Can I export from the Family Chart View?
+
+Yes. Click the Export button to open the Export Wizard with:
+- **5 Quick Presets**: Quick Share, High Quality, Print Ready, Editable, Document
+- **Format options**: PNG, SVG, PDF, ODT
+- **Customization**: Scale, avatars, cover pages, page layout
+
+See [Family Chart View: Exporting](Family-Chart-View#exporting-the-chart) for details.
 
 ### Can I have multiple chart views open?
 
@@ -109,13 +120,22 @@ Yes. Use "Open new family chart" to open additional tabs with different root per
 
 ### What genealogy software can I import from?
 
-Canvas Roots supports GEDCOM 5.5.1 format, which is exported by:
+Canvas Roots supports multiple import formats:
+
+**GEDCOM 5.5.1** — The universal genealogy exchange format, exported by:
 - Ancestry
 - FamilySearch
 - MyHeritage
-- Gramps
 - Legacy Family Tree
 - Most other genealogy software
+
+**Gramps XML / .gpkg** — Direct import from Gramps:
+- Gramps XML files (`.gramps` or exported XML)
+- Gramps Packages (`.gpkg`) with bundled media files automatically extracted
+
+**CSV** — Spreadsheet data with configurable column mapping
+
+See [Import & Export](Import-Export) for detailed instructions.
 
 ### Will importing overwrite my existing data?
 
