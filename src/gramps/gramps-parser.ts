@@ -59,6 +59,8 @@ export interface ParsedGrampsPerson {
 	spouseRefs: string[];
 	// Marriage data per spouse
 	marriages: Map<string, { date?: string; place?: string }>;
+	// Media references
+	mediaRefs: string[];
 }
 
 /**
@@ -69,6 +71,7 @@ export interface ParsedGrampsPlace {
 	id?: string;
 	name?: string;
 	type?: string;
+	mediaRefs: string[];
 }
 
 /**
@@ -85,6 +88,8 @@ export interface ParsedGrampsEvent {
 	personHandles: string[];
 	/** Citation handles for this event */
 	citationHandles: string[];
+	/** Media references */
+	mediaRefs: string[];
 }
 
 /**
@@ -308,7 +313,8 @@ export class GrampsParser {
 				handle: grampsPlace.handle,
 				id: grampsPlace.id,
 				name: grampsPlace.name,
-				type: grampsPlace.type
+				type: grampsPlace.type,
+				mediaRefs: grampsPlace.mediaRefs || []
 			});
 		}
 
@@ -338,7 +344,8 @@ export class GrampsParser {
 				placeName,
 				description: grampsEvent.description,
 				personHandles,
-				citationHandles: grampsEvent.citationRefs || []
+				citationHandles: grampsEvent.citationRefs || [],
+				mediaRefs: grampsEvent.mediaRefs || []
 			});
 		}
 
@@ -544,7 +551,8 @@ export class GrampsParser {
 			names: [],
 			eventrefs: [],
 			childof: [],
-			parentin: []
+			parentin: [],
+			mediaRefs: []
 		};
 
 		// Parse names
@@ -578,6 +586,14 @@ export class GrampsParser {
 			const hlink = refEl.getAttribute('hlink');
 			if (hlink) {
 				person.parentin.push(hlink);
+			}
+		});
+
+		// Parse media references
+		el.querySelectorAll('objref').forEach(refEl => {
+			const hlink = refEl.getAttribute('hlink');
+			if (hlink) {
+				person.mediaRefs.push(hlink);
 			}
 		});
 
@@ -629,6 +645,15 @@ export class GrampsParser {
 			}
 		});
 
+		// Parse media references
+		const mediaRefs: string[] = [];
+		el.querySelectorAll('objref').forEach(refEl => {
+			const hlink = refEl.getAttribute('hlink');
+			if (hlink) {
+				mediaRefs.push(hlink);
+			}
+		});
+
 		const event: GrampsEvent = {
 			handle,
 			id: el.getAttribute('id') || undefined,
@@ -636,7 +661,8 @@ export class GrampsParser {
 			date: this.parseDate(el),
 			place: el.querySelector('place')?.getAttribute('hlink') || undefined,
 			description: el.querySelector('description')?.textContent || undefined,
-			citationRefs
+			citationRefs,
+			mediaRefs
 		};
 
 		return event;
@@ -697,11 +723,21 @@ export class GrampsParser {
 		const handle = el.getAttribute('handle');
 		if (!handle) return null;
 
+		// Parse media references
+		const mediaRefs: string[] = [];
+		el.querySelectorAll('objref').forEach(refEl => {
+			const hlink = refEl.getAttribute('hlink');
+			if (hlink) {
+				mediaRefs.push(hlink);
+			}
+		});
+
 		const place: GrampsPlace = {
 			handle,
 			id: el.getAttribute('id') || undefined,
 			name: el.querySelector('pname')?.getAttribute('value') || undefined,
-			type: el.getAttribute('type') || undefined
+			type: el.getAttribute('type') || undefined,
+			mediaRefs
 		};
 
 		return place;
@@ -985,7 +1021,8 @@ export class GrampsParser {
 			stepfatherRefs: [],
 			stepmotherRefs: [],
 			spouseRefs: [],
-			marriages: new Map()
+			marriages: new Map(),
+			mediaRefs: person.mediaRefs || []
 		};
 	}
 

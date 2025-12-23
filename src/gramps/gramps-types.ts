@@ -65,6 +65,7 @@ export interface GrampsEvent {
 	place?: string;  // Handle link to place
 	description?: string;
 	citationRefs: string[];  // Handle links to citations
+	mediaRefs: string[];     // Handle links to media objects
 }
 
 /**
@@ -75,6 +76,7 @@ export interface GrampsPlace {
 	id?: string;
 	name?: string;
 	type?: string;
+	mediaRefs: string[];  // Handle links to media objects
 }
 
 /**
@@ -97,6 +99,7 @@ export interface GrampsPerson {
 	eventrefs: GrampsEventRef[];
 	childof: string[];   // Handle links to families where this person is a child
 	parentin: string[];  // Handle links to families where this person is a parent
+	mediaRefs: string[]; // Handle links to media objects
 }
 
 /**
