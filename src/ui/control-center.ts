@@ -8560,7 +8560,7 @@ export class ControlCenterModal extends Modal {
 			.addDropdown(dropdown => {
 				dropdown.addOption('gedcom', 'GEDCOM 5.5.1');
 				dropdown.addOption('gedcomx', 'GEDCOM X (JSON)');
-				dropdown.addOption('gramps', 'Gramps XML');
+				dropdown.addOption('gramps', 'Gramps XML / .gpkg');
 				dropdown.addOption('csv', 'CSV');
 
 				dropdown.setValue(this.importFormat);
@@ -9558,17 +9558,17 @@ export class ControlCenterModal extends Modal {
 	}
 
 	/**
-	 * Render Gramps XML import options
+	 * Render Gramps XML/.gpkg import options
 	 */
 	private renderGrampsImport(container: HTMLElement): void {
 		const card = this.createCard({
-			title: 'Import Gramps XML',
+			title: 'Import Gramps XML / .gpkg',
 			icon: 'upload'
 		});
 		const content = card.querySelector('.crc-card__content') as HTMLElement;
 
 		content.createEl('p', {
-			text: 'Import family tree data from Gramps genealogy software XML format',
+			text: 'Import family tree data from Gramps XML or .gpkg package files (with bundled media)',
 			cls: 'crc-text-muted crc-mb-4'
 		});
 
