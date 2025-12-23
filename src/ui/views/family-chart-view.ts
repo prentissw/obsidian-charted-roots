@@ -16,6 +16,7 @@ import { getLogger } from '../../core/logging';
 import { PersonPickerModal } from '../person-picker';
 import { FamilyChartExportWizard } from './family-chart-export-wizard';
 import type { FamilyChartExportProgress, ProgressCallback } from './family-chart-export-progress-modal';
+import { generateOdt } from './odt-generator';
 
 const logger = getLogger('FamilyChartView');
 
@@ -1507,11 +1508,11 @@ export class FamilyChartView extends ItemView {
 	 * Export chart with options from the wizard
 	 */
 	async exportWithOptions(options: {
-		format: 'png' | 'svg' | 'pdf';
+		format: 'png' | 'svg' | 'pdf' | 'odt';
 		filename: string;
 		includeAvatars: boolean;
 		scale?: number;
-		// PDF-specific options
+		// PDF/ODT-specific options
 		pageSize?: 'fit' | 'a4' | 'letter' | 'legal' | 'tabloid';
 		layout?: 'single' | 'tiled';
 		orientation?: 'auto' | 'portrait' | 'landscape';
@@ -1536,6 +1537,13 @@ export class FamilyChartView extends ItemView {
 					pageSize: options.pageSize ?? 'fit',
 					layout: options.layout ?? 'single',
 					orientation: options.orientation ?? 'auto',
+					includeCoverPage: options.includeCoverPage ?? false,
+					coverTitle: options.coverTitle ?? '',
+					coverSubtitle: options.coverSubtitle ?? ''
+				}, onProgress, isCancelled);
+				break;
+			case 'odt':
+				await this.exportAsOdtWithOptions(filename, includeAvatars, scale ?? 2, {
 					includeCoverPage: options.includeCoverPage ?? false,
 					coverTitle: options.coverTitle ?? '',
 					coverSubtitle: options.coverSubtitle ?? ''
@@ -1927,6 +1935,142 @@ export class FamilyChartView extends ItemView {
 		} catch (error) {
 			logger.error('export-pdf', 'Failed to export PDF', { error });
 			new Notice('Failed to export PDF');
+		}
+	}
+
+	/**
+	 * Export as ODT with options
+	 */
+	private async exportAsOdtWithOptions(
+		filename: string,
+		includeAvatars: boolean,
+		scale: number,
+		odtOptions: {
+			includeCoverPage: boolean;
+			coverTitle: string;
+			coverSubtitle: string;
+		},
+		onProgress?: ProgressCallback,
+		isCancelled?: () => boolean
+	): Promise<void> {
+		if (!this.f3Chart) return;
+
+		const svg = this.f3Chart.svg;
+		if (!svg) {
+			new Notice('No chart to export');
+			return;
+		}
+
+		try {
+			onProgress?.({ phase: 'preparing', current: 0, total: 100, message: 'Preparing chart...' });
+
+			const { svgClone, width, height } = this.prepareSvgForExport(svg as SVGSVGElement);
+
+			logger.debug('export-odt', 'Preparing ODT export', {
+				width, height, scale, includeAvatars, odtOptions
+			});
+
+			// Check for canvas size limits
+			const maxDimension = 16384;
+			const maxArea = 268435456;
+			const scaledWidth = width * scale;
+			const scaledHeight = height * scale;
+			const scaledArea = scaledWidth * scaledHeight;
+
+			if (scaledWidth > maxDimension || scaledHeight > maxDimension) {
+				new Notice(`Chart too large for ODT export (${Math.round(width)}x${Math.round(height)}px). Try SVG export instead.`, 0);
+				return;
+			}
+
+			if (scaledArea > maxArea) {
+				new Notice(`Chart too large for ODT export (${Math.round(scaledArea / 1000000)}M pixels). Try SVG export instead.`, 0);
+				return;
+			}
+
+			// Check for cancellation
+			if (isCancelled?.()) return;
+
+			// Handle avatars based on option
+			if (includeAvatars) {
+				await this.embedImagesAsBase64WithProgress(svgClone, onProgress, isCancelled);
+				if (isCancelled?.()) return;
+			} else {
+				const imageElements = svgClone.querySelectorAll('image[href]');
+				imageElements.forEach((imgEl) => {
+					const href = imgEl.getAttribute('href') || imgEl.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+					if (href?.startsWith('app://')) {
+						imgEl.remove();
+					}
+				});
+			}
+
+			onProgress?.({ phase: 'rendering', current: 0, total: 100, message: 'Rendering image...' });
+
+			// Serialize SVG
+			const serializer = new XMLSerializer();
+			const svgString = serializer.serializeToString(svgClone);
+			const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+			const svgUrl = URL.createObjectURL(svgBlob);
+
+			// Create canvas
+			const canvas = document.createElement('canvas');
+			canvas.width = scaledWidth;
+			canvas.height = scaledHeight;
+			const ctx = canvas.getContext('2d');
+			if (!ctx) {
+				new Notice('Failed to create canvas context');
+				return;
+			}
+
+			const img = new Image();
+			img.onload = async () => {
+				ctx.scale(scale, scale);
+				ctx.drawImage(img, 0, 0);
+				URL.revokeObjectURL(svgUrl);
+
+				onProgress?.({ phase: 'encoding', current: 0, total: 100, message: 'Creating ODT...' });
+
+				// Get PNG data from canvas
+				const pngDataUrl = canvas.toDataURL('image/png');
+
+				// Get export info for cover page
+				const exportInfo = this.getExportInfo();
+
+				// Generate ODT using the odt-generator module
+				const odtBlob = await generateOdt({
+					title: odtOptions.coverTitle || `${exportInfo.rootPersonName} Family Tree`,
+					chartImageData: pngDataUrl,
+					chartWidth: scaledWidth,
+					chartHeight: scaledHeight,
+					includeCoverPage: odtOptions.includeCoverPage,
+					coverTitle: odtOptions.coverTitle,
+					coverSubtitle: odtOptions.coverSubtitle,
+					peopleCount: exportInfo.peopleCount,
+					rootPersonName: exportInfo.rootPersonName
+				});
+
+				onProgress?.({ phase: 'saving', current: 0, total: 100, message: 'Saving file...' });
+
+				// Download the ODT file
+				const url = URL.createObjectURL(odtBlob);
+				const link = document.createElement('a');
+				link.href = url;
+				link.download = filename;
+				link.click();
+				URL.revokeObjectURL(url);
+
+				onProgress?.({ phase: 'complete', current: 100, total: 100, message: 'Done!' });
+				new Notice('ODT exported successfully');
+			};
+			img.onerror = () => {
+				URL.revokeObjectURL(svgUrl);
+				new Notice('Failed to render chart as ODT. Try SVG export instead.');
+			};
+			img.src = svgUrl;
+
+		} catch (error) {
+			logger.error('export-odt', 'Failed to export ODT', { error });
+			new Notice('Failed to export ODT');
 		}
 	}
 

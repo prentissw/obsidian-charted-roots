@@ -854,12 +854,6 @@ export class FamilyChartExportWizard extends Modal {
 		const filename = `${this.formData.filename}.${this.formData.format}`;
 
 		try {
-			if (this.formData.format === 'odt') {
-				// ODT export not yet implemented (Phase 6)
-				new Notice('ODT export not yet implemented');
-				return;
-			}
-
 			// Close the wizard modal
 			this.close();
 
@@ -867,7 +861,8 @@ export class FamilyChartExportWizard extends Modal {
 			const formatNames: Record<string, string> = {
 				png: 'PNG',
 				svg: 'SVG',
-				pdf: 'PDF'
+				pdf: 'PDF',
+				odt: 'ODT'
 			};
 			const formatName = formatNames[this.formData.format] || this.formData.format.toUpperCase();
 
@@ -877,7 +872,7 @@ export class FamilyChartExportWizard extends Modal {
 
 			// Perform the export with progress tracking
 			await this.chartView.exportWithOptions({
-				format: this.formData.format as 'png' | 'svg' | 'pdf',
+				format: this.formData.format as 'png' | 'svg' | 'pdf' | 'odt',
 				filename,
 				includeAvatars: this.formData.includeAvatars,
 				scale: this.formData.scale,
