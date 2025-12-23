@@ -243,13 +243,15 @@ map.addLayer(markers);
 
 ## JSZip
 
-**Purpose:** ZIP archive extraction for Gramps Package (.gpkg) import.
+**Purpose:** ZIP archive handling for Gramps Package (.gpkg) import and ODT document generation.
 
 **Version:** ^3.10.1
 
-**Location:** `src/gramps/gpkg-extractor.ts`
+**Locations:**
+- `src/gramps/gpkg-extractor.ts` - Gramps Package extraction
+- `src/ui/views/family-chart-view.ts` - ODT export generation
 
-**Usage pattern:**
+**Usage pattern (extraction):**
 
 ```typescript
 import JSZip from 'jszip';
@@ -268,6 +270,25 @@ for (const [path, file] of Object.entries(zip.files)) {
 }
 ```
 
+**Usage pattern (creation for ODT):**
+
+```typescript
+import JSZip from 'jszip';
+
+// Create new ZIP archive
+const zip = new JSZip();
+
+// Add files with content
+zip.file('mimetype', 'application/vnd.oasis.opendocument.text', { compression: 'STORE' });
+zip.file('content.xml', contentXml);
+zip.file('styles.xml', stylesXml);
+zip.file('META-INF/manifest.xml', manifestXml);
+zip.file('Pictures/chart.png', imageData, { binary: true });
+
+// Generate as Blob for download
+const blob = await zip.generateAsync({ type: 'blob' });
+```
+
 **Key features used:**
 
 | Feature | Description |
@@ -275,16 +296,28 @@ for (const [path, file] of Object.entries(zip.files)) {
 | `loadAsync()` | Parse ZIP from ArrayBuffer, Blob, or base64 |
 | `file.async()` | Extract file contents as string, Uint8Array, or ArrayBuffer |
 | `files` | Object with all entries (directories have `dir: true`) |
+| `new JSZip()` | Create new archive for generating ZIP/ODT files |
+| `zip.file()` | Add file to archive with content and options |
+| `generateAsync()` | Generate ZIP as Blob, ArrayBuffer, or base64 |
 
 **Gramps Package structure:**
 - `.gpkg` files are ZIP archives containing:
   - `data.gramps` - Gramps XML file (may be gzip-compressed)
   - `media/` - Directory with referenced media files (images, documents)
 
+**ODT structure:**
+- ODT files are ZIP archives with specific structure:
+  - `mimetype` - Must be first, uncompressed
+  - `content.xml` - Document content
+  - `styles.xml` - Document styles
+  - `META-INF/manifest.xml` - File manifest
+  - `Pictures/` - Embedded images
+
 **Notes:**
 - Lightweight (~90KB minified, ~30KB gzipped)
 - Pure JavaScript, no native dependencies
 - Works in browser and Node.js environments
+- Used for both reading (Gramps import) and writing (ODT export)
 
 ---
 
