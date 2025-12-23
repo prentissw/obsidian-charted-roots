@@ -171,7 +171,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 20px;
+  padding: 12px 20px;
   min-height: 0;
 }
 
@@ -180,11 +180,11 @@
    ========================================================================== */
 
 .cr-export-section {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .cr-export-section-title {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -193,7 +193,7 @@
 }
 
 .cr-export-separator {
-  margin: 12px 0;
+  margin: 8px 0;
   border: none;
   border-top: 1px solid var(--background-modifier-border);
 }
@@ -328,13 +328,13 @@
    ========================================================================== */
 
 .cr-export-estimate {
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: var(--background-secondary);
   border-radius: 5px;
 }
 
 .cr-export-estimate .cr-export-section-title {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .cr-export-stats-row {
@@ -398,7 +398,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 0;
+  padding: 4px 0;
 }
 
 .cr-export-radio-row input[type="radio"] {
@@ -440,8 +440,8 @@
 
 /* Scope hint */
 .cr-export-scope-hint {
-  margin-top: 8px;
-  padding: 8px 12px;
+  margin-top: 6px;
+  padding: 6px 10px;
   background: var(--background-secondary);
   border-radius: 4px;
 }
@@ -459,8 +459,8 @@
 .cr-export-option-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 0;
+  gap: 10px;
+  padding: 4px 0;
 }
 
 .cr-export-option-row--checkbox {

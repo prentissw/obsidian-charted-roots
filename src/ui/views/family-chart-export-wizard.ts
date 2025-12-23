@@ -847,12 +847,19 @@ export class FamilyChartExportWizard extends Modal {
 			// Close the modal first for a cleaner UX
 			this.close();
 
-			// Perform the export
+			// Perform the export with format-specific options
 			await this.chartView.exportWithOptions({
 				format: this.formData.format as 'png' | 'svg' | 'pdf',
 				filename,
 				includeAvatars: this.formData.includeAvatars,
-				scale: this.formData.scale
+				scale: this.formData.scale,
+				// PDF-specific options
+				pageSize: this.formData.pageSize,
+				layout: this.formData.layout,
+				orientation: this.formData.orientation,
+				includeCoverPage: this.formData.includeCoverPage,
+				coverTitle: this.formData.coverTitle,
+				coverSubtitle: this.formData.coverSubtitle
 			});
 
 		} catch (error) {

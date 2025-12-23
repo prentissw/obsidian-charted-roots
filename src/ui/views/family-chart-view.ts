@@ -1492,6 +1492,17 @@ export class FamilyChartView extends ItemView {
 	}
 
 	/**
+	 * PDF page size definitions (in points, 72 points = 1 inch)
+	 */
+	private static readonly PDF_PAGE_SIZES: Record<string, { width: number; height: number; label: string } | null> = {
+		fit: null, // Dynamic sizing to match content
+		a4: { width: 595, height: 842, label: 'A4' },
+		letter: { width: 612, height: 792, label: 'Letter' },
+		legal: { width: 612, height: 1008, label: 'Legal' },
+		tabloid: { width: 792, height: 1224, label: 'Tabloid' }
+	};
+
+	/**
 	 * Export chart with options from the wizard
 	 */
 	async exportWithOptions(options: {
@@ -1499,6 +1510,13 @@ export class FamilyChartView extends ItemView {
 		filename: string;
 		includeAvatars: boolean;
 		scale?: number;
+		// PDF-specific options
+		pageSize?: 'fit' | 'a4' | 'letter' | 'legal' | 'tabloid';
+		layout?: 'single' | 'tiled';
+		orientation?: 'auto' | 'portrait' | 'landscape';
+		includeCoverPage?: boolean;
+		coverTitle?: string;
+		coverSubtitle?: string;
 	}): Promise<void> {
 		const { format, filename, includeAvatars, scale } = options;
 
@@ -1510,7 +1528,14 @@ export class FamilyChartView extends ItemView {
 				await this.exportAsSvgWithOptions(filename, includeAvatars);
 				break;
 			case 'pdf':
-				await this.exportAsPdfWithOptions(filename, includeAvatars, scale ?? 2);
+				await this.exportAsPdfWithOptions(filename, includeAvatars, scale ?? 2, {
+					pageSize: options.pageSize ?? 'fit',
+					layout: options.layout ?? 'single',
+					orientation: options.orientation ?? 'auto',
+					includeCoverPage: options.includeCoverPage ?? false,
+					coverTitle: options.coverTitle ?? '',
+					coverSubtitle: options.coverSubtitle ?? ''
+				});
 				break;
 		}
 	}
@@ -1661,7 +1686,19 @@ export class FamilyChartView extends ItemView {
 	/**
 	 * Export as PDF with options
 	 */
-	private async exportAsPdfWithOptions(filename: string, includeAvatars: boolean, scale: number): Promise<void> {
+	private async exportAsPdfWithOptions(
+		filename: string,
+		includeAvatars: boolean,
+		scale: number,
+		pdfOptions: {
+			pageSize: 'fit' | 'a4' | 'letter' | 'legal' | 'tabloid';
+			layout: 'single' | 'tiled';
+			orientation: 'auto' | 'portrait' | 'landscape';
+			includeCoverPage: boolean;
+			coverTitle: string;
+			coverSubtitle: string;
+		}
+	): Promise<void> {
 		if (!this.f3Chart) return;
 
 		const svg = this.f3Chart.svg;
@@ -1673,7 +1710,9 @@ export class FamilyChartView extends ItemView {
 		try {
 			const { svgClone, width, height } = this.prepareSvgForExport(svg as SVGSVGElement);
 
-			logger.debug('export-pdf', 'Preparing PDF export', { width, height, scale, includeAvatars });
+			logger.debug('export-pdf', 'Preparing PDF export', {
+				width, height, scale, includeAvatars, pdfOptions
+			});
 
 			// Check for canvas size limits
 			const maxDimension = 16384;
@@ -1727,16 +1766,96 @@ export class FamilyChartView extends ItemView {
 				ctx.drawImage(img, 0, 0);
 				URL.revokeObjectURL(svgUrl);
 
+				// Determine PDF dimensions and orientation
+				const pageSpec = FamilyChartView.PDF_PAGE_SIZES[pdfOptions.pageSize];
+
+				let pdfOrientation: 'portrait' | 'landscape';
+				let pdfFormat: [number, number] | string;
+
+				if (pageSpec === null) {
+					// "Fit to content" mode - use chart dimensions
+					pdfOrientation = width > height ? 'landscape' : 'portrait';
+					pdfFormat = [width, height];
+				} else {
+					// Fixed page size
+					if (pdfOptions.orientation === 'auto') {
+						pdfOrientation = width > height ? 'landscape' : 'portrait';
+					} else {
+						pdfOrientation = pdfOptions.orientation;
+					}
+
+					// For fixed page sizes, we scale the chart to fit
+					pdfFormat = pdfOptions.pageSize.toUpperCase();
+				}
+
 				// Create PDF
-				const orientation = width > height ? 'landscape' : 'portrait';
 				const pdf = new jsPDF({
-					orientation,
-					unit: 'px',
-					format: [width, height]
+					orientation: pdfOrientation,
+					unit: 'pt', // Use points for standard page sizes
+					format: pdfFormat
 				});
 
+				// Set document metadata
+				pdf.setDocumentProperties({
+					title: pdfOptions.coverTitle || filename.replace('.pdf', ''),
+					subject: 'Family Tree Chart',
+					author: 'Canvas Roots - Obsidian Plugin',
+					keywords: 'family tree, genealogy, chart',
+					creator: 'Canvas Roots'
+				});
+
+				// Track total pages for footer
+				const totalPages = pdfOptions.includeCoverPage ? 2 : 1;
+				let currentPage = 1;
+
+				// Add cover page if requested
+				if (pdfOptions.includeCoverPage) {
+					this.addPdfCoverPage(pdf, pdfOptions.coverTitle, pdfOptions.coverSubtitle);
+					// Add footer to cover page (page 1 of N)
+					this.addPdfFooter(pdf, currentPage, totalPages);
+					currentPage++;
+					pdf.addPage(pdfFormat, pdfOrientation);
+				}
+
+				// Calculate image placement
+				const pdfWidth = pdf.internal.pageSize.getWidth();
+				const pdfHeight = pdf.internal.pageSize.getHeight();
 				const imgData = canvas.toDataURL('image/png');
-				pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+
+				if (pageSpec === null) {
+					// Fit to content - image fills the page
+					pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+				} else {
+					// Fixed page size - scale image to fit with padding
+					const padding = 20; // points
+					const footerHeight = 30; // Reserve space for footer
+					const availableWidth = pdfWidth - (padding * 2);
+					const availableHeight = pdfHeight - (padding * 2) - footerHeight;
+
+					const chartAspect = width / height;
+					const pageAspect = availableWidth / availableHeight;
+
+					let imgWidth: number, imgHeight: number;
+					if (chartAspect > pageAspect) {
+						// Chart is wider - fit to width
+						imgWidth = availableWidth;
+						imgHeight = availableWidth / chartAspect;
+					} else {
+						// Chart is taller - fit to height
+						imgHeight = availableHeight;
+						imgWidth = availableHeight * chartAspect;
+					}
+
+					// Center the image (vertically adjusted for footer)
+					const x = (pdfWidth - imgWidth) / 2;
+					const y = (pdfHeight - imgHeight - footerHeight) / 2;
+
+					pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+				}
+
+				// Add footer to chart page
+				this.addPdfFooter(pdf, currentPage, totalPages);
+
 				pdf.save(filename);
 				new Notice('PDF exported successfully');
 			};
@@ -1750,6 +1869,106 @@ export class FamilyChartView extends ItemView {
 			logger.error('export-pdf', 'Failed to export PDF', { error });
 			new Notice('Failed to export PDF');
 		}
+	}
+
+	/**
+	 * Add a styled cover page to the PDF
+	 * Design matches the report PDF cover page style from pdf-report-renderer.ts
+	 */
+	private addPdfCoverPage(pdf: jsPDF, title: string, subtitle: string): void {
+		const pageWidth = pdf.internal.pageSize.getWidth();
+		const pageHeight = pdf.internal.pageSize.getHeight();
+
+		// Vertical position for title (about 35% from top, matching report style)
+		const titleY = pageHeight * 0.35;
+
+		// Title - centered, large font (28pt in reports, same here for consistency)
+		pdf.setFontSize(28);
+		pdf.setFont('helvetica', 'bold');
+		pdf.setTextColor(51, 51, 51); // #333333 - primary text color
+		pdf.text(title, pageWidth / 2, titleY, { align: 'center' });
+
+		// Subtitle if provided (italics, secondary color)
+		let currentY = titleY + 30;
+		if (subtitle) {
+			pdf.setFontSize(18);
+			pdf.setFont('helvetica', 'italic');
+			pdf.setTextColor(102, 102, 102); // #666666 - secondary text color
+			pdf.text(subtitle, pageWidth / 2, currentY, { align: 'center' });
+			currentY += 30;
+		}
+
+		// Decorative line (centered, 200pt wide, matching report style)
+		const lineWidth = 200;
+		const lineX = (pageWidth - lineWidth) / 2;
+		currentY += 10;
+		pdf.setDrawColor(204, 204, 204); // #cccccc - separator line color
+		pdf.setLineWidth(1);
+		pdf.line(lineX, currentY, lineX + lineWidth, currentY);
+
+		// Generation info near bottom
+		const now = new Date();
+		const dateStr = now.toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		});
+
+		const footerY = pageHeight - 80;
+
+		// "Generated on" date
+		pdf.setFontSize(11);
+		pdf.setFont('helvetica', 'normal');
+		pdf.setTextColor(128, 128, 128); // #808080 - muted text
+		pdf.text(`Generated on ${dateStr}`, pageWidth / 2, footerY, { align: 'center' });
+
+		// People count
+		pdf.text(`${this.chartData.length} people`, pageWidth / 2, footerY + 16, { align: 'center' });
+
+		// "Canvas Roots for Obsidian" branding
+		pdf.setFontSize(10);
+		pdf.setTextColor(170, 170, 170); // #aaaaaa - light muted
+		pdf.text('Canvas Roots for Obsidian', pageWidth / 2, footerY + 32, { align: 'center' });
+
+		// Reset text color for subsequent pages
+		pdf.setTextColor(0, 0, 0);
+	}
+
+	/**
+	 * Add a footer to the current page
+	 * Design matches the report PDF footer style from pdf-report-renderer.ts
+	 * Page numbers only shown for multi-page documents (2+ pages)
+	 */
+	private addPdfFooter(pdf: jsPDF, currentPage: number, totalPages: number): void {
+		const pageWidth = pdf.internal.pageSize.getWidth();
+		const pageHeight = pdf.internal.pageSize.getHeight();
+
+		// Format date like reports
+		const now = new Date();
+		const dateStr = now.toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		});
+
+		// Footer Y position (near bottom with margin)
+		const footerY = pageHeight - 20;
+		const margin = 40;
+
+		pdf.setFontSize(9);
+		pdf.setFont('helvetica', 'normal');
+		pdf.setTextColor(128, 128, 128); // Muted gray
+
+		// Left side: Generated date
+		pdf.text(`Generated: ${dateStr}`, margin, footerY, { align: 'left' });
+
+		// Right side: Page X of Y (only for multi-page documents)
+		if (totalPages > 1) {
+			pdf.text(`Page ${currentPage} of ${totalPages}`, pageWidth - margin, footerY, { align: 'right' });
+		}
+
+		// Reset text color
+		pdf.setTextColor(0, 0, 0);
 	}
 
 	/**

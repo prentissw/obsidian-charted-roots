@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-23 15:51:30 UTC
+ * - Generated: 2025-12-23 16:19:54 UTC
  * - Components: 36 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -10414,7 +10414,7 @@ settings:
    COMPONENT: FAMILY-CHART-EXPORT.CSS
    ========================================================================== */
 
-/* Component Size: 641 lines, 13.57 KB */
+/* Component Size: 641 lines, 13.56 KB */
 
 /* ==========================================================================
    FAMILY CHART EXPORT WIZARD
@@ -10589,7 +10589,7 @@ settings:
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 20px;
+  padding: 12px 20px;
   min-height: 0;
 }
 
@@ -10598,11 +10598,11 @@ settings:
    ========================================================================== */
 
 .cr-export-section {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .cr-export-section-title {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -10611,7 +10611,7 @@ settings:
 }
 
 .cr-export-separator {
-  margin: 12px 0;
+  margin: 8px 0;
   border: none;
   border-top: 1px solid var(--background-modifier-border);
 }
@@ -10746,13 +10746,13 @@ settings:
    ========================================================================== */
 
 .cr-export-estimate {
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: var(--background-secondary);
   border-radius: 5px;
 }
 
 .cr-export-estimate .cr-export-section-title {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .cr-export-stats-row {
@@ -10816,7 +10816,7 @@ settings:
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 0;
+  padding: 4px 0;
 }
 
 .cr-export-radio-row input[type="radio"] {
@@ -10858,8 +10858,8 @@ settings:
 
 /* Scope hint */
 .cr-export-scope-hint {
-  margin-top: 8px;
-  padding: 8px 12px;
+  margin-top: 6px;
+  padding: 6px 10px;
   background: var(--background-secondary);
   border-radius: 4px;
 }
@@ -10877,8 +10877,8 @@ settings:
 .cr-export-option-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 0;
+  gap: 10px;
+  padding: 4px 0;
 }
 
 .cr-export-option-row--checkbox {
@@ -25850,11 +25850,11 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-23 15:51:30 UTC
+ * Build completed: 2025-12-23 16:19:54 UTC
  * Components processed: 36
  * Total lines: 25503
  * Total size: 506.41 KB
- * Build duration: 0.04 seconds
+ * Build duration: 0.05 seconds
  *
  * Component breakdown:
  * - variables.css: 56 lines, 1.61 KB
@@ -25873,7 +25873,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - folder-scan.css: 155 lines, 2.56 KB
  * - relationship-calculator.css: 302 lines, 5.21 KB
  * - family-chart-view.css: 1019 lines, 23.54 KB
- * - family-chart-export.css: 641 lines, 13.57 KB
+ * - family-chart-export.css: 641 lines, 13.56 KB
  * - data-quality.css: 1393 lines, 27.56 KB
  * - relationships.css: 517 lines, 9.76 KB
  * - canvas-navigation.css: 683 lines, 14.64 KB
