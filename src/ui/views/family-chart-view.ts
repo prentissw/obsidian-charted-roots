@@ -15,7 +15,7 @@ import type { ColorScheme, FamilyChartColors } from '../../settings';
 import { getLogger } from '../../core/logging';
 import { PersonPickerModal } from '../person-picker';
 import { FamilyChartExportWizard } from './family-chart-export-wizard';
-import type { FamilyChartExportProgress, ProgressCallback } from './family-chart-export-progress-modal';
+import type { ProgressCallback } from './family-chart-export-progress-modal';
 import { generateOdt } from './odt-generator';
 
 const logger = getLogger('FamilyChartView');
@@ -4482,12 +4482,14 @@ class FamilyChartStyleModal extends Modal {
 			text: 'Apply',
 			cls: 'mod-cta'
 		});
-		applyBtn.addEventListener('click', async () => {
-			// Save colors
-			this.plugin.settings.familyChartColors = { ...this.colors };
-			await this.plugin.saveSettings();
-			new Notice('Colors applied');
-			this.close();
+		applyBtn.addEventListener('click', () => {
+			void (async () => {
+				// Save colors
+				this.plugin.settings.familyChartColors = { ...this.colors };
+				await this.plugin.saveSettings();
+				new Notice('Colors applied');
+				this.close();
+			})();
 		});
 	}
 
@@ -4562,7 +4564,7 @@ class FamilyChartStyleModal extends Modal {
 	 * Refresh all color inputs after preset selection
 	 */
 	private refreshColorInputs(): void {
-		const inputs = this.contentEl.querySelectorAll('.cr-fcv-color-input') as NodeListOf<HTMLInputElement>;
+		const inputs = this.contentEl.querySelectorAll<HTMLInputElement>('.cr-fcv-color-input');
 		const isDark = document.body.classList.contains('theme-dark');
 
 		inputs.forEach((input) => {

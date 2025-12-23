@@ -669,7 +669,7 @@ export class FamilyChartExportWizard extends Modal {
 		});
 		checkbox.checked = this.formData.includeCoverPage;
 
-		const label = coverRow.createEl('label', {
+		coverRow.createEl('label', {
 			text: 'Include cover page',
 			attr: { for: 'cover-page' }
 		});
@@ -792,7 +792,7 @@ export class FamilyChartExportWizard extends Modal {
 			});
 			exportBtn.appendText('Export');
 			exportBtn.appendChild(createLucideIcon('download', 16));
-			exportBtn.addEventListener('click', () => this.doExport());
+			exportBtn.addEventListener('click', () => { void this.doExport(); });
 		} else {
 			// Step 2: Just Export
 			const exportBtn = footer.createEl('button', {
@@ -800,7 +800,7 @@ export class FamilyChartExportWizard extends Modal {
 			});
 			exportBtn.appendText('Export');
 			exportBtn.appendChild(createLucideIcon('download', 16));
-			exportBtn.addEventListener('click', () => this.doExport());
+			exportBtn.addEventListener('click', () => { void this.doExport(); });
 		}
 	}
 

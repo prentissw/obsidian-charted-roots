@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Export settings memory** - Last-used export format, scale, page size, layout, orientation, and cover page settings are remembered for next export.
 
+- **Dynamic content blocks for Gramps import** - Added "Include dynamic content blocks" toggle to Gramps XML/.gpkg import, matching the existing GEDCOM import option. When enabled, imports include timeline and family relationship blocks in person notes.
+
 ### Changed
 
 - **Export button behavior** - The toolbar export button now opens the Export Wizard instead of a dropdown menu, providing better discoverability and preventing accidental exports.
