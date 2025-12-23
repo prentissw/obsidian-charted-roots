@@ -156,9 +156,11 @@ export class FamilyChartExportWizard extends Modal {
 	 * Get default form data based on current chart state
 	 */
 	private getDefaultFormData(): ExportFormData {
-		const rootPersonName = this.getRootPersonName();
+		const info = this.chartView.getExportInfo();
+		const sanitizedName = this.getRootPersonName(); // Hyphenated for filename
+		const displayName = info.rootPersonName; // Original name with spaces for cover title
 		const date = new Date().toISOString().split('T')[0];
-		const defaultFilename = `${rootPersonName}-family-chart-${date}`;
+		const defaultFilename = `${sanitizedName}-family-chart-${date}`;
 
 		return {
 			selectedPreset: null,
@@ -172,7 +174,7 @@ export class FamilyChartExportWizard extends Modal {
 			layout: 'single',
 			orientation: 'auto',
 			includeCoverPage: false,
-			coverTitle: `${rootPersonName} Family Tree`,
+			coverTitle: `${displayName} Family Tree`,
 			coverSubtitle: ''
 		};
 	}

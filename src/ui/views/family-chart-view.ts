@@ -1744,6 +1744,9 @@ export class FamilyChartView extends ItemView {
 				});
 			}
 
+			// Load Roboto fonts from pdfmake VFS for visual consistency with report PDFs
+			const robotoFonts = await this.loadRobotoFonts();
+
 			// Serialize SVG
 			const serializer = new XMLSerializer();
 			const svgString = serializer.serializeToString(svgClone);
@@ -1795,6 +1798,12 @@ export class FamilyChartView extends ItemView {
 					format: pdfFormat
 				});
 
+				// Register Roboto fonts if available
+				const useRoboto = robotoFonts !== null;
+				if (robotoFonts) {
+					this.registerRobotoFonts(pdf, robotoFonts);
+				}
+
 				// Set document metadata
 				pdf.setDocumentProperties({
 					title: pdfOptions.coverTitle || filename.replace('.pdf', ''),
@@ -1809,10 +1818,10 @@ export class FamilyChartView extends ItemView {
 				let currentPage = 1;
 
 				// Add cover page if requested
+				// Note: Cover page has its own footer section with date, people count, and branding
+				// so we don't add the standard footer (which would duplicate "Generated on")
 				if (pdfOptions.includeCoverPage) {
-					this.addPdfCoverPage(pdf, pdfOptions.coverTitle, pdfOptions.coverSubtitle);
-					// Add footer to cover page (page 1 of N)
-					this.addPdfFooter(pdf, currentPage, totalPages);
+					this.addPdfCoverPage(pdf, pdfOptions.coverTitle, pdfOptions.coverSubtitle, useRoboto);
 					currentPage++;
 					pdf.addPage(pdfFormat, pdfOrientation);
 				}
@@ -1854,7 +1863,7 @@ export class FamilyChartView extends ItemView {
 				}
 
 				// Add footer to chart page
-				this.addPdfFooter(pdf, currentPage, totalPages);
+				this.addPdfFooter(pdf, currentPage, totalPages, useRoboto);
 
 				pdf.save(filename);
 				new Notice('PDF exported successfully');
@@ -1872,41 +1881,152 @@ export class FamilyChartView extends ItemView {
 	}
 
 	/**
+	 * Load Roboto fonts from pdfmake's VFS for use in jsPDF
+	 * This provides visual consistency with report PDFs which use pdfmake
+	 */
+	private async loadRobotoFonts(): Promise<Record<string, string> | null> {
+		try {
+			const vfsFonts = await import('pdfmake/build/vfs_fonts');
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- vfs_fonts export structure varies
+			const vfsModule = vfsFonts as any;
+
+			// Debug: log the actual structure we're getting
+			logger.debug('pdf-fonts', 'VFS module structure', {
+				topLevelKeys: Object.keys(vfsModule),
+				hasPdfMake: !!vfsModule.pdfMake,
+				hasDefault: !!vfsModule.default,
+				hasVfs: !!vfsModule.vfs,
+				defaultKeys: vfsModule.default ? Object.keys(vfsModule.default) : []
+			});
+
+			// Try multiple possible structures based on bundler behavior
+			let vfs = null;
+
+			// Structure 1: Direct pdfMake.vfs
+			if (vfsModule.pdfMake?.vfs) {
+				vfs = vfsModule.pdfMake.vfs;
+				logger.debug('pdf-fonts', 'Found VFS at pdfMake.vfs');
+			}
+			// Structure 2: default.pdfMake.vfs
+			else if (vfsModule.default?.pdfMake?.vfs) {
+				vfs = vfsModule.default.pdfMake.vfs;
+				logger.debug('pdf-fonts', 'Found VFS at default.pdfMake.vfs');
+			}
+			// Structure 3: Direct vfs property
+			else if (vfsModule.vfs) {
+				vfs = vfsModule.vfs;
+				logger.debug('pdf-fonts', 'Found VFS at vfs');
+			}
+			// Structure 4: default.vfs
+			else if (vfsModule.default?.vfs) {
+				vfs = vfsModule.default.vfs;
+				logger.debug('pdf-fonts', 'Found VFS at default.vfs');
+			}
+			// Structure 5: The module itself might be the vfs object (check for Roboto keys)
+			else if (vfsModule['Roboto-Regular.ttf']) {
+				vfs = vfsModule;
+				logger.debug('pdf-fonts', 'Module itself is the VFS');
+			}
+			// Structure 6: default is the vfs object
+			else if (vfsModule.default?.['Roboto-Regular.ttf']) {
+				vfs = vfsModule.default;
+				logger.debug('pdf-fonts', 'default is the VFS');
+			}
+
+			if (!vfs) {
+				logger.warn('pdf-fonts', 'Could not locate VFS in module structure');
+				return null;
+			}
+
+			// Debug: log available font keys
+			const fontKeys = Object.keys(vfs).filter(k => k.includes('Roboto'));
+			logger.debug('pdf-fonts', 'Available Roboto fonts in VFS', { fontKeys });
+
+			const regular = vfs['Roboto-Regular.ttf'];
+			const medium = vfs['Roboto-Medium.ttf'];
+			const italic = vfs['Roboto-Italic.ttf'];
+			const mediumItalic = vfs['Roboto-MediumItalic.ttf'];
+
+			// Verify fonts were found
+			if (!regular || !medium) {
+				logger.warn('pdf-fonts', 'Roboto fonts not found in VFS', {
+					hasRegular: !!regular,
+					hasMedium: !!medium,
+					hasItalic: !!italic,
+					hasMediumItalic: !!mediumItalic
+				});
+				return null;
+			}
+
+			logger.debug('pdf-fonts', 'Successfully loaded Roboto fonts from pdfmake VFS');
+
+			return {
+				regular,
+				medium,
+				italic: italic || regular, // Fallback to regular if italic missing
+				mediumItalic: mediumItalic || medium // Fallback to medium if mediumItalic missing
+			};
+		} catch (error) {
+			logger.warn('pdf-fonts', 'Failed to load Roboto fonts, falling back to Helvetica', { error });
+			return null;
+		}
+	}
+
+	/**
+	 * Register Roboto fonts with jsPDF instance
+	 */
+	private registerRobotoFonts(pdf: jsPDF, fonts: Record<string, string>): void {
+		try {
+			// Add font files to jsPDF's virtual file system
+			pdf.addFileToVFS('Roboto-Regular.ttf', fonts.regular);
+			pdf.addFileToVFS('Roboto-Medium.ttf', fonts.medium);
+			pdf.addFileToVFS('Roboto-Italic.ttf', fonts.italic);
+			pdf.addFileToVFS('Roboto-MediumItalic.ttf', fonts.mediumItalic);
+
+			// Register the fonts with jsPDF
+			pdf.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+			pdf.addFont('Roboto-Medium.ttf', 'Roboto', 'bold');
+			pdf.addFont('Roboto-Italic.ttf', 'Roboto', 'italic');
+			pdf.addFont('Roboto-MediumItalic.ttf', 'Roboto', 'bolditalic');
+
+			logger.debug('pdf-fonts', 'Roboto fonts registered with jsPDF');
+		} catch (error) {
+			logger.error('pdf-fonts', 'Failed to register Roboto fonts with jsPDF', { error });
+			throw error;
+		}
+	}
+
+	/**
 	 * Add a styled cover page to the PDF
 	 * Design matches the report PDF cover page style from pdf-report-renderer.ts
+	 * Uses Roboto font for visual consistency with report PDFs
 	 */
-	private addPdfCoverPage(pdf: jsPDF, title: string, subtitle: string): void {
+	private addPdfCoverPage(pdf: jsPDF, title: string, subtitle: string, useRoboto: boolean): void {
 		const pageWidth = pdf.internal.pageSize.getWidth();
 		const pageHeight = pdf.internal.pageSize.getHeight();
 
-		// Vertical position for title (about 35% from top, matching report style)
-		const titleY = pageHeight * 0.35;
+		// Font family - use Roboto if loaded, otherwise fall back to Helvetica
+		const fontFamily = useRoboto ? 'Roboto' : 'helvetica';
+
+		// Vertical position for title (about 42% from top - better visual balance)
+		const titleY = pageHeight * 0.42;
 
 		// Title - centered, large font (28pt in reports, same here for consistency)
 		pdf.setFontSize(28);
-		pdf.setFont('helvetica', 'bold');
+		pdf.setFont(fontFamily, 'bold');
 		pdf.setTextColor(51, 51, 51); // #333333 - primary text color
 		pdf.text(title, pageWidth / 2, titleY, { align: 'center' });
 
 		// Subtitle if provided (italics, secondary color)
-		let currentY = titleY + 30;
 		if (subtitle) {
-			pdf.setFontSize(18);
-			pdf.setFont('helvetica', 'italic');
+			const subtitleY = titleY + 28;
+			pdf.setFontSize(16);
+			pdf.setFont(fontFamily, 'italic');
 			pdf.setTextColor(102, 102, 102); // #666666 - secondary text color
-			pdf.text(subtitle, pageWidth / 2, currentY, { align: 'center' });
-			currentY += 30;
+			pdf.text(subtitle, pageWidth / 2, subtitleY, { align: 'center' });
 		}
 
-		// Decorative line (centered, 200pt wide, matching report style)
-		const lineWidth = 200;
-		const lineX = (pageWidth - lineWidth) / 2;
-		currentY += 10;
-		pdf.setDrawColor(204, 204, 204); // #cccccc - separator line color
-		pdf.setLineWidth(1);
-		pdf.line(lineX, currentY, lineX + lineWidth, currentY);
-
-		// Generation info near bottom
+		// Generation info near bottom (compact layout)
 		const now = new Date();
 		const dateStr = now.toLocaleDateString('en-US', {
 			year: 'numeric',
@@ -1914,21 +2034,21 @@ export class FamilyChartView extends ItemView {
 			day: 'numeric'
 		});
 
-		const footerY = pageHeight - 80;
+		const footerY = pageHeight - 55;
 
 		// "Generated on" date
-		pdf.setFontSize(11);
-		pdf.setFont('helvetica', 'normal');
+		pdf.setFontSize(10);
+		pdf.setFont(fontFamily, 'normal');
 		pdf.setTextColor(128, 128, 128); // #808080 - muted text
 		pdf.text(`Generated on ${dateStr}`, pageWidth / 2, footerY, { align: 'center' });
 
 		// People count
-		pdf.text(`${this.chartData.length} people`, pageWidth / 2, footerY + 16, { align: 'center' });
+		pdf.text(`${this.chartData.length} people`, pageWidth / 2, footerY + 14, { align: 'center' });
 
 		// "Canvas Roots for Obsidian" branding
-		pdf.setFontSize(10);
+		pdf.setFontSize(9);
 		pdf.setTextColor(170, 170, 170); // #aaaaaa - light muted
-		pdf.text('Canvas Roots for Obsidian', pageWidth / 2, footerY + 32, { align: 'center' });
+		pdf.text('Canvas Roots for Obsidian', pageWidth / 2, footerY + 26, { align: 'center' });
 
 		// Reset text color for subsequent pages
 		pdf.setTextColor(0, 0, 0);
@@ -1938,10 +2058,14 @@ export class FamilyChartView extends ItemView {
 	 * Add a footer to the current page
 	 * Design matches the report PDF footer style from pdf-report-renderer.ts
 	 * Page numbers only shown for multi-page documents (2+ pages)
+	 * Uses Roboto font for visual consistency with report PDFs
 	 */
-	private addPdfFooter(pdf: jsPDF, currentPage: number, totalPages: number): void {
+	private addPdfFooter(pdf: jsPDF, currentPage: number, totalPages: number, useRoboto: boolean): void {
 		const pageWidth = pdf.internal.pageSize.getWidth();
 		const pageHeight = pdf.internal.pageSize.getHeight();
+
+		// Font family - use Roboto if loaded, otherwise fall back to Helvetica
+		const fontFamily = useRoboto ? 'Roboto' : 'helvetica';
 
 		// Format date like reports
 		const now = new Date();
@@ -1956,7 +2080,7 @@ export class FamilyChartView extends ItemView {
 		const margin = 40;
 
 		pdf.setFontSize(9);
-		pdf.setFont('helvetica', 'normal');
+		pdf.setFont(fontFamily, 'normal');
 		pdf.setTextColor(128, 128, 128); // Muted gray
 
 		// Left side: Generated date
