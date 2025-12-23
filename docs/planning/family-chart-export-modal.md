@@ -34,120 +34,232 @@ The Family Chart View has an export dropdown menu with these options:
 
 ## Proposed Solution
 
-### Export Modal UI
+### Two-Step Wizard Design
+
+The export wizard uses a two-step flow to reduce cognitive load:
+
+**Step 1: Quick Export** — Presets and basic choices (most users stop here)
+**Step 2: Customize** — Format-specific options for power users
+
+This design provides a fast path (click preset → Export) while still offering full control.
+
+### Step 1: Quick Export
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Export Family Chart                                    [X] │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
+│  PRESETS                                                    │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
+│  │ Quick Share │ │ High Quality│ │ Print Ready │           │
+│  │ PNG · 1x    │ │ PNG · 2x    │ │ PDF · Cover │           │
+│  └─────────────┘ └─────────────┘ └─────────────┘           │
+│  ┌─────────────┐ ┌─────────────┐                           │
+│  │  Editable   │ │  Document   │                           │
+│  │    SVG      │ │    ODT      │                           │
+│  └─────────────┘ └─────────────┘                           │
+│                                                             │
+│  ─────────────────────────────────────────────────────────  │
+│                                                             │
 │  FORMAT                                                     │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐                     │
-│  │  [PNG]  │  │  [SVG]  │  │  [PDF]  │                     │
-│  │  icon   │  │  icon   │  │  icon   │                     │
-│  └─────────┘  └─────────┘  └─────────┘                     │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐        │
+│  │  [PNG]  │  │  [SVG]  │  │  [PDF]  │  │  [ODT]  │        │
+│  │  icon   │  │  icon   │  │  icon   │  │  icon   │        │
+│  └─────────┘  └─────────┘  └─────────┘  └─────────┘        │
 │                                                             │
-│  AVATARS                                                    │
-│  ○ Include avatars (recommended for small trees)           │
-│  ● Exclude avatars (faster, smaller file)                  │
-│                                                             │
-│  SCOPE                                                      │
-│  ○ Visible tree (current view)                             │
-│  ● Full tree (all loaded people)                           │
-│  ○ Limited depth: [3 ▼] generations                        │
+│  FILENAME                                                   │
+│  ┌───────────────────────────────────────────┐ .png        │
+│  │ John-Smith-family-chart-2025-12-23        │             │
+│  └───────────────────────────────────────────┘             │
 │                                                             │
 │  ─────────────────────────────────────────────────────────  │
 │                                                             │
 │  ESTIMATE                                                   │
 │  People: 127  │  Avatars: 89  │  Est. size: ~2.4 MB        │
 │                                                             │
-│  ⚠ Large export - may take 10-30 seconds                   │
+│  ⚠ Large export — may take 10-30 seconds                   │
 │                                                             │
 ├─────────────────────────────────────────────────────────────┤
-│                              [Cancel]  [Export]             │
+│  [Customize →]                      [Cancel]  [Export]      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### Step 2: Customize (Optional)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Export Family Chart                                    [X] │
+├─────────────────────────────────────────────────────────────┤
+│  ← Back to presets                                          │
+│                                                             │
+│  AVATARS                                                    │
+│  ○ Include avatars (slower, larger)                        │
+│  ● Exclude avatars (faster, smaller)                       │
+│                                                             │
+│  SCOPE                                                      │
+│  ● Full tree (respects current depth settings)             │
+│  ○ Limited depth: [3 ▼] generations                        │
+│                                                             │
+│  ───────────────────────────────────────────────────────── │
+│                                                             │
+│  PNG OPTIONS                                                │
+│  Scale:  [1x]  [2x]  [3x]                                  │
+│                                                             │
+│  ─────────────────────────────────────────────────────────  │
+│                                                             │
+│  ESTIMATE                                                   │
+│  People: 127  │  Avatars: 89  │  Est. size: ~2.4 MB        │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│  [← Back]                           [Cancel]  [Export]      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**PDF Step 2 shows:**
+- Page size (Fit/A4/Letter/Legal/Tabloid)
+- Layout (Single/Tiled)
+- Orientation (Auto/Portrait/Landscape) — shown when Tiled selected
+- Cover page toggle with title/subtitle fields
+
+**ODT Step 2 shows:**
+- Cover page toggle with title/subtitle fields
+
 ### Features
 
-#### 1. Format Selection
+#### Step 1 Features
+
+##### 1. Presets (Quick Path)
+Prominent preset cards at top for one-click export:
+
+| Preset | Format | Avatars | Scale/Options | Use Case |
+|--------|--------|---------|---------------|----------|
+| **Quick Share** | PNG | Exclude | 1x | Fast sharing on social/chat |
+| **High Quality** | PNG | Include | 2x | Best quality raster image |
+| **Print Ready** | PDF | Include | Cover page, Fit | Physical printing/archival |
+| **Editable** | SVG | Exclude | — | Further editing in design tools |
+| **Document** | ODT | Include | Cover page | Merging with text reports |
+
+Clicking a preset:
+1. Populates all settings (format, avatars, scale, cover page, etc.)
+2. User can immediately click Export, or modify settings first
+3. Preset selection is visual feedback only — settings can be changed
+
+##### 2. Format Selection
+Visual icon cards for each format:
 - **PNG** — Raster image, best for sharing/printing
 - **SVG** — Vector, best for editing/scaling
 - **PDF** — Document format, best for archival
+- **ODT** — Editable document for merging workflows (Phase 6)
 
-Visual icons/cards for each format with brief description on hover.
+##### 3. Filename
+- Editable text field pre-populated with generated filename
+- Default pattern: `{name}-family-chart-{date}` (from existing settings)
+- Root person name auto-detected from current chart
+- Extension automatically appended based on format
 
-#### 2. Avatar Options
+##### 4. Size Estimation
+Shown on Step 1 to inform decisions before export:
+- Number of people in export scope
+- Number of avatars to embed (hidden when avatars excluded in Step 2)
+- Estimated file size
+
+##### 5. Warning Logic
+Show warning when ANY of:
+- People count > 100 (large tree regardless of avatars)
+- Avatar count > 50 AND avatars included
+- Estimated file size > 5 MB
+
+---
+
+#### Step 2 Features (Customize)
+
+Accessed via "Customize →" button. Back button returns to Step 1.
+
+##### 6. Avatar Options
 - **Include avatars** — Embeds person photos as base64 (slower, larger)
 - **Exclude avatars** — Gender icons only (faster, smaller, always works)
 
-Show warning when avatars + large tree detected.
+When avatars excluded, hide avatar count from estimate panel for cleaner UI.
 
-#### 3. Scope Options
-- **Visible tree** — Export only what's currently rendered
-- **Full tree** — Export entire loaded tree
-- **Limited depth** — Export N generations from root
+##### 7. Scope Options
+- **Full tree** — Export entire loaded tree (respects current depth settings)
+- **Limited depth** — Override current depth with modal-specified value (2-5 generations)
 
-#### 4. Size Estimation
-Before export, calculate and display:
-- Number of people in export scope
-- Number of avatars to embed
-- Estimated file size
-- Estimated export duration
+Note: "Visible tree" (viewport-based) removed to reduce complexity. Users control scope via depth limits.
 
-#### 5. Progress Display
-For exports > 2 seconds, show:
-- Progress bar with percentage
-- Current phase (rendering, embedding avatars, encoding)
-- Cancel button
+##### 8. PNG-Specific Options
+When PNG format is selected:
+- **Scale** — 1x (standard), 2x (high DPI/retina, default), 3x (print quality)
+  - Higher scale = sharper image, larger file size
+  - Current implementation uses 2x internally
 
-#### 6. PDF-Specific Options
+##### 9. SVG-Specific Options
+SVG is inherently scalable, so no additional options needed beyond avatars toggle.
+
+##### 10. PDF-Specific Options
 When PDF format is selected, show additional options:
 
-**Document Metadata:**
-- Title (defaults to "{Root Person} Family Tree")
-- Author (optional, defaults to vault name or empty)
-- Keywords (optional, for searchability)
+**Page Size:**
+- Fit to content (default) — Dynamic sizing to match chart
+- A4 (210 × 297 mm)
+- Letter (8.5 × 11 in)
+- Legal (8.5 × 14 in)
+- Tabloid (11 × 17 in)
+
+**Layout:**
+- **Single page** — Fit entire chart on one page (default)
+- **Tiled pages** — Split large charts across multiple standard pages
+
+**Orientation** (for tiled pages):
+- Auto (detect from chart dimensions)
+- Portrait
+- Landscape
 
 **Cover Page (optional):**
 - Include a title page before the chart
 - Shows: Tree title, root person name, generation date, person count
-- Clean, professional layout suitable for archival
+- Title field (defaults to "{Root Person} Family Tree")
+- Subtitle field (optional)
 
-**Multi-Page Layout:**
-- **Single page** — Fit entire chart on one page (default)
-- **Tiled pages** — Split large charts across multiple standard pages (A4/Letter)
-- Page size selection: A4, Letter, Legal, Tabloid
+##### 11. ODT-Specific Options (Phase 6)
+When ODT format is selected:
+- **Cover page** toggle with title/subtitle fields
+- Same title/subtitle defaults as PDF
 
-Multi-page is useful for printing large trees that would otherwise be unreadably small when fit to a single page.
+---
 
-#### 7. Presets (Future Enhancement)
-Quick-select buttons:
-- **Print quality** — PNG, with avatars, full tree
-- **Web sharing** — PNG, no avatars, visible tree
-- **Archival PDF** — PDF with cover page, metadata, full tree
-- **Compact** — SVG, no avatars, limited depth
+#### Shared Features
+
+##### 12. Progress Display
+For exports > 2 seconds, show (replaces normal footer):
+- Progress bar with percentage
+- Current phase (rendering, embedding avatars, encoding)
+- Cancel button
 
 ---
 
 ## Implementation Plan
 
-### Phase 1: Basic Modal
-1. Create `FamilyChartExportModal` class extending `Modal`
-2. Implement format selection (PNG/SVG/PDF cards)
-3. Implement avatar toggle (include/exclude)
-4. Wire up to existing export methods
-5. Replace dropdown with single "Export" button that opens modal
+### Phase 1: Two-Step Wizard Structure
+1. Create `FamilyChartExportWizard` class extending `Modal`
+2. Implement step navigation (Step 1 ↔ Step 2)
+3. Create Step 1: Presets, format cards, filename, estimate panel
+4. Create Step 2: Avatars, scope, format-specific options
+5. Wire "Customize →" and "← Back" buttons
+6. Replace dropdown with single "Export" button that opens wizard
 
-### Phase 2: Scope & Estimation
-1. Add scope options (visible/full/limited)
-2. Implement tree size calculation
-3. Add file size estimation algorithm
-4. Display warnings for large exports
+### Phase 2: Core Export Integration
+1. Implement format selection (PNG/SVG/PDF cards)
+2. Implement avatar toggle (include/exclude)
+3. Add scope options (full/limited)
+4. Wire up to existing export methods
+5. Implement tree size calculation and file size estimation
+6. Display warnings for large exports
 
 ### Phase 3: PDF Enhancements
 1. Keep jsPDF for Family Chart PDF export (better image quality — see Technical Notes)
-2. Add PDF-specific options panel (shown when PDF selected)
+2. Add PDF-specific options panel in Step 2 (shown when PDF selected)
 3. Implement cover page generation using jsPDF text primitives
 4. Implement multi-page tiling for large charts
 5. Add page size selection (A4, Letter, Legal, Tabloid)
@@ -159,12 +271,12 @@ Quick-select buttons:
 3. Add export duration estimation
 4. Polish UI/UX
 
-### Phase 5: Presets (Optional)
-1. Add preset buttons
-2. Remember last-used settings
-3. Allow custom preset creation
+### Phase 5: Presets
+1. Implement 5 preset cards with visual feedback
+2. Preset click populates all form fields
+3. Remember last-used settings
 
-### Phase 6: ODT Export (Optional)
+### Phase 6: ODT Export
 1. Add ODT format option alongside PNG/SVG/PDF
 2. Implement ODT generation using JSZip + manual XML (no external library)
 3. Embed chart as image in ODT document
@@ -199,8 +311,8 @@ function estimateExportSize(options: ExportOptions): number {
 }
 ```
 
-### Modal File Location
-`src/ui/views/family-chart-export-modal.ts`
+### Wizard File Location
+`src/ui/views/family-chart-export-wizard.ts`
 
 ### PDF Enhancement Implementation
 
@@ -224,17 +336,24 @@ For the Family Chart's detailed SVG with text labels, the jsPDF approach produce
 ```typescript
 interface FamilyChartExportOptions {
   format: 'png' | 'svg' | 'pdf' | 'odt';
+  filename: string;  // User-editable, without extension
   includeAvatars: boolean;
-  scope: 'visible' | 'full' | 'limited';
-  limitedDepth?: number;
+  scope: 'full' | 'limited';
+  limitedDepth?: number;  // 2-5 generations
+
+  // PNG-specific options
+  pngOptions?: {
+    scale: 1 | 2 | 3;  // 1x, 2x (default), 3x
+  };
 
   // PDF-specific options
   pdfOptions?: {
-    pageSize: 'A4' | 'LETTER' | 'LEGAL' | 'TABLOID' | 'fit'; // 'fit' = dynamic sizing
+    pageSize: 'fit' | 'A4' | 'LETTER' | 'LEGAL' | 'TABLOID';
+    layout: 'single' | 'tiled';
+    orientation: 'auto' | 'portrait' | 'landscape';  // For tiled only
     includeCoverPage: boolean;
     customTitle?: string;
     customSubtitle?: string;
-    multiPage: 'single' | 'tiled';
   };
 
   // ODT-specific options (Phase 6)
@@ -244,6 +363,44 @@ interface FamilyChartExportOptions {
     customSubtitle?: string;
   };
 }
+
+// Preset definitions
+const EXPORT_PRESETS = {
+  quickShare: {
+    format: 'png',
+    includeAvatars: false,
+    scope: 'full',
+    pngOptions: { scale: 1 }
+  },
+  highQuality: {
+    format: 'png',
+    includeAvatars: true,
+    scope: 'full',
+    pngOptions: { scale: 2 }
+  },
+  printReady: {
+    format: 'pdf',
+    includeAvatars: true,
+    scope: 'full',
+    pdfOptions: {
+      pageSize: 'fit',
+      layout: 'single',
+      orientation: 'auto',
+      includeCoverPage: true
+    }
+  },
+  editable: {
+    format: 'svg',
+    includeAvatars: false,
+    scope: 'full'
+  },
+  document: {
+    format: 'odt',
+    includeAvatars: true,
+    scope: 'full',
+    odtOptions: { includeCoverPage: true }
+  }
+};
 ```
 
 **Cover Page with jsPDF:**
@@ -351,14 +508,20 @@ const PAGE_SIZES = {
 ```
 
 ### CSS Classes
-- `.cr-fcv-export-modal`
+- `.cr-fcv-export-wizard`
+- `.cr-fcv-export-wizard__step` — Container for each step
+- `.cr-fcv-export-wizard__step--active` — Currently visible step
+- `.cr-fcv-export-presets` — Preset cards container
+- `.cr-fcv-export-preset` — Individual preset card
+- `.cr-fcv-export-preset--selected` — Selected preset
 - `.cr-fcv-export-format-cards`
 - `.cr-fcv-export-format-card`
 - `.cr-fcv-export-format-card--selected`
-- `.cr-fcv-export-options`
+- `.cr-fcv-export-options` — Step 2 options container
 - `.cr-fcv-export-estimate`
 - `.cr-fcv-export-warning`
 - `.cr-fcv-export-progress`
+- `.cr-fcv-export-nav` — Navigation buttons (Customize/Back)
 
 ---
 
@@ -374,35 +537,52 @@ const PAGE_SIZES = {
 
 ## Success Criteria
 
-### Phase 1-2: Basic Modal
-- [ ] Export modal opens from toolbar button
-- [ ] All three formats (PNG, SVG, PDF) selectable
-- [ ] Avatar include/exclude toggle works
-- [ ] Scope options affect export content
-- [ ] Size estimation displays before export
-- [ ] Warning shown for large exports (>50 people with avatars)
+### Phase 1: Two-Step Wizard Structure
+- [ ] Export wizard opens from toolbar button
+- [ ] Step 1 shows: presets, format cards, filename, estimate panel
+- [ ] Step 2 shows: avatars, scope, format-specific options
+- [ ] "Customize →" button navigates to Step 2
+- [ ] "← Back" button returns to Step 1
+- [ ] Export button works from both steps
+
+### Phase 2: Core Export Integration
+- [ ] All four formats (PNG, SVG, PDF, ODT placeholder) selectable via cards
+- [ ] Filename field editable, pre-populated with pattern
+- [ ] Avatar include/exclude toggle works (Step 2)
+- [ ] Scope options (full/limited) affect export content (Step 2)
+- [ ] PNG scale option (1x/2x/3x) works (Step 2)
+- [ ] Size estimation displays on Step 1 (people count, avatar count, file size)
+- [ ] Avatar count hidden when avatars excluded
+- [ ] Warning shown when: >100 people, OR >50 avatars with avatars included, OR >5MB
 
 ### Phase 3: PDF Enhancements
 - [ ] PDF export continues using jsPDF (better quality for chart images)
-- [ ] Document metadata added (title, subject, author, keywords)
+- [ ] PDF options appear in Step 2 when PDF selected
+- [ ] Page size selection (Fit, A4, Letter, Legal, Tabloid) works
+- [ ] Layout selection (single/tiled) works
+- [ ] Orientation selection (auto/portrait/landscape) for tiled layout
 - [ ] Cover page option available with styled title page
 - [ ] Custom title/subtitle fields work
-- [ ] Multi-page tiling available for large charts
-- [ ] Page size selection (A4, Letter, Legal, Tabloid, Fit) works
+- [ ] Document metadata added (title, subject, author, keywords)
 
-### Phase 4-5: Polish & Presets
+### Phase 4: Progress & Polish
 - [ ] Progress bar shown for exports >2 seconds
 - [ ] Cancel button works during export
+- [ ] UI polish complete
+
+### Phase 5: Presets
+- [ ] Five preset cards displayed prominently on Step 1
+- [ ] Preset click populates all form fields (format, avatars, scale, cover page)
+- [ ] Visual feedback shows which preset is selected
 - [ ] Settings remembered between sessions
-- [ ] Presets available for common export configurations
 
 ### Phase 6: ODT Export
-- [ ] ODT format option appears alongside PNG/SVG/PDF
+- [ ] ODT format option fully functional alongside PNG/SVG/PDF
 - [ ] ODT generation works without external library (JSZip + manual XML)
 - [ ] Chart embedded as image in ODT document
 - [ ] Optional cover page with title/subtitle renders correctly
 - [ ] Generated ODT opens in LibreOffice/Word without errors
-- [ ] Document merging workflow validated (user can combine with text exports)
+- [ ] Document preset uses ODT format
 
 ---
 
