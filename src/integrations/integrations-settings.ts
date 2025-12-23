@@ -76,8 +76,9 @@ function renderCalendariumSection(
 					plugin.settings.calendariumIntegration = value;
 					await plugin.saveSettings();
 
-					// Refresh the status display
+					// Refresh the status display and sync toggle
 					void renderCalendariumStatus(statusContainer, plugin, bridge);
+					renderSyncToggle(syncSettingContainer, plugin);
 
 					if (value === 'read') {
 						new Notice('Calendarium calendars will now appear in date system dropdowns');
@@ -88,6 +89,41 @@ function renderCalendariumSection(
 	// Status container (shows available calendars when enabled)
 	const statusContainer = container.createDiv({ cls: 'cr-calendarium-status' });
 	void renderCalendariumStatus(statusContainer, plugin, bridge);
+
+	// Timeline sync toggle (only show when integration is enabled)
+	const syncSettingContainer = container.createDiv({ cls: 'cr-calendarium-sync-setting' });
+	renderSyncToggle(syncSettingContainer, plugin);
+}
+
+/**
+ * Render the toggle for showing Calendarium dates on timelines
+ */
+function renderSyncToggle(
+	container: HTMLElement,
+	plugin: CanvasRootsPlugin
+): void {
+	container.empty();
+
+	// Only show when integration is enabled
+	if (plugin.settings.calendariumIntegration === 'off') {
+		return;
+	}
+
+	new Setting(container)
+		.setName('Show Calendarium dates on timelines')
+		.setDesc('Display events with fc-date and fc-end fields on person and place timelines')
+		.addToggle(toggle => {
+			toggle
+				.setValue(plugin.settings.syncCalendariumEvents)
+				.onChange(async (value: boolean) => {
+					plugin.settings.syncCalendariumEvents = value;
+					await plugin.saveSettings();
+
+					if (value) {
+						new Notice('Calendarium dates will now appear on timelines');
+					}
+				});
+		});
 }
 
 /**

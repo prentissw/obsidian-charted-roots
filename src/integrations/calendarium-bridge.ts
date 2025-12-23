@@ -333,6 +333,66 @@ export class CalendariumBridge {
 		}
 		return calApi.toDisplayDate(date);
 	}
+
+	/**
+	 * Convert a CalendariumDate to an ISO-like date string for Canvas Roots
+	 * Handles 0-indexed months (Calendarium) to 1-indexed months (ISO)
+	 *
+	 * @param date CalendariumDate object with 0-indexed month
+	 * @returns ISO-format date string (YYYY-MM-DD)
+	 */
+	calendariumDateToString(date: CalendariumDate): string {
+		const year = date.year;
+		// Convert from 0-indexed to 1-indexed month
+		const month = (date.month + 1).toString().padStart(2, '0');
+		const day = date.day.toString().padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	}
+
+	/**
+	 * Parse Calendarium frontmatter date (fc-date or fc-start/fc-end)
+	 * Handles both CalendariumDate objects and string dates
+	 *
+	 * fc-date can be either:
+	 * - An object: { year: 2931, month: 2, day: 1 } (0-indexed month)
+	 * - A string that Calendarium can parse
+	 *
+	 * @param fcDate The fc-date value from frontmatter
+	 * @param calendarName The calendar name for string parsing
+	 * @returns ISO-format date string or null
+	 */
+	parseFcDate(fcDate: unknown, calendarName?: string): string | null {
+		if (!fcDate) {
+			return null;
+		}
+
+		// If it's already a CalendariumDate object (most common case)
+		if (typeof fcDate === 'object' && fcDate !== null) {
+			const dateObj = fcDate as Record<string, unknown>;
+			if (typeof dateObj.year === 'number' && typeof dateObj.month === 'number' && typeof dateObj.day === 'number') {
+				return this.calendariumDateToString({
+					year: dateObj.year,
+					month: dateObj.month,
+					day: dateObj.day
+				});
+			}
+		}
+
+		// If it's a string, try to parse it using Calendarium's parser
+		if (typeof fcDate === 'string' && calendarName) {
+			const parsed = this.parseDate(calendarName, fcDate);
+			if (parsed) {
+				return this.calendariumDateToString(parsed);
+			}
+		}
+
+		// If it's already an ISO-like string, return it
+		if (typeof fcDate === 'string') {
+			return fcDate;
+		}
+
+		return null;
+	}
 }
 
 /**

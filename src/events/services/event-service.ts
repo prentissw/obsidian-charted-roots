@@ -19,6 +19,7 @@ import {
 } from '../types/event-types';
 import { generateCrId } from '../../core/uuid';
 import { isEventNote } from '../../utils/note-type-detection';
+import { getCalendariumBridge } from '../../integrations/calendarium-bridge';
 
 /**
  * Safely convert frontmatter value to string
@@ -654,8 +655,8 @@ export class EventService {
 		}
 
 		// Resolve aliasable properties
-		const dateValue = resolveProperty(frontmatter, 'date', aliases);
-		const dateEndValue = resolveProperty(frontmatter, 'date_end', aliases);
+		let dateValue = resolveProperty(frontmatter, 'date', aliases);
+		let dateEndValue = resolveProperty(frontmatter, 'date_end', aliases);
 		const personValue = resolveProperty(frontmatter, 'person', aliases);
 		const personsValue = resolveProperty(frontmatter, 'persons', aliases);
 		const placeValue = resolveProperty(frontmatter, 'place', aliases);
@@ -663,12 +664,45 @@ export class EventService {
 		const descriptionValue = resolveProperty(frontmatter, 'description', aliases);
 		const isCanonicalValue = resolveProperty(frontmatter, 'is_canonical', aliases);
 		const universeValue = resolveProperty(frontmatter, 'universe', aliases);
-		const dateSystemValue = resolveProperty(frontmatter, 'date_system', aliases);
+		let dateSystemValue = resolveProperty(frontmatter, 'date_system', aliases);
 		const beforeValue = resolveProperty(frontmatter, 'before', aliases);
 		const afterValue = resolveProperty(frontmatter, 'after', aliases);
 		const timelineValue = resolveProperty(frontmatter, 'timeline', aliases);
 		const groupsValue = resolveProperty(frontmatter, 'groups', aliases);
 		const mediaValue = resolveProperty(frontmatter, 'media', aliases);
+
+		// Check for Calendarium fc-* fields when integration is enabled
+		if (this.settings.syncCalendariumEvents && this.settings.calendariumIntegration !== 'off') {
+			const fcDate = frontmatter['fc-date'];
+			const fcStart = frontmatter['fc-start'];
+			const fcEnd = frontmatter['fc-end'];
+			const fcCalendar = frontmatter['fc-calendar'];
+
+			// If we have Calendarium date fields, use them
+			if (fcDate || fcStart) {
+				const bridge = getCalendariumBridge(this.app);
+				const calendarName = fcCalendar ? fmToString(fcCalendar) : undefined;
+
+				// Parse fc-date or fc-start as start date
+				const parsedDate = bridge.parseFcDate(fcDate || fcStart, calendarName);
+				if (parsedDate) {
+					dateValue = parsedDate;
+				}
+
+				// Parse fc-end as end date
+				if (fcEnd) {
+					const parsedEndDate = bridge.parseFcDate(fcEnd, calendarName);
+					if (parsedEndDate) {
+						dateEndValue = parsedEndDate;
+					}
+				}
+
+				// Use fc-calendar as date system if not already set
+				if (fcCalendar && !dateSystemValue) {
+					dateSystemValue = fmToString(fcCalendar);
+				}
+			}
+		}
 
 		// Parse media array
 		const media = fmToStringArray(mediaValue);

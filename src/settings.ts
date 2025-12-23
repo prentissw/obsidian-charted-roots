@@ -328,6 +328,8 @@ export interface CanvasRootsSettings {
 	requireLeadingZeros: boolean;
 	// Calendarium integration
 	calendariumIntegration: CalendariumIntegrationMode;
+	/** Show Calendarium dates (fc-date, fc-end) on timelines */
+	syncCalendariumEvents: boolean;
 	// Reports settings
 	reportsFolder: string;
 	// Sex value normalization
@@ -567,6 +569,7 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	requireLeadingZeros: false,                // Don't require YYYY-MM-DD format (allow YYYY-M-D)
 	// Calendarium integration
 	calendariumIntegration: 'off',             // Default: no integration (invisible to users without Calendarium)
+	syncCalendariumEvents: false,              // Default: don't show fc-* dates on timelines
 	// Reports settings
 	reportsFolder: 'Canvas Roots/Reports',     // Default folder for generated reports
 	// Sex value normalization
