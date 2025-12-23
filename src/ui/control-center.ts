@@ -9751,6 +9751,7 @@ export class ControlCenterModal extends Modal {
 			let createSourceNotes = analysis.sourceCount > 0;
 			let createPlaceNotes = analysis.placeCount > 0;
 			let createEventNotes = analysis.eventCount > 0;
+			let includeDynamicBlocks = false;
 			const sourcesFolder = this.plugin.settings.sourcesFolder || 'Canvas Roots/Sources';
 			const placesFolder = this.plugin.settings.placesFolder || 'Canvas Roots/Places';
 			const eventsFolder = this.plugin.settings.eventsFolder || 'Canvas Roots/Events';
@@ -9793,6 +9794,17 @@ export class ControlCenterModal extends Modal {
 					);
 			}
 
+			// Dynamic content blocks toggle
+			new Setting(optionsSection)
+				.setName('Include dynamic content blocks')
+				.setDesc('Add timeline and family relationship blocks to person notes (can be frozen to static markdown later)')
+				.addToggle(toggle => toggle
+					.setValue(includeDynamicBlocks)
+					.onChange(value => {
+						includeDynamicBlocks = value;
+					})
+				);
+
 			// Import button
 			const importBtn = analysisContainer.createEl('button', {
 				cls: 'crc-btn crc-btn--primary crc-mt-4',
@@ -9808,7 +9820,8 @@ export class ControlCenterModal extends Modal {
 					createPlaceNotes,
 					placesFolder,
 					createEventNotes,
-					eventsFolder
+					eventsFolder,
+					includeDynamicBlocks
 				);
 			});
 
@@ -9832,7 +9845,8 @@ export class ControlCenterModal extends Modal {
 		createPlaceNotes: boolean = false,
 		placesFolder?: string,
 		createEventNotes: boolean = false,
-		eventsFolder?: string
+		eventsFolder?: string,
+		includeDynamicBlocks: boolean = false
 	): Promise<void> {
 		// Show progress modal (reuse GEDCOM modal, update title after open)
 		const progressModal = new GedcomImportProgressModal(this.app);
@@ -9870,6 +9884,8 @@ export class ControlCenterModal extends Modal {
 				createEventNotes,
 				eventsFolder,
 				propertyAliases: this.plugin.settings.propertyAliases,
+				includeDynamicBlocks,
+				dynamicBlockTypes: ['timeline', 'relationships'],
 				// Pass media files from .gpkg extraction if available
 				mediaFiles: this.gpkgExtractionResult?.mediaFiles,
 				mediaFolder: this.plugin.settings.mediaFolders[0] || 'Canvas Roots/Media',
