@@ -227,5 +227,36 @@ settings:
     type: variable-color
     format: hex
     default: "#60a5fa"
+  -
+    id: frozen-gallery-heading
+    title: Frozen media gallery
+    description: Styling for frozen [!info|cr-frozen-gallery] callouts. Inspired by MCL Gallery Cards (github.com/efemkay/obsidian-modular-css-layout) by Faiz Khuzaimah.
+    type: heading
+    level: 1
+    collapsed: true
+  -
+    id: cr-gallery-gap
+    title: Gallery gap
+    description: Space between images in the gallery
+    type: variable-text
+    default: "5px"
+  -
+    id: cr-gallery-img-max-height
+    title: Image max height
+    description: Maximum height for gallery images
+    type: variable-text
+    default: "200px"
+  -
+    id: cr-gallery-img-max-width
+    title: Image max width
+    description: Maximum width for gallery images
+    type: variable-text
+    default: "250px"
+  -
+    id: cr-gallery-img-border-radius
+    title: Image border radius
+    description: Corner rounding for gallery images
+    type: variable-text
+    default: "8px"
 
 */

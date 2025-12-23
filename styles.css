@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-23 00:40:38 UTC
+ * - Generated: 2025-12-23 01:06:00 UTC
  * - Components: 35 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -22,7 +22,7 @@
    COMPONENT: VARIABLES.CSS
    ========================================================================== */
 
-/* Component Size: 48 lines, 1.33 KB */
+/* Component Size: 54 lines, 1.54 KB */
 
 /* Canvas Roots CSS Variables */
 
@@ -70,6 +70,12 @@
   --cr-coverage-high: #22c55e;
   --cr-coverage-medium: #f59e0b;
   --cr-coverage-low: #ef4444;
+
+  /* Frozen Media Gallery - customizable via Style Settings plugin */
+  --cr-gallery-gap: 5px;
+  --cr-gallery-img-max-height: 200px;
+  --cr-gallery-img-max-width: 250px;
+  --cr-gallery-img-border-radius: 8px;
 }
 
 
@@ -79,7 +85,7 @@
    COMPONENT: STYLE-SETTINGS.CSS
    ========================================================================== */
 
-/* Component Size: 232 lines, 5.48 KB */
+/* Component Size: 263 lines, 6.38 KB */
 
 /**
  * Style Settings Integration
@@ -310,6 +316,37 @@ settings:
     type: variable-color
     format: hex
     default: "#60a5fa"
+  -
+    id: frozen-gallery-heading
+    title: Frozen media gallery
+    description: Styling for frozen [!info|cr-frozen-gallery] callouts. Inspired by MCL Gallery Cards (github.com/efemkay/obsidian-modular-css-layout) by Faiz Khuzaimah.
+    type: heading
+    level: 1
+    collapsed: true
+  -
+    id: cr-gallery-gap
+    title: Gallery gap
+    description: Space between images in the gallery
+    type: variable-text
+    default: "5px"
+  -
+    id: cr-gallery-img-max-height
+    title: Image max height
+    description: Maximum height for gallery images
+    type: variable-text
+    default: "200px"
+  -
+    id: cr-gallery-img-max-width
+    title: Image max width
+    description: Maximum width for gallery images
+    type: variable-text
+    default: "250px"
+  -
+    id: cr-gallery-img-border-radius
+    title: Image border radius
+    description: Corner rounding for gallery images
+    type: variable-text
+    default: "8px"
 
 */
 
@@ -24566,7 +24603,7 @@ body:has(.cr-media-linker) .suggestion-container {
    COMPONENT: DYNAMIC-CONTENT.CSS
    ========================================================================== */
 
-/* Component Size: 394 lines, 8.11 KB */
+/* Component Size: 455 lines, 9.73 KB */
 
 /**
  * Dynamic Content Styles
@@ -24929,26 +24966,87 @@ body:has(.cr-media-linker) .suggestion-container {
 
 /* stylelint-disable selector-class-pattern -- Targets Obsidian's built-in .callout classes */
 
-/* Style for frozen gallery callout: > [!info|cr-frozen-gallery] */
+/*
+ * Frozen gallery callout styling
+ * Variables defined in variables.css, customizable via Style Settings plugin
+ * Inspired by MCL Gallery Cards snippet
+ */
 .callout[data-callout-metadata="cr-frozen-gallery"] {
   padding: var(--cr-spacing-sm);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .callout[data-callout-metadata="cr-frozen-gallery"] .callout-title {
   display: none;
 }
 
+/* Flex gallery layout for images */
 .callout[data-callout-metadata="cr-frozen-gallery"] .callout-content {
   display: flex;
+  --callout-content-padding: 0;
   flex-wrap: wrap;
-  gap: var(--cr-spacing-xs);
+  gap: var(--cr-gallery-gap);
+  margin: 0;
+  padding: 0;
 }
 
+/* Paragraph containers within callout content */
+.callout[data-callout-metadata="cr-frozen-gallery"] .callout-content > p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cr-gallery-gap);
+  margin: 0;
+}
+
+/* Image embed containers */
+.callout[data-callout-metadata="cr-frozen-gallery"] .callout-content .internal-embed.image-embed {
+  display: block;
+  line-height: 0;
+}
+
+/* Image styling with MCL-inspired features */
 .callout[data-callout-metadata="cr-frozen-gallery"] .callout-content img {
-  max-height: 150px;
+  max-height: var(--cr-gallery-img-max-height);
+  max-width: var(--cr-gallery-img-max-width);
+  width: auto;
+  height: auto;
   object-fit: cover;
-  border-radius: var(--cr-radius-sm);
+  border-radius: var(--cr-gallery-img-border-radius);
   border: 1px solid var(--background-modifier-border);
+  display: block;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* Hover effect */
+.callout[data-callout-metadata="cr-frozen-gallery"] .callout-content img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+  border-color: var(--text-accent);
+}
+
+/* Image zoom on click (hold) - MCL Gallery Cards feature */
+.callout[data-callout-metadata="cr-frozen-gallery"] .callout-content img:active {
+  cursor: zoom-out;
+  display: block;
+  background: rgb(0 0 0 / 80%);
+  max-height: calc(100vh - 40px);
+  max-width: calc(100vw - 40px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  border: none;
+  border-radius: var(--cr-gallery-img-border-radius);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 50%);
 }
 
 /* stylelint-enable selector-class-pattern */
@@ -25033,15 +25131,15 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-23 00:40:38 UTC
+ * Build completed: 2025-12-23 01:06:00 UTC
  * Components processed: 35
- * Total lines: 24695
- * Total size: 488.56 KB
- * Build duration: 0.04 seconds
+ * Total lines: 24793
+ * Total size: 491.28 KB
+ * Build duration: 0.05 seconds
  *
  * Component breakdown:
- * - variables.css: 48 lines, 1.33 KB
- * - style-settings.css: 232 lines, 5.48 KB
+ * - variables.css: 54 lines, 1.54 KB
+ * - style-settings.css: 263 lines, 6.38 KB
  * - base.css: 73 lines, 0.97 KB
  * - layout.css: 22 lines, 0.24 KB
  * - canvas.css: 4 lines, 0.07 KB
@@ -25071,7 +25169,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - universe-wizard.css: 621 lines, 11.05 KB
  * - preferences.css: 315 lines, 6.86 KB
  * - tree-output.css: 1504 lines, 29.36 KB
- * - dynamic-content.css: 394 lines, 8.11 KB
+ * - dynamic-content.css: 455 lines, 9.73 KB
  * - animations.css: 16 lines, 0.18 KB
  * - responsive.css: 9 lines, 0.13 KB
  * - theme.css: 11 lines, 0.19 KB

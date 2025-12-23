@@ -44,4 +44,10 @@
   --cr-coverage-high: #22c55e;
   --cr-coverage-medium: #f59e0b;
   --cr-coverage-low: #ef4444;
+
+  /* Frozen Media Gallery - customizable via Style Settings plugin */
+  --cr-gallery-gap: 5px;
+  --cr-gallery-img-max-height: 200px;
+  --cr-gallery-img-max-width: 250px;
+  --cr-gallery-img-border-radius: 8px;
 }

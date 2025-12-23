@@ -359,26 +359,87 @@
 
 /* stylelint-disable selector-class-pattern -- Targets Obsidian's built-in .callout classes */
 
-/* Style for frozen gallery callout: > [!info|cr-frozen-gallery] */
+/*
+ * Frozen gallery callout styling
+ * Variables defined in variables.css, customizable via Style Settings plugin
+ * Inspired by MCL Gallery Cards snippet
+ */
 .callout[data-callout-metadata="cr-frozen-gallery"] {
   padding: var(--cr-spacing-sm);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .callout[data-callout-metadata="cr-frozen-gallery"] .callout-title {
   display: none;
 }
 
+/* Flex gallery layout for images */
 .callout[data-callout-metadata="cr-frozen-gallery"] .callout-content {
   display: flex;
+  --callout-content-padding: 0;
   flex-wrap: wrap;
-  gap: var(--cr-spacing-xs);
+  gap: var(--cr-gallery-gap);
+  margin: 0;
+  padding: 0;
 }
 
+/* Paragraph containers within callout content */
+.callout[data-callout-metadata="cr-frozen-gallery"] .callout-content > p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cr-gallery-gap);
+  margin: 0;
+}
+
+/* Image embed containers */
+.callout[data-callout-metadata="cr-frozen-gallery"] .callout-content .internal-embed.image-embed {
+  display: block;
+  line-height: 0;
+}
+
+/* Image styling with MCL-inspired features */
 .callout[data-callout-metadata="cr-frozen-gallery"] .callout-content img {
-  max-height: 150px;
+  max-height: var(--cr-gallery-img-max-height);
+  max-width: var(--cr-gallery-img-max-width);
+  width: auto;
+  height: auto;
   object-fit: cover;
-  border-radius: var(--cr-radius-sm);
+  border-radius: var(--cr-gallery-img-border-radius);
   border: 1px solid var(--background-modifier-border);
+  display: block;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* Hover effect */
+.callout[data-callout-metadata="cr-frozen-gallery"] .callout-content img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+  border-color: var(--text-accent);
+}
+
+/* Image zoom on click (hold) - MCL Gallery Cards feature */
+.callout[data-callout-metadata="cr-frozen-gallery"] .callout-content img:active {
+  cursor: zoom-out;
+  display: block;
+  background: rgb(0 0 0 / 80%);
+  max-height: calc(100vh - 40px);
+  max-width: calc(100vw - 40px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  border: none;
+  border-radius: var(--cr-gallery-img-border-radius);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 50%);
 }
 
 /* stylelint-enable selector-class-pattern */
