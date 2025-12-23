@@ -537,44 +537,44 @@ const PAGE_SIZES = {
 
 ## Success Criteria
 
-### Phase 1: Two-Step Wizard Structure
-- [ ] Export wizard opens from toolbar button
-- [ ] Step 1 shows: presets, format cards, filename, estimate panel
-- [ ] Step 2 shows: avatars, scope, format-specific options
-- [ ] "Customize →" button navigates to Step 2
-- [ ] "← Back" button returns to Step 1
-- [ ] Export button works from both steps
+### Phase 1: Two-Step Wizard Structure ✅
+- [x] Export wizard opens from toolbar button
+- [x] Step 1 shows: presets, format cards, filename, estimate panel
+- [x] Step 2 shows: avatars, scope, format-specific options
+- [x] "Customize →" button navigates to Step 2
+- [x] "← Back" button returns to Step 1
+- [x] Export button works from both steps
 
-### Phase 2: Core Export Integration
-- [ ] All four formats (PNG, SVG, PDF, ODT placeholder) selectable via cards
-- [ ] Filename field editable, pre-populated with pattern
-- [ ] Avatar include/exclude toggle works (Step 2)
-- [ ] Scope options (full/limited) affect export content (Step 2)
-- [ ] PNG scale option (1x/2x/3x) works (Step 2)
-- [ ] Size estimation displays on Step 1 (people count, avatar count, file size)
-- [ ] Avatar count hidden when avatars excluded
-- [ ] Warning shown when: >100 people, OR >50 avatars with avatars included, OR >5MB
+### Phase 2: Core Export Integration ✅
+- [x] All four formats (PNG, SVG, PDF, ODT placeholder) selectable via cards
+- [x] Filename field editable, pre-populated with pattern
+- [x] Avatar include/exclude toggle works (Step 2)
+- [x] Scope options (full/limited) affect export content (Step 2)
+- [x] PNG scale option (1x/2x/3x) works (Step 2)
+- [x] Size estimation displays on Step 1 (people count, avatar count, file size)
+- [x] Avatar count hidden when avatars excluded
+- [x] Warning shown when: >100 people, OR >50 avatars with avatars included, OR >5MB
 
-### Phase 3: PDF Enhancements
-- [ ] PDF export continues using jsPDF (better quality for chart images)
-- [ ] PDF options appear in Step 2 when PDF selected
-- [ ] Page size selection (Fit, A4, Letter, Legal, Tabloid) works
-- [ ] Layout selection (single/tiled) works
-- [ ] Orientation selection (auto/portrait/landscape) for tiled layout
-- [ ] Cover page option available with styled title page
-- [ ] Custom title/subtitle fields work
-- [ ] Document metadata added (title, subject, author, keywords)
+### Phase 3: PDF Enhancements ✅
+- [x] PDF export continues using jsPDF (better quality for chart images)
+- [x] PDF options appear in Step 2 when PDF selected
+- [x] Page size selection (Fit, A4, Letter, Legal, Tabloid) works
+- [x] Layout selection (single/tiled) works
+- [x] Orientation selection (auto/portrait/landscape) for tiled layout
+- [x] Cover page option available with styled title page
+- [x] Custom title/subtitle fields work
+- [x] Document metadata added (title, subject, author, keywords)
 
-### Phase 4: Progress & Polish
-- [ ] Progress bar shown for exports >2 seconds
-- [ ] Cancel button works during export
-- [ ] UI polish complete
+### Phase 4: Progress & Polish ✅
+- [x] Progress bar shown for exports >2 seconds
+- [x] Cancel button works during export
+- [x] UI polish complete
 
-### Phase 5: Presets
-- [ ] Five preset cards displayed prominently on Step 1
-- [ ] Preset click populates all form fields (format, avatars, scale, cover page)
-- [ ] Visual feedback shows which preset is selected
-- [ ] Settings remembered between sessions
+### Phase 5: Presets ✅
+- [x] Five preset cards displayed prominently on Step 1
+- [x] Preset click populates all form fields (format, avatars, scale, cover page)
+- [x] Visual feedback shows which preset is selected (icon + border highlight)
+- [x] Settings remembered between sessions (lastFamilyChartExport in settings)
 
 ### Phase 6: ODT Export
 - [ ] ODT format option fully functional alongside PNG/SVG/PDF
