@@ -33,6 +33,10 @@ Planning document for extending media attachment support to all entity types.
   - Media files extracted to vault during import
   - Added 'media' phase to import progress modal
   - Media linked to source notes via mediaRefs
+  - **Media linking to Person, Event, Place notes**:
+    - Added `mediaRefs` field to GrampsPerson, GrampsEvent, GrampsPlace types
+    - Parser extracts `<objref>` elements from Person/Event/Place
+    - Import resolves media handles to vault wikilinks for all entity types
 
 ---
 
@@ -1417,7 +1421,7 @@ Benefits:
 - [x] Media files extracted to vault (uses first configured media folder)
 - [x] Media linked to Source notes via `media` YAML array
 - [x] Import progress shows media extraction phase
-- [ ] Media linking to Person, Event, Place notes (future enhancement)
+- [x] Media linking to Person, Event, Place notes
 
 ### Phase 5
 - [x] `canvas-roots-media` code block processor registered
