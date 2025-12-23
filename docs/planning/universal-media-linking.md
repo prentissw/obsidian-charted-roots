@@ -1060,9 +1060,23 @@ Styling inspired by [MCL Gallery Cards](https://github.com/efemkay/obsidian-modu
 |---------|-------------|---------|
 | Frozen gallery callout type | Callout type used when freezing galleries | info |
 
-#### Future Enhancements
+#### Editable Mode
 
-- [ ] `editable` option for inline drag-to-reorder
+The `editable: true` option enables inline drag-and-drop reordering:
+
+```markdown
+```canvas-roots-media
+columns: 3
+editable: true
+```
+```
+
+When enabled:
+- Items show a drag handle on hover
+- Drag items to reorder
+- First item becomes the thumbnail
+- Frontmatter is updated automatically on drop
+- Gallery has dashed border to indicate edit mode
 
 ---
 
@@ -1416,7 +1430,7 @@ Benefits:
 - [x] New person notes include media block when dynamic blocks enabled
 - [x] Configurable callout type in plugin settings (`frozenGalleryCalloutType`)
 - [x] Additional Style Settings options (object-fit, background color)
-- [ ] `editable` option for inline drag-to-reorder (future enhancement)
+- [x] `editable` option for inline drag-to-reorder with frontmatter update
 
 ---
 

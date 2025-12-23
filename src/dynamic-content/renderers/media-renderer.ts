@@ -46,6 +46,10 @@ export class MediaRenderer {
 	private service: DynamicContentService;
 	private currentItems: MediaItem[] = [];
 	private currentContext: DynamicBlockContext | null = null;
+	private isEditable: boolean = false;
+	private gridElement: HTMLElement | null = null;
+	private draggedItem: HTMLElement | null = null;
+	private draggedIndex: number = -1;
 
 	constructor(plugin: CanvasRootsPlugin, service: DynamicContentService) {
 		this.plugin = plugin;
@@ -61,7 +65,14 @@ export class MediaRenderer {
 		config: DynamicBlockConfig,
 		component: MarkdownRenderChild
 	): Promise<void> {
-		const container = el.createDiv({ cls: 'cr-dynamic-block cr-media' });
+		// Parse editable option
+		this.isEditable = this.parseEditable(config.editable);
+
+		const containerClasses = ['cr-dynamic-block', 'cr-media'];
+		if (this.isEditable) {
+			containerClasses.push('cr-media--editable');
+		}
+		const container = el.createDiv({ cls: containerClasses.join(' ') });
 
 		// Get media items from frontmatter
 		const items = this.getMediaItems(context, config);
@@ -198,6 +209,14 @@ export class MediaRenderer {
 	}
 
 	/**
+	 * Parse editable config option
+	 */
+	private parseEditable(value: unknown): boolean {
+		if (value === true || value === 'true') return true;
+		return false; // default
+	}
+
+	/**
 	 * Render the header with title and toolbar
 	 */
 	private renderHeader(container: HTMLElement, itemCount: number, config: DynamicBlockConfig): void {
@@ -283,23 +302,42 @@ export class MediaRenderer {
 		gridClasses.push(`cr-media__grid--${size}`);
 
 		const grid = contentEl.createDiv({ cls: gridClasses.join(' ') });
+		this.gridElement = grid;
 
-		// Render each item
-		for (const item of items) {
-			await this.renderGalleryItem(grid, item);
+		// Render each item with index for drag-and-drop
+		for (let i = 0; i < items.length; i++) {
+			await this.renderGalleryItem(grid, items[i], i);
 		}
 	}
 
 	/**
 	 * Render a single gallery item
 	 */
-	private async renderGalleryItem(grid: HTMLElement, item: MediaItem): Promise<void> {
+	private async renderGalleryItem(grid: HTMLElement, item: MediaItem, index: number): Promise<void> {
 		const itemClasses = ['cr-media__item'];
 		if (item.isThumbnail) {
 			itemClasses.push('cr-media__item--thumbnail');
 		}
 
 		const itemEl = grid.createDiv({ cls: itemClasses.join(' ') });
+		itemEl.dataset.index = String(index);
+
+		// Add drag handle when editable
+		if (this.isEditable) {
+			itemEl.setAttribute('draggable', 'true');
+			this.setupDragEvents(itemEl, index);
+
+			// Add drag handle indicator
+			const handle = itemEl.createDiv({ cls: 'cr-media__drag-handle' });
+			handle.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+				<circle cx="9" cy="6" r="1.5"/>
+				<circle cx="15" cy="6" r="1.5"/>
+				<circle cx="9" cy="12" r="1.5"/>
+				<circle cx="15" cy="12" r="1.5"/>
+				<circle cx="9" cy="18" r="1.5"/>
+				<circle cx="15" cy="18" r="1.5"/>
+			</svg>`;
+		}
 
 		if (item.isImage && item.file) {
 			// Render image thumbnail
@@ -315,12 +353,14 @@ export class MediaRenderer {
 			const resourcePath = this.plugin.app.vault.getResourcePath(item.file);
 			img.src = resourcePath;
 
-			// Add click handler to open in default viewer
-			itemEl.addEventListener('click', () => {
-				if (item.file) {
-					this.plugin.app.workspace.openLinkText(item.path, '', false);
-				}
-			});
+			// Add click handler to open in default viewer (only when not dragging)
+			if (!this.isEditable) {
+				itemEl.addEventListener('click', () => {
+					if (item.file) {
+						this.plugin.app.workspace.openLinkText(item.path, '', false);
+					}
+				});
+			}
 
 			// Add thumbnail badge if applicable
 			if (item.isThumbnail) {
@@ -338,13 +378,103 @@ export class MediaRenderer {
 			const nameEl = itemEl.createDiv({ cls: 'cr-media__doc-name' });
 			nameEl.textContent = item.file?.basename || item.path.split('/').pop() || 'Document';
 
-			// Add click handler
-			itemEl.addEventListener('click', () => {
-				if (item.file) {
-					this.plugin.app.workspace.openLinkText(item.path, '', false);
-				}
-			});
+			// Add click handler (only when not editable)
+			if (!this.isEditable) {
+				itemEl.addEventListener('click', () => {
+					if (item.file) {
+						this.plugin.app.workspace.openLinkText(item.path, '', false);
+					}
+				});
+			}
 		}
+	}
+
+	/**
+	 * Setup drag-and-drop event handlers for an item
+	 */
+	private setupDragEvents(itemEl: HTMLElement, index: number): void {
+		itemEl.addEventListener('dragstart', (e) => {
+			this.draggedItem = itemEl;
+			this.draggedIndex = index;
+			itemEl.addClass('cr-media__item--dragging');
+			e.dataTransfer?.setData('text/plain', String(index));
+			e.dataTransfer!.effectAllowed = 'move';
+		});
+
+		itemEl.addEventListener('dragend', () => {
+			itemEl.removeClass('cr-media__item--dragging');
+			this.draggedItem = null;
+			this.draggedIndex = -1;
+
+			// Remove all drag-over classes
+			if (this.gridElement) {
+				this.gridElement.querySelectorAll('.cr-media__item--drag-over').forEach(el => {
+					el.removeClass('cr-media__item--drag-over');
+				});
+			}
+		});
+
+		itemEl.addEventListener('dragover', (e) => {
+			e.preventDefault();
+			e.dataTransfer!.dropEffect = 'move';
+
+			// Don't highlight self
+			if (this.draggedIndex === index) return;
+
+			itemEl.addClass('cr-media__item--drag-over');
+		});
+
+		itemEl.addEventListener('dragleave', () => {
+			itemEl.removeClass('cr-media__item--drag-over');
+		});
+
+		itemEl.addEventListener('drop', (e) => {
+			e.preventDefault();
+			itemEl.removeClass('cr-media__item--drag-over');
+
+			const fromIndex = this.draggedIndex;
+			const toIndex = index;
+
+			if (fromIndex === -1 || fromIndex === toIndex) return;
+
+			// Reorder items
+			void this.reorderItems(fromIndex, toIndex);
+		});
+	}
+
+	/**
+	 * Reorder items and update frontmatter
+	 */
+	private async reorderItems(fromIndex: number, toIndex: number): Promise<void> {
+		if (!this.currentContext) return;
+
+		// Move item in array
+		const [movedItem] = this.currentItems.splice(fromIndex, 1);
+		this.currentItems.splice(toIndex, 0, movedItem);
+
+		// Update isThumbnail flags
+		this.currentItems.forEach((item, i) => {
+			item.isThumbnail = i === 0;
+		});
+
+		// Update frontmatter
+		const newMediaRefs = this.currentItems.map(item => item.wikilink);
+		await this.updateMediaFrontmatter(this.currentContext.file, newMediaRefs);
+
+		new Notice('Media order updated');
+	}
+
+	/**
+	 * Update the media frontmatter property with new order
+	 */
+	private async updateMediaFrontmatter(file: TFile, mediaRefs: string[]): Promise<void> {
+		await this.plugin.app.fileManager.processFrontMatter(file, (fm) => {
+			if (mediaRefs.length > 0) {
+				fm.media = mediaRefs;
+			} else {
+				delete fm.media;
+			}
+		});
 	}
 
 	/**

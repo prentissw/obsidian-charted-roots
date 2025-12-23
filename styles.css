@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-23 01:31:18 UTC
+ * - Generated: 2025-12-23 01:36:45 UTC
  * - Components: 35 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -24623,7 +24623,7 @@ body:has(.cr-media-linker) .suggestion-container {
    COMPONENT: DYNAMIC-CONTENT.CSS
    ========================================================================== */
 
-/* Component Size: 455 lines, 9.77 KB */
+/* Component Size: 504 lines, 10.79 KB */
 
 /**
  * Dynamic Content Styles
@@ -24981,6 +24981,55 @@ body:has(.cr-media-linker) .suggestion-container {
 }
 
 /* ==========================================================================
+   Editable Mode (Drag-and-Drop Reordering)
+   ========================================================================== */
+
+/* Editable mode indicator */
+.cr-media--editable {
+  border: 1px dashed var(--text-accent);
+  border-radius: var(--cr-radius-md);
+}
+
+.cr-media--editable .cr-media__item {
+  cursor: grab;
+}
+
+.cr-media--editable .cr-media__item:active {
+  cursor: grabbing;
+}
+
+/* Drag handle */
+.cr-media__drag-handle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgb(0 0 0 / 60%);
+  color: #fff;
+  padding: 4px;
+  border-radius: 4px;
+  opacity: 0;
+  z-index: 3;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.cr-media--editable .cr-media__item:hover .cr-media__drag-handle {
+  opacity: 1;
+}
+
+/* Dragging state */
+.cr-media__item--dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+/* Drop target highlight */
+.cr-media__item--drag-over {
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 2px var(--text-accent);
+}
+
+/* ==========================================================================
    Frozen Gallery Callout
    ========================================================================== */
 
@@ -25151,10 +25200,10 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-23 01:31:18 UTC
+ * Build completed: 2025-12-23 01:36:45 UTC
  * Components processed: 35
- * Total lines: 24813
- * Total size: 491.82 KB
+ * Total lines: 24862
+ * Total size: 492.84 KB
  * Build duration: 0.04 seconds
  *
  * Component breakdown:
@@ -25189,7 +25238,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - universe-wizard.css: 621 lines, 11.05 KB
  * - preferences.css: 315 lines, 6.86 KB
  * - tree-output.css: 1504 lines, 29.36 KB
- * - dynamic-content.css: 455 lines, 9.77 KB
+ * - dynamic-content.css: 504 lines, 10.79 KB
  * - animations.css: 16 lines, 0.18 KB
  * - responsive.css: 9 lines, 0.13 KB
  * - theme.css: 11 lines, 0.19 KB
