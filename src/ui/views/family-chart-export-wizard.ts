@@ -132,9 +132,16 @@ export class FamilyChartExportWizard extends Modal {
 
 	// UI containers
 	private contentContainer?: HTMLElement;
+	private progressContainer?: HTMLElement;
 
 	// Export estimate cache
 	private estimate: ExportEstimate | null = null;
+
+	// Step definitions
+	private readonly steps = [
+		{ number: 1, title: 'Quick Export', description: 'Choose a preset or format' },
+		{ number: 2, title: 'Customize', description: 'Fine-tune export options' }
+	];
 
 	constructor(plugin: CanvasRootsPlugin, chartView: FamilyChartView) {
 		super(plugin.app);
@@ -229,14 +236,20 @@ export class FamilyChartExportWizard extends Modal {
 		contentEl.empty();
 		contentEl.addClass('cr-export-wizard');
 
-		// Modal header
+		// Modal header with icon and title
 		const header = contentEl.createDiv({ cls: 'cr-export-wizard-header' });
-		header.createEl('h2', { text: 'Export Family Chart' });
+
+		const titleRow = header.createDiv({ cls: 'cr-wizard-title' });
+		titleRow.appendChild(createLucideIcon('download', 24));
+		titleRow.createSpan({ text: 'Export Family Chart' });
 
 		// Close button
 		const closeBtn = header.createDiv({ cls: 'cr-export-wizard-close' });
 		setIcon(closeBtn, 'x');
 		closeBtn.addEventListener('click', () => this.close());
+
+		// Step progress indicator
+		this.renderStepProgress(contentEl);
 
 		// Content container
 		this.contentContainer = contentEl.createDiv({ cls: 'cr-export-wizard-content' });
@@ -254,11 +267,79 @@ export class FamilyChartExportWizard extends Modal {
 	}
 
 	/**
+	 * Render the step progress indicator
+	 */
+	private renderStepProgress(container: HTMLElement): void {
+		this.progressContainer = container.createDiv({ cls: 'cr-wizard-progress' });
+		this.updateStepProgress();
+	}
+
+	/**
+	 * Update the step progress indicator
+	 */
+	private updateStepProgress(): void {
+		if (!this.progressContainer) return;
+		this.progressContainer.empty();
+
+		const stepsRow = this.progressContainer.createDiv({ cls: 'cr-wizard-steps' });
+
+		this.steps.forEach((step, index) => {
+			// Step circle with number
+			const stepEl = stepsRow.createDiv({ cls: 'cr-wizard-step' });
+
+			// Mark active or completed
+			if (index === this.currentStep) {
+				stepEl.addClass('cr-wizard-step--active');
+			} else if (index < this.currentStep) {
+				stepEl.addClass('cr-wizard-step--completed');
+			}
+
+			// Step number circle
+			const numberEl = stepEl.createDiv({ cls: 'cr-wizard-step-number' });
+			if (index < this.currentStep) {
+				// Show checkmark for completed steps
+				setIcon(numberEl, 'check');
+			} else {
+				numberEl.textContent = String(step.number);
+			}
+
+			// Step info (title shown only for active step)
+			const infoEl = stepEl.createDiv({ cls: 'cr-wizard-step-info' });
+			infoEl.createDiv({ cls: 'cr-wizard-step-title', text: step.title });
+
+			// Add connector between steps (except after last step)
+			if (index < this.steps.length - 1) {
+				const connector = stepsRow.createDiv({ cls: 'cr-wizard-connector' });
+				if (index < this.currentStep) {
+					connector.addClass('cr-wizard-connector--completed');
+				}
+			}
+		});
+
+		// Step counter and description below the circles
+		const stepInfo = this.progressContainer.createDiv({ cls: 'cr-export-step-info' });
+		const currentStepData = this.steps[this.currentStep];
+
+		stepInfo.createDiv({
+			cls: 'cr-export-step-counter',
+			text: `Step ${this.currentStep + 1} of ${this.steps.length}`
+		});
+
+		stepInfo.createDiv({
+			cls: 'cr-export-step-description',
+			text: currentStepData.description
+		});
+	}
+
+	/**
 	 * Render the current step
 	 */
 	private renderCurrentStep(): void {
 		if (!this.contentContainer) return;
 		this.contentContainer.empty();
+
+		// Update step progress indicator
+		this.updateStepProgress();
 
 		// Recalculate estimate based on current options
 		this.estimate = this.calculateEstimate();
@@ -357,15 +438,6 @@ export class FamilyChartExportWizard extends Modal {
 	// ========== STEP 2: CUSTOMIZE ==========
 
 	private renderStep2(container: HTMLElement): void {
-		// Back link
-		const backLink = container.createDiv({ cls: 'cr-export-back-link' });
-		backLink.appendChild(createLucideIcon('chevron-left', 16));
-		backLink.createSpan({ text: 'Back to presets' });
-		backLink.addEventListener('click', () => {
-			this.currentStep = 0;
-			this.renderCurrentStep();
-		});
-
 		// Avatars section
 		const avatarsSection = container.createDiv({ cls: 'cr-export-section' });
 		avatarsSection.createEl('h3', { text: 'Avatars', cls: 'cr-export-section-title' });
@@ -660,59 +732,58 @@ export class FamilyChartExportWizard extends Modal {
 
 	/**
 	 * Render the footer with navigation buttons
+	 * Layout matches "Generate family tree" wizard: Cancel on left, primary action on right
 	 */
 	private renderFooter(container: HTMLElement): void {
 		const footer = container.createDiv({ cls: 'cr-export-wizard-footer' });
 
+		// Left side: Cancel (step 1) or Back (step 2)
 		if (this.currentStep === 0) {
-			// Step 1 footer: Customize | Cancel | Export
-			const customizeBtn = footer.createEl('button', {
-				cls: 'cr-btn',
-				text: 'Customize'
-			});
-			customizeBtn.appendChild(createLucideIcon('arrow-right', 16));
-			customizeBtn.addEventListener('click', () => {
-				this.currentStep = 1;
-				this.renderCurrentStep();
-			});
-
-			const rightBtns = footer.createDiv({ cls: 'cr-export-footer-right' });
-
-			const cancelBtn = rightBtns.createEl('button', {
+			const cancelBtn = footer.createEl('button', {
 				cls: 'cr-btn',
 				text: 'Cancel'
 			});
 			cancelBtn.addEventListener('click', () => this.close());
-
-			const exportBtn = rightBtns.createEl('button', {
-				cls: 'cr-btn cr-btn--primary',
-				text: 'Export'
-			});
-			exportBtn.addEventListener('click', () => this.doExport());
 		} else {
-			// Step 2 footer: Back | Cancel | Export
 			const backBtn = footer.createEl('button', {
-				cls: 'cr-btn',
-				text: 'Back'
+				cls: 'cr-btn'
 			});
-			backBtn.prepend(createLucideIcon('chevron-left', 16));
+			backBtn.appendChild(createLucideIcon('chevron-left', 16));
+			backBtn.appendText('Back');
 			backBtn.addEventListener('click', () => {
 				this.currentStep = 0;
 				this.renderCurrentStep();
 			});
+		}
 
+		// Right side: Primary action with arrow
+		if (this.currentStep === 0) {
+			// Step 1: Show both "Next" (to customize) and "Export" (quick path)
 			const rightBtns = footer.createDiv({ cls: 'cr-export-footer-right' });
 
-			const cancelBtn = rightBtns.createEl('button', {
-				cls: 'cr-btn',
-				text: 'Cancel'
+			const nextBtn = rightBtns.createEl('button', {
+				cls: 'cr-btn cr-btn--outline'
 			});
-			cancelBtn.addEventListener('click', () => this.close());
+			nextBtn.appendText('Customize');
+			nextBtn.appendChild(createLucideIcon('arrow-right', 16));
+			nextBtn.addEventListener('click', () => {
+				this.currentStep = 1;
+				this.renderCurrentStep();
+			});
 
 			const exportBtn = rightBtns.createEl('button', {
-				cls: 'cr-btn cr-btn--primary',
-				text: 'Export'
+				cls: 'cr-btn cr-btn--primary'
 			});
+			exportBtn.appendText('Export');
+			exportBtn.appendChild(createLucideIcon('download', 16));
+			exportBtn.addEventListener('click', () => this.doExport());
+		} else {
+			// Step 2: Just Export
+			const exportBtn = footer.createEl('button', {
+				cls: 'cr-btn cr-btn--primary'
+			});
+			exportBtn.appendText('Export');
+			exportBtn.appendChild(createLucideIcon('download', 16));
 			exportBtn.addEventListener('click', () => this.doExport());
 		}
 	}
