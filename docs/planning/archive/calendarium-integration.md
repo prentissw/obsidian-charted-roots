@@ -338,12 +338,24 @@ Calendarium's date model is significantly richer than Canvas Roots needs:
 - Dropdowns (Create Event Modal, etc.) use a flat list - no visual distinction needed
 - Integrations card hidden when Calendarium is not installed
 
-### Phase 2: Event Display
+### Phase 2: Event Display (Read-only)
 
-- [ ] Parse `fc-*` frontmatter when loading events
-- [ ] Display Calendarium events on person timelines
-- [ ] Display Calendarium events on place timelines
-- [ ] Filter timeline by calendar
+**Scope:** Read `fc-*` fields from Canvas Roots event notes (notes with `cr_type: event`) to display them on timelines. This phase does not import pure Calendarium events (notes without `cr_type`).
+
+**Settings:**
+- [ ] Add `syncCalendariumEvents: boolean` setting (default: false)
+- [ ] Add UI toggle in Integrations card: "Show Calendarium dates on timelines"
+
+**Date Parsing:**
+- [ ] Parse `fc-date` or `fc-start` as event start date
+- [ ] Parse `fc-end` as event end date (for date ranges: lifespans, reigns, residences)
+- [ ] Handle 0-indexed month conversion in CalendariumBridge (Calendarium months are 0-indexed)
+- [ ] Gracefully handle unknown `fc-calendar` values (show event with warning, don't drop)
+
+**Timeline Display:**
+- [ ] Display events with `fc-*` dates on person timelines
+- [ ] Display events with `fc-*` dates on place timelines
+- [ ] Add calendar filter dropdown to timeline views
 
 ### Phase 3: Bidirectional Sync
 
