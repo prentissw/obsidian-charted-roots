@@ -196,7 +196,7 @@ function renderSourcesListCard(
 	// Link media to existing sources button
 	new Setting(content)
 		.setName('Link media to sources')
-		.setDesc('Attach existing images to source notes that don\'t have media')
+		.setDesc('Smart matching to link images to sources by filename patterns. For general media linking to any entity, use Dashboard → Media → Bulk Link Media.')
 		.addButton(button => button
 			.setButtonText('Link')
 			.onClick(() => {
