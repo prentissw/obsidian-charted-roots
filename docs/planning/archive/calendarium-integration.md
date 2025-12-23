@@ -312,32 +312,31 @@ Calendarium's date model is significantly richer than Canvas Roots needs:
 
 ## Planned Features
 
-### Phase 1: Calendar Import (Read-only) — Recommended Starting Point
+### Phase 1: Calendar Import (Read-only) — ✅ Complete (v0.12.0)
 
-- [ ] Detect Calendarium installation
-- [ ] Import calendar definitions (names, eras, months)
-- [ ] Display imported calendars in date system dropdown
-- [ ] Graceful fallback when Calendarium not installed
-- [ ] Hide integration settings entirely if Calendarium not installed
+- [x] Detect Calendarium installation
+- [x] Import calendar definitions (names, eras, months)
+- [x] Display imported calendars in date system dropdown
+- [x] Graceful fallback when Calendarium not installed
+- [x] Hide integration settings entirely if Calendarium not installed
 
 #### Phase 1 Implementation Details
 
-**Files to create:**
+**Files created:**
 - `src/integrations/calendarium-bridge.ts` - Bridge service for Calendarium API
-- `src/integrations/integrations-settings.ts` - Settings UI for integrations (new section)
 
-**Files to modify:**
-- `src/settings.ts` - Add `calendariumIntegration: 'off' | 'read'` setting
-- `src/dates/ui/date-systems-card.ts` - Add "From Calendarium" section (table, read-only)
-- `src/events/ui/create-event-modal.ts` - Include Calendarium calendars in dropdown
+**Files modified:**
+- `src/settings.ts` - Added `calendariumIntegration: 'off' | 'read'` setting
+- `src/dates/ui/date-systems-card.ts` - Added "From Calendarium" section (table, read-only)
+- `src/events/ui/create-event-modal.ts` - Included Calendarium calendars in dropdown
 
-**UI Decisions:**
+**UI Implementation:**
 - Date Systems Card uses three-section grouping:
   1. Built-in systems (Middle-earth, Westeros) - table, view-only
   2. From Calendarium (if enabled) - table, view-only
   3. Custom systems (user-defined) - cards, editable
 - Dropdowns (Create Event Modal, etc.) use a flat list - no visual distinction needed
-- Settings section only visible when Calendarium is installed
+- Integrations card hidden when Calendarium is not installed
 
 ### Phase 2: Event Display
 
