@@ -36,6 +36,7 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.15.2 | [Calendarium Integration Phase 2](Release-History#calendarium-integration-phase-2-v0152) | Display fc-* dated events on timelines, calendar filter dropdown, timeline badges |
 | v0.15.1 | [Family Chart Export Wizard](Release-History#family-chart-export-wizard-v0151) | Multi-step export wizard with presets, PNG/SVG/PDF/ODT formats, progress modal |
 | v0.15.1 | [Family Chart Styling Panel](Release-History#family-chart-styling-panel-v0151) | In-view color theming with 5 presets, custom color picker modal |
 | v0.15.0 | [Universal Media Linking](#universal-media-linking) | Media support for all entities, .gpkg import, dynamic galleries |
@@ -66,7 +67,7 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Priority:** ⚡ High — Unified timeline experience for fictional worldbuilders
 
-**Status:** ✅ Phase 1 complete (v0.12.0) | Phases 2-4 planned
+**Status:** ✅ Phase 1 complete (v0.12.0) | ✅ Phase 2 complete | Phases 3-4 planned
 
 **Summary:** Integration with the [Calendarium](https://plugins.javalent.com/calendarium) plugin to share calendar definitions, eliminating duplicate configuration for worldbuilders. Designed to be invisible to users who don't need it—settings default to off, and no UI changes appear unless Calendarium is installed.
 
@@ -86,7 +87,7 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Phased Approach:**
 - ✅ **Phase 1 (v0.12.0):** Import calendar definitions from Calendarium—delivers ~80% of value
-- **Phase 2:** Display Calendarium events on Canvas Roots timelines; support date ranges (`fc-end`)
+- ✅ **Phase 2:** Display Calendarium events on Canvas Roots timelines; support date ranges (`fc-end`)
 - **Phase 3:** Bidirectional sync between plugins
 - **Phase 4:** Cross-calendar date translation
 

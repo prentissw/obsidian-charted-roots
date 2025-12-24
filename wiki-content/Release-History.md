@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.15.x](#v015x)
+  - [Calendarium Integration Phase 2](#calendarium-integration-phase-2-v0152)
   - [Family Chart Export Wizard](#family-chart-export-wizard-v0151)
   - [Family Chart Styling Panel](#family-chart-styling-panel-v0151)
   - [Universal Media Linking](#universal-media-linking-v0150)
@@ -58,6 +59,63 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.15.x
+
+### Calendarium Integration Phase 2 (v0.15.2)
+
+Display events with Calendarium `fc-*` date fields on Canvas Roots timelines, with calendar filtering support.
+
+**Problem Solved:**
+- Events using Calendarium's `fc-date` format weren't visible on Canvas Roots timelines
+- No way to filter timeline views by calendar system when mixing real and fictional dates
+- Timeline badges in People tab didn't show event counts
+
+**Features:**
+
+| Feature | Description |
+|---------|-------------|
+| **fc-date Parsing** | Read `fc-date` or `fc-start` as event start date |
+| **fc-end Support** | Read `fc-end` as event end date for date ranges (lifespans, reigns) |
+| **Month Conversion** | Handle 0-indexed months from Calendarium (converts to 1-indexed) |
+| **Calendar Filter** | Dropdown to filter timelines by `fc-calendar` value |
+| **Timeline Badges** | Calendar icon with event count in People tab table rows |
+| **Timeline Modal** | Click badge to open full timeline in modal dialog |
+
+**Settings:**
+
+| Setting | Description |
+|---------|-------------|
+| `syncCalendariumEvents` | Enable/disable fc-* field parsing (default: false) |
+| Integration mode | Must be set to "Read-only" in Preferences → Integrations |
+
+**How It Works:**
+
+1. Enable Calendarium integration in Preferences → Integrations
+2. Enable "Show Calendarium dates on timelines" toggle
+3. Event notes with `fc-date` fields will now appear on timelines
+4. The `fc-calendar` value is used as the date system for filtering
+
+**Example Event Note:**
+
+```yaml
+---
+cr_type: event
+cr_id: "20251223120000"
+title: "Birth of Aragorn"
+event_type: birth
+person: "[[Aragorn]]"
+fc-date:
+  year: 2931
+  month: 2
+  day: 1
+fc-calendar: Middle-earth
+---
+```
+
+**Related Documentation:**
+- [Calendarium Integration](Fictional-Date-Systems#calendarium-integration)
+- [Events & Timelines](Events-And-Timelines)
+
+---
 
 ### Family Chart Export Wizard (v0.15.1)
 

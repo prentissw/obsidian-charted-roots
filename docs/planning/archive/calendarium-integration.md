@@ -338,24 +338,37 @@ Calendarium's date model is significantly richer than Canvas Roots needs:
 - Dropdowns (Create Event Modal, etc.) use a flat list - no visual distinction needed
 - Integrations card hidden when Calendarium is not installed
 
-### Phase 2: Event Display (Read-only)
+### Phase 2: Event Display (Read-only) — ✅ Complete
 
 **Scope:** Read `fc-*` fields from Canvas Roots event notes (notes with `cr_type: event`) to display them on timelines. This phase does not import pure Calendarium events (notes without `cr_type`).
 
 **Settings:**
-- [ ] Add `syncCalendariumEvents: boolean` setting (default: false)
-- [ ] Add UI toggle in Integrations card: "Show Calendarium dates on timelines"
+- [x] Add `syncCalendariumEvents: boolean` setting (default: false)
+- [x] Add UI toggle in Integrations card: "Show Calendarium dates on timelines"
 
 **Date Parsing:**
-- [ ] Parse `fc-date` or `fc-start` as event start date
-- [ ] Parse `fc-end` as event end date (for date ranges: lifespans, reigns, residences)
-- [ ] Handle 0-indexed month conversion in CalendariumBridge (Calendarium months are 0-indexed)
-- [ ] Gracefully handle unknown `fc-calendar` values (show event with warning, don't drop)
+- [x] Parse `fc-date` or `fc-start` as event start date
+- [x] Parse `fc-end` as event end date (for date ranges: lifespans, reigns, residences)
+- [x] Handle 0-indexed month conversion in CalendariumBridge (Calendarium months are 0-indexed)
+- [x] Use `fc-calendar` value as `dateSystem` for calendar filtering
 
 **Timeline Display:**
-- [ ] Display events with `fc-*` dates on person timelines
-- [ ] Display events with `fc-*` dates on place timelines
-- [ ] Add calendar filter dropdown to timeline views
+- [x] Display events with `fc-*` dates on person timelines
+- [x] Display events with `fc-*` dates on place timelines
+- [x] Add calendar filter dropdown to timeline views (appears when multiple calendars exist)
+- [x] Add timeline badge to People tab table rows (click to open timeline modal)
+
+#### Phase 2 Implementation Details
+
+**Files modified:**
+- `src/settings.ts` - Added `syncCalendariumEvents: boolean` setting
+- `src/integrations/integrations-settings.ts` - Added sync toggle UI in Integrations card
+- `src/integrations/calendarium-bridge.ts` - Added `parseFcDate()` and `calendariumDateToString()` methods
+- `src/events/services/event-service.ts` - Extended `parseEventNote()` to check fc-* fields
+- `src/events/ui/person-timeline.ts` - Added calendar filter dropdown
+- `src/events/ui/place-timeline.ts` - Added calendar filter dropdown
+- `src/ui/control-center.ts` - Added timeline badge to person table rows, `showPersonTimelineModal()`
+- `styles/events.css` - Added filter and modal CSS styles
 
 ### Phase 3: Bidirectional Sync
 
