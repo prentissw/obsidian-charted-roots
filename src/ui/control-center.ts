@@ -50,7 +50,7 @@ import { EventService } from '../events/services/event-service';
 import { AddPersonTypePreviewModal } from './add-person-type-modal';
 import { renderFamilyTimeline, getFamilyTimelineSummary } from '../events/ui/family-timeline';
 import { renderPlaceTimelineCard } from '../events/ui/place-timeline';
-import { renderPreferencesTab } from './preferences-tab';
+import { renderPreferencesTab, renderCanvasLayoutCard, renderCanvasStylingCard } from './preferences-tab';
 import { renderDashboardTab } from './dashboard-tab';
 import { renderPlacesTab } from './places-tab';
 import { PropertyAliasService } from '../core/property-alias-service';
@@ -4273,6 +4273,11 @@ export class ControlCenterModal extends Modal {
 			'Right-click recent trees for regenerate, reveal, or delete options.'
 		];
 		tips.forEach(tip => tipsList.createEl('li', { text: tip }));
+
+		// === Canvas Settings Section ===
+		// Canvas Layout and Styling cards (moved from Preferences tab)
+		renderCanvasLayoutCard(container, this.plugin, this.createCard.bind(this));
+		renderCanvasStylingCard(container, this.plugin, this.createCard.bind(this));
 	}
 
 	/**

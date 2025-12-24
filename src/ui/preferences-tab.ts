@@ -122,12 +122,6 @@ export function renderPreferencesTab(
 	// Folder Locations card
 	renderFolderLocationsCard(container, plugin, createCard);
 
-	// Canvas Layout card
-	renderCanvasLayoutCard(container, plugin, createCard);
-
-	// Canvas Styling card
-	renderCanvasStylingCard(container, plugin, createCard);
-
 	// Date Validation card
 	renderDateValidationCard(container, plugin, createCard, showTab);
 
@@ -926,7 +920,7 @@ function renderMediaFoldersList(
 /**
  * Render the Canvas Layout card
  */
-function renderCanvasLayoutCard(
+export function renderCanvasLayoutCard(
 	container: HTMLElement,
 	plugin: CanvasRootsPlugin,
 	createCard: (options: { title: string; icon?: LucideIconName; subtitle?: string }) => HTMLElement
@@ -1023,7 +1017,7 @@ function renderCanvasLayoutCard(
 /**
  * Render the Canvas Styling card
  */
-function renderCanvasStylingCard(
+export function renderCanvasStylingCard(
 	container: HTMLElement,
 	plugin: CanvasRootsPlugin,
 	createCard: (options: { title: string; icon?: LucideIconName; subtitle?: string }) => HTMLElement

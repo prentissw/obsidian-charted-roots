@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Quick Actions tiles in Universes tab** - The Universes tab now displays a tile-based quick actions bar with three options: Create Universe, Date Systems (links to Events tab), and Custom Maps (links to Places tab). These tiles are always visible for quick access.
 
+- **Canvas settings moved to Canvas Trees tab** - The "Canvas layout" and "Canvas styling" cards have been moved from the Preferences tab to the Canvas Trees tab, placing them in context with tree generation features.
+
 ### Changed
 
 - **Universe discoverability** - Users can now discover and create universes from three entry points: command palette, Universes tab tiles, or Statistics tab. Previously the only entry was buried in the Statistics tab.
