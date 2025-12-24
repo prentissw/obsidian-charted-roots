@@ -345,6 +345,9 @@ export interface CanvasRootsSettings {
 	mediaFolders: string[];
 	/** Whether to limit media scanning to specified folders */
 	enableMediaFolderFilter: boolean;
+	// Gramps import settings
+	/** Preserve subfolder structure when extracting media from .gpkg files */
+	preserveMediaFolderStructure: boolean;
 	// Dynamic content settings
 	/** Callout type for frozen media galleries (info, note, etc.) */
 	frozenGalleryCalloutType: string;
@@ -581,6 +584,8 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	// Media folder filtering
 	mediaFolders: [],                          // Empty = no filtering (scan entire vault)
 	enableMediaFolderFilter: false,            // Disabled by default for backwards compatibility
+	// Gramps import settings
+	preserveMediaFolderStructure: false,       // Disabled by default for backwards compatibility
 	// Dynamic content settings
 	frozenGalleryCalloutType: 'info'           // Callout type for frozen media galleries
 };

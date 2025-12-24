@@ -9913,6 +9913,20 @@ export class ControlCenterModal extends Modal {
 					})
 				);
 
+			// Preserve media folder structure toggle (only for .gpkg with media)
+			let preserveMediaStructure = this.plugin.settings.preserveMediaFolderStructure;
+			if (this.gpkgExtractionResult && this.gpkgExtractionResult.mediaFiles.size > 0) {
+				new Setting(optionsSection)
+					.setName('Preserve media folder structure')
+					.setDesc('Recreate the original subfolder hierarchy from the source instead of importing all media to a flat folder')
+					.addToggle(toggle => toggle
+						.setValue(preserveMediaStructure)
+						.onChange(value => {
+							preserveMediaStructure = value;
+						})
+					);
+			}
+
 			// Import button
 			const importBtn = analysisContainer.createEl('button', {
 				cls: 'crc-btn crc-btn--primary crc-mt-4',
@@ -9929,7 +9943,8 @@ export class ControlCenterModal extends Modal {
 					placesFolder,
 					createEventNotes,
 					eventsFolder,
-					includeDynamicBlocks
+					includeDynamicBlocks,
+					preserveMediaStructure
 				);
 			});
 
@@ -9954,7 +9969,8 @@ export class ControlCenterModal extends Modal {
 		placesFolder?: string,
 		createEventNotes: boolean = false,
 		eventsFolder?: string,
-		includeDynamicBlocks: boolean = false
+		includeDynamicBlocks: boolean = false,
+		preserveMediaFolderStructure: boolean = false
 	): Promise<void> {
 		// Show progress modal (reuse GEDCOM modal, update title after open)
 		const progressModal = new GedcomImportProgressModal(this.app);
@@ -9998,6 +10014,7 @@ export class ControlCenterModal extends Modal {
 				mediaFiles: this.gpkgExtractionResult?.mediaFiles,
 				mediaFolder: this.plugin.settings.mediaFolders[0] || 'Canvas Roots/Media',
 				extractMedia: this.gpkgExtractionResult !== undefined,
+				preserveMediaFolderStructure,
 				onProgress: (progress) => {
 					progressModal.updateProgress({
 						phase: progress.phase,

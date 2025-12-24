@@ -76,6 +76,8 @@ export interface GrampsImportOptions {
 	mediaFolder?: string;
 	/** Whether to extract and save media files from .gpkg packages */
 	extractMedia?: boolean;
+	/** Preserve subfolder structure when extracting media (default: false = flat folder) */
+	preserveMediaFolderStructure?: boolean;
 }
 
 /**
@@ -278,7 +280,8 @@ export class GrampsImporter {
 							content,
 							mediaFolder,
 							grampsData,
-							result.mediaHandleToPath!
+							result.mediaHandleToPath!,
+							options.preserveMediaFolderStructure ?? false
 						);
 						if (vaultPath) {
 							result.mediaFilesExtracted = (result.mediaFilesExtracted || 0) + 1;
@@ -887,6 +890,7 @@ export class GrampsImporter {
 	 * @param mediaFolder - Target folder in the vault
 	 * @param grampsData - Parsed Gramps data to look up media handles
 	 * @param handleToPath - Map to populate with handle → vault path mappings
+	 * @param preserveStructure - Whether to preserve subfolder structure from source
 	 * @returns The vault path where the file was saved, or null if skipped
 	 */
 	private async extractMediaFile(
@@ -894,13 +898,37 @@ export class GrampsImporter {
 		content: ArrayBuffer,
 		mediaFolder: string,
 		grampsData: ParsedGrampsData,
-		handleToPath: Map<string, string>
+		handleToPath: Map<string, string>,
+		preserveStructure: boolean
 	): Promise<string | null> {
-		// Get just the filename from the path
-		const filename = relativePath.split('/').pop() || relativePath;
+		let vaultPath: string;
 
-		// Build the vault path
-		const vaultPath = normalizePath(`${mediaFolder}/${filename}`);
+		if (preserveStructure) {
+			// Preserve the subfolder structure from the source
+			// Strip any absolute path prefix (e.g., C:\Users\... or /home/...)
+			let cleanPath = relativePath;
+
+			// Remove Windows absolute path prefix
+			if (/^[A-Za-z]:[\\/]/.test(cleanPath)) {
+				cleanPath = cleanPath.replace(/^[A-Za-z]:[\\/]/, '');
+			}
+			// Remove Unix absolute path prefix
+			if (cleanPath.startsWith('/')) {
+				cleanPath = cleanPath.substring(1);
+			}
+
+			vaultPath = normalizePath(`${mediaFolder}/${cleanPath}`);
+
+			// Ensure parent directories exist
+			const parentDir = vaultPath.substring(0, vaultPath.lastIndexOf('/'));
+			if (parentDir && parentDir !== mediaFolder) {
+				await this.ensureFolderExists(parentDir);
+			}
+		} else {
+			// Flat import: just use the filename
+			const filename = relativePath.split('/').pop() || relativePath;
+			vaultPath = normalizePath(`${mediaFolder}/${filename}`);
+		}
 
 		// Check if file already exists
 		const existing = this.app.vault.getAbstractFileByPath(vaultPath);

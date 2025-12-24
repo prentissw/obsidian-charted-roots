@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Canvas settings moved to Canvas Trees tab** - The "Canvas layout" and "Canvas styling" cards have been moved from the Preferences tab to the Canvas Trees tab, placing them in context with tree generation features.
 
+- **Preserve media folder structure on import** - New toggle in Gramps .gpkg import to recreate the original subfolder hierarchy from the source instead of importing all media to a flat folder. Useful for users who organize media by family or category.
+
 ### Changed
 
 - **Universe discoverability** - Users can now discover and create universes from three entry points: command palette, Universes tab tiles, or Statistics tab. Previously the only entry was buried in the Statistics tab.
