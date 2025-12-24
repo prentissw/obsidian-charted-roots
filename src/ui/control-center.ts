@@ -304,9 +304,6 @@ export class ControlCenterModal extends Modal {
 	 * Create navigation list with grouped tabs
 	 */
 	private createNavigationList(container: HTMLElement): void {
-		// Legacy tab IDs that should be hidden from navigation
-		const hiddenTabs = new Set(['guide', 'statistics']);
-
 		// Render groups in order
 		NAV_GROUPS.forEach((groupConfig, groupIndex) => {
 			// Tools group renders tool entries instead of tabs
@@ -315,10 +312,8 @@ export class ControlCenterModal extends Modal {
 				return;
 			}
 
-			// Get tabs for this group (excluding hidden ones)
-			const groupTabs = TAB_CONFIGS.filter(
-				tab => tab.group === groupConfig.id && !hiddenTabs.has(tab.id)
-			);
+			// Get tabs for this group
+			const groupTabs = TAB_CONFIGS.filter(tab => tab.group === groupConfig.id);
 
 			if (groupTabs.length === 0) return;
 
@@ -464,10 +459,8 @@ export class ControlCenterModal extends Modal {
 
 		switch (tabId) {
 			case 'dashboard':
+			case 'guide':  // Redirect legacy Guide tab to Dashboard
 				this.showDashboardTab();
-				break;
-			case 'guide':
-				this.showGuideTab();
 				break;
 			case 'people':
 				void this.showPeopleTab();
@@ -485,7 +478,9 @@ export class ControlCenterModal extends Modal {
 				this.showDataQualityTab();
 				break;
 			case 'statistics':
-				this.showStatisticsTab();
+				// Statistics tab removed - redirect to Dashboard
+				// Use the Statistics leaf for vault statistics
+				this.showDashboardTab();
 				break;
 			case 'places':
 				void this.showPlacesTab();

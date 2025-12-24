@@ -385,21 +385,6 @@ export const TAB_CONFIGS: TabConfig[] = [
 		icon: 'sliders',
 		description: 'Aliases, folder locations, and canvas settings',
 		group: 'settings'
-	},
-	// Legacy tabs (kept for backwards compatibility, will be removed)
-	{
-		id: 'guide',
-		name: 'Guide',
-		icon: 'book-open',
-		description: 'Quick start guide and getting started',
-		group: 'dashboard'  // Hidden - content moved to Dashboard
-	},
-	{
-		id: 'statistics',
-		name: 'Statistics',
-		icon: 'bar-chart-2',
-		description: 'Vault statistics, data completeness, and quality metrics',
-		group: 'dashboard'  // Hidden - use Statistics leaf instead
 	}
 ];
 
