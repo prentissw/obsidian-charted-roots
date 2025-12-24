@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.15.3] - 2025-12-24
+
+### Added
+
+- **Report Wizard Modal** - New multi-step wizard for the Report Generator with 5 steps: Report Type, Subject, Content Options, Output & Styling, and Generate. Category filtering, dynamic options based on report type, and streamlined navigation replace the previous single-modal layout.
+
+- **ODT Export for Reports** - Export all 13 report types as OpenDocument Text (.odt) files for editing in LibreOffice Writer or Microsoft Word. Includes optional cover page with title, subtitle, and notes. Uses JSZip for ZIP archive creation with manual XML generation.
+
+- **ODT Export for Visual Trees** - The unified tree wizard now supports ODT output format. Title field in Step 5 is used for document title and filename. Tree image is embedded in the ODT document.
+
+- **Visual Tree PDF Quality Improvements** - Increased canvas scale from 2× to 4× for crisp PDF output. Removed explicit height constraint to preserve aspect ratio. Visual Tree PDFs now match Family Chart PDF sharpness.
+
+### Changed
+
+- **Report Generator UI** - The Report Generator modal has been replaced with a wizard-style interface. Previous single-screen layout is now split into logical steps for better UX.
+
+---
+
 ## [0.15.2] - 2025-12-23
 
 ### Added
