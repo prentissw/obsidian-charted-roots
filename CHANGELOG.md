@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.15.2] - 2025-12-23
+
 ### Added
 
 - **Create universe command** - New command palette entry "Canvas Roots: Create universe" opens the Universe Wizard directly, making universe creation more discoverable.
