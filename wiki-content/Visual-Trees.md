@@ -1,6 +1,6 @@
-# Canvas Trees
+# Visual Trees
 
-Generate interactive family tree visualizations on the Obsidian Canvas for exploration, annotation, and sharing. You can also generate printable PDF tree diagrams.
+Generate visual family tree diagrams in multiple formats: interactive Canvas files, hand-drawn Excalidraw diagrams, printable PDFs, or editable ODT documents.
 
 ---
 
@@ -12,25 +12,27 @@ Generate interactive family tree visualizations on the Obsidian Canvas for explo
   - [Step 1: Select Root Person](#step-1-select-root-person)
   - [Step 2: Choose Tree Type](#step-2-choose-tree-type)
   - [Step 3: Select Output Format](#step-3-select-output-format)
-  - [Canvas Path: Options and Preview](#canvas-path-options-and-preview)
-  - [PDF Path: Options and Generate](#pdf-path-options-and-generate)
+  - [Canvas/Excalidraw Path](#canvasexcalidraw-path)
+  - [PDF/ODT Path](#pdfodt-path)
 - [Tree Types Explained](#tree-types-explained)
 - [Canvas Layout Algorithms](#canvas-layout-algorithms)
-- [PDF Options](#pdf-options)
+- [PDF/ODT Options](#pdfodt-options)
 - [Next Steps](#next-steps)
 
 ---
 
 ## Overview
 
-Canvas Roots provides a unified tree generation wizard that supports two output formats:
+Canvas Roots provides a unified tree generation wizard that supports four output formats:
 
 | Output | Description | Best For |
 |--------|-------------|----------|
-| **Canvas** | Interactive Obsidian canvas file | Exploration, annotation, linking to notes |
+| **Canvas** | Interactive Obsidian canvas file | Exploration, linking to notes, editing |
+| **Excalidraw** | Hand-drawn style diagram | Annotation, drawings, SVG/PNG export |
 | **PDF** | Printable tree diagram | Sharing, printing, archiving |
+| **ODT** | Editable document format | Further editing in word processors |
 
-Both formats share the same person selection and tree type steps, then branch into format-specific options.
+All formats share the same person selection and tree type steps, then branch into format-specific options.
 
 ---
 
@@ -38,13 +40,17 @@ Both formats share the same person selection and tree type steps, then branch in
 
 **From Control Center:**
 1. Open Control Center (`Ctrl/Cmd + P` → "Canvas Roots: Open Control Center")
-2. Go to the **Canvas Trees** tab
+2. Go to the **Visual Trees** tab in the Output group
 3. Click **New Tree** button
 
 **From Statistics Dashboard:**
 1. Open Statistics Dashboard
 2. Scroll to **Visual Trees** section
 3. Click any tree type (Pedigree, Descendant, Hourglass, Fan Chart)
+
+**From Context Menu:**
+1. Right-click on a person note
+2. Select **Canvas Roots** → **Generate Tree**
 
 ---
 
@@ -84,39 +90,54 @@ Choose your output format:
 | Format | Features |
 |--------|----------|
 | **Canvas** | Interactive pan/zoom, links to person notes, editable, re-layoutable |
+| **Excalidraw** | Hand-drawn style, annotations, SVG/PNG export, editable drawings |
 | **PDF** | Printable, shareable, styled boxes and lines, multiple page sizes |
+| **ODT** | Editable in word processors, customizable formatting |
 
-After selecting, the wizard branches into format-specific steps.
+After selecting, the wizard branches into format-specific steps:
+- Canvas and Excalidraw share similar options (preview, styling)
+- PDF and ODT share similar options (page size, node content)
 
-### Canvas Path: Options and Preview
+### Canvas/Excalidraw Path
 
-**Canvas Options Step:**
+**Options Step:**
 - **Scope options**: Include step-parents, adoptive parents, filter by collection/place/universe
 - **Style options**: Color scheme, edge styles, spouse edge display
 
-**Canvas Preview Step:**
+**Preview Step:**
 - Interactive preview with pan and zoom
 - Tree statistics (people count, generations, edges)
 - Verify layout before generating
 
-**Canvas Output Step:**
-- Set canvas filename
+**Output Step:**
+- Set filename (`.canvas` or `.excalidraw.md`)
 - Choose save folder
-- Option to open canvas after generation
+- Option to open file after generation
 
-### PDF Path: Options and Generate
+**Excalidraw-specific features:**
+- Hand-drawn aesthetic for a more informal look
+- Add annotations and drawings after generation
+- Export to SVG or PNG for sharing
+- Requires the [Excalidraw plugin](https://github.com/zsviczian/obsidian-excalidraw-plugin)
 
-**PDF Options Step:**
+### PDF/ODT Path
+
+**Options Step:**
 - **Page size**: Letter, A4, Legal, Tabloid, A3
 - **Orientation**: Portrait or Landscape
 - **Node content**: Name only, with dates, with dates and places
 - **Color scheme**: Default (gender-based), Grayscale, Generational
 - **Large tree handling**: Auto-scale, increase page size, or limit generations
 
-**PDF Output Step:**
-- Set PDF title
+**Output Step:**
+- Set document title
 - Summary of selections
-- Click **Generate PDF** to download
+- Click **Generate** to download
+
+**ODT-specific features:**
+- Open and edit in LibreOffice, Microsoft Word, or Google Docs
+- Customize fonts, colors, and formatting after generation
+- Add additional content around the tree diagram
 
 ---
 
@@ -167,7 +188,7 @@ When generating canvas output, choose a layout algorithm:
 
 ---
 
-## PDF Options
+## PDF/ODT Options
 
 ### Page Sizes
 
