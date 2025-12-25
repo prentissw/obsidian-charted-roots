@@ -55,6 +55,7 @@ interface ImportWizardFormData {
 	importSources: boolean;
 	importEvents: boolean;
 	importMedia: boolean;
+	includeDynamicBlocks: boolean;
 	targetFolder: string;
 	conflictHandling: ConflictHandling;
 
@@ -182,6 +183,7 @@ export class ImportWizardModal extends Modal {
 			importSources: true,
 			importEvents: true,
 			importMedia: true,
+			includeDynamicBlocks: true,
 			targetFolder: this.plugin?.settings?.peopleFolder || 'People',
 			conflictHandling: 'skip',
 
@@ -496,6 +498,10 @@ export class ImportWizardModal extends Modal {
 			});
 		}
 
+		this.renderToggleOption(entityOptions, 'Dynamic blocks', 'Timeline, relationships, and media renderers in notes', this.formData.includeDynamicBlocks, (val) => {
+			this.formData.includeDynamicBlocks = val;
+		});
+
 		// Target folder
 		section.createEl('h4', { text: 'Target folder', cls: 'crc-import-options-title crc-mt-3' });
 
@@ -765,6 +771,7 @@ export class ImportWizardModal extends Modal {
 					createEventNotes: this.formData.importEvents,
 					createSourceNotes: this.formData.importSources,
 					createPlaceNotes: this.formData.importPlaces,
+					includeDynamicBlocks: this.formData.includeDynamicBlocks,
 					onProgress: (progress) => {
 						// Update UI based on progress
 						const percent = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
@@ -839,6 +846,7 @@ export class ImportWizardModal extends Modal {
 					createEventNotes: this.formData.importEvents,
 					eventsFolder: settings.eventsFolder,
 					propertyAliases: settings.propertyAliases,
+					includeDynamicBlocks: this.formData.includeDynamicBlocks,
 					// Pass media files from .gpkg extraction if available
 					mediaFiles: this.formData.gpkgExtractionResult?.mediaFiles,
 					mediaFolder: settings.mediaFolders?.[0] || 'Canvas Roots/Media',
