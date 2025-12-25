@@ -11,7 +11,7 @@
  * Step 6: Complete — Download/save options
  */
 
-import { App, Modal, Notice, setIcon } from 'obsidian';
+import { App, Modal, Notice, setIcon, TFolder, FuzzySuggestModal } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
 import { createLucideIcon } from './lucide-icons';
 import { GedcomExporter, type GedcomExportOptions, type GedcomExportResult } from '../gedcom/gedcom-exporter';
@@ -19,6 +19,42 @@ import { GedcomXExporter, type GedcomXExportOptions, type GedcomXExportResult } 
 import { FolderFilterService } from '../core/folder-filter';
 import type { PrivacySettings } from '../core/privacy-service';
 import { FamilyGraphService } from '../core/family-graph';
+
+/**
+ * Folder picker modal
+ */
+class FolderPickerModal extends FuzzySuggestModal<TFolder> {
+	private onSelect: (folder: TFolder) => void;
+
+	constructor(app: App, onSelect: (folder: TFolder) => void) {
+		super(app);
+		this.onSelect = onSelect;
+		this.setPlaceholder('Select a folder...');
+	}
+
+	getItems(): TFolder[] {
+		const folders: TFolder[] = [];
+		this.collectFolders(this.app.vault.getRoot(), folders);
+		return folders.sort((a, b) => a.path.localeCompare(b.path));
+	}
+
+	private collectFolders(folder: TFolder, result: TFolder[]): void {
+		for (const child of folder.children) {
+			if (child instanceof TFolder) {
+				result.push(child);
+				this.collectFolders(child, result);
+			}
+		}
+	}
+
+	getItemText(folder: TFolder): string {
+		return folder.path;
+	}
+
+	onChooseItem(folder: TFolder): void {
+		this.onSelect(folder);
+	}
+}
 
 /**
  * Export format types
@@ -976,14 +1012,21 @@ export class ExportWizardModal extends Modal {
 				type: 'text',
 				cls: 'crc-export-input',
 				value: value
-			});
+			}) as HTMLInputElement;
 			input.addEventListener('input', () => onChange(input.value));
 
 			const browseBtn = inputWrapper.createEl('button', {
-				cls: 'crc-btn crc-btn--small',
-				text: 'Browse'
+				cls: 'crc-btn crc-btn--small'
 			});
-			// TODO: Implement folder picker
+			const browseIcon = browseBtn.createSpan({ cls: 'crc-btn-icon' });
+			setIcon(browseIcon, 'folder-open');
+
+			browseBtn.addEventListener('click', () => {
+				new FolderPickerModal(this.app, (folder) => {
+					input.value = folder.path;
+					onChange(folder.path);
+				}).open();
+			});
 		} else {
 			row.createSpan({ text: value + '/', cls: 'crc-export-folder-value' });
 		}
