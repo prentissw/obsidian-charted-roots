@@ -1507,7 +1507,7 @@ export class CleanupWizardModal extends Modal {
 			case 'geocode':
 				this.renderGeocodeStep(container, stepState);
 				break;
-			case 'hierarchy':
+			case 'place-hierarchy':
 				this.renderHierarchyStep(container, stepState);
 				break;
 			default:
