@@ -32,8 +32,9 @@ export type BuiltInEventTypeCategory = 'vital' | 'life' | 'narrative';
 
 /**
  * Event type category for grouping (built-in or user-defined)
+ * Uses (string & {}) to preserve literal type hints while allowing any string
  */
-export type EventTypeCategory = BuiltInEventTypeCategory | string;
+export type EventTypeCategory = BuiltInEventTypeCategory | (string & {});
 
 /**
  * Definition of a user-created category
