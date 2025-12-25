@@ -464,6 +464,73 @@ const WIZARD_STEPS: WizardStepConfig[] = [
 4. ✅ Implement Step 9 (Place Hierarchy) interactive UI
 5. ⏳ Add dependency checking between place steps
 
+#### Task 5: Dependency Checking Between Place Steps
+
+**Goal:** Warn users when running steps out of order and track completion status.
+
+**Step Dependencies (Places):**
+```
+Step 7 (Place Variants) → Step 7b (Deduplication) → Step 8 (Geocode) → Step 9 (Hierarchy)
+```
+
+**Implementation Requirements:**
+
+1. **Dependency warnings:**
+   - When entering Step 8 (Geocode) without completing Step 7/7b, show warning callout
+   - When entering Step 9 (Hierarchy) without completing Step 8, show warning callout
+   - Warnings should be dismissible (user can proceed anyway)
+
+2. **Tile status indicators:**
+   - "Waiting for Step N" message when prerequisites not met
+   - Visual dimming of tiles that have unmet dependencies
+   - Tooltip explaining the dependency
+
+3. **Completion tracking:**
+   - Persist step completion in `plugin.settings.cleanupWizardState`
+   - Track separately from issue counts (a step can be "complete" with 0 fixes)
+   - Reset tracking when user starts fresh wizard session
+
+4. **Auto-skip enhancement:**
+   - If Step 8 has 0 places without coordinates AND Step 7 wasn't run this session, check if Step 7 might create new candidates
+   - Option to re-scan after completing prerequisite step
+
+**UI Components:**
+
+```typescript
+// Warning callout for unmet dependencies
+private renderDependencyWarning(container: HTMLElement, missingSteps: string[]): void {
+  const warning = container.createDiv({ cls: 'crc-warning-callout' });
+  setLucideIcon(warning, 'alert-triangle', 16);
+  warning.createSpan({
+    text: ` Recommended: Complete ${missingSteps.join(', ')} first for best results.`
+  });
+
+  const dismissBtn = warning.createEl('button', {
+    text: 'Continue anyway',
+    cls: 'cr-link-button'
+  });
+  dismissBtn.addEventListener('click', () => warning.remove());
+}
+```
+
+**State Schema Update:**
+
+```typescript
+interface CleanupWizardState {
+  // ... existing fields
+  stepCompletion: {
+    [stepId: string]: {
+      completed: boolean;
+      completedAt: number;
+      issuesFixed: number;
+    };
+  };
+}
+```
+
+**Effort:** Low-Medium
+**Priority:** Medium (improves UX but not blocking)
+
 ### Phase 3: Smart Analysis ✅
 
 **Goal:** Pre-scan vault and enable auto-skip.
@@ -480,11 +547,13 @@ const WIZARD_STEPS: WizardStepConfig[] = [
 **Goal:** User experience refinements.
 
 **Tasks:**
-1. User-configurable step order (drag-drop tiles)
-2. Save/load cleanup profiles
-3. Keyboard navigation (arrow keys, Enter, Escape)
-4. Animations for step transitions
+1. Keyboard navigation (arrow keys, Enter, Escape)
+2. Step transition animations
+3. Cleanup profiles (save/load named configurations)
+4. User-configurable step order (drag-drop tiles)
 5. Integration with schema validation (if implemented)
+
+See [Cleanup Wizard Phase 4](./cleanup-wizard-phase4.md) for detailed planning.
 
 ## Testing Strategy
 
