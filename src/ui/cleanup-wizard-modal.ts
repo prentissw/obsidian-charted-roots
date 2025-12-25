@@ -17,9 +17,18 @@
 
 import { App, Modal, Notice, setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
-import { DataQualityService, type BatchOperationResult, type DataQualityReport } from '../core/data-quality';
-import { FamilyGraphService } from '../core/family-graph';
+import {
+	DataQualityService,
+	type BatchOperationResult,
+	type DataQualityReport,
+	type DataQualityIssue,
+	type IssueCategory,
+	type BidirectionalInconsistency
+} from '../core/data-quality';
 import { FolderFilterService } from '../core/folder-filter';
+import { getLogger } from '../core/logging';
+
+const logger = getLogger('CleanupWizard');
 
 /**
  * Wizard step types
@@ -207,6 +216,10 @@ export class CleanupWizardModal extends Modal {
 
 	// View state
 	private currentView: 'overview' | 'step' | 'summary' = 'overview';
+
+	// Cached analysis results
+	private qualityReport: DataQualityReport | null = null;
+	private bidirectionalIssues: BidirectionalInconsistency[] = [];
 
 	constructor(app: App, plugin: CanvasRootsPlugin) {
 		super(app);
@@ -547,17 +560,189 @@ export class CleanupWizardModal extends Modal {
 			return;
 		}
 
-		// Show issue summary grouped by type
-		const issueList = container.createDiv({ cls: 'crc-cleanup-issue-list' });
-
-		// Placeholder for issues - will be populated by pre-scan
-		const placeholder = issueList.createDiv({ cls: 'crc-cleanup-placeholder' });
+		// Show loading state
 		if (this.state.isPreScanning) {
-			const spinner = placeholder.createDiv({ cls: 'crc-cleanup-spinner' });
+			const scanningEl = container.createDiv({ cls: 'crc-cleanup-scanning' });
+			const spinner = scanningEl.createDiv({ cls: 'crc-cleanup-spinner' });
 			setIcon(spinner, 'loader-2');
-			placeholder.createSpan({ text: 'Analyzing quality issues...' });
+			scanningEl.createSpan({ text: 'Analyzing quality issues...' });
+			return;
+		}
+
+		// Show quality report summary
+		if (this.qualityReport) {
+			this.renderQualityReport(container, this.qualityReport);
+		}
+	}
+
+	/**
+	 * Render the quality report with issue categories
+	 */
+	private renderQualityReport(container: HTMLElement, report: DataQualityReport): void {
+		// Summary stats row
+		const statsRow = container.createDiv({ cls: 'crc-cleanup-quality-stats' });
+
+		// Quality score card
+		const scoreCard = statsRow.createDiv({ cls: 'crc-cleanup-quality-score' });
+		const scoreValue = scoreCard.createDiv({ cls: 'crc-cleanup-quality-score-value' });
+		scoreValue.textContent = String(report.summary.qualityScore);
+
+		// Color based on score
+		if (report.summary.qualityScore >= 80) {
+			scoreValue.addClass('crc-cleanup-quality-score--good');
+		} else if (report.summary.qualityScore >= 50) {
+			scoreValue.addClass('crc-cleanup-quality-score--moderate');
 		} else {
-			placeholder.textContent = `Found ${stepState.issueCount} quality issues. Review them above and proceed to fix automatically in subsequent steps.`;
+			scoreValue.addClass('crc-cleanup-quality-score--poor');
+		}
+		scoreCard.createDiv({ cls: 'crc-cleanup-quality-score-label', text: 'Quality Score' });
+
+		// Stats mini cards
+		const statsGrid = statsRow.createDiv({ cls: 'crc-cleanup-quality-mini-stats' });
+
+		this.renderMiniStat(statsGrid, 'users', String(report.summary.totalPeople), 'People');
+		this.renderMiniStat(statsGrid, 'alert-circle', String(report.summary.bySeverity.error), 'Errors');
+		this.renderMiniStat(statsGrid, 'alert-triangle', String(report.summary.bySeverity.warning), 'Warnings');
+		this.renderMiniStat(statsGrid, 'info', String(report.summary.bySeverity.info), 'Info');
+
+		// Issue categories
+		const categoriesSection = container.createDiv({ cls: 'crc-cleanup-categories' });
+		categoriesSection.createEl('h4', { text: 'Issues by Category', cls: 'crc-cleanup-categories-title' });
+
+		const service = this.getDataQualityService();
+		const groupedIssues = service.groupIssuesByCategory(report.issues);
+
+		// Category display config
+		const categoryConfig: Record<IssueCategory, { icon: string; label: string; stepRef?: number }> = {
+			'date_inconsistency': { icon: 'calendar-x', label: 'Date Inconsistencies', stepRef: 3 },
+			'relationship_inconsistency': { icon: 'git-branch', label: 'Relationship Issues', stepRef: 2 },
+			'missing_data': { icon: 'file-question', label: 'Missing Data' },
+			'data_format': { icon: 'type', label: 'Format Issues', stepRef: 4 },
+			'orphan_reference': { icon: 'unlink', label: 'Orphan References', stepRef: 5 },
+			'nested_property': { icon: 'layers', label: 'Nested Properties', stepRef: 10 },
+			'legacy_type_property': { icon: 'tag', label: 'Legacy Type Property' }
+		};
+
+		// Render each category that has issues
+		for (const [category, config] of Object.entries(categoryConfig)) {
+			const issues = groupedIssues.get(category as IssueCategory);
+			if (!issues || issues.length === 0) continue;
+
+			this.renderIssueCategoryCard(categoriesSection, category as IssueCategory, config, issues);
+		}
+
+		// If no issues in any category, show a message
+		if (report.issues.length === 0) {
+			const noIssues = categoriesSection.createDiv({ cls: 'crc-cleanup-no-issues' });
+			noIssues.textContent = 'No issues found in any category.';
+		}
+	}
+
+	/**
+	 * Render a mini stat card
+	 */
+	private renderMiniStat(container: HTMLElement, icon: string, value: string, label: string): void {
+		const stat = container.createDiv({ cls: 'crc-cleanup-mini-stat' });
+		const iconEl = stat.createDiv({ cls: 'crc-cleanup-mini-stat-icon' });
+		setIcon(iconEl, icon);
+		stat.createDiv({ cls: 'crc-cleanup-mini-stat-value', text: value });
+		stat.createDiv({ cls: 'crc-cleanup-mini-stat-label', text: label });
+	}
+
+	/**
+	 * Render an issue category card with collapsible issue list
+	 */
+	private renderIssueCategoryCard(
+		container: HTMLElement,
+		category: IssueCategory,
+		config: { icon: string; label: string; stepRef?: number },
+		issues: DataQualityIssue[]
+	): void {
+		const card = container.createDiv({ cls: 'crc-cleanup-category-card' });
+
+		// Header (clickable to expand/collapse)
+		const header = card.createDiv({ cls: 'crc-cleanup-category-header' });
+
+		const iconEl = header.createDiv({ cls: 'crc-cleanup-category-icon' });
+		setIcon(iconEl, config.icon);
+
+		const labelEl = header.createDiv({ cls: 'crc-cleanup-category-label' });
+		labelEl.textContent = config.label;
+
+		const badge = header.createDiv({ cls: 'crc-cleanup-category-badge' });
+		badge.textContent = String(issues.length);
+
+		// Add severity indicator based on issue mix
+		const hasErrors = issues.some(i => i.severity === 'error');
+		const hasWarnings = issues.some(i => i.severity === 'warning');
+		if (hasErrors) {
+			badge.addClass('crc-cleanup-category-badge--error');
+		} else if (hasWarnings) {
+			badge.addClass('crc-cleanup-category-badge--warning');
+		}
+
+		const chevron = header.createDiv({ cls: 'crc-cleanup-category-chevron' });
+		setIcon(chevron, 'chevron-right');
+
+		// Collapsible content
+		const content = card.createDiv({ cls: 'crc-cleanup-category-content' });
+		content.style.display = 'none';
+
+		// Toggle behavior
+		let isExpanded = false;
+		header.addEventListener('click', () => {
+			isExpanded = !isExpanded;
+			content.style.display = isExpanded ? 'block' : 'none';
+			chevron.empty();
+			setIcon(chevron, isExpanded ? 'chevron-down' : 'chevron-right');
+			header.toggleClass('crc-cleanup-category-header--expanded', isExpanded);
+		});
+
+		// Issue list (limit to first 20, show "and X more" if needed)
+		const maxDisplay = 20;
+		const displayIssues = issues.slice(0, maxDisplay);
+		const remaining = issues.length - maxDisplay;
+
+		const issueList = content.createDiv({ cls: 'crc-cleanup-issue-list' });
+
+		for (const issue of displayIssues) {
+			const issueRow = issueList.createDiv({ cls: 'crc-cleanup-issue-row' });
+
+			// Severity icon
+			const severityIcon = issueRow.createDiv({ cls: `crc-cleanup-issue-severity crc-cleanup-issue-severity--${issue.severity}` });
+			setIcon(severityIcon, issue.severity === 'error' ? 'x-circle' : issue.severity === 'warning' ? 'alert-triangle' : 'info');
+
+			// Person name (clickable link)
+			const personLink = issueRow.createDiv({ cls: 'crc-cleanup-issue-person' });
+			personLink.textContent = issue.person.name || issue.person.file.basename;
+			personLink.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.close();
+				void this.app.workspace.openLinkText(issue.person.file.path, '', false);
+			});
+
+			// Issue message
+			const messageEl = issueRow.createDiv({ cls: 'crc-cleanup-issue-message' });
+			messageEl.textContent = issue.message;
+		}
+
+		if (remaining > 0) {
+			const moreEl = issueList.createDiv({ cls: 'crc-cleanup-issue-more' });
+			moreEl.textContent = `... and ${remaining} more`;
+		}
+
+		// Step reference link if applicable
+		if (config.stepRef) {
+			const stepLink = content.createDiv({ cls: 'crc-cleanup-category-step-link' });
+			const stepBtn = stepLink.createEl('button', {
+				cls: 'crc-btn crc-btn--secondary crc-btn--small'
+			});
+			stepBtn.textContent = `Go to Step ${config.stepRef} to fix`;
+			stepBtn.addEventListener('click', () => {
+				this.state.currentStep = config.stepRef!;
+				this.currentView = 'step';
+				this.renderCurrentView();
+			});
 		}
 	}
 
@@ -902,37 +1087,49 @@ export class CleanupWizardModal extends Modal {
 
 		try {
 			const service = this.getDataQualityService();
+			logger.info('runPreScan', 'Starting pre-scan analysis...');
 
 			// Run full analysis to get issue counts
 			const report: DataQualityReport = service.analyze({});
+			this.qualityReport = report;
+
+			logger.info('runPreScan', `Analysis complete: ${report.summary.totalPeople} people, ${report.summary.totalIssues} total issues`);
+			logger.debug('runPreScan', `By category: ${JSON.stringify(report.summary.byCategory)}`);
+			logger.debug('runPreScan', `By severity: ${JSON.stringify(report.summary.bySeverity)}`);
 
 			// Populate step 1 with total issues from report
 			this.state.steps[1].issueCount = report.summary.totalIssues;
 
-			// Populate other steps based on issue categories
-			// Step 2: Bidirectional - count relationship issues
-			const bidirIssues = service.detectBidirectionalInconsistencies({});
-			this.state.steps[2].issueCount = bidirIssues.length;
+			// Step 2: Bidirectional - detect inconsistencies
+			this.bidirectionalIssues = service.detectBidirectionalInconsistencies({});
+			this.state.steps[2].issueCount = this.bidirectionalIssues.length;
+			logger.debug('runPreScan', `Step 2 (Bidir): ${this.bidirectionalIssues.length} issues`);
 
 			// Step 3: Date issues - using category counts
 			this.state.steps[3].issueCount = report.summary.byCategory['date_inconsistency'] || 0;
+			logger.debug('runPreScan', `Step 3 (Dates): ${this.state.steps[3].issueCount} issues`);
 
-			// Step 4: Gender issues - part of data_format
-			// We count issues with 'sex' in the code
-			const genderIssues = report.issues.filter(i => i.code.includes('sex') || i.code.includes('gender'));
+			// Step 4: Gender issues - count INVALID_GENDER code specifically
+			const genderIssues = report.issues.filter(i => i.code === 'INVALID_GENDER');
 			this.state.steps[4].issueCount = genderIssues.length;
+			logger.debug('runPreScan', `Step 4 (Gender): ${genderIssues.length} issues`);
 
 			// Step 5: Orphan references
 			this.state.steps[5].issueCount = report.summary.byCategory['orphan_reference'] || 0;
+			logger.debug('runPreScan', `Step 5 (Orphans): ${this.state.steps[5].issueCount} issues`);
 
 			// Step 10: Nested properties
 			this.state.steps[10].issueCount = report.summary.byCategory['nested_property'] || 0;
+			logger.debug('runPreScan', `Step 10 (Nested): ${this.state.steps[10].issueCount} issues`);
 
 			// Steps 6-9 (source migration, place variants, geocode, hierarchy)
 			// These require different services - leave as 0 for now (Phase 2)
 
 			this.state.preScanComplete = true;
+			logger.info('runPreScan', 'Pre-scan complete');
 		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			logger.error('runPreScan', `Pre-scan failed: ${message}`);
 			console.error('Pre-scan failed:', error);
 		} finally {
 			this.state.isPreScanning = false;
