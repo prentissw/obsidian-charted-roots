@@ -1108,23 +1108,43 @@ export class DataQualityService {
 		};
 
 		for (const person of people) {
+			// Read raw frontmatter to get actual field names used
+			const cache = this.app.metadataCache.getFileCache(person.file);
+			const fm = cache?.frontmatter as Record<string, unknown> | undefined;
+
 			let modified = false;
 			const updates: Record<string, string> = {};
 
-			// Check birth date
-			if (person.birthDate && !this.isStandardDateFormat(person.birthDate)) {
-				const normalized = this.normalizeDateString(person.birthDate);
-				if (normalized && normalized !== person.birthDate) {
-					updates['birth_date'] = normalized;
+			// Get raw date values and determine which field to update
+			const rawBorn = fm?.['born'];
+			const birthDate = rawBorn instanceof Date
+				? rawBorn.toISOString().split('T')[0]
+				: typeof rawBorn === 'number'
+					? String(rawBorn)
+					: typeof rawBorn === 'string' ? rawBorn : undefined;
+
+			if (birthDate && !this.isStandardDateFormat(birthDate)) {
+				const normalized = this.normalizeDateString(birthDate);
+				if (normalized && normalized !== birthDate) {
+					// Update the 'born' field (canonical name used in frontmatter)
+					updates['born'] = normalized;
 					modified = true;
 				}
 			}
 
-			// Check death date
-			if (person.deathDate && !this.isStandardDateFormat(person.deathDate)) {
-				const normalized = this.normalizeDateString(person.deathDate);
-				if (normalized && normalized !== person.deathDate) {
-					updates['death_date'] = normalized;
+			// Get raw death date
+			const rawDied = fm?.['died'];
+			const deathDate = rawDied instanceof Date
+				? rawDied.toISOString().split('T')[0]
+				: typeof rawDied === 'number'
+					? String(rawDied)
+					: typeof rawDied === 'string' ? rawDied : undefined;
+
+			if (deathDate && !this.isStandardDateFormat(deathDate)) {
+				const normalized = this.normalizeDateString(deathDate);
+				if (normalized && normalized !== deathDate) {
+					// Update the 'died' field (canonical name used in frontmatter)
+					updates['died'] = normalized;
 					modified = true;
 				}
 			}
