@@ -1,25 +1,20 @@
 # Tree Preview
 
-Before generating a canvas, you can preview your family tree layout using the interactive SVG preview feature. This is particularly useful for large trees (50+ people) where you want to verify the layout before committing to canvas generation.
+> **Note:** This page covers the preview step of the tree generation wizard. For complete documentation, see [Visual Trees](Visual-Trees).
 
----
-
-## Table of Contents
-
-- [Accessing the Preview](#accessing-the-preview)
-- [Preview Controls](#preview-controls)
-- [Color Schemes](#color-schemes)
-- [Exporting the Preview](#exporting-the-preview)
-- [When to Use Preview](#when-to-use-preview)
-- [Next Steps](#next-steps)
+The tree preview step lets you verify your family tree layout before generating output. This is particularly useful for large trees (50+ people) where you want to confirm the layout looks correct.
 
 ---
 
 ## Accessing the Preview
 
-1. Open Control Center → Tree Output tab
-2. Select your root person and configure tree options
-3. Click **Preview tree** to generate the interactive preview
+The preview is Step 5 in the Canvas/Excalidraw wizard flow:
+
+1. Open the tree wizard from Control Center → **Visual Trees** tab → **New Tree**
+2. Complete Steps 1-4 (Person, Tree Type, Output Format, Options)
+3. Step 5 shows the interactive preview
+
+---
 
 ## Preview Controls
 
@@ -30,11 +25,6 @@ Before generating a canvas, you can preview your family tree layout using the in
 - **Zoom buttons**: Fine-grained zoom control (+/-)
 - **Zoom to fit**: Reset view to show entire tree
 
-### Display Options
-
-- **Show labels**: Toggle person name visibility
-- **Color scheme**: Switch between Gender, Generation, or Monochrome coloring
-
 ### Hover Tooltips
 
 Hover over any node to see person details:
@@ -42,35 +32,26 @@ Hover over any node to see person details:
 - Birth and death dates (if available)
 - Generation number relative to root person
 
-## Color Schemes
+---
 
-- **Gender**: Green for male, purple for female (genealogy convention)
-- **Generation**: Multi-color layers showing generational depth
-- **Monochrome**: Neutral gray for clean, professional appearance
+## Preview Statistics
 
-## Exporting the Preview
+The preview step displays tree statistics:
+- Total people in tree
+- Number of generations
+- Edge count
 
-Export the preview as an image file for use outside Obsidian:
-
-### PNG Export
-
-- Click **Export PNG** button
-- High-resolution raster image suitable for documents and presentations
-
-### SVG Export
-
-- Click **Export SVG** button
-- Vector format that scales without quality loss
-- Ideal for printing or further editing in vector graphics software
+---
 
 ## When to Use Preview
 
-- **Large trees**: Verify layout before generating 50+ person canvases
+- **Large trees**: Verify layout before generating 50+ person outputs
 - **Layout comparison**: Test different algorithms (Standard, Compact, Timeline, Hourglass)
-- **Quick exports**: Generate shareable images without creating canvas files
 - **Research review**: Visually verify relationships before finalizing
 
-## Next Steps
+---
 
-- [Canvas Trees](Visual-Trees) - Generate the full canvas
+## See Also
+
+- [Visual Trees](Visual-Trees) - Complete tree generation documentation
 - [Family Chart View](Family-Chart-View) - Interactive exploration view
