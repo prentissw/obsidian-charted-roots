@@ -20,7 +20,8 @@ import type { GedcomDataV2, GedcomImportOptionsV2, GedcomImportResultV2 } from '
 import { ReferenceNumberingService, type NumberingSystem as RefNumberingSystem, type NumberingStats } from '../core/reference-numbering';
 import { PersonPickerModal, type PersonInfo } from './person-picker';
 import { GrampsParser } from '../gramps/gramps-parser';
-import { extractGpkg } from '../gramps/gpkg-extractor';
+import { extractGpkg, type GpkgExtractionResult } from '../gramps/gpkg-extractor';
+import { GrampsImporter, type GrampsImportOptions, type GrampsImportResult } from '../gramps/gramps-importer';
 
 /**
  * Import format types
@@ -71,12 +72,13 @@ interface ImportWizardFormData {
 	parsedData: GedcomDataV2 | null;
 	parseErrors: string[];
 	parseWarnings: string[];
+	gpkgExtractionResult: GpkgExtractionResult | null;
 
 	// Step 5: Import (progress)
 	importedCount: number;
 	totalCount: number;
 	importLog: string[];
-	importResult: GedcomImportResultV2 | null;
+	importResult: GedcomImportResultV2 | GrampsImportResult | null;
 
 	// Step 6: Numbering
 	numberingSystem: NumberingSystem;
@@ -197,6 +199,7 @@ export class ImportWizardModal extends Modal {
 			parsedData: null,
 			parseErrors: [],
 			parseWarnings: [],
+			gpkgExtractionResult: null,
 
 			// Step 5
 			importedCount: 0,
@@ -657,14 +660,16 @@ export class ImportWizardModal extends Modal {
 				const fileName = this.formData.fileName.toLowerCase();
 
 				let grampsXml: string;
+				let mediaCount = 0;
 
 				if (fileName.endsWith('.gpkg')) {
 					// Extract XML from .gpkg package (ZIP or gzip-compressed tar)
 					const extraction = await extractGpkg(arrayBuffer, this.formData.fileName);
 					grampsXml = extraction.grampsXml;
+					mediaCount = extraction.mediaFiles.size;
 
-					// Store media count from extraction
-					this.formData.previewCounts.media = extraction.mediaFiles.size;
+					// Store extraction result for use during import
+					this.formData.gpkgExtractionResult = extraction;
 				} else {
 					// Plain .gramps XML file - read as text
 					grampsXml = await this.formData.file.text();
@@ -681,7 +686,7 @@ export class ImportWizardModal extends Modal {
 					places: validation.stats.placeCount,
 					sources: validation.stats.sourceCount,
 					events: validation.stats.eventCount,
-					media: this.formData.previewCounts.media || 0
+					media: mediaCount
 				};
 
 				// Convert validation errors and warnings
@@ -800,6 +805,87 @@ export class ImportWizardModal extends Modal {
 					// Show any warnings
 					for (const warning of result.warnings.slice(0, 5)) {
 						addLogEntry(warning, 'warning');
+					}
+
+					// Auto-advance to numbering step after a short delay
+					setTimeout(() => {
+						this.currentStep = 5; // Numbering step
+						this.isImporting = false;
+						this.renderCurrentStep();
+					}, 1500);
+				} else {
+					addLogEntry('Import failed!', 'error');
+					for (const error of result.errors) {
+						addLogEntry(error, 'error');
+					}
+					this.isImporting = false;
+				}
+			} else if (this.formData.format === 'gramps') {
+				addLogEntry('Starting Gramps import...');
+
+				if (!this.formData.fileContent) {
+					throw new Error('No file content available');
+				}
+
+				// Build import options
+				const settings = this.plugin.settings;
+				const options: GrampsImportOptions = {
+					peopleFolder: this.formData.targetFolder || settings.peopleFolder,
+					overwriteExisting: this.formData.conflictHandling === 'overwrite',
+					fileName: this.formData.fileName,
+					createSourceNotes: this.formData.importSources,
+					sourcesFolder: settings.sourcesFolder,
+					createPlaceNotes: this.formData.importPlaces,
+					placesFolder: settings.placesFolder,
+					createEventNotes: this.formData.importEvents,
+					eventsFolder: settings.eventsFolder,
+					propertyAliases: settings.propertyAliases,
+					// Pass media files from .gpkg extraction if available
+					mediaFiles: this.formData.gpkgExtractionResult?.mediaFiles,
+					mediaFolder: settings.mediaFolders?.[0] || 'Canvas Roots/Media',
+					extractMedia: this.formData.importMedia && this.formData.gpkgExtractionResult !== null,
+					onProgress: (progress) => {
+						// Update UI based on progress
+						const percent = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
+						progressFill.style.width = `${percent}%`;
+						statusEl.textContent = progress.message || `${progress.phase}: ${progress.current}/${progress.total}`;
+
+						if (progress.message) {
+							addLogEntry(progress.message);
+						}
+					}
+				};
+
+				// Run import
+				const grampsImporter = new GrampsImporter(this.app);
+				const result = await grampsImporter.importFile(
+					this.formData.fileContent,
+					options
+				);
+
+				this.formData.importResult = result;
+				this.formData.importedCount = result.individualsImported;
+
+				if (result.success) {
+					progressFill.style.width = '100%';
+					addLogEntry(`Import complete! ${result.individualsImported} people imported.`, 'success');
+
+					if (result.mediaFilesExtracted && result.mediaFilesExtracted > 0) {
+						addLogEntry(`Extracted ${result.mediaFilesExtracted} media files.`, 'success');
+					}
+					if (result.placeNotesCreated && result.placeNotesCreated > 0) {
+						addLogEntry(`Created ${result.placeNotesCreated} place notes.`, 'success');
+					}
+					if (result.sourceNotesCreated && result.sourceNotesCreated > 0) {
+						addLogEntry(`Created ${result.sourceNotesCreated} source notes.`, 'success');
+					}
+					if (result.eventNotesCreated && result.eventNotesCreated > 0) {
+						addLogEntry(`Created ${result.eventNotesCreated} event notes.`, 'success');
+					}
+
+					// Show any errors as warnings
+					for (const error of result.errors.slice(0, 5)) {
+						addLogEntry(error, 'warning');
 					}
 
 					// Auto-advance to numbering step after a short delay
