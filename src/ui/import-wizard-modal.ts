@@ -14,7 +14,6 @@
 
 import { App, Modal, Notice, setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
-import { createLucideIcon } from './lucide-icons';
 import { GedcomImporterV2 } from '../gedcom/gedcom-importer-v2';
 import type { GedcomDataV2, GedcomImportOptionsV2, GedcomImportResultV2 } from '../gedcom/gedcom-types';
 import { ReferenceNumberingService, type NumberingSystem as RefNumberingSystem, type NumberingStats } from '../core/reference-numbering';
@@ -422,9 +421,9 @@ export class ImportWizardModal extends Modal {
 		const fileInput = section.createEl('input', {
 			type: 'file',
 			cls: 'crc-import-file-input'
-		}) as HTMLInputElement;
+		});
 		fileInput.accept = selectedFormat?.extension || '*';
-		fileInput.style.display = 'none';
+		fileInput.setCssProps({ display: 'none' });
 
 		fileInput.addEventListener('change', () => {
 			if (fileInput.files && fileInput.files.length > 0) {
@@ -528,7 +527,7 @@ export class ImportWizardModal extends Modal {
 				optionEl.addClass('crc-import-conflict-option--selected');
 			}
 
-			const radio = optionEl.createDiv({ cls: 'crc-import-radio' });
+			optionEl.createDiv({ cls: 'crc-import-radio' });
 			const radioContent = optionEl.createDiv({ cls: 'crc-import-radio-content' });
 			radioContent.createDiv({ cls: 'crc-import-radio-label', text: choice.label });
 			radioContent.createDiv({ cls: 'crc-import-radio-description', text: choice.description });
@@ -565,7 +564,7 @@ export class ImportWizardModal extends Modal {
 			loadingEl.textContent = 'Parsing file...';
 
 			// Parse the file asynchronously
-			this.parseFileForPreview();
+			void this.parseFileForPreview();
 			return;
 		}
 
@@ -712,7 +711,7 @@ export class ImportWizardModal extends Modal {
 		// Progress bar
 		const progressBar = section.createDiv({ cls: 'crc-import-progress-bar' });
 		const progressFill = progressBar.createDiv({ cls: 'crc-import-progress-fill' });
-		progressFill.style.width = '0%';
+		progressFill.setCssProps({ width: '0%' });
 
 		// Status text
 		const statusEl = section.createDiv({ cls: 'crc-import-progress-status' });
@@ -723,7 +722,7 @@ export class ImportWizardModal extends Modal {
 
 		// Start import if not already running
 		if (!this.isImporting) {
-			this.runImport(progressFill, statusEl, logArea);
+			void this.runImport(progressFill, statusEl, logArea);
 		}
 	}
 
@@ -769,7 +768,7 @@ export class ImportWizardModal extends Modal {
 					onProgress: (progress) => {
 						// Update UI based on progress
 						const percent = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
-						progressFill.style.width = `${percent}%`;
+						progressFill.setCssProps({ width: `${percent}%` });
 						statusEl.textContent = progress.message || `${progress.phase}: ${progress.current}/${progress.total}`;
 
 						if (progress.message) {
@@ -789,7 +788,7 @@ export class ImportWizardModal extends Modal {
 				this.formData.importedCount = result.individualsImported;
 
 				if (result.success) {
-					progressFill.style.width = '100%';
+					progressFill.setCssProps({ width: '100%' });
 					addLogEntry(`Import complete! ${result.individualsImported} people imported.`, 'success');
 
 					if (result.eventsCreated > 0) {
@@ -847,7 +846,7 @@ export class ImportWizardModal extends Modal {
 					onProgress: (progress) => {
 						// Update UI based on progress
 						const percent = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
-						progressFill.style.width = `${percent}%`;
+						progressFill.setCssProps({ width: `${percent}%` });
 						statusEl.textContent = progress.message || `${progress.phase}: ${progress.current}/${progress.total}`;
 
 						if (progress.message) {
@@ -867,7 +866,7 @@ export class ImportWizardModal extends Modal {
 				this.formData.importedCount = result.individualsImported;
 
 				if (result.success) {
-					progressFill.style.width = '100%';
+					progressFill.setCssProps({ width: '100%' });
 					addLogEntry(`Import complete! ${result.individualsImported} people imported.`, 'success');
 
 					if (result.mediaFilesExtracted && result.mediaFilesExtracted > 0) {
@@ -949,7 +948,7 @@ export class ImportWizardModal extends Modal {
 				optionEl.addClass('crc-import-numbering-option--selected');
 			}
 
-			const radio = optionEl.createDiv({ cls: 'crc-import-radio' });
+			optionEl.createDiv({ cls: 'crc-import-radio' });
 			const radioContent = optionEl.createDiv({ cls: 'crc-import-radio-content' });
 			radioContent.createDiv({ cls: 'crc-import-radio-label', text: system.label });
 			radioContent.createDiv({ cls: 'crc-import-radio-description', text: system.description });
@@ -1198,7 +1197,7 @@ export class ImportWizardModal extends Modal {
 			}
 
 			assignBtn.addEventListener('click', () => {
-				this.assignReferenceNumbers();
+				void this.assignReferenceNumbers();
 			});
 		} else if (this.currentStep === 6) {
 			// Step 6 (Complete): Show Done and Import Another buttons

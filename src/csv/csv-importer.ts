@@ -285,7 +285,7 @@ export class CsvImporter {
 
 					for (const placeString of allPlaces) {
 						try {
-							const { crId, wikilink } = await this.createPlaceNote(placeString, placesFolder);
+							const { wikilink } = await this.createPlaceNote(placeString, placesFolder);
 							placeNameToWikilink.set(placeString, wikilink);
 							result.placesCreated = (result.placesCreated || 0) + 1;
 						} catch (error: unknown) {

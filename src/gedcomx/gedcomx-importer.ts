@@ -11,7 +11,6 @@ import {
 	GedcomXValidationResult,
 	GedcomXDocument,
 	GedcomXSourceDescription,
-	GedcomXFact,
 	extractTypeName
 } from './gedcomx-types';
 import { createPersonNote, PersonData } from '../core/person-note-writer';
@@ -223,7 +222,7 @@ export class GedcomXImporter {
 
 					for (const placeString of allPlaces) {
 						try {
-							const { crId, wikilink } = await this.createPlaceNote(placeString, placesFolder, options);
+							const { wikilink } = await this.createPlaceNote(placeString, placesFolder, options);
 							placeNameToWikilink.set(placeString, wikilink);
 							result.placesCreated = (result.placesCreated || 0) + 1;
 						} catch (error: unknown) {
@@ -252,7 +251,7 @@ export class GedcomXImporter {
 
 					for (const source of rawDocument.sourceDescriptions) {
 						try {
-							const { crId, wikilink } = await this.createSourceNote(source, sourcesFolder);
+							const { wikilink } = await this.createSourceNote(source, sourcesFolder);
 							if (source.id) {
 								sourceIdToWikilink.set(source.id, wikilink);
 							}

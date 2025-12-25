@@ -110,6 +110,32 @@ Replace the Import/Export tab in Control Center with a modal-based hub that laun
 - `ReferenceNumberingService` for numbering integration
 - `FamilyGraphService` for person picker in numbering step
 
+## Progress
+
+### Completed
+- [x] Phase 1: Hub Modal - `ImportExportHubModal` created and wired to Tools group
+- [x] Phase 2: Import Wizard - All 7 steps implemented
+  - GEDCOM and Gramps formats fully functional
+  - Reference numbering integrated in Step 6
+  - .gpkg media extraction working
+- [x] Phase 3: Export Wizard - All 6 steps implemented
+  - GEDCOM export functional
+  - Privacy controls (exclude/redact living persons)
+  - Entity inclusion toggles (sources, places, notes)
+- [x] Phase 4: Cleanup - Import/Export tab removed from Control Center
+- [x] CSS styling refinements for wizard modals
+  - Footer overlap fix (footer outside scrollable content)
+  - Step 3 vertical spacing optimization
+  - Small input field width fix (60px for years input)
+  - Content area max-height increased to 65vh
+
+### Remaining
+- [ ] GEDCOM X import wizard integration
+- [ ] CSV import wizard integration
+- [ ] GEDCOM X export format
+- [ ] Gramps XML export format
+- [ ] CSV export format
+
 ## Related
 
 - `src/ui/reports-hub-modal.ts` - Hub modal pattern reference

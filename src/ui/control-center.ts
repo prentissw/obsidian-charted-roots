@@ -412,18 +412,18 @@ export class ControlCenterModal extends Modal {
 				break;
 			case 'family-chart':
 				// Open family chart leaf
-				this.plugin.activateFamilyChartView(undefined, true, true);
+				void this.plugin.activateFamilyChartView(undefined, true, true);
 				this.close();
 				break;
 			case 'reports':
 				// Import and open reports hub modal
-				import('./reports-hub-modal').then(({ ReportsHubModal }) => {
+				void import('./reports-hub-modal').then(({ ReportsHubModal }) => {
 					new ReportsHubModal(this.app, this.plugin).open();
 				});
 				break;
 			case 'import-export':
 				// Import and open import/export hub modal
-				import('./import-export-hub-modal').then(({ ImportExportHubModal }) => {
+				void import('./import-export-hub-modal').then(({ ImportExportHubModal }) => {
 					new ImportExportHubModal(this.app, this.plugin).open();
 				});
 				break;

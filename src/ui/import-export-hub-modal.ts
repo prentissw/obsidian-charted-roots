@@ -92,12 +92,12 @@ export class ImportExportHubModal extends Modal {
 
 		if (type === 'import') {
 			// Open Import Wizard
-			import('./import-wizard-modal').then(({ ImportWizardModal }) => {
+			void import('./import-wizard-modal').then(({ ImportWizardModal }) => {
 				new ImportWizardModal(this.app, this.plugin).open();
 			});
 		} else {
 			// Open Export Wizard
-			import('./export-wizard-modal').then(({ ExportWizardModal }) => {
+			void import('./export-wizard-modal').then(({ ExportWizardModal }) => {
 				new ExportWizardModal(this.app, this.plugin).open();
 			});
 		}

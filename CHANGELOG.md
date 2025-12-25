@@ -11,6 +11,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.16.0] - 2025-12-24
+
+### Added
+
+- **Import/Export Hub** - New modal-based hub accessible from the Tools group, replacing the Import/Export tab in Control Center. Two-card layout for launching Import or Export wizards.
+
+- **Import Wizard** - 7-step wizard for importing genealogical data:
+  1. Format selection (GEDCOM, GEDCOM X, Gramps, CSV)
+  2. File picker with drag-and-drop support
+  3. Options (entity types, target folder, conflict handling)
+  4. Preview (entity counts, validation warnings)
+  5. Import progress with real-time log
+  6. Optional reference numbering (Ahnentafel, d'Aboville, Henry, Generation)
+  7. Completion summary
+
+- **Export Wizard** - 6-step wizard for exporting genealogical data:
+  1. Format selection (GEDCOM, GEDCOM X, Gramps, CSV)
+  2. Folder selection (preference folders or custom)
+  3. Privacy controls (exclude/redact living persons) and entity inclusions
+  4. Preview with entity counts and privacy summary
+  5. Export progress with real-time log
+  6. Completion with download options
+
+- **Living person privacy controls** - Export wizard Step 3 includes privacy options: exclude living persons entirely, redact sensitive details, or include all. Configurable threshold for "born within X years" living determination.
+
+- **Reports Hub** - New hub modal accessible from Tools group. Provides card-based access to both Narrative Reports (Report Wizard) and Visual Charts (Unified Tree Wizard) from a single entry point.
+
+- **Grouped navigation sidebar** - Control Center sidebar reorganized into logical groups with dividers:
+  - **Entities**: People, Events, Places, Sources, Organizations, Universes, Collections
+  - **Data & Structure**: Data Quality, Schemas, Relationships
+  - **Output**: Canvas Trees, Maps
+  - **Tools**: Templates, Media Manager, Family Chart, Reports, Import/Export (open modals/views instead of tabs)
+  - **Settings**: Preferences
+
+- **Tools group** - New navigation group containing entries that open modals or dedicated views instead of switching tab content. Entries show a ↗ indicator to distinguish from regular tabs.
+
+### Changed
+
+- **Import/Export UI** - Moved from tab-based interface in Control Center to modal-based wizards, improving discoverability and providing step-by-step guidance.
+
+- **Control Center sidebar styling**:
+  - Removed "Navigation" header (redundant with grouped layout)
+  - Compact styling with optimized spacing for desktop and mobile
+  - Tighter padding and improved text sizing (13px)
+
+### Removed
+
+- **Import/Export tab** - Removed from Control Center's Data & Structure group. Import/Export is now accessed via the hub modal in the Tools group.
+
+- **Guide tab** - Removed from Control Center. Getting Started and Essential Properties documentation moved to the wiki.
+
+- **Statistics tab** - Removed from Control Center. Statistics are now accessed via the dedicated Statistics leaf view (View → Open Statistics).
+
+---
+
 ## [0.15.3] - 2025-12-24
 
 ### Added

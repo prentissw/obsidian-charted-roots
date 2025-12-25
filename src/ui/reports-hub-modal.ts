@@ -92,12 +92,12 @@ export class ReportsHubModal extends Modal {
 
 		if (type === 'narrative') {
 			// Open Report Wizard
-			import('../reports/ui/report-wizard-modal').then(({ ReportWizardModal }) => {
+			void import('../reports/ui/report-wizard-modal').then(({ ReportWizardModal }) => {
 				new ReportWizardModal(this.plugin).open();
 			});
 		} else {
 			// Open Unified Tree Wizard
-			import('../trees/ui/unified-tree-wizard-modal').then(({ UnifiedTreeWizardModal }) => {
+			void import('../trees/ui/unified-tree-wizard-modal').then(({ UnifiedTreeWizardModal }) => {
 				new UnifiedTreeWizardModal(this.plugin).open();
 			});
 		}

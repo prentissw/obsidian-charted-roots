@@ -13,7 +13,6 @@
 
 import { App, Modal, Notice, setIcon, TFolder, FuzzySuggestModal } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
-import { createLucideIcon } from './lucide-icons';
 import { GedcomExporter, type GedcomExportOptions, type GedcomExportResult } from '../gedcom/gedcom-exporter';
 import { GedcomXExporter, type GedcomXExportOptions, type GedcomXExportResult } from '../gedcomx/gedcomx-exporter';
 import { FolderFilterService } from '../core/folder-filter';
@@ -403,7 +402,7 @@ export class ExportWizardModal extends Modal {
 		const sourceRow = section.createDiv({ cls: 'crc-export-option-row' });
 		sourceRow.createSpan({ text: 'Use folders from', cls: 'crc-export-option-label' });
 
-		const sourceSelect = sourceRow.createEl('select', { cls: 'crc-export-select' }) as HTMLSelectElement;
+		const sourceSelect = sourceRow.createEl('select', { cls: 'crc-export-select' });
 		const prefOption = sourceSelect.createEl('option', { value: 'preferences', text: 'Preference folders' });
 		const customOption = sourceSelect.createEl('option', { value: 'custom', text: 'Specify folders' });
 
@@ -477,7 +476,7 @@ export class ExportWizardModal extends Modal {
 				optionEl.addClass('crc-export-privacy-option--selected');
 			}
 
-			const radio = optionEl.createDiv({ cls: 'crc-export-radio' });
+			optionEl.createDiv({ cls: 'crc-export-radio' });
 			const radioContent = optionEl.createDiv({ cls: 'crc-export-radio-content' });
 			radioContent.createDiv({ cls: 'crc-export-radio-label', text: choice.label });
 			radioContent.createDiv({ cls: 'crc-export-radio-description', text: choice.description });
@@ -497,7 +496,7 @@ export class ExportWizardModal extends Modal {
 				type: 'number',
 				cls: 'crc-export-input crc-export-input--small',
 				value: String(this.formData.livingThresholdYears)
-			}) as HTMLInputElement;
+			});
 			thresholdInput.min = '50';
 			thresholdInput.max = '150';
 
@@ -686,7 +685,7 @@ export class ExportWizardModal extends Modal {
 		// Progress bar
 		const progressBar = section.createDiv({ cls: 'crc-export-progress-bar' });
 		const progressFill = progressBar.createDiv({ cls: 'crc-export-progress-fill' });
-		progressFill.style.width = '0%';
+		progressFill.setCssProps({ width: '0%' });
 
 		// Status text
 		const statusEl = section.createDiv({ cls: 'crc-export-progress-status' });
@@ -704,11 +703,11 @@ export class ExportWizardModal extends Modal {
 	/**
 	 * Run the actual export
 	 */
-	private async runExport(
+	private runExport(
 		progressFill: HTMLElement,
 		statusEl: HTMLElement,
 		logArea: HTMLElement
-	): Promise<void> {
+	): void {
 		if (this.formData.isExporting) return;
 		this.formData.isExporting = true;
 
@@ -740,7 +739,7 @@ export class ExportWizardModal extends Modal {
 
 			if (this.formData.format === 'gedcom') {
 				addLogEntry('Starting GEDCOM export...');
-				progressFill.style.width = '20%';
+				progressFill.setCssProps({ width: '20%' });
 				statusEl.textContent = 'Reading person notes...';
 
 				// Create exporter with folder filter
@@ -751,7 +750,7 @@ export class ExportWizardModal extends Modal {
 				exporter.setSourceService(this.plugin.settings);
 				exporter.setPlaceGraphService(this.plugin.settings);
 
-				progressFill.style.width = '40%';
+				progressFill.setCssProps({ width: '40%' });
 				statusEl.textContent = 'Generating GEDCOM data...';
 				addLogEntry('Generating GEDCOM data...');
 
@@ -768,7 +767,7 @@ export class ExportWizardModal extends Modal {
 				this.formData.exportResult = result;
 
 				if (result.success && result.gedcomContent) {
-					progressFill.style.width = '100%';
+					progressFill.setCssProps({ width: '100%' });
 					statusEl.textContent = 'Export complete!';
 
 					this.formData.gedcomContent = result.gedcomContent;
@@ -801,14 +800,14 @@ export class ExportWizardModal extends Modal {
 				}
 			} else if (this.formData.format === 'gedcomx') {
 				addLogEntry('Starting GEDCOM X export...');
-				progressFill.style.width = '20%';
+				progressFill.setCssProps({ width: '20%' });
 
 				const exporter = new GedcomXExporter(this.app, folderFilter);
 				exporter.setEventService(this.plugin.settings);
 				exporter.setSourceService(this.plugin.settings);
 				exporter.setPlaceGraphService(this.plugin.settings);
 
-				progressFill.style.width = '40%';
+				progressFill.setCssProps({ width: '40%' });
 				statusEl.textContent = 'Generating GEDCOM X JSON...';
 				addLogEntry('Generating GEDCOM X JSON...');
 
@@ -822,7 +821,7 @@ export class ExportWizardModal extends Modal {
 				this.formData.exportResult = result;
 
 				if (result.success && result.jsonContent) {
-					progressFill.style.width = '100%';
+					progressFill.setCssProps({ width: '100%' });
 					statusEl.textContent = 'Export complete!';
 
 					this.formData.gedcomContent = result.jsonContent;
@@ -1045,7 +1044,7 @@ export class ExportWizardModal extends Modal {
 				type: 'text',
 				cls: 'crc-export-input',
 				value: value
-			}) as HTMLInputElement;
+			});
 			input.addEventListener('input', () => onChange(input.value));
 
 			const browseBtn = inputWrapper.createEl('button', {
