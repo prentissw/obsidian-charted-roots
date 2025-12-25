@@ -461,7 +461,7 @@ const WIZARD_STEPS: WizardStepConfig[] = [
 1. ✅ Implement Step 7 (Place Variants) interactive UI
 2. ✅ Implement Step 7b (Place Deduplication) as follow-up to Step 7
 3. ✅ Implement Step 8 (Bulk Geocode) with progress
-4. ⏳ Implement Step 9 (Place Hierarchy) interactive UI
+4. ✅ Implement Step 9 (Place Hierarchy) interactive UI
 5. ⏳ Add dependency checking between place steps
 
 ### Phase 3: Smart Analysis ✅
@@ -545,7 +545,7 @@ The mockup includes:
 | 6 | ⏳ Pending | Source array migration (service exists, wizard integration TBD) |
 | 7 | ✅ Complete | Place variant standardization with interactive table, select all/deselect, canonical override |
 | 8 | ✅ Complete | Bulk geocoding with progress tracking, cancellation, and results summary |
-| 9 | ⏳ Pending | Place hierarchy enrichment (interactive step) |
+| 9 | ✅ Complete | Place hierarchy enrichment with settings, progress, and parent creation |
 | 10 | ✅ Complete | Nested property flattening with preview |
 
 ### Key Implementation Details
@@ -592,6 +592,26 @@ The mockup includes:
   - Note about manually geocoding failed places
 - Uses existing `GeocodingService` for API calls and file updates
 - Respects Nominatim rate limit (1100ms between requests)
+
+**Step 9 Place Hierarchy:** Interactive hierarchy enrichment with:
+- Pre-scan detection of places without parent (excluding countries/regions)
+- Settings panel for:
+  - "Create missing parent places" toggle (default: on)
+  - Directory input for new place notes
+- Time estimate based on number of places
+- Scrollable list preview of places to enrich
+- Real-time progress view with:
+  - Progress bar and percentage
+  - Three counters: enriched, parents created, failed
+  - Live results list showing last 10 enriched places with parent links
+  - Cancel button with confirmation state
+- Results summary showing:
+  - Three summary cards (enriched/created/failed)
+  - Scrollable table of all results with parent chains
+  - Note about manually enriching failed places
+- Uses `geocodeWithDetails()` to get address components
+- Parses hierarchy from Nominatim address (city → county → state → country)
+- Creates missing parent places with inferred place types
 
 ### Bug Fixes Applied
 
