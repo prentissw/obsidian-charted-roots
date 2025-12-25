@@ -8,7 +8,9 @@ This document outlines planned features for Canvas Roots. For completed features
 
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
-  - [Post-Import Cleanup Wizard](#post-import-cleanup-wizard) 📋 Medium
+  - [v0.17.0: Data Cleanup Bundle](#v0170-data-cleanup-bundle) 📋 Medium
+    - [Post-Import Cleanup Wizard](#post-import-cleanup-wizard)
+    - [Source Array Migration](#source-array-migration)
   - [Universe Management Enhancements](#universe-management-enhancements) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
@@ -55,7 +57,21 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 ---
 
-### Post-Import Cleanup Wizard
+### v0.17.0: Data Cleanup Bundle
+
+**Priority:** 📋 Medium — Comprehensive data quality tooling
+
+**Summary:** v0.17.0 bundles two related data quality features: the Post-Import Cleanup Wizard and Source Array Migration. Both features focus on improving data quality after import and are designed to work together—the wizard guides users through the migration as one of its steps.
+
+**Why Bundle These Features:**
+- Both address post-import data quality concerns
+- Source migration is a breaking change requiring a major version bump
+- The wizard provides a natural context for running the migration
+- Users benefit from a single, comprehensive cleanup experience
+
+---
+
+#### Post-Import Cleanup Wizard
 
 **Priority:** 📋 Medium — Guided workflow for data quality after GEDCOM import
 
@@ -77,10 +93,11 @@ After a GEDCOM import (especially from a file with data quality issues), users f
 | 3 | Normalize Date Formats | Data Quality tab | Standardized dates enable age calculations |
 | 4 | Normalize Gender Values | Data Quality tab | Required for parent role validation |
 | 5 | Clear Orphan References | Data Quality tab | Remove dangling links |
-| 6 | Standardize Place Variants | Places tab | Consistent names before geocoding |
-| 7 | Bulk Geocode | Places tab | Coordinates for map features |
-| 8 | Enrich Place Hierarchy | Places tab | Build containment chains |
-| 9 | Flatten Nested Properties | Data Quality tab | Optional: fix frontmatter structure |
+| 6 | Migrate Source Properties | Data Quality tab | Convert indexed sources to array format |
+| 7 | Standardize Place Variants | Places tab | Consistent names before geocoding |
+| 8 | Bulk Geocode | Places tab | Coordinates for map features |
+| 9 | Enrich Place Hierarchy | Places tab | Build containment chains |
+| 10 | Flatten Nested Properties | Data Quality tab | Optional: fix frontmatter structure |
 
 **UI Design:**
 
@@ -138,6 +155,63 @@ After a GEDCOM import (especially from a file with data quality issues), users f
 
 **Documentation:**
 - See [Data Quality: Post-Import Cleanup Workflow](Data-Quality#post-import-cleanup-workflow) for manual workflow
+
+---
+
+#### Source Array Migration
+
+**Priority:** 📋 Medium — Modernize source citation storage format
+
+**Summary:** Migrate from indexed source properties (`source`, `source_2`, `source_3`) to a YAML array format (`sources: []`). This change improves scalability, simplifies querying, and aligns with modern frontmatter practices.
+
+**Problem Statement:**
+
+The current indexed format has limitations:
+- **Fixed slots:** Only 3 source slots available per entity
+- **Query complexity:** Dataview queries must check multiple properties
+- **Schema rigidity:** Adding more sources requires schema changes
+
+**Current Format:**
+```yaml
+source: "[[Birth Certificate.md]]"
+source_2: "[[Census 1920.md]]"
+source_3: "[[Family Bible.md]]"
+```
+
+**New Format:**
+```yaml
+sources:
+  - "[[Birth Certificate.md]]"
+  - "[[Census 1920.md]]"
+  - "[[Family Bible.md]]"
+  - "[[Interview Notes.md]]"  # Unlimited sources
+```
+
+**Migration Approach:**
+
+| Phase | Description | Breaking? |
+|-------|-------------|-----------|
+| Phase 1 | Support both formats (read array, fall back to indexed) | No |
+| Phase 2 | Add migration tooling in Data Quality tab | No |
+| Phase 3 | Deprecate indexed format (warnings in UI) | No |
+| Phase 4 | Remove indexed format support | **Yes** |
+
+**Wizard Integration:**
+
+The source migration is integrated as Step 6 in the Post-Import Cleanup Wizard:
+- Pre-scan detects notes using indexed format
+- Preview shows proposed changes before applying
+- Batch migration with progress indicator
+- Skip option if no indexed sources detected
+
+**Technical Notes:**
+- New `SourceMigrationService` handles conversion
+- Preserves source order during migration
+- Updates both person and event notes
+- Integrated into `DataQualityService` for consistency
+
+**Documentation:**
+- See [Source Array Migration Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/source-array-migration.md) for implementation details
 
 ---
 
