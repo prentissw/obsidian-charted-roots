@@ -889,6 +889,9 @@ export class ImportWizardModal extends Modal {
 					if (result.eventNotesCreated && result.eventNotesCreated > 0) {
 						addLogEntry(`Created ${result.eventNotesCreated} event notes.`, 'success');
 					}
+					if (result.duplicateEventsSkipped && result.duplicateEventsSkipped > 0) {
+						addLogEntry(`Skipped ${result.duplicateEventsSkipped} duplicate event(s) in source file.`, 'warning');
+					}
 
 					// Show any errors as warnings
 					for (const error of result.errors.slice(0, 5)) {

@@ -25,6 +25,7 @@ export type GrampsImportPhase =
 	| 'places'
 	| 'sources'
 	| 'people'
+	| 'relationships'
 	| 'events'
 	| 'complete';
 
@@ -97,6 +98,8 @@ export interface GrampsImportResult {
 	placeNotesCreated?: number;
 	eventsImported?: number;
 	eventNotesCreated?: number;
+	/** Number of duplicate events skipped (same type + person + date) */
+	duplicateEventsSkipped?: number;
 	sourcesImported?: number;
 	sourceNotesCreated?: number;
 	mediaFilesExtracted?: number;
@@ -458,7 +461,9 @@ export class GrampsImporter {
 			}
 
 			// Second pass: Update relationships now that all cr_ids are known
-			// Note: This is a quick pass, no separate progress phase needed
+			const relationshipsTotal = grampsData.persons.size;
+			reportProgress('relationships', 0, relationshipsTotal, 'Updating relationships...');
+			let relationshipIndex = 0;
 			for (const [, person] of grampsData.persons) {
 				try {
 					await this.updateRelationships(
@@ -472,6 +477,8 @@ export class GrampsImporter {
 						`Failed to update relationships for ${person.name}: ${getErrorMessage(error)}`
 					);
 				}
+				relationshipIndex++;
+				reportProgress('relationships', relationshipIndex, relationshipsTotal);
 			}
 
 			// Create event notes if requested
@@ -524,6 +531,7 @@ export class GrampsImporter {
 				}
 
 				if (duplicateEventsSkipped > 0) {
+					result.duplicateEventsSkipped = duplicateEventsSkipped;
 					logger.info('importFile', `Skipped ${duplicateEventsSkipped} duplicate event(s)`);
 				}
 			}
