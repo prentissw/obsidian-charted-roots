@@ -19,6 +19,10 @@ import { GedcomXExporter, type GedcomXExportOptions, type GedcomXExportResult } 
 import { FolderFilterService } from '../core/folder-filter';
 import type { PrivacySettings } from '../core/privacy-service';
 import { FamilyGraphService } from '../core/family-graph';
+import { PlaceGraphService } from '../core/place-graph';
+import { SourceService } from '../sources/services/source-service';
+import { EventService } from '../events/services/event-service';
+import type { CanvasRootsSettings } from '../settings';
 
 /**
  * Folder picker modal
@@ -167,7 +171,6 @@ export class ExportWizardModal extends Modal {
 	private currentStep: number = 0;
 	private formData: ExportWizardFormData;
 	private contentContainer: HTMLElement | null = null;
-	private footerContainer: HTMLElement | null = null;
 	private progressContainer: HTMLElement | null = null;
 
 	// Step definitions
@@ -253,9 +256,6 @@ export class ExportWizardModal extends Modal {
 		// Content container
 		this.contentContainer = contentEl.createDiv({ cls: 'crc-export-wizard-content' });
 
-		// Footer container (outside content for proper positioning)
-		this.footerContainer = contentEl.createDiv({ cls: 'crc-export-wizard-footer-container' });
-
 		// Render current step
 		this.renderCurrentStep();
 	}
@@ -322,9 +322,8 @@ export class ExportWizardModal extends Modal {
 	 * Render the current step
 	 */
 	private renderCurrentStep(): void {
-		if (!this.contentContainer || !this.footerContainer) return;
+		if (!this.contentContainer) return;
 		this.contentContainer.empty();
-		this.footerContainer.empty();
 
 		// Update step progress indicator
 		this.updateStepProgress();
@@ -350,8 +349,8 @@ export class ExportWizardModal extends Modal {
 				break;
 		}
 
-		// Render footer with navigation buttons (in separate container)
-		this.renderFooter(this.footerContainer);
+		// Render footer with navigation buttons
+		this.renderFooter(this.contentContainer);
 	}
 
 	/**
@@ -599,7 +598,22 @@ export class ExportWizardModal extends Modal {
 			// Use FamilyGraphService to count people
 			const graphService = new FamilyGraphService(this.app);
 			graphService.setFolderFilter(folderFilter);
+			graphService.setSettings(settings as CanvasRootsSettings);
+			graphService.ensureCacheLoaded();
 			const allPeople = graphService.getAllPeople();
+
+			// Use PlaceGraphService to count places
+			const placeService = new PlaceGraphService(this.app);
+			placeService.setFolderFilter(folderFilter);
+			const allPlaces = placeService.getAllPlaces();
+
+			// Use SourceService to count sources
+			const sourceService = new SourceService(this.app, settings as CanvasRootsSettings);
+			const allSources = sourceService.getAllSources();
+
+			// Use EventService to count events
+			const eventService = new EventService(this.app, settings as CanvasRootsSettings);
+			const allEvents = eventService.getAllEvents();
 
 			// Count living persons based on threshold
 			const currentYear = new Date().getFullYear();
@@ -620,9 +634,9 @@ export class ExportWizardModal extends Modal {
 
 			this.formData.previewCounts = {
 				people: allPeople.length,
-				places: 0, // Would need PlaceGraphService
-				sources: 0, // Would need SourceService
-				events: 0 // Would need EventService
+				places: allPlaces.length,
+				sources: allSources.length,
+				events: allEvents.length
 			};
 			this.formData.livingCount = livingCount;
 			this.formData.previewScanned = true;
