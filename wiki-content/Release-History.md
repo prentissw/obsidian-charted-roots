@@ -611,7 +611,7 @@ The Family Chart view produces superior visual output (orthogonal connectors, pr
 - `src/trees/ui/tree-generation-wizard.ts` (1500+ lines, replaced by unified wizard)
 - `src/trees/ui/visual-tree-wizard-modal.ts` (570+ lines, replaced by unified wizard)
 
-See [Canvas Trees](Canvas-Trees) for user documentation and [Tree Visualization Overhaul Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/tree-visualization-overhaul.md) for implementation details.
+See [Canvas Trees](Visual-Trees) for user documentation and [Tree Visualization Overhaul Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/tree-visualization-overhaul.md) for implementation details.
 
 ---
 

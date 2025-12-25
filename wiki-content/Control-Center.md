@@ -51,7 +51,7 @@ Twelve action tiles arranged in a responsive grid (4×3 on desktop, 2×2 on mobi
 | **Report** | Open the Reports hub modal |
 | **Statistics** | Open the Statistics Dashboard view |
 | **Import** | Open the Import/Export hub modal |
-| **Canvas Trees** | Go to the Canvas Trees tab |
+| **Visual Trees** | Go to the Visual Trees tab |
 | **Family Chart** | Open the interactive Family Chart view |
 | **Map** | Open the interactive Map View |
 | **Media** | Open the Media Manager modal |
@@ -116,7 +116,7 @@ The Control Center navigation is organized into groups:
 
 | Tab | Purpose |
 |-----|---------|
-| **Canvas Trees** | Canvas tree generation with preview |
+| **Visual Trees** | Canvas tree generation with preview |
 | **Maps** | Interactive map view, custom image maps, bulk geocoding |
 
 ### Tools

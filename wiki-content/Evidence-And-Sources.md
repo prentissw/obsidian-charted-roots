@@ -473,7 +473,7 @@ Canvas Roots doesn't include built-in OCR, but you can transcribe documents usin
 
 ## Related Pages
 
-- [Canvas Trees](Canvas-Trees) - Generate trees with source indicators
+- [Canvas Trees](Visual-Trees) - Generate trees with source indicators
 - [Frontmatter Reference](Frontmatter-Reference) - Complete property documentation
 - [Bases Integration](Bases-Integration) - Using Obsidian Bases for data management
 - [Roadmap](Roadmap) - Planned source management features

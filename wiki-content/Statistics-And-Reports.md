@@ -185,7 +185,7 @@ Clicking any Visual Tree report opens the unified tree wizard, which guides you 
 4. Configuring PDF options (page size, orientation, colors)
 5. Generating and downloading the PDF
 
-See [Canvas Trees](Canvas-Trees) for detailed wizard documentation.
+See [Canvas Trees](Visual-Trees) for detailed wizard documentation.
 
 ### Genealogical Reports
 

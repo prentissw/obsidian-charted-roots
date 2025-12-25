@@ -27,7 +27,7 @@
 - [Dynamic Note Content](Dynamic-Note-Content)
 
 ### Visualization & Output
-- [Canvas Trees](Canvas-Trees)
+- [Canvas Trees](Visual-Trees)
 - [Tree Preview](Tree-Preview)
 - [Statistics & Reports](Statistics-And-Reports)
 

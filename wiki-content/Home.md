@@ -112,7 +112,7 @@ Transform person notes with relationship frontmatter into visual family trees on
 - **Smart spacing** - Automatic node positioning with collision avoidance
 - **Export options** - Export trees to Canvas, Excalidraw, or Markdown
 
-[Learn about canvas trees](Canvas-Trees)
+[Learn about canvas trees](Visual-Trees)
 
 ### World-Building Suite
 Tools for novelists and world-builders working with fictional genealogies.
@@ -150,7 +150,7 @@ Adapt Canvas Roots to your existing data structure and terminology.
 
 ### Exploration & Visualization
 - [Family Chart View](Family-Chart-View) - Dedicated tree exploration view
-- [Canvas Trees](Canvas-Trees) - Generating visual family trees
+- [Canvas Trees](Visual-Trees) - Generating visual family trees
 - [Tree Preview](Tree-Preview) - Interactive preview before committing
 - [Relationship Tools](Relationship-Tools) - Calculator, numbering systems, lineage tracking
 
