@@ -462,9 +462,9 @@ const WIZARD_STEPS: WizardStepConfig[] = [
 2. ✅ Implement Step 7b (Place Deduplication) as follow-up to Step 7
 3. ✅ Implement Step 8 (Bulk Geocode) with progress
 4. ✅ Implement Step 9 (Place Hierarchy) interactive UI
-5. ⏳ Add dependency checking between place steps
+5. ✅ Add dependency checking between place steps
 
-#### Task 5: Dependency Checking Between Place Steps
+#### Task 5: Dependency Checking Between Place Steps ✅
 
 **Goal:** Warn users when running steps out of order and track completion status.
 
