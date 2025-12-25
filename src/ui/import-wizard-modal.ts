@@ -12,9 +12,13 @@
  * Step 7: Complete — Summary with actions
  */
 
-import { App, Modal, setIcon } from 'obsidian';
+import { App, Modal, Notice, setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
 import { createLucideIcon } from './lucide-icons';
+import { GedcomImporterV2 } from '../gedcom/gedcom-importer-v2';
+import type { GedcomDataV2, GedcomImportOptionsV2, GedcomImportResultV2 } from '../gedcom/gedcom-types';
+import { ReferenceNumberingService, type NumberingSystem as RefNumberingSystem, type NumberingStats } from '../core/reference-numbering';
+import { PersonPickerModal, type PersonInfo } from './person-picker';
 
 /**
  * Import format types
@@ -61,11 +65,16 @@ interface ImportWizardFormData {
 		media: number;
 	};
 	duplicateCount: number;
+	fileContent: string | null;
+	parsedData: GedcomDataV2 | null;
+	parseErrors: string[];
+	parseWarnings: string[];
 
 	// Step 5: Import (progress)
 	importedCount: number;
 	totalCount: number;
 	importLog: string[];
+	importResult: GedcomImportResultV2 | null;
 
 	// Step 6: Numbering
 	numberingSystem: NumberingSystem;
@@ -128,6 +137,8 @@ export class ImportWizardModal extends Modal {
 	private formData: ImportWizardFormData;
 	private contentContainer: HTMLElement | null = null;
 	private progressContainer: HTMLElement | null = null;
+	private importer: GedcomImporterV2;
+	private isImporting: boolean = false;
 
 	// Step definitions
 	private readonly steps = [
@@ -144,6 +155,7 @@ export class ImportWizardModal extends Modal {
 		super(app);
 		this.plugin = plugin;
 		this.formData = this.getDefaultFormData();
+		this.importer = new GedcomImporterV2(app);
 	}
 
 	/**
@@ -177,11 +189,16 @@ export class ImportWizardModal extends Modal {
 				media: 0
 			},
 			duplicateCount: 0,
+			fileContent: null,
+			parsedData: null,
+			parseErrors: [],
+			parseWarnings: [],
 
 			// Step 5
 			importedCount: 0,
 			totalCount: 0,
 			importLog: [],
+			importResult: null,
 
 			// Step 6
 			numberingSystem: 'none',
@@ -528,15 +545,26 @@ export class ImportWizardModal extends Modal {
 		setIcon(fileIcon, 'file');
 		fileHeader.createDiv({ cls: 'crc-import-preview-filename', text: this.formData.fileName });
 
-		// TODO: Implement actual file parsing to get real counts
-		// For now, show placeholder counts
+		// Check if file needs parsing (only for GEDCOM format currently)
+		if (this.formData.format === 'gedcom' && !this.formData.parsedData && this.formData.file) {
+			// Show loading state
+			const loadingEl = section.createDiv({ cls: 'crc-import-preview-loading' });
+			loadingEl.textContent = 'Parsing file...';
+
+			// Parse the file asynchronously
+			this.parseFileForPreview();
+			return;
+		}
+
+		// Show counts from parsed data
 		const counts = section.createDiv({ cls: 'crc-import-preview-counts' });
 
+		const { previewCounts } = this.formData;
 		const countItems = [
-			{ label: 'People', count: '—', icon: 'users', enabled: this.formData.importPeople },
-			{ label: 'Places', count: '—', icon: 'map-pin', enabled: this.formData.importPlaces },
-			{ label: 'Sources', count: '—', icon: 'archive', enabled: this.formData.importSources },
-			{ label: 'Events', count: '—', icon: 'calendar', enabled: this.formData.importEvents }
+			{ label: 'People', count: previewCounts.people, icon: 'users', enabled: this.formData.importPeople },
+			{ label: 'Places', count: previewCounts.places, icon: 'map-pin', enabled: this.formData.importPlaces },
+			{ label: 'Sources', count: previewCounts.sources, icon: 'archive', enabled: this.formData.importSources },
+			{ label: 'Events', count: previewCounts.events, icon: 'calendar', enabled: this.formData.importEvents }
 		];
 
 		for (const item of countItems) {
@@ -544,14 +572,83 @@ export class ImportWizardModal extends Modal {
 				const countEl = counts.createDiv({ cls: 'crc-import-preview-count' });
 				const countIcon = countEl.createDiv({ cls: 'crc-import-preview-count-icon' });
 				setIcon(countIcon, item.icon);
-				countEl.createDiv({ cls: 'crc-import-preview-count-value', text: item.count });
+				countEl.createDiv({ cls: 'crc-import-preview-count-value', text: String(item.count) });
 				countEl.createDiv({ cls: 'crc-import-preview-count-label', text: item.label });
 			}
 		}
 
-		// Note about parsing
-		const noteEl = section.createDiv({ cls: 'crc-import-preview-note' });
-		noteEl.createSpan({ text: 'File will be parsed when you click Import. Entity counts will be shown during import.' });
+		// Show warnings if any
+		if (this.formData.parseWarnings.length > 0) {
+			const warningEl = section.createDiv({ cls: 'crc-import-preview-warning' });
+			const warningIcon = warningEl.createDiv({ cls: 'crc-import-preview-warning-icon' });
+			setIcon(warningIcon, 'alert-triangle');
+			warningEl.createDiv({
+				cls: 'crc-import-preview-warning-text',
+				text: `${this.formData.parseWarnings.length} warning(s) found during parsing`
+			});
+		}
+
+		// Show errors if any
+		if (this.formData.parseErrors.length > 0) {
+			const errorEl = section.createDiv({ cls: 'crc-import-preview-error' });
+			const errorIcon = errorEl.createDiv({ cls: 'crc-import-preview-error-icon' });
+			setIcon(errorIcon, 'x-circle');
+			errorEl.createDiv({
+				cls: 'crc-import-preview-error-text',
+				text: `${this.formData.parseErrors.length} error(s) found. Import may fail.`
+			});
+			for (const error of this.formData.parseErrors.slice(0, 3)) {
+				errorEl.createDiv({ cls: 'crc-import-preview-error-detail', text: error });
+			}
+		}
+
+		// Ready message
+		if (this.formData.parseErrors.length === 0) {
+			const readyEl = section.createDiv({ cls: 'crc-import-preview-ready' });
+			readyEl.createSpan({ text: 'Ready to import. Click Next to proceed.' });
+		}
+	}
+
+	/**
+	 * Parse file for preview counts
+	 */
+	private async parseFileForPreview(): Promise<void> {
+		if (!this.formData.file) return;
+
+		try {
+			// Read file content
+			const content = await this.formData.file.text();
+			this.formData.fileContent = content;
+
+			// Parse based on format
+			if (this.formData.format === 'gedcom') {
+				// Use the importer to analyze and parse
+				const analysis = this.importer.analyzeFile(content);
+
+				this.formData.previewCounts = {
+					people: analysis.individualCount,
+					places: analysis.uniquePlaces,
+					sources: analysis.sourceCount,
+					events: analysis.eventCount,
+					media: 0 // GEDCOM doesn't include media count in analysis
+				};
+
+				// Parse for validation
+				const parseResult = this.importer.parseContent(content);
+				this.formData.parseErrors = parseResult.errors;
+				this.formData.parseWarnings = parseResult.warnings;
+
+				if (parseResult.valid && parseResult.data) {
+					this.formData.parsedData = parseResult.data;
+				}
+			}
+
+			// Re-render to show results
+			this.renderCurrentStep();
+		} catch (error) {
+			this.formData.parseErrors = [`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`];
+			this.renderCurrentStep();
+		}
 	}
 
 	/**
@@ -572,10 +669,116 @@ export class ImportWizardModal extends Modal {
 
 		// Log area
 		const logArea = section.createDiv({ cls: 'crc-import-log' });
-		logArea.createDiv({ cls: 'crc-import-log-entry', text: 'Waiting to start...' });
 
-		// TODO: Implement actual import logic
-		// This will need to read the file, parse it, and create notes
+		// Start import if not already running
+		if (!this.isImporting) {
+			this.runImport(progressFill, statusEl, logArea);
+		}
+	}
+
+	/**
+	 * Run the actual import
+	 */
+	private async runImport(
+		progressFill: HTMLElement,
+		statusEl: HTMLElement,
+		logArea: HTMLElement
+	): Promise<void> {
+		if (this.isImporting) return;
+		this.isImporting = true;
+
+		const addLogEntry = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
+			const entry = logArea.createDiv({ cls: `crc-import-log-entry crc-import-log-entry--${type}` });
+			entry.textContent = message;
+			logArea.scrollTop = logArea.scrollHeight;
+			this.formData.importLog.push(message);
+		};
+
+		try {
+			if (this.formData.format === 'gedcom') {
+				addLogEntry('Starting GEDCOM import...');
+
+				if (!this.formData.fileContent) {
+					throw new Error('No file content available');
+				}
+
+				// Build import options
+				const settings = this.plugin.settings;
+				const options: GedcomImportOptionsV2 = {
+					peopleFolder: this.formData.targetFolder || settings.peopleFolder,
+					eventsFolder: settings.eventsFolder,
+					sourcesFolder: settings.sourcesFolder,
+					placesFolder: settings.placesFolder,
+					overwriteExisting: this.formData.conflictHandling === 'overwrite',
+					fileName: this.formData.fileName,
+					createPeopleNotes: this.formData.importPeople,
+					createEventNotes: this.formData.importEvents,
+					createSourceNotes: this.formData.importSources,
+					createPlaceNotes: this.formData.importPlaces,
+					onProgress: (progress) => {
+						// Update UI based on progress
+						const percent = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
+						progressFill.style.width = `${percent}%`;
+						statusEl.textContent = progress.message || `${progress.phase}: ${progress.current}/${progress.total}`;
+
+						if (progress.message) {
+							addLogEntry(progress.message);
+						}
+					}
+				};
+
+				// Run import
+				const result = await this.importer.importFile(
+					this.formData.fileContent,
+					options,
+					this.formData.parsedData || undefined
+				);
+
+				this.formData.importResult = result;
+				this.formData.importedCount = result.individualsImported;
+
+				if (result.success) {
+					progressFill.style.width = '100%';
+					addLogEntry(`Import complete! ${result.individualsImported} people imported.`, 'success');
+
+					if (result.eventsCreated > 0) {
+						addLogEntry(`Created ${result.eventsCreated} event notes.`, 'success');
+					}
+					if (result.sourcesCreated > 0) {
+						addLogEntry(`Created ${result.sourcesCreated} source notes.`, 'success');
+					}
+					if (result.placesCreated > 0) {
+						addLogEntry(`Created ${result.placesCreated} place notes.`, 'success');
+					}
+
+					// Show any warnings
+					for (const warning of result.warnings.slice(0, 5)) {
+						addLogEntry(warning, 'warning');
+					}
+
+					// Auto-advance to numbering step after a short delay
+					setTimeout(() => {
+						this.currentStep = 5; // Numbering step
+						this.isImporting = false;
+						this.renderCurrentStep();
+					}, 1500);
+				} else {
+					addLogEntry('Import failed!', 'error');
+					for (const error of result.errors) {
+						addLogEntry(error, 'error');
+					}
+					this.isImporting = false;
+				}
+			} else {
+				// Other formats not yet implemented
+				addLogEntry(`Import format '${this.formData.format}' is not yet supported.`, 'warning');
+				this.isImporting = false;
+			}
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Unknown error';
+			addLogEntry(`Import failed: ${message}`, 'error');
+			this.isImporting = false;
+		}
 	}
 
 	/**
