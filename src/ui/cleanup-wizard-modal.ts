@@ -707,6 +707,18 @@ export class CleanupWizardModal extends Modal {
 	private renderStepView(): void {
 		if (!this.contentContainer || !this.footerContainer) return;
 
+		// Trigger pre-scan if not done (e.g., when resuming directly to a step)
+		// Show loading state and return - runPreScan will call renderCurrentView when complete
+		if (!this.state.preScanComplete && !this.state.isPreScanning) {
+			const section = this.contentContainer.createDiv({ cls: 'crc-cleanup-section' });
+			const scanning = section.createDiv({ cls: 'crc-cleanup-scanning' });
+			const spinner = scanning.createDiv({ cls: 'crc-cleanup-spinner' });
+			setIcon(spinner, 'loader-2');
+			scanning.createSpan({ text: 'Analyzing vault...' });
+			void this.runPreScan();
+			return;
+		}
+
 		// Show step progress
 		this.renderStepProgress();
 
