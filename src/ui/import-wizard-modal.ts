@@ -19,6 +19,8 @@ import { GedcomImporterV2 } from '../gedcom/gedcom-importer-v2';
 import type { GedcomDataV2, GedcomImportOptionsV2, GedcomImportResultV2 } from '../gedcom/gedcom-types';
 import { ReferenceNumberingService, type NumberingSystem as RefNumberingSystem, type NumberingStats } from '../core/reference-numbering';
 import { PersonPickerModal, type PersonInfo } from './person-picker';
+import { GrampsParser } from '../gramps/gramps-parser';
+import { extractGpkg } from '../gramps/gpkg-extractor';
 
 /**
  * Import format types
@@ -549,8 +551,12 @@ export class ImportWizardModal extends Modal {
 		setIcon(fileIcon, 'file');
 		fileHeader.createDiv({ cls: 'crc-import-preview-filename', text: this.formData.fileName });
 
-		// Check if file needs parsing (only for GEDCOM format currently)
-		if (this.formData.format === 'gedcom' && !this.formData.parsedData && this.formData.file) {
+		// Check if file needs parsing (GEDCOM or Gramps format)
+		const needsParsing = (this.formData.format === 'gedcom' || this.formData.format === 'gramps')
+			&& this.formData.previewCounts.people === 0
+			&& this.formData.file;
+
+		if (needsParsing) {
 			// Show loading state
 			const loadingEl = section.createDiv({ cls: 'crc-import-preview-loading' });
 			loadingEl.textContent = 'Parsing file...';
@@ -620,12 +626,12 @@ export class ImportWizardModal extends Modal {
 		if (!this.formData.file) return;
 
 		try {
-			// Read file content
-			const content = await this.formData.file.text();
-			this.formData.fileContent = content;
-
 			// Parse based on format
 			if (this.formData.format === 'gedcom') {
+				// Read file content as text
+				const content = await this.formData.file.text();
+				this.formData.fileContent = content;
+
 				// Use the importer to analyze and parse
 				const analysis = this.importer.analyzeFile(content);
 
@@ -645,6 +651,42 @@ export class ImportWizardModal extends Modal {
 				if (parseResult.valid && parseResult.data) {
 					this.formData.parsedData = parseResult.data;
 				}
+			} else if (this.formData.format === 'gramps') {
+				// Read file as ArrayBuffer for .gpkg extraction
+				const arrayBuffer = await this.formData.file.arrayBuffer();
+				const fileName = this.formData.fileName.toLowerCase();
+
+				let grampsXml: string;
+
+				if (fileName.endsWith('.gpkg')) {
+					// Extract XML from .gpkg package (ZIP or gzip-compressed tar)
+					const extraction = await extractGpkg(arrayBuffer, this.formData.fileName);
+					grampsXml = extraction.grampsXml;
+
+					// Store media count from extraction
+					this.formData.previewCounts.media = extraction.mediaFiles.size;
+				} else {
+					// Plain .gramps XML file - read as text
+					grampsXml = await this.formData.file.text();
+				}
+
+				// Store the extracted/read XML content
+				this.formData.fileContent = grampsXml;
+
+				// Validate and get counts
+				const validation = GrampsParser.validate(grampsXml);
+
+				this.formData.previewCounts = {
+					people: validation.stats.personCount,
+					places: validation.stats.placeCount,
+					sources: validation.stats.sourceCount,
+					events: validation.stats.eventCount,
+					media: this.formData.previewCounts.media || 0
+				};
+
+				// Convert validation errors and warnings
+				this.formData.parseErrors = validation.errors.map(e => e.message);
+				this.formData.parseWarnings = validation.warnings.map(w => w.message);
 			}
 
 			// Re-render to show results
