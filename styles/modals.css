@@ -9075,6 +9075,102 @@
   font-weight: 500;
 }
 
+/* Complete step - success message */
+.crc-import-complete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.crc-import-complete-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(74, 222, 128, 0.15);
+  border-radius: 50%;
+  margin-bottom: 16px;
+  color: rgb(74, 222, 128);
+}
+
+.crc-import-complete-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.crc-import-complete-title {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 8px;
+}
+
+.crc-import-complete-message {
+  color: var(--text-muted);
+  font-size: 0.95em;
+}
+
+/* Complete step - stats grid */
+.crc-import-complete-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.crc-import-complete-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 12px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+}
+
+.crc-import-complete-stat-value {
+  font-size: 2em;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.crc-import-complete-stat-value--blue {
+  color: rgb(96, 165, 250);
+}
+
+.crc-import-complete-stat-value--green {
+  color: rgb(74, 222, 128);
+}
+
+.crc-import-complete-stat-value--purple {
+  color: rgb(168, 85, 247);
+}
+
+.crc-import-complete-stat-value--orange {
+  color: rgb(251, 146, 60);
+}
+
+.crc-import-complete-stat-label {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Complete step - skipped duplicates */
+.crc-import-complete-skipped {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(251, 146, 60, 0.1);
+  border: 1px solid rgba(251, 146, 60, 0.3);
+  border-radius: 8px;
+  color: var(--text-normal);
+  text-align: center;
+}
+
 /* Complete step numbering result */
 .crc-import-complete-numbering {
   display: flex;
