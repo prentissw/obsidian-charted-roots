@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Dynamic blocks import option** - Import Wizard Step 3 now includes a toggle for dynamic blocks, which was inadvertently omitted from the initial wizard implementation. Controls whether timeline, relationships, and media renderer blocks are included in imported person notes. Enabled by default.
 
+- **Excalidraw output format** - Generate Tree wizard now includes Excalidraw as an output format, which was inadvertently omitted from the initial unified wizard implementation. Creates hand-drawn style diagrams that can be annotated and exported to SVG or PNG via the Excalidraw plugin.
+
 - **Export Wizard** - 6-step wizard for exporting genealogical data:
   1. Format selection (GEDCOM, GEDCOM X, Gramps, CSV)
   2. Folder selection (preference folders or custom)
