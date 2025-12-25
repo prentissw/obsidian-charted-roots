@@ -1016,40 +1016,74 @@ export class CleanupWizardModal extends Modal {
 			return;
 		}
 
+		// Separate auto-fixable from conflicts
+		const autoFixable = this.bidirectionalIssues.filter(i => i.type !== 'conflicting-parent-claim');
+		const conflicts = this.bidirectionalIssues.filter(i => i.type === 'conflicting-parent-claim');
+
 		const preview = container.createDiv({ cls: 'crc-cleanup-preview' });
-		const summary = preview.createDiv({ cls: 'crc-cleanup-preview-summary' });
-		summary.textContent = `${this.bidirectionalIssues.length} relationship${this.bidirectionalIssues.length === 1 ? '' : 's'} will be fixed:`;
 
-		const list = preview.createDiv({ cls: 'crc-cleanup-preview-list' });
+		// Auto-fixable section
+		if (autoFixable.length > 0) {
+			const summary = preview.createDiv({ cls: 'crc-cleanup-preview-summary' });
+			summary.textContent = `${autoFixable.length} relationship${autoFixable.length === 1 ? '' : 's'} will be fixed:`;
 
-		// Show first 15 items
-		const maxDisplay = 15;
-		const displayItems = this.bidirectionalIssues.slice(0, maxDisplay);
-		const remaining = this.bidirectionalIssues.length - maxDisplay;
+			const list = preview.createDiv({ cls: 'crc-cleanup-preview-list' });
 
-		for (const issue of displayItems) {
-			const row = list.createDiv({ cls: 'crc-cleanup-preview-row' });
+			const maxDisplay = 15;
+			const displayItems = autoFixable.slice(0, maxDisplay);
+			const remaining = autoFixable.length - maxDisplay;
 
-			// Icon based on type
-			const iconEl = row.createDiv({ cls: 'crc-cleanup-preview-icon' });
-			if (issue.type === 'missing-child-in-parent') {
-				setIcon(iconEl, 'user-plus');
-			} else if (issue.type === 'missing-parent-in-child') {
-				setIcon(iconEl, 'arrow-up');
-			} else if (issue.type === 'missing-spouse-in-spouse') {
-				setIcon(iconEl, 'heart');
-			} else {
-				setIcon(iconEl, 'alert-triangle');
+			for (const issue of displayItems) {
+				const row = list.createDiv({ cls: 'crc-cleanup-preview-row' });
+
+				// Icon based on type
+				const iconEl = row.createDiv({ cls: 'crc-cleanup-preview-icon' });
+				if (issue.type === 'missing-child-in-parent') {
+					setIcon(iconEl, 'user-plus');
+				} else if (issue.type === 'missing-parent-in-child') {
+					setIcon(iconEl, 'arrow-up');
+				} else if (issue.type === 'missing-spouse-in-spouse') {
+					setIcon(iconEl, 'heart');
+				} else {
+					setIcon(iconEl, 'alert-triangle');
+				}
+
+				// Description
+				const desc = row.createDiv({ cls: 'crc-cleanup-preview-desc' });
+				desc.textContent = issue.description;
 			}
 
-			// Description
-			const desc = row.createDiv({ cls: 'crc-cleanup-preview-desc' });
-			desc.textContent = issue.description;
+			if (remaining > 0) {
+				const moreEl = list.createDiv({ cls: 'crc-cleanup-preview-more' });
+				moreEl.textContent = `... and ${remaining} more`;
+			}
 		}
 
-		if (remaining > 0) {
-			const moreEl = list.createDiv({ cls: 'crc-cleanup-preview-more' });
-			moreEl.textContent = `... and ${remaining} more`;
+		// Conflicts section (require manual resolution)
+		if (conflicts.length > 0) {
+			const conflictSection = preview.createDiv({ cls: 'crc-cleanup-preview-conflicts' });
+
+			const conflictHeader = conflictSection.createDiv({ cls: 'crc-cleanup-preview-conflict-header' });
+			const warningIcon = conflictHeader.createSpan({ cls: 'crc-cleanup-preview-conflict-icon' });
+			setIcon(warningIcon, 'alert-triangle');
+			conflictHeader.createSpan({ text: `${conflicts.length} conflict${conflicts.length === 1 ? '' : 's'} require manual resolution:` });
+
+			const conflictList = conflictSection.createDiv({ cls: 'crc-cleanup-preview-list' });
+
+			for (const issue of conflicts.slice(0, 5)) {
+				const row = conflictList.createDiv({ cls: 'crc-cleanup-preview-row crc-cleanup-preview-row--conflict' });
+
+				const iconEl = row.createDiv({ cls: 'crc-cleanup-preview-icon' });
+				setIcon(iconEl, 'alert-triangle');
+
+				const desc = row.createDiv({ cls: 'crc-cleanup-preview-desc' });
+				desc.textContent = issue.description;
+			}
+
+			if (conflicts.length > 5) {
+				const moreEl = conflictList.createDiv({ cls: 'crc-cleanup-preview-more' });
+				moreEl.textContent = `... and ${conflicts.length - 5} more`;
+			}
 		}
 	}
 
@@ -1385,11 +1419,10 @@ export class CleanupWizardModal extends Modal {
 			let result: BatchOperationResult | null = null;
 			const service = this.getDataQualityService();
 
-			// Call the appropriate service method
+			// Call the appropriate service method using cached issues from pre-scan
 			switch (stepConfig.id) {
 				case 'bidirectional':
-					const inconsistencies = service.detectBidirectionalInconsistencies({});
-					result = await service.fixBidirectionalInconsistencies(inconsistencies);
+					result = await service.fixBidirectionalInconsistencies(this.bidirectionalIssues);
 					break;
 				case 'date-normalize':
 					result = await service.normalizeDateFormats();
@@ -1413,7 +1446,18 @@ export class CleanupWizardModal extends Modal {
 			if (result) {
 				stepState.status = 'complete';
 				stepState.fixCount = result.modified;
-				new Notice(`Fixed ${result.modified} issues`);
+
+				// Custom notice for bidirectional step to mention conflicts
+				if (stepConfig.id === 'bidirectional') {
+					const conflicts = this.bidirectionalIssues.filter(i => i.type === 'conflicting-parent-claim').length;
+					if (conflicts > 0) {
+						new Notice(`Fixed ${result.modified} issues (${conflicts} conflicts require manual resolution)`);
+					} else {
+						new Notice(`Fixed ${result.modified} issues`);
+					}
+				} else {
+					new Notice(`Fixed ${result.modified} issues`);
+				}
 			}
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Unknown error';

@@ -1565,8 +1565,17 @@ export class DataQualityService {
 			errors: [],
 		};
 
-		for (const issue of inconsistencies) {
+		// Filter out conflicting-parent-claim issues - they require manual resolution
+		const autoFixable = inconsistencies.filter(i => i.type !== 'conflicting-parent-claim');
+		const conflicts = inconsistencies.filter(i => i.type === 'conflicting-parent-claim');
+
+		if (conflicts.length > 0) {
+			logger.info('fix-bidirectional', `Skipping ${conflicts.length} conflicting-parent-claim issues (require manual resolution)`);
+		}
+
+		for (const issue of autoFixable) {
 			results.processed++;
+			logger.debug('fix-bidirectional', `Processing ${issue.type}: ${issue.description}`);
 
 			try {
 				if (issue.type === 'missing-child-in-parent') {
@@ -1605,7 +1614,7 @@ export class DataQualityService {
 			}
 		}
 
-		logger.info('fix-bidirectional', `Fixed ${results.modified}/${results.processed} bidirectional inconsistencies`);
+		logger.info('fix-bidirectional', `Fixed ${results.modified}/${results.processed} bidirectional inconsistencies (${conflicts.length} conflicts require manual resolution)`);
 		return results;
 	}
 

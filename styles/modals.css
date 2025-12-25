@@ -10884,6 +10884,41 @@
   font-style: italic;
 }
 
+/* Conflict Preview Styles */
+.crc-cleanup-preview-conflicts {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.crc-cleanup-preview-conflict-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-yellow);
+}
+
+.crc-cleanup-preview-conflict-icon {
+  flex-shrink: 0;
+}
+
+.crc-cleanup-preview-conflict-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.crc-cleanup-preview-row--conflict {
+  background: rgba(var(--color-yellow-rgb), 0.1);
+  border: 1px solid rgba(var(--color-yellow-rgb), 0.3);
+}
+
+.crc-cleanup-preview-row--conflict .crc-cleanup-preview-icon {
+  color: var(--color-yellow);
+}
+
 /* Resume Prompt Styles */
 .crc-cleanup-resume-prompt {
   display: flex;
