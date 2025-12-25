@@ -1,9 +1,13 @@
 # Import & Export
 
-Canvas Roots supports importing and exporting family data in GEDCOM, Gramps XML, and CSV formats.
+Canvas Roots supports importing and exporting family data in GEDCOM, Gramps XML, and CSV formats through guided step-by-step wizards.
 
 ## Table of Contents
 
+- [Import/Export Hub](#importexport-hub)
+  - [Opening the Hub](#opening-the-hub)
+  - [Import Wizard](#import-wizard)
+  - [Export Wizard](#export-wizard)
 - [GEDCOM Import/Export](#gedcom-importexport)
   - [Importing a GEDCOM File](#importing-a-gedcom-file)
   - [After Import](#after-import)
@@ -23,27 +27,90 @@ Canvas Roots supports importing and exporting family data in GEDCOM, Gramps XML,
   - [Format Comparison](#format-comparison)
 - [Selective Branch Export](#selective-branch-export)
 
+---
+
+## Import/Export Hub
+
+The Import/Export Hub provides a centralized entry point for all data import and export operations through guided wizards.
+
+### Opening the Hub
+
+| Method | How |
+|--------|-----|
+| **Control Center** | Click **Import/Export** in the Tools group |
+| **Dashboard** | Click the **Import** quick action tile |
+| **Command Palette** | `Ctrl/Cmd+P` → "Canvas Roots: Open Import/Export Hub" |
+
+The hub displays two cards:
+- **Import** — Launch the 7-step import wizard
+- **Export** — Launch the 6-step export wizard
+
+### Import Wizard
+
+The import wizard guides you through 7 steps:
+
+| Step | Purpose |
+|------|---------|
+| **1. Format** | Select GEDCOM 5.5.1, GEDCOM X (JSON), Gramps XML/.gpkg, or CSV |
+| **2. File** | Drag-and-drop or click to select your import file |
+| **3. Options** | Configure entity types, target folder, conflict handling, dynamic blocks |
+| **4. Preview** | Review entity counts and duplicate warnings |
+| **5. Import** | Watch progress with real-time log |
+| **6. Numbering** | Optional reference numbering (Ahnentafel, d'Aboville, Henry, Generation) |
+| **7. Complete** | Summary with quick actions |
+
+**Key Features:**
+
+- **Dynamic blocks toggle** — Enable or disable dynamic content blocks in imported notes
+- **Integrated numbering** — Apply reference numbers immediately after import without leaving the wizard
+- **Gramps media extraction** — `.gpkg` packages automatically extract embedded media files
+
+### Export Wizard
+
+The export wizard guides you through 6 steps:
+
+| Step | Purpose |
+|------|---------|
+| **1. Format** | Select GEDCOM 5.5.1 (other formats coming soon) |
+| **2. Folders** | Choose preference folders or specify custom folders |
+| **3. Options** | Configure privacy controls and entity inclusions |
+| **4. Preview** | Review entity counts and privacy summary |
+| **5. Export** | Watch progress with real-time log |
+| **6. Complete** | Download or save options |
+
+**Privacy Controls:**
+
+- **Exclude living persons** — Completely omit people without death dates born after threshold year
+- **Redact living persons** — Include structure but replace personal details with "[Living]"
+- **Birth year threshold** — Configure how recent a birth date triggers living person protection
+
+**Entity Inclusions:**
+
+Toggle which entity types to include in the export:
+- Sources and citations
+- Places with hierarchy
+- Notes and annotations
+
 ## GEDCOM Import/Export
 
 Canvas Roots provides full round-trip support for GEDCOM 5.5.1 format, allowing you to import family trees from popular genealogy software and export your Obsidian data back to GEDCOM format.
 
 ### Importing a GEDCOM File
 
-**Using Control Center:**
-1. Open Control Center → **Import/Export** tab
-2. Set **Format** to "GEDCOM" and **Direction** to "Import"
-3. If folders aren't configured, expand **Configure folders** to set your people folder
-4. Click **Import GEDCOM**
-5. Select your `.ged` file
-6. Review the file analysis (people, families, events, sources, places found)
-7. Configure import options:
-   - **Create people notes** - Person notes with relationships and life events (default: on)
-   - **Create event notes** - Births, deaths, marriages, and other life events (default: on if events found)
-   - **Create source notes** - Citations and references for genealogical records (default: on if sources found)
-   - **Create place notes** - Locations with parent/child hierarchy (default: on if places found)
-   - **Filename format** - Original (John Smith.md), Kebab-case (john-smith.md), or Snake_case (john_smith.md)
-   - **Customize per note type** - Set different filename formats for each note type
-8. Click **Import to vault** (or **Import to staging** if using staging folder)
+**Using the Import Wizard:**
+1. Open the Import/Export Hub (see [Opening the Hub](#opening-the-hub))
+2. Click the **Import** card
+3. Select **GEDCOM 5.5.1** format
+4. Drag and drop your `.ged` file or click to browse
+5. Configure import options:
+   - **Entity types** — People, events, sources, places (toggle each on/off)
+   - **Target folder** — Where to create notes
+   - **Conflict handling** — Skip, overwrite, or merge duplicates
+   - **Dynamic blocks** — Enable/disable dynamic content blocks
+6. Review the preview showing entity counts and any warnings
+7. Click **Import** to begin
+8. Optionally apply reference numbering in Step 6
+9. Review summary and use quick actions to open imported notes
 
 **Data Quality Preview:**
 
@@ -165,19 +232,23 @@ When importing places, Canvas Roots uses context-aware type inference:
 
 Export your family data back to GEDCOM format for sharing with other genealogy software or family members.
 
-**Using Context Menu:**
+**Using the Export Wizard:**
+1. Open the Import/Export Hub (see [Opening the Hub](#opening-the-hub))
+2. Click the **Export** card
+3. Select **GEDCOM 5.5.1** format
+4. Choose folders:
+   - **Preference folders** — Uses paths configured in Preferences
+   - **Specify folders** — Select custom folders for each entity type
+5. Configure privacy and inclusion options
+6. Review the preview showing entity counts and privacy summary
+7. Click **Export** to generate the file
+8. Download or save the exported `.ged` file
+
+**Using Context Menu (Quick Export):**
 1. Right-click on a folder containing person notes
 2. Select **Export folder to GEDCOM**
 3. Choose export options
 4. Save the `.ged` file
-
-**Using Control Center:**
-1. Open Control Center → **Import/Export** tab
-2. Set **Format** to "GEDCOM" and **Direction** to "Export"
-3. Click **Export GEDCOM**
-4. Select the folder to export
-5. Configure export options
-6. Click **Export**
 
 **What Gets Exported:**
 - All person notes in the selected folder
@@ -224,18 +295,19 @@ Canvas Roots supports importing family data from [Gramps](https://gramps-project
 
 ### Importing a Gramps File
 
-**Using Control Center:**
-1. Open Control Center → **Import/Export** tab
-2. Set **Format** to "Gramps XML" and **Direction** to "Import"
-3. If folders aren't configured, expand **Configure folders** to set your people folder
-4. Click **Import Gramps XML**
-5. Select your `.gpkg`, `.gramps`, or `.xml` file
-6. Review the file analysis (people, families, places, events, sources, media found)
-7. Configure import options:
-   - **Create source notes** - Source records with citations (default: on)
-   - **Create place notes** - Location notes linked from person birth/death places (default: off)
-   - **Create event notes** - Birth, death, marriage, and other life events (default: off)
-8. Click **Import**
+**Using the Import Wizard:**
+1. Open the Import/Export Hub (see [Opening the Hub](#opening-the-hub))
+2. Click the **Import** card
+3. Select **Gramps XML** format (note: ".gpkg includes media")
+4. Drag and drop your `.gpkg`, `.gramps`, or `.xml` file
+5. Configure import options:
+   - **Entity types** — People, events, sources, places (toggle each on/off)
+   - **Target folder** — Where to create notes
+   - **Dynamic blocks** — Enable/disable dynamic content blocks
+6. Review the preview showing entity counts and media files
+7. Click **Import** to begin (media files are automatically extracted from `.gpkg`)
+8. Optionally apply reference numbering
+9. Review summary and use quick actions
 
 ### What Gets Created
 
@@ -312,15 +384,15 @@ Canvas Roots supports CSV and TSV file formats for easy data exchange with sprea
 
 ### Importing from CSV/TSV
 
-**Using Control Center:**
-1. Open Control Center → **Import/Export** tab
-2. Set **Format** to "CSV" and **Direction** to "Import"
-3. If folders aren't configured, expand **Configure folders** to set your people folder
-4. Click **Import CSV**
-5. Select your `.csv` or `.tsv` file
-6. Review the auto-detected column mapping
-7. Adjust mappings if needed
-8. Click **Import**
+**Using the Import Wizard:**
+1. Open the Import/Export Hub (see [Opening the Hub](#opening-the-hub))
+2. Click the **Import** card
+3. Select **CSV** format
+4. Drag and drop your `.csv` or `.tsv` file
+5. Review the auto-detected column mapping and adjust if needed
+6. Configure target folder and options
+7. Review the preview
+8. Click **Import** to create notes
 
 **Auto-Detected Column Mapping:**
 
@@ -346,14 +418,16 @@ You can manually adjust any mapping before importing if the auto-detection doesn
 
 ### Exporting to CSV
 
-**Using Control Center:**
-1. Open Control Center → **Import/Export** tab
-2. Set **Format** to "CSV" and **Direction** to "Export"
-3. Click **Export CSV**
-4. Select the folder to export
+**Using the Export Wizard:**
+1. Open the Import/Export Hub (see [Opening the Hub](#opening-the-hub))
+2. Click the **Export** card
+3. Select **CSV** format (coming soon)
+4. Choose folders to export from
 5. Configure columns to include
 6. Enable privacy protection if needed
-7. Click **Export**
+7. Review and export
+
+> **Note:** CSV export via the wizard is planned for a future release. Currently available via context menu on folders.
 
 **Configurable Columns:**
 
@@ -404,24 +478,14 @@ Export only the descendants (children, grandchildren, etc.) of a selected person
 
 ### How to Use Selective Export
 
-**In GEDCOM Export:**
-1. Open Control Center → **Import/Export** tab
-2. Set **Format** to "GEDCOM" and **Direction** to "Export"
-3. Click **Export GEDCOM**
-4. Select "Branch export" mode
-5. Choose a root person for the branch
-6. Select branch type (ancestors or descendants)
-7. Optionally enable "Include spouses" for descendant exports
-8. Click **Export**
-
-**In CSV Export:**
-1. Open Control Center → **Import/Export** tab
-2. Set **Format** to "CSV" and **Direction** to "Export"
-3. Click **Export CSV**
-4. Select "Branch export" mode
-5. Choose a root person and branch type
-6. Configure other options as needed
-7. Click **Export**
+**Using the Export Wizard:**
+1. Open the Import/Export Hub and click **Export**
+2. Select your format (GEDCOM 5.5.1)
+3. In the Folders step, select "Branch export" mode
+4. Choose a root person for the branch
+5. Select branch type (ancestors or descendants)
+6. Optionally enable "Include spouses" for descendant exports
+7. Complete the remaining wizard steps
 
 ### Combining with Collection Filtering
 
