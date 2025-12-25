@@ -171,6 +171,7 @@ export class ExportWizardModal extends Modal {
 	private currentStep: number = 0;
 	private formData: ExportWizardFormData;
 	private contentContainer: HTMLElement | null = null;
+	private footerContainer: HTMLElement | null = null;
 	private progressContainer: HTMLElement | null = null;
 
 	// Step definitions
@@ -253,8 +254,11 @@ export class ExportWizardModal extends Modal {
 		// Step progress indicator
 		this.renderStepProgress(contentEl);
 
-		// Content container
+		// Content container (scrollable)
 		this.contentContainer = contentEl.createDiv({ cls: 'crc-export-wizard-content' });
+
+		// Footer container (fixed at bottom)
+		this.footerContainer = contentEl.createDiv({ cls: 'crc-export-wizard-footer' });
 
 		// Render current step
 		this.renderCurrentStep();
@@ -322,8 +326,9 @@ export class ExportWizardModal extends Modal {
 	 * Render the current step
 	 */
 	private renderCurrentStep(): void {
-		if (!this.contentContainer) return;
+		if (!this.contentContainer || !this.footerContainer) return;
 		this.contentContainer.empty();
+		this.footerContainer.empty();
 
 		// Update step progress indicator
 		this.updateStepProgress();
@@ -353,7 +358,7 @@ export class ExportWizardModal extends Modal {
 
 		// Render footer with navigation buttons (skip if step is still loading)
 		if (!skipFooter) {
-			this.renderFooter(this.contentContainer);
+			this.renderFooter(this.footerContainer);
 		}
 	}
 
@@ -953,9 +958,7 @@ export class ExportWizardModal extends Modal {
 	/**
 	 * Render footer with navigation buttons
 	 */
-	private renderFooter(container: HTMLElement): void {
-		const footer = container.createDiv({ cls: 'crc-export-footer' });
-
+	private renderFooter(footer: HTMLElement): void {
 		// Left side: Cancel or Back
 		const leftBtns = footer.createDiv({ cls: 'crc-export-footer-left' });
 

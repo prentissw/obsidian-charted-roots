@@ -8342,6 +8342,26 @@
   padding: 20px;
   overflow-y: auto;
   max-height: 50vh;
+  flex: 1;
+  min-height: 0; /* Required for flex item to respect overflow */
+}
+
+/* Remove bottom margin from last section to prevent overlap with footer */
+.crc-import-wizard-content > :last-child,
+.crc-export-wizard-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* Wizard footer wrapper (fixed at bottom) */
+.crc-import-wizard-footer,
+.crc-export-wizard-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--background-modifier-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 /* Section styling */
