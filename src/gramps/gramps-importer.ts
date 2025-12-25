@@ -1217,19 +1217,29 @@ export class GrampsImporter {
 		const fileName = this.slugify(title) + '.md';
 		const filePath = normalizePath(`${sourcesFolder}/${fileName}`);
 
-		// Handle duplicate file names with suffix
-		let finalPath = filePath;
-		let counter = 2;
-		while (this.app.vault.getAbstractFileByPath(finalPath)) {
-			const baseName = this.slugify(title);
-			finalPath = normalizePath(`${sourcesFolder}/${baseName} (${counter}).md`);
-			counter++;
+		// Check if file already exists
+		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
+		if (existingFile) {
+			if (options.overwriteExisting) {
+				// Overwrite existing file
+				await this.app.vault.modify(existingFile as TFile, content);
+				logger.debug('importSource', `Overwrote existing source: ${filePath}`);
+			} else {
+				// Skip existing file
+				logger.debug('importSource', `Skipping existing source: ${filePath}`);
+			}
+			// Return wikilink to existing file
+			const existingFileName = filePath.split('/').pop()?.replace('.md', '') || title;
+			return {
+				crId,
+				wikilink: `[[${existingFileName}]]`
+			};
 		}
 
-		await this.app.vault.create(finalPath, content);
+		await this.app.vault.create(filePath, content);
 
 		// Return both crId and wikilink for mapping
-		const finalFileName = finalPath.split('/').pop()?.replace('.md', '') || title;
+		const finalFileName = filePath.split('/').pop()?.replace('.md', '') || title;
 		return {
 			crId,
 			wikilink: `[[${finalFileName}]]`
@@ -1395,16 +1405,21 @@ export class GrampsImporter {
 		const fileName = this.slugify(title) + '.md';
 		const filePath = normalizePath(`${eventsFolder}/${fileName}`);
 
-		// Check if file already exists and add suffix if needed
-		let finalPath = filePath;
-		let counter = 1;
-		while (this.app.vault.getAbstractFileByPath(finalPath)) {
-			const baseName = this.slugify(title);
-			finalPath = normalizePath(`${eventsFolder}/${baseName}-${counter}.md`);
-			counter++;
+		// Check if file already exists
+		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
+		if (existingFile) {
+			if (options.overwriteExisting) {
+				// Overwrite existing file
+				await this.app.vault.modify(existingFile as TFile, content);
+				logger.debug('importEvent', `Overwrote existing event: ${filePath}`);
+			} else {
+				// Skip existing file (like places do)
+				logger.debug('importEvent', `Skipping existing event: ${filePath}`);
+			}
+			return crId;
 		}
 
-		await this.app.vault.create(finalPath, content);
+		await this.app.vault.create(filePath, content);
 
 		return crId;
 	}
