@@ -17,7 +17,9 @@
 
 import { App, Modal, Notice, setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
-import { DataQualityService, type BatchOperationResult } from '../core/data-quality';
+import { DataQualityService, type BatchOperationResult, type DataQualityReport } from '../core/data-quality';
+import { FamilyGraphService } from '../core/family-graph';
+import { FolderFilterService } from '../core/folder-filter';
 
 /**
  * Wizard step types
@@ -201,7 +203,7 @@ export class CleanupWizardModal extends Modal {
 	private contentContainer: HTMLElement | null = null;
 	private footerContainer: HTMLElement | null = null;
 	private progressContainer: HTMLElement | null = null;
-	private dataQualityService: DataQualityService;
+	private dataQualityService: DataQualityService | null = null;
 
 	// View state
 	private currentView: 'overview' | 'step' | 'summary' = 'overview';
@@ -210,7 +212,25 @@ export class CleanupWizardModal extends Modal {
 		super(app);
 		this.plugin = plugin;
 		this.state = this.getDefaultState();
-		this.dataQualityService = new DataQualityService(app);
+	}
+
+	/**
+	 * Initialize the DataQualityService (lazy initialization)
+	 */
+	private getDataQualityService(): DataQualityService {
+		if (!this.dataQualityService) {
+			const familyGraph = this.plugin.createFamilyGraphService();
+			familyGraph.ensureCacheLoaded();
+			const folderFilter = new FolderFilterService(this.plugin.settings);
+			this.dataQualityService = new DataQualityService(
+				this.app,
+				this.plugin.settings,
+				familyGraph,
+				folderFilter,
+				this.plugin
+			);
+		}
+		return this.dataQualityService;
 	}
 
 	/**
@@ -726,20 +746,22 @@ export class CleanupWizardModal extends Modal {
 
 		try {
 			let result: BatchOperationResult | null = null;
+			const service = this.getDataQualityService();
 
 			// Call the appropriate service method
 			switch (stepConfig.id) {
 				case 'bidirectional':
-					result = await this.dataQualityService.fixBidirectionalInconsistencies();
+					const inconsistencies = service.detectBidirectionalInconsistencies({});
+					result = await service.fixBidirectionalInconsistencies(inconsistencies);
 					break;
 				case 'date-normalize':
-					result = await this.dataQualityService.normalizeDateFormats();
+					result = await service.normalizeDateFormats();
 					break;
 				case 'gender-normalize':
-					result = await this.dataQualityService.normalizeGenderValues();
+					result = await service.normalizeGenderValues();
 					break;
 				case 'orphan-clear':
-					result = await this.dataQualityService.clearOrphanReferences();
+					result = await service.clearOrphanReferences();
 					break;
 				// TODO: Add other batch methods as they're implemented
 				default:
@@ -879,23 +901,35 @@ export class CleanupWizardModal extends Modal {
 		this.renderCurrentView();
 
 		try {
-			// Initialize DataQualityService with plugin settings
-			this.dataQualityService.setSettings(this.plugin.settings);
-			this.dataQualityService.refreshCache();
+			const service = this.getDataQualityService();
 
-			// Get quality summary for step 1
-			const summary = await this.dataQualityService.getIssuesSummary();
+			// Run full analysis to get issue counts
+			const report: DataQualityReport = service.analyze({});
 
-			// Populate step 1 with total issues
-			let totalIssues = 0;
-			for (const category of Object.values(summary)) {
-				totalIssues += category.length;
-			}
-			this.state.steps[1].issueCount = totalIssues;
+			// Populate step 1 with total issues from report
+			this.state.steps[1].issueCount = report.summary.totalIssues;
 
-			// For now, use placeholder counts for other steps
-			// In a full implementation, each step would have its own detection method
-			// This is Phase 1 - we'll wire up actual detection in subsequent phases
+			// Populate other steps based on issue categories
+			// Step 2: Bidirectional - count relationship issues
+			const bidirIssues = service.detectBidirectionalInconsistencies({});
+			this.state.steps[2].issueCount = bidirIssues.length;
+
+			// Step 3: Date issues - using category counts
+			this.state.steps[3].issueCount = report.summary.byCategory['date_inconsistency'] || 0;
+
+			// Step 4: Gender issues - part of data_format
+			// We count issues with 'sex' in the code
+			const genderIssues = report.issues.filter(i => i.code.includes('sex') || i.code.includes('gender'));
+			this.state.steps[4].issueCount = genderIssues.length;
+
+			// Step 5: Orphan references
+			this.state.steps[5].issueCount = report.summary.byCategory['orphan_reference'] || 0;
+
+			// Step 10: Nested properties
+			this.state.steps[10].issueCount = report.summary.byCategory['nested_property'] || 0;
+
+			// Steps 6-9 (source migration, place variants, geocode, hierarchy)
+			// These require different services - leave as 0 for now (Phase 2)
 
 			this.state.preScanComplete = true;
 		} catch (error) {
