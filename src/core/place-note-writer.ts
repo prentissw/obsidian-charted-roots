@@ -95,11 +95,14 @@ export async function createPlaceNote(
 	// Generate cr_id if not provided
 	const crId = place.crId || generateCrId();
 
+	// Sanitize name - strip wikilink brackets if present
+	const cleanName = stripWikilinkBrackets(place.name || '');
+
 	// Build frontmatter with aliased property names
 	const frontmatter: Record<string, unknown> = {
 		[prop('cr_type')]: 'place',
 		[prop('cr_id')]: crId,
-		[prop('name')]: place.name || ''
+		[prop('name')]: cleanName
 	};
 
 	// Aliases
@@ -177,14 +180,14 @@ export async function createPlaceNote(
 	const noteContent = [
 		yamlContent,
 		'',
-		`# ${place.name}`,
+		`# ${cleanName}`,
 		'',
 		'',
 		''
 	].join('\n');
 
 	// Sanitize filename (remove invalid characters)
-	const filename = sanitizeFilename(place.name || 'Untitled Place');
+	const filename = sanitizeFilename(cleanName || 'Untitled Place');
 
 	// Build full path
 	const fullPath = directory
@@ -495,14 +498,20 @@ function formatObjectForYaml(obj: Record<string, unknown>, indent: number = 0): 
 }
 
 /**
+ * Strip wikilink brackets from a string if present
+ */
+function stripWikilinkBrackets(value: string): string {
+	return value
+		.replace(/^\[\[/, '')
+		.replace(/\]\]$/, '');
+}
+
+/**
  * Sanitize a filename by removing invalid characters
  */
 function sanitizeFilename(filename: string): string {
 	return filename
-		// Strip wikilink brackets if present
-		.replace(/^\[\[/, '')
-		.replace(/\]\]$/, '')
-		// Remove filesystem-invalid characters
+		// Remove filesystem-invalid characters (including brackets)
 		.replace(/[\\/:*?"<>|[\]]/g, '-')
 		.replace(/\s+/g, ' ')
 		.trim();
