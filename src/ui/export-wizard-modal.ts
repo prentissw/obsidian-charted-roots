@@ -11,9 +11,14 @@
  * Step 6: Complete — Download/save options
  */
 
-import { App, Modal, setIcon } from 'obsidian';
+import { App, Modal, Notice, setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
 import { createLucideIcon } from './lucide-icons';
+import { GedcomExporter, type GedcomExportOptions, type GedcomExportResult } from '../gedcom/gedcom-exporter';
+import { GedcomXExporter, type GedcomXExportOptions, type GedcomXExportResult } from '../gedcomx/gedcomx-exporter';
+import { FolderFilterService } from '../core/folder-filter';
+import type { PrivacySettings } from '../core/privacy-service';
+import { FamilyGraphService } from '../core/family-graph';
 
 /**
  * Export format types
@@ -65,11 +70,14 @@ interface ExportWizardFormData {
 	exportedCount: number;
 	totalCount: number;
 	exportLog: string[];
+	isExporting: boolean;
+	exportResult: GedcomExportResult | GedcomXExportResult | null;
 
 	// Step 6: Complete
 	exportComplete: boolean;
 	outputFilePath: string;
 	outputFileSize: number;
+	gedcomContent: string | null;
 }
 
 /**
@@ -176,11 +184,14 @@ export class ExportWizardModal extends Modal {
 			exportedCount: 0,
 			totalCount: 0,
 			exportLog: [],
+			isExporting: false,
+			exportResult: null,
 
 			// Step 6
 			exportComplete: false,
 			outputFilePath: '',
-			outputFileSize: 0
+			outputFileSize: 0,
+			gedcomContent: null
 		};
 	}
 
@@ -477,6 +488,14 @@ export class ExportWizardModal extends Modal {
 		const section = container.createDiv({ cls: 'crc-export-section' });
 		section.createEl('h3', { text: 'Preview', cls: 'crc-export-section-title' });
 
+		// Check if we need to scan the vault
+		if (this.formData.previewCounts.people === 0) {
+			const loadingEl = section.createDiv({ cls: 'crc-export-preview-loading' });
+			loadingEl.textContent = 'Scanning vault...';
+			this.scanVaultForPreview();
+			return;
+		}
+
 		// Summary card
 		const summaryCard = section.createDiv({ cls: 'crc-export-preview-card' });
 
@@ -486,10 +505,10 @@ export class ExportWizardModal extends Modal {
 		this.renderSettingRow(settingsGrid, 'Format', this.getFormatDisplayName());
 		this.renderSettingRow(settingsGrid, 'Folders', this.formData.folderSource === 'preferences' ? 'Preference folders' : 'Custom folders');
 
-		if (this.formData.privacyHandling !== 'include') {
+		if (this.formData.privacyHandling !== 'include' && this.formData.livingCount > 0) {
 			const privacyText = this.formData.privacyHandling === 'exclude'
-				? `${this.formData.livingCount} living persons excluded`
-				: `${this.formData.livingCount} living persons redacted`;
+				? `${this.formData.livingCount} living persons will be excluded`
+				: `${this.formData.livingCount} living persons will be redacted`;
 			this.renderSettingRow(settingsGrid, 'Privacy', privacyText, 'warning');
 		}
 
@@ -498,25 +517,92 @@ export class ExportWizardModal extends Modal {
 
 		const counts = section.createDiv({ cls: 'crc-export-preview-counts' });
 
-		// TODO: Implement actual vault scanning to get real counts
+		const { previewCounts } = this.formData;
 		const countItems = [
-			{ label: 'People', count: '—', icon: 'users' },
-			{ label: 'Places', count: this.formData.includePlaces ? '—' : '0', icon: 'map-pin' },
-			{ label: 'Sources', count: this.formData.includeSources ? '—' : '0', icon: 'archive' },
-			{ label: 'Events', count: '—', icon: 'calendar' }
+			{ label: 'People', count: previewCounts.people, icon: 'users' },
+			{ label: 'Places', count: this.formData.includePlaces ? previewCounts.places : 0, icon: 'map-pin' },
+			{ label: 'Sources', count: this.formData.includeSources ? previewCounts.sources : 0, icon: 'archive' },
+			{ label: 'Events', count: previewCounts.events, icon: 'calendar' }
 		];
 
 		for (const item of countItems) {
 			const countEl = counts.createDiv({ cls: 'crc-export-preview-count' });
 			const countIcon = countEl.createDiv({ cls: 'crc-export-preview-count-icon' });
 			setIcon(countIcon, item.icon);
-			countEl.createDiv({ cls: 'crc-export-preview-count-value', text: item.count });
+			countEl.createDiv({ cls: 'crc-export-preview-count-value', text: String(item.count) });
 			countEl.createDiv({ cls: 'crc-export-preview-count-label', text: item.label });
 		}
 
-		// Note about scanning
-		const noteEl = section.createDiv({ cls: 'crc-export-preview-note' });
-		noteEl.createSpan({ text: 'Vault will be scanned when you click Export. Entity counts will be shown during export.' });
+		// Ready message
+		const readyEl = section.createDiv({ cls: 'crc-export-preview-ready' });
+		readyEl.createSpan({ text: 'Ready to export. Click Export to proceed.' });
+	}
+
+	/**
+	 * Scan the vault to get preview counts
+	 */
+	private scanVaultForPreview(): void {
+		try {
+			// Create folder filter based on plugin settings (with overrides)
+			const settings = {
+				...this.plugin.settings,
+				peopleFolder: this.formData.peoplePath,
+				eventsFolder: this.formData.eventsPath,
+				sourcesFolder: this.formData.sourcesPath,
+				placesFolder: this.formData.placesPath
+			};
+			const folderFilter = new FolderFilterService(settings);
+
+			// Use FamilyGraphService to count people
+			const graphService = new FamilyGraphService(this.app);
+			graphService.setFolderFilter(folderFilter);
+			const allPeople = graphService.getAllPeople();
+
+			// Count living persons based on threshold
+			const currentYear = new Date().getFullYear();
+			let livingCount = 0;
+
+			for (const person of allPeople) {
+				// Consider living if no death date and birth within threshold years
+				if (!person.deathDate && person.birthDate) {
+					const birthYear = this.extractYear(person.birthDate);
+					if (birthYear && (currentYear - birthYear) < this.formData.livingThresholdYears) {
+						livingCount++;
+					}
+				} else if (!person.deathDate && !person.birthDate) {
+					// No birth or death date - conservatively assume living
+					livingCount++;
+				}
+			}
+
+			this.formData.previewCounts = {
+				people: allPeople.length,
+				places: 0, // Would need PlaceGraphService
+				sources: 0, // Would need SourceService
+				events: 0 // Would need EventService
+			};
+			this.formData.livingCount = livingCount;
+
+			// Re-render to show results
+			this.renderCurrentStep();
+		} catch (error) {
+			console.error('Failed to scan vault:', error);
+			this.formData.previewCounts = {
+				people: 0,
+				places: 0,
+				sources: 0,
+				events: 0
+			};
+			this.renderCurrentStep();
+		}
+	}
+
+	/**
+	 * Extract year from a date string
+	 */
+	private extractYear(dateStr: string): number | null {
+		const match = dateStr.match(/\b(\d{4})\b/);
+		return match ? parseInt(match[1], 10) : null;
 	}
 
 	/**
@@ -537,9 +623,166 @@ export class ExportWizardModal extends Modal {
 
 		// Log area
 		const logArea = section.createDiv({ cls: 'crc-export-log' });
-		logArea.createDiv({ cls: 'crc-export-log-entry', text: 'Waiting to start...' });
 
-		// TODO: Implement actual export logic
+		// Start export if not already running
+		if (!this.formData.isExporting) {
+			this.runExport(progressFill, statusEl, logArea);
+		}
+	}
+
+	/**
+	 * Run the actual export
+	 */
+	private async runExport(
+		progressFill: HTMLElement,
+		statusEl: HTMLElement,
+		logArea: HTMLElement
+	): Promise<void> {
+		if (this.formData.isExporting) return;
+		this.formData.isExporting = true;
+
+		const addLogEntry = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
+			const entry = logArea.createDiv({ cls: `crc-export-log-entry crc-export-log-entry--${type}` });
+			entry.textContent = message;
+			logArea.scrollTop = logArea.scrollHeight;
+			this.formData.exportLog.push(message);
+		};
+
+		try {
+			// Create folder filter using plugin settings with overrides
+			const settings = {
+				...this.plugin.settings,
+				peopleFolder: this.formData.peoplePath,
+				eventsFolder: this.formData.eventsPath,
+				sourcesFolder: this.formData.sourcesPath,
+				placesFolder: this.formData.placesPath
+			};
+			const folderFilter = new FolderFilterService(settings);
+
+			// Build privacy settings
+			const privacySettings: PrivacySettings = {
+				enablePrivacyProtection: this.formData.privacyHandling !== 'include',
+				livingPersonAgeThreshold: this.formData.livingThresholdYears,
+				privacyDisplayFormat: this.formData.privacyHandling === 'exclude' ? 'hidden' : 'private',
+				hideDetailsForLiving: this.formData.privacyHandling === 'redact'
+			};
+
+			if (this.formData.format === 'gedcom') {
+				addLogEntry('Starting GEDCOM export...');
+				progressFill.style.width = '20%';
+				statusEl.textContent = 'Reading person notes...';
+
+				// Create exporter with folder filter
+				const exporter = new GedcomExporter(this.app, folderFilter);
+
+				// Set up services
+				exporter.setEventService(this.plugin.settings);
+				exporter.setSourceService(this.plugin.settings);
+				exporter.setPlaceGraphService(this.plugin.settings);
+
+				progressFill.style.width = '40%';
+				statusEl.textContent = 'Generating GEDCOM data...';
+				addLogEntry('Generating GEDCOM data...');
+
+				// Build export options
+				const options: GedcomExportOptions = {
+					peopleFolder: this.formData.peoplePath,
+					fileName: `export-${new Date().toISOString().split('T')[0]}`,
+					privacySettings
+				};
+
+				// Run export
+				const result = exporter.exportToGedcom(options);
+
+				this.formData.exportResult = result;
+
+				if (result.success && result.gedcomContent) {
+					progressFill.style.width = '100%';
+					statusEl.textContent = 'Export complete!';
+
+					this.formData.gedcomContent = result.gedcomContent;
+					this.formData.exportedCount = result.individualsExported;
+					this.formData.outputFilePath = `${result.fileName}.ged`;
+					this.formData.outputFileSize = new Blob([result.gedcomContent]).size;
+
+					addLogEntry(`Exported ${result.individualsExported} people`, 'success');
+					addLogEntry(`Created ${result.familiesExported} family records`, 'success');
+
+					if (result.privacyExcluded && result.privacyExcluded > 0) {
+						addLogEntry(`Excluded ${result.privacyExcluded} living persons for privacy`, 'warning');
+					}
+					if (result.privacyObfuscated && result.privacyObfuscated > 0) {
+						addLogEntry(`Redacted ${result.privacyObfuscated} living persons`, 'warning');
+					}
+
+					// Auto-advance to complete step
+					setTimeout(() => {
+						this.formData.isExporting = false;
+						this.currentStep = 5;
+						this.renderCurrentStep();
+					}, 1500);
+				} else {
+					addLogEntry('Export failed!', 'error');
+					for (const error of result.errors) {
+						addLogEntry(error, 'error');
+					}
+					this.formData.isExporting = false;
+				}
+			} else if (this.formData.format === 'gedcomx') {
+				addLogEntry('Starting GEDCOM X export...');
+				progressFill.style.width = '20%';
+
+				const exporter = new GedcomXExporter(this.app, folderFilter);
+				exporter.setEventService(this.plugin.settings);
+				exporter.setSourceService(this.plugin.settings);
+				exporter.setPlaceGraphService(this.plugin.settings);
+
+				progressFill.style.width = '40%';
+				statusEl.textContent = 'Generating GEDCOM X JSON...';
+				addLogEntry('Generating GEDCOM X JSON...');
+
+				const options: GedcomXExportOptions = {
+					peopleFolder: this.formData.peoplePath,
+					fileName: `export-${new Date().toISOString().split('T')[0]}`,
+					privacySettings
+				};
+
+				const result = exporter.exportToGedcomX(options);
+				this.formData.exportResult = result;
+
+				if (result.success && result.jsonContent) {
+					progressFill.style.width = '100%';
+					statusEl.textContent = 'Export complete!';
+
+					this.formData.gedcomContent = result.jsonContent;
+					this.formData.exportedCount = result.personsExported;
+					this.formData.outputFilePath = `${result.fileName}.json`;
+					this.formData.outputFileSize = new Blob([result.jsonContent]).size;
+
+					addLogEntry(`Exported ${result.personsExported} persons`, 'success');
+					addLogEntry(`Created ${result.relationshipsExported} relationships`, 'success');
+
+					setTimeout(() => {
+						this.formData.isExporting = false;
+						this.currentStep = 5;
+						this.renderCurrentStep();
+					}, 1500);
+				} else {
+					addLogEntry('Export failed!', 'error');
+					for (const error of result.errors) {
+						addLogEntry(error, 'error');
+					}
+					this.formData.isExporting = false;
+				}
+			} else {
+				addLogEntry(`Export format '${this.formData.format}' is not yet supported.`, 'warning');
+				this.formData.isExporting = false;
+			}
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Unknown error';
+			addLogEntry(`Export failed: ${message}`, 'error');
+			this.formData.isExporting = false;
+		}
 	}
 
 	/**
@@ -555,7 +798,7 @@ export class ExportWizardModal extends Modal {
 		completeEl.createDiv({ cls: 'crc-export-complete-title', text: 'Export Complete!' });
 		completeEl.createDiv({ cls: 'crc-export-complete-message', text: 'Your data has been successfully exported.' });
 
-		// File info
+		// File info with download button
 		const fileCard = section.createDiv({ cls: 'crc-export-file-card crc-mt-3' });
 
 		const fileHeader = fileCard.createDiv({ cls: 'crc-export-file-header' });
@@ -572,13 +815,25 @@ export class ExportWizardModal extends Modal {
 			text: this.formatFileSize(this.formData.outputFileSize)
 		});
 
+		// Download button
+		const downloadBtn = fileCard.createEl('button', {
+			cls: 'crc-btn crc-btn--primary crc-btn--download'
+		});
+		const downloadIcon = downloadBtn.createSpan({ cls: 'crc-btn-icon' });
+		setIcon(downloadIcon, 'download');
+		downloadBtn.createSpan({ text: 'Download' });
+
+		downloadBtn.addEventListener('click', () => {
+			this.downloadExportFile();
+		});
+
 		// Summary stats
 		section.createEl('h4', { text: 'Export summary', cls: 'crc-export-options-title crc-mt-3' });
 
 		const stats = section.createDiv({ cls: 'crc-export-complete-stats' });
 
 		const statItems = [
-			{ label: 'People', value: this.formData.previewCounts.people, color: 'blue' },
+			{ label: 'People', value: this.formData.exportedCount, color: 'blue' },
 			{ label: 'Places', value: this.formData.previewCounts.places, color: 'green' },
 			{ label: 'Sources', value: this.formData.previewCounts.sources, color: 'purple' },
 			{ label: 'Events', value: this.formData.previewCounts.events, color: 'orange' }
@@ -593,10 +848,40 @@ export class ExportWizardModal extends Modal {
 		}
 
 		// Privacy note
-		if (this.formData.privacyHandling !== 'include' && this.formData.livingCount > 0) {
+		const result = this.formData.exportResult;
+		if (result && 'privacyExcluded' in result && result.privacyExcluded && result.privacyExcluded > 0) {
 			const privacyNote = section.createDiv({ cls: 'crc-export-complete-privacy' });
-			privacyNote.textContent = `${this.formData.livingCount} living persons ${this.formData.privacyHandling === 'exclude' ? 'excluded' : 'redacted'}.`;
+			privacyNote.textContent = `${result.privacyExcluded} living persons excluded for privacy.`;
 		}
+		if (result && 'privacyObfuscated' in result && result.privacyObfuscated && result.privacyObfuscated > 0) {
+			const privacyNote = section.createDiv({ cls: 'crc-export-complete-privacy' });
+			privacyNote.textContent = `${result.privacyObfuscated} living persons redacted.`;
+		}
+	}
+
+	/**
+	 * Download the exported file
+	 */
+	private downloadExportFile(): void {
+		if (!this.formData.gedcomContent) {
+			new Notice('No export content available');
+			return;
+		}
+
+		// Create blob and download
+		const mimeType = this.formData.format === 'gedcomx' ? 'application/json' : 'text/plain';
+		const blob = new Blob([this.formData.gedcomContent], { type: mimeType });
+		const url = URL.createObjectURL(blob);
+
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = this.formData.outputFilePath || `export.${this.getFormatExtension()}`;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
+
+		new Notice(`Downloaded ${this.formData.outputFilePath}`);
 	}
 
 	/**
