@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Base templates not created on import** - Import Wizard now auto-creates base templates (people, places, events, sources, organizations) after successful imports, matching the Control Center behavior.
+
 ---
 
 ## [0.17.1] - 2025-12-25
@@ -34,8 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Temporary canvas file cleanup** - Excalidraw export no longer leaves behind an intermediate `.canvas` file.
 
 - **Generate button reactivity** - Canvas name input changes now immediately update the Generate button state.
-
-- **Duplicate navigation footer** - Fixed wizard modal showing multiple navigation bars when canvas name was edited.
 
 ### Internal
 
