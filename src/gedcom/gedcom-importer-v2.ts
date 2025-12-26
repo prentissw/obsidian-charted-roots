@@ -374,6 +374,9 @@ export class GedcomImporterV2 {
 			// Phase 3: Create event notes
 			if (options.createEventNotes && totalEvents > 0) {
 				let eventIndex = 0;
+				// Track created event paths to handle duplicate filenames
+				// (vault indexing may not catch up fast enough between sequential creates)
+				const createdEventPaths = new Set<string>();
 
 				// Individual events
 				for (const individual of gedcomData.individuals.values()) {
@@ -388,7 +391,8 @@ export class GedcomImporterV2 {
 								gedcomToNotePath,
 								sourceIdToNotePath,
 								placeToNoteInfo,
-								options
+								options,
+								createdEventPaths
 							);
 							result.eventsCreated++;
 						} catch (error: unknown) {
@@ -413,7 +417,8 @@ export class GedcomImporterV2 {
 								gedcomToNotePath,
 								sourceIdToNotePath,
 								placeToNoteInfo,
-								options
+								options,
+								createdEventPaths
 							);
 							result.eventsCreated++;
 						} catch (error: unknown) {
@@ -832,7 +837,8 @@ export class GedcomImporterV2 {
 		gedcomToNotePath: Map<string, string>,
 		sourceIdToNotePath: Map<string, string>,
 		placeToNoteInfo: Map<string, PlaceNoteInfo>,
-		options: GedcomImportOptionsV2
+		options: GedcomImportOptionsV2,
+		createdEventPaths?: Set<string>
 	): Promise<TFile> {
 		// Build event title
 		let title: string;
@@ -936,13 +942,18 @@ export class GedcomImporterV2 {
 		const filePath = normalizePath(`${options.eventsFolder}/${fileName}`);
 
 		// Handle duplicate filenames
+		// Check both the vault and the set of paths created during this import session
+		// (vault indexing may not have caught up yet for recently created files)
 		let finalPath = filePath;
 		let counter = 1;
-		while (this.app.vault.getAbstractFileByPath(finalPath)) {
+		while (this.app.vault.getAbstractFileByPath(finalPath) || createdEventPaths?.has(finalPath)) {
 			const baseName = this.formatFilename(`${title}-${counter}`, eventFormat);
 			finalPath = normalizePath(`${options.eventsFolder}/${baseName}`);
 			counter++;
 		}
+
+		// Track this path as created before actually creating the file
+		createdEventPaths?.add(finalPath);
 
 		const file = await this.app.vault.create(finalPath, content);
 		return file;
