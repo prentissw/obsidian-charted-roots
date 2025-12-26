@@ -10,7 +10,150 @@ Phase 4 focuses on user experience refinements for the Post-Import Cleanup Wizar
 
 ## Tasks
 
-### Task 1: Keyboard Navigation
+### Task 1: Batch Operation Progress Indicators
+
+**Goal:** Provide visual feedback during batch fix operations so users know progress is happening.
+
+**Problem:** During large batch operations (Steps 2-6, 10), there's no indication that work is in progress. The UI just shows "In progress" status with no granular feedback. For vaults with hundreds of notes, this can leave users wondering if the operation is stuck.
+
+**Note:** Steps 7-9 (geocoding, hierarchy enrichment) already have progress bars because they re-render periodically. This task brings the same pattern to the remaining batch steps.
+
+**Requirements:**
+- Show progress bar during batch operations
+- Display current/total count (e.g., "Processing 47 of 312 notes")
+- Update UI periodically (every 5-10 items) to show progress
+- Optionally show the current file being processed
+
+**Implementation Approach:**
+
+1. **Add progress callbacks to service methods**
+
+```typescript
+// In data-quality.ts
+interface BatchProgressCallback {
+  onProgress?: (current: number, total: number, currentFile?: string) => void;
+}
+
+async normalizeDateFormats(
+  options: DataQualityOptions = {},
+  progress?: BatchProgressCallback
+): Promise<BatchOperationResult> {
+  const people = this.getPeopleForScope(options);
+  // ...
+  for (let i = 0; i < people.length; i++) {
+    const person = people[i];
+    progress?.onProgress?.(i + 1, people.length, person.file.basename);
+    // ... existing logic
+  }
+}
+```
+
+2. **Track progress state in wizard modal**
+
+```typescript
+// In cleanup-wizard-modal.ts
+interface BatchProgressState {
+  current: number;
+  total: number;
+  currentFile?: string;
+}
+
+private batchProgress: BatchProgressState | null = null;
+```
+
+3. **Render progress during batch operations**
+
+```typescript
+private renderBatchProgress(container: HTMLElement): void {
+  if (!this.batchProgress) return;
+
+  const { current, total, currentFile } = this.batchProgress;
+  const percent = Math.round((current / total) * 100);
+
+  const progressContainer = container.createDiv({ cls: 'crc-cleanup-batch-progress' });
+
+  // Progress text
+  const text = progressContainer.createDiv({ cls: 'crc-cleanup-batch-progress-text' });
+  text.textContent = `Processing ${current} of ${total} notes...`;
+
+  // Progress bar
+  const barContainer = progressContainer.createDiv({ cls: 'crc-cleanup-batch-progress-bar-container' });
+  const bar = barContainer.createDiv({ cls: 'crc-cleanup-batch-progress-bar' });
+  bar.style.width = `${percent}%`;
+
+  // Current file (optional)
+  if (currentFile) {
+    const fileText = progressContainer.createDiv({ cls: 'crc-cleanup-batch-progress-file' });
+    fileText.textContent = currentFile;
+  }
+}
+```
+
+4. **Update applyBatchFixes to pass progress callback**
+
+```typescript
+private async applyBatchFixes(stepConfig: WizardStepConfig): Promise<void> {
+  // ...
+  const onProgress = (current: number, total: number, currentFile?: string) => {
+    this.batchProgress = { current, total, currentFile };
+    // Re-render every 5 items to avoid excessive updates
+    if (current % 5 === 0 || current === total) {
+      this.renderCurrentView();
+    }
+  };
+
+  switch (stepConfig.id) {
+    case 'date-normalize':
+      result = await service.normalizeDateFormats({}, { onProgress });
+      break;
+    // ... other cases
+  }
+
+  this.batchProgress = null;
+  // ...
+}
+```
+
+**CSS:**
+
+```css
+.crc-cleanup-batch-progress {
+  padding: var(--size-4-2);
+  text-align: center;
+}
+
+.crc-cleanup-batch-progress-text {
+  margin-bottom: var(--size-4-2);
+  color: var(--text-muted);
+}
+
+.crc-cleanup-batch-progress-bar-container {
+  height: 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.crc-cleanup-batch-progress-bar {
+  height: 100%;
+  background: var(--interactive-accent);
+  transition: width 0.2s ease;
+}
+
+.crc-cleanup-batch-progress-file {
+  margin-top: var(--size-4-1);
+  font-size: var(--font-smaller);
+  color: var(--text-faint);
+  font-family: var(--font-monospace);
+}
+```
+
+**Effort:** Low-Medium
+**Priority:** High (UX improvement for large vaults)
+
+---
+
+### Task 2: Keyboard Navigation
 
 **Goal:** Full keyboard accessibility for wizard navigation.
 
@@ -81,7 +224,7 @@ private handleOverviewKeyboard(e: KeyboardEvent): void {
 
 ---
 
-### Task 2: Step Reordering (Drag-Drop Tiles)
+### Task 3: Step Reordering (Drag-Drop Tiles)
 
 **Goal:** Allow users to customize the order of steps for their workflow.
 
@@ -147,7 +290,7 @@ function isValidOrder(order: string[]): boolean {
 
 ---
 
-### Task 3: Cleanup Profiles
+### Task 4: Cleanup Profiles
 
 **Goal:** Save and load named cleanup configurations.
 
@@ -235,7 +378,7 @@ const BUILTIN_PROFILES: CleanupProfile[] = [
 
 ---
 
-### Task 4: Step Transition Animations
+### Task 5: Step Transition Animations
 
 **Goal:** Smooth visual transitions between wizard states.
 
@@ -317,7 +460,7 @@ const BUILTIN_PROFILES: CleanupProfile[] = [
 
 ---
 
-### Task 5: Schema Validation Integration
+### Task 6: Schema Validation Integration
 
 **Goal:** Integrate wizard with future schema validation system.
 
@@ -349,23 +492,27 @@ const BUILTIN_PROFILES: CleanupProfile[] = [
 
 Recommended implementation sequence:
 
-1. **Task 1: Keyboard Navigation** (High priority, low effort)
+1. **Task 1: Batch Operation Progress Indicators** (High priority, low-medium effort)
+   - Addresses user-reported UX issue in large vaults
+   - Follows existing pattern from geocoding/hierarchy steps
+
+2. **Task 2: Keyboard Navigation** (High priority, low effort)
    - Immediate accessibility improvement
    - No breaking changes
 
-2. **Task 4: Animations** (Low priority, low effort)
+3. **Task 5: Animations** (Low priority, low effort)
    - Quick win for UX polish
    - Can be added incrementally
 
-3. **Task 3: Cleanup Profiles** (Medium priority, medium effort)
+4. **Task 4: Cleanup Profiles** (Medium priority, medium effort)
    - Useful for power users
-   - Foundation for task 2
+   - Foundation for task 3
 
-4. **Task 2: Step Reordering** (Low priority, medium effort)
+5. **Task 3: Step Reordering** (Low priority, medium effort)
    - Complex due to dependency validation
    - May not be needed if profiles cover the use case
 
-5. **Task 5: Schema Integration** (Low priority, high effort)
+6. **Task 6: Schema Integration** (Low priority, high effort)
    - Defer until schema validation exists
 
 ---
