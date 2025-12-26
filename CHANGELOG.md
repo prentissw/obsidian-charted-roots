@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Dynamic block order** - When automatically added to person notes, dynamic code blocks now appear in the order: Media, Timeline, Relationships (previously Timeline, Relationships, Media).
 
+- **Dynamic blocks enabled by default** - The "Include dynamic blocks" option in Create Person modal is now enabled by default, automatically adding Media, Timeline, and Relationships code blocks to new person notes.
+
 ---
 
 ## [0.17.1] - 2025-12-25
