@@ -709,6 +709,112 @@ export class GedcomImporterV2 {
 			);
 		}
 
+		// Fix wikilinks to use actual filenames (handles duplicate names)
+		// When files are created with suffixes like "John Smith-1.md" for duplicates,
+		// the wikilinks need to point to the actual filename, not the display name
+		const wikilinkReplacements: Array<{ displayName: string; actualFilename: string }> = [];
+
+		// Father
+		if (individual.fatherRef) {
+			const fatherPath = gedcomToNotePath.get(individual.fatherRef);
+			const father = gedcomData.individuals.get(individual.fatherRef);
+			if (fatherPath && father?.name) {
+				const actualFilename = this.getFilenameFromPath(fatherPath);
+				if (actualFilename !== father.name) {
+					wikilinkReplacements.push({ displayName: father.name, actualFilename });
+				}
+			}
+		}
+
+		// Mother
+		if (individual.motherRef) {
+			const motherPath = gedcomToNotePath.get(individual.motherRef);
+			const mother = gedcomData.individuals.get(individual.motherRef);
+			if (motherPath && mother?.name) {
+				const actualFilename = this.getFilenameFromPath(motherPath);
+				if (actualFilename !== mother.name) {
+					wikilinkReplacements.push({ displayName: mother.name, actualFilename });
+				}
+			}
+		}
+
+		// Spouses
+		for (const spouseRef of individual.spouseRefs) {
+			const spousePath = gedcomToNotePath.get(spouseRef);
+			const spouse = gedcomData.individuals.get(spouseRef);
+			if (spousePath && spouse?.name) {
+				const actualFilename = this.getFilenameFromPath(spousePath);
+				if (actualFilename !== spouse.name) {
+					wikilinkReplacements.push({ displayName: spouse.name, actualFilename });
+				}
+			}
+		}
+
+		// Children (from families where this person is a parent)
+		for (const family of gedcomData.families.values()) {
+			if (family.husbandRef === individual.id || family.wifeRef === individual.id) {
+				for (const childRef of family.childRefs) {
+					const childPath = gedcomToNotePath.get(childRef);
+					const child = gedcomData.individuals.get(childRef);
+					if (childPath && child?.name) {
+						const actualFilename = this.getFilenameFromPath(childPath);
+						if (actualFilename !== child.name) {
+							wikilinkReplacements.push({ displayName: child.name, actualFilename });
+						}
+					}
+				}
+			}
+		}
+
+		// Step/adoptive parents
+		const stepAdoptiveParentsForWikilinks = this.extractStepAdoptiveParents(individual, gedcomData);
+		for (const stepfatherRef of stepAdoptiveParentsForWikilinks.stepfatherRefs) {
+			const stepfatherPath = gedcomToNotePath.get(stepfatherRef);
+			const stepfather = gedcomData.individuals.get(stepfatherRef);
+			if (stepfatherPath && stepfather?.name) {
+				const actualFilename = this.getFilenameFromPath(stepfatherPath);
+				if (actualFilename !== stepfather.name) {
+					wikilinkReplacements.push({ displayName: stepfather.name, actualFilename });
+				}
+			}
+		}
+		for (const stepmotherRef of stepAdoptiveParentsForWikilinks.stepmotherRefs) {
+			const stepmotherPath = gedcomToNotePath.get(stepmotherRef);
+			const stepmother = gedcomData.individuals.get(stepmotherRef);
+			if (stepmotherPath && stepmother?.name) {
+				const actualFilename = this.getFilenameFromPath(stepmotherPath);
+				if (actualFilename !== stepmother.name) {
+					wikilinkReplacements.push({ displayName: stepmother.name, actualFilename });
+				}
+			}
+		}
+		if (stepAdoptiveParentsForWikilinks.adoptiveFatherRef) {
+			const adoptiveFatherPath = gedcomToNotePath.get(stepAdoptiveParentsForWikilinks.adoptiveFatherRef);
+			const adoptiveFather = gedcomData.individuals.get(stepAdoptiveParentsForWikilinks.adoptiveFatherRef);
+			if (adoptiveFatherPath && adoptiveFather?.name) {
+				const actualFilename = this.getFilenameFromPath(adoptiveFatherPath);
+				if (actualFilename !== adoptiveFather.name) {
+					wikilinkReplacements.push({ displayName: adoptiveFather.name, actualFilename });
+				}
+			}
+		}
+		if (stepAdoptiveParentsForWikilinks.adoptiveMotherRef) {
+			const adoptiveMotherPath = gedcomToNotePath.get(stepAdoptiveParentsForWikilinks.adoptiveMotherRef);
+			const adoptiveMother = gedcomData.individuals.get(stepAdoptiveParentsForWikilinks.adoptiveMotherRef);
+			if (adoptiveMotherPath && adoptiveMother?.name) {
+				const actualFilename = this.getFilenameFromPath(adoptiveMotherPath);
+				if (actualFilename !== adoptiveMother.name) {
+					wikilinkReplacements.push({ displayName: adoptiveMother.name, actualFilename });
+				}
+			}
+		}
+
+		// Apply wikilink replacements
+		for (const { displayName, actualFilename } of wikilinkReplacements) {
+			const pattern = new RegExp(`\\[\\[${this.escapeRegex(displayName)}\\]\\]`, 'g');
+			updatedContent = updatedContent.replace(pattern, `[[${actualFilename}]]`);
+		}
+
 		if (updatedContent !== content) {
 			await this.app.vault.modify(file, updatedContent);
 		}
@@ -980,6 +1086,20 @@ export class GedcomImporterV2 {
 	// ============================================================================
 	// Private: Utilities
 	// ============================================================================
+
+	/**
+	 * Escape special regex characters in a string
+	 */
+	private escapeRegex(str: string): string {
+		return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	}
+
+	/**
+	 * Extract filename (without .md extension) from a full path
+	 */
+	private getFilenameFromPath(path: string): string {
+		return path.replace(/\.md$/, '').split('/').pop() || '';
+	}
 
 	/**
 	 * Get the filename format for a specific note type
