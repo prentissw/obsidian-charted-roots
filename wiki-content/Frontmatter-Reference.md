@@ -545,15 +545,24 @@ Sources can link to media files (images, scans, documents) in the vault:
 
 ---
 
-## Linking Sources to Person Notes
+## Linking Sources to Person and Event Notes
 
-Sources are linked to person notes using the `source` property (with indexed properties for multiple sources):
+Sources are linked to person and event notes using the `sources` property as a YAML array:
 
 | Property | Type | Description | Example |
 |----------|------|-------------|---------|
-| `source` | `string` | Wikilink to first source | `"[[1900 US Census - Smith Family]]"` |
-| `source_2` | `string` | Wikilink to second source | `"[[1910 US Census - Smith Family]]"` |
-| `source_3` | `string` | Continue pattern for additional sources | ... |
+| `sources` | `string[]` | Array of wikilinks to source notes | See below |
+
+**Recommended format (array):**
+
+```yaml
+sources:
+  - "[[1900 US Census - Smith Family]]"
+  - "[[1910 US Census - Smith Family]]"
+  - "[[Birth Certificate - John Smith]]"
+```
+
+> **Note:** An older indexed format (`source`, `source_2`, `source_3`...) is deprecated but still supported for backwards compatibility. Use the Cleanup Wizard (Step 6: Source Migration) to convert existing notes to the array format.
 
 ---
 
@@ -861,6 +870,7 @@ All person note properties can be aliased:
 | Dates | `born`, `died` |
 | Places | `birth_place`, `death_place` |
 | Relationships | `father`, `father_id`, `mother`, `mother_id`, `spouse`, `spouse_id`, `child`, `children_id` |
+| Sources | `sources` |
 | Other | `occupation`, `universe`, `image`, `sourced_facts`, `relationships` |
 
 ### Tips
@@ -968,6 +978,9 @@ ahnentafel: 1
 media:
   - "[[john-smith-portrait.jpg]]"
   - "[[smith-family-photo-1920.jpg]]"
+sources:
+  - "[[1900 US Census - Smith Family]]"
+  - "[[Birth Certificate - John Robert Smith]]"
 sourced_facts:
   birth_date:
     sources:
