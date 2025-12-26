@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Configured media folders in Bulk Media Linker** - The Link Media to Sources wizard now offers to use media folders configured in Control Center → Preferences. When folders are configured, users can select from them with checkboxes or switch to custom folder entry. Files from multiple configured folders are combined automatically.
+
+### Fixed
+
+- **Table overflow in Bulk Media Linker** - Fixed table columns spilling outside the modal. Column widths are now fixed with proper proportions, and the Apply button is no longer cut off.
+
+- **Pagination in Bulk Media Linker** - Link step now shows 10 rows at a time with "Show more" and "Show all" buttons, preventing UI sluggishness with large file sets.
+
+- **Focus loss in Media folder field** - Fixed input losing focus on every keystroke. Now only updates when selecting from suggestions or pressing Enter, matching the Control Center preferences behavior.
+
+- **Individual Apply button per row** - Added ability to apply links one at a time from the Link step, with checkmark showing applied status. Review and Execute steps now show only pending (unapplied) links.
+
+- **Confidence dot alignment** - Confidence indicator dots are now vertically aligned with filenames in a styled wrapper div.
+
 ---
 
 ## [0.17.3] - 2025-12-26

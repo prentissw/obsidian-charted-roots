@@ -6,7 +6,7 @@
  * media to sources that already exist but don't have media attached.
  */
 
-import { App, Modal, Notice, Setting, TFile, TFolder, TextComponent, AbstractInputSuggest } from 'obsidian';
+import { App, Modal, Notice, Setting, TFile, TFolder, TextComponent, AbstractInputSuggest, debounce } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import { createLucideIcon } from '../../ui/lucide-icons';
 import { SourceService } from '../services/source-service';
@@ -62,6 +62,11 @@ class FolderSuggest extends AbstractInputSuggest<TFolder> {
 type WizardStep = 'select' | 'link' | 'review' | 'execute';
 
 /**
+ * Folder source mode - whether using configured folders from preferences or custom entry
+ */
+type FolderSourceMode = 'configured' | 'custom';
+
+/**
  * Media file with linking info
  */
 interface MediaFileInfo {
@@ -69,6 +74,7 @@ interface MediaFileInfo {
 	linkedSource: SourceNote | null;
 	suggestedSources: ScoredSource[];
 	isFiltered: boolean;
+	isApplied: boolean;
 }
 
 /**
@@ -101,6 +107,8 @@ export class SourceMediaLinkerModal extends Modal {
 	private currentStep: WizardStep = 'select';
 
 	// Step 1: Select Media
+	private folderSourceMode: FolderSourceMode = 'custom';
+	private selectedConfiguredFolders: string[] = [];
 	private selectedFolder: string = '';
 	private excludeThumbnails: boolean = true;
 	private excludeHidden: boolean = true;
@@ -110,15 +118,41 @@ export class SourceMediaLinkerModal extends Modal {
 	private filteredFiles: MediaFileInfo[] = [];
 	private sourcesWithoutMedia: SourceNote[] = [];
 
+	// Step 2: Link - pagination
+	private displayedRowCount: number = 10;
+	private readonly ROWS_PER_PAGE: number = 10;
+
 	// Step 3: Execute
 	private isExecuting: boolean = false;
 	private executionResults: LinkResult[] = [];
 	private executionProgress: number = 0;
 
+	// Debounced render for text input changes (prevents focus loss)
+	private debouncedRender = debounce(() => this.render(), 300, true);
+
 	constructor(app: App, plugin: CanvasRootsPlugin) {
 		super(app);
 		this.plugin = plugin;
 		this.sourceService = new SourceService(app, plugin.settings);
+
+		// Initialize folder source mode based on whether media folders are configured
+		const configuredFolders = this.getConfiguredMediaFolders();
+		if (configuredFolders.length > 0) {
+			this.folderSourceMode = 'configured';
+			// Pre-select all configured folders
+			this.selectedConfiguredFolders = [...configuredFolders];
+		}
+	}
+
+	/**
+	 * Get configured media folders from plugin settings
+	 */
+	private getConfiguredMediaFolders(): string[] {
+		const settings = this.plugin.settings;
+		if (settings.enableMediaFolderFilter && settings.mediaFolders.length > 0) {
+			return settings.mediaFolders;
+		}
+		return [];
 	}
 
 	onOpen(): void {
@@ -128,6 +162,11 @@ export class SourceMediaLinkerModal extends Modal {
 
 		// Load sources without media
 		this.loadSourcesWithoutMedia();
+
+		// If configured folders are pre-selected, load files from them
+		if (this.folderSourceMode === 'configured' && this.selectedConfiguredFolders.length > 0) {
+			this.loadFilesFromConfiguredFolders();
+		}
 
 		this.render();
 	}
@@ -233,25 +272,16 @@ export class SourceMediaLinkerModal extends Modal {
 			return;
 		}
 
-		// Folder selection
-		new Setting(container)
-			.setName('Media folder')
-			.setDesc('Select the vault folder containing images to link')
-			.addText((text) => {
-				text.setPlaceholder('Canvas Roots/Sources/Media').setValue(this.selectedFolder);
+		// Folder selection - show configured folders or custom input
+		const configuredFolders = this.getConfiguredMediaFolders();
 
-				new FolderSuggest(this.app, text, (value) => {
-					this.selectedFolder = value;
-					this.loadFilesFromFolder();
-					this.render();
-				});
-
-				text.onChange((value) => {
-					this.selectedFolder = value;
-					this.loadFilesFromFolder();
-					this.render();
-				});
-			});
+		if (configuredFolders.length > 0) {
+			// Show folder source options
+			this.renderFolderSourceOptions(container, configuredFolders);
+		} else {
+			// No configured folders - show custom input only
+			this.renderCustomFolderInput(container);
+		}
 
 		// Filter options
 		container.createDiv({
@@ -281,10 +311,148 @@ export class SourceMediaLinkerModal extends Modal {
 				});
 			});
 
-		// File preview
-		if (this.selectedFolder) {
+		// File preview - show if we have files loaded
+		if (this.filteredFiles.length > 0 || this.allFiles.length > 0) {
+			this.renderFilePreview(container);
+		} else if (this.folderSourceMode === 'custom' && this.selectedFolder) {
 			this.renderFilePreview(container);
 		}
+	}
+
+	/**
+	 * Render folder source options when configured folders exist
+	 */
+	private renderFolderSourceOptions(container: HTMLElement, configuredFolders: string[]): void {
+		container.createDiv({
+			cls: 'cr-media-linker__section-header',
+			text: 'Media folder source',
+		});
+
+		const optionsContainer = container.createDiv({ cls: 'cr-media-linker__folder-options' });
+
+		// Option 1: Use configured folders
+		const configuredOption = optionsContainer.createDiv({ cls: 'cr-media-linker__folder-option' });
+		const configuredRadio = configuredOption.createEl('input', {
+			type: 'radio',
+			attr: { name: 'folder-source', id: 'folder-source-configured' },
+		});
+		configuredRadio.checked = this.folderSourceMode === 'configured';
+		configuredRadio.addEventListener('change', () => {
+			if (configuredRadio.checked) {
+				this.folderSourceMode = 'configured';
+				this.selectedFolder = '';
+				this.loadFilesFromConfiguredFolders();
+				this.render();
+			}
+		});
+
+		const configuredLabel = configuredOption.createEl('label', {
+			attr: { for: 'folder-source-configured' },
+		});
+		configuredLabel.createSpan({
+			text: 'Use configured media folders',
+			cls: 'cr-media-linker__folder-option-label',
+		});
+
+		// Show configured folders as checkboxes (when this option is selected)
+		if (this.folderSourceMode === 'configured') {
+			const foldersListEl = configuredOption.createDiv({ cls: 'cr-media-linker__configured-folders' });
+
+			for (const folder of configuredFolders) {
+				const folderItem = foldersListEl.createDiv({ cls: 'cr-media-linker__configured-folder-item' });
+
+				const checkbox = folderItem.createEl('input', {
+					type: 'checkbox',
+					attr: { id: `folder-${folder.replace(/[^a-zA-Z0-9]/g, '-')}` },
+				});
+				checkbox.checked = this.selectedConfiguredFolders.includes(folder);
+				checkbox.addEventListener('change', () => {
+					if (checkbox.checked) {
+						if (!this.selectedConfiguredFolders.includes(folder)) {
+							this.selectedConfiguredFolders.push(folder);
+						}
+					} else {
+						this.selectedConfiguredFolders = this.selectedConfiguredFolders.filter((f) => f !== folder);
+					}
+					this.loadFilesFromConfiguredFolders();
+					this.render();
+				});
+
+				folderItem.createEl('label', {
+					text: folder,
+					attr: { for: `folder-${folder.replace(/[^a-zA-Z0-9]/g, '-')}` },
+					cls: 'cr-media-linker__configured-folder-label',
+				});
+			}
+		} else {
+			// Show folder count hint when not selected
+			configuredOption.createSpan({
+				text: ` (${configuredFolders.length} folder${configuredFolders.length > 1 ? 's' : ''} from Preferences)`,
+				cls: 'cr-media-linker__folder-option-hint',
+			});
+		}
+
+		// Option 2: Custom folder
+		const customOption = optionsContainer.createDiv({ cls: 'cr-media-linker__folder-option' });
+		const customRadio = customOption.createEl('input', {
+			type: 'radio',
+			attr: { name: 'folder-source', id: 'folder-source-custom' },
+		});
+		customRadio.checked = this.folderSourceMode === 'custom';
+		customRadio.addEventListener('change', () => {
+			if (customRadio.checked) {
+				this.folderSourceMode = 'custom';
+				this.selectedConfiguredFolders = [];
+				this.allFiles = [];
+				this.filteredFiles = [];
+				this.render();
+			}
+		});
+
+		const customLabel = customOption.createEl('label', {
+			attr: { for: 'folder-source-custom' },
+		});
+		customLabel.createSpan({
+			text: 'Custom folder...',
+			cls: 'cr-media-linker__folder-option-label',
+		});
+
+		// Show custom folder input when custom is selected
+		if (this.folderSourceMode === 'custom') {
+			const customInputContainer = customOption.createDiv({ cls: 'cr-media-linker__custom-folder-input' });
+			this.renderCustomFolderInput(customInputContainer);
+		}
+	}
+
+	/**
+	 * Render custom folder text input
+	 */
+	private renderCustomFolderInput(container: HTMLElement): void {
+		new Setting(container)
+			.setName('Media folder')
+			.setDesc('Select the vault folder containing images to link')
+			.addText((text) => {
+				text.setPlaceholder('Canvas Roots/Sources/Media').setValue(this.selectedFolder);
+
+				// Only update when user selects from suggestions (matches preferences tab pattern)
+				new FolderSuggest(this.app, text, (value) => {
+					this.selectedFolder = value;
+					this.loadFilesFromFolder();
+					this.render();
+				});
+
+				// Handle Enter key for manual entry
+				text.inputEl.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter') {
+						const value = text.inputEl.value.trim();
+						if (value) {
+							this.selectedFolder = value;
+							this.loadFilesFromFolder();
+							this.render();
+						}
+					}
+				});
+			});
 	}
 
 	/**
@@ -293,6 +461,7 @@ export class SourceMediaLinkerModal extends Modal {
 	private loadFilesFromFolder(): void {
 		this.allFiles = [];
 		this.filteredFiles = [];
+		this.displayedRowCount = this.ROWS_PER_PAGE; // Reset pagination
 
 		if (!this.selectedFolder) return;
 
@@ -326,6 +495,58 @@ export class SourceMediaLinkerModal extends Modal {
 				linkedSource: suggestions.length > 0 ? suggestions[0].source : null,
 				suggestedSources: suggestions,
 				isFiltered: false,
+				isApplied: false,
+			});
+		}
+
+		this.applyFilters();
+	}
+
+	/**
+	 * Load files from all selected configured folders
+	 */
+	private loadFilesFromConfiguredFolders(): void {
+		this.allFiles = [];
+		this.filteredFiles = [];
+		this.displayedRowCount = this.ROWS_PER_PAGE; // Reset pagination
+
+		if (this.selectedConfiguredFolders.length === 0) return;
+
+		// Recursively get all files in a folder
+		const getAllFiles = (f: TFolder): TFile[] => {
+			const files: TFile[] = [];
+			for (const child of f.children) {
+				if (child instanceof TFile) {
+					files.push(child);
+				} else if (child instanceof TFolder) {
+					files.push(...getAllFiles(child));
+				}
+			}
+			return files;
+		};
+
+		// Collect files from all selected folders
+		const allCollectedFiles: TFile[] = [];
+		for (const folderPath of this.selectedConfiguredFolders) {
+			const folder = this.app.vault.getAbstractFileByPath(folderPath);
+			if (folder instanceof TFolder) {
+				allCollectedFiles.push(...getAllFiles(folder));
+			}
+		}
+
+		// Process each file
+		for (const file of allCollectedFiles) {
+			if (!isImageFile(file.name)) continue;
+
+			const suggestions = this.calculateSuggestions(file);
+
+			this.allFiles.push({
+				file,
+				// Auto-select top suggestion if available
+				linkedSource: suggestions.length > 0 ? suggestions[0].source : null,
+				suggestedSources: suggestions,
+				isFiltered: false,
+				isApplied: false,
 			});
 		}
 
@@ -514,15 +735,22 @@ export class SourceMediaLinkerModal extends Modal {
 
 		// Summary with breakdown
 		const linkedCount = this.filteredFiles.filter((f) => f.linkedSource !== null).length;
+		const appliedCount = this.filteredFiles.filter((f) => f.isApplied).length;
 		const autoMatchedCount = this.filteredFiles.filter((f) => f.suggestedSources.length > 0).length;
 		const manualCount = this.filteredFiles.length - autoMatchedCount;
 
 		const summaryEl = container.createDiv({ cls: 'cr-media-linker__link-summary' });
 		summaryEl.createSpan({ text: `${linkedCount} of ${this.filteredFiles.length} images linked` });
+		if (appliedCount > 0) {
+			summaryEl.createSpan({
+				cls: 'cr-media-linker__summary-applied',
+				text: ` · ${appliedCount} already applied`,
+			});
+		}
 		if (manualCount > 0) {
 			summaryEl.createSpan({
 				cls: 'cr-media-linker__summary-detail',
-				text: ` · ${autoMatchedCount} auto-matched, ${manualCount} need manual selection`,
+				text: ` · ${manualCount} need manual selection`,
 			});
 		}
 
@@ -540,14 +768,45 @@ export class SourceMediaLinkerModal extends Modal {
 		// Body
 		const tbody = table.createEl('tbody');
 
-		for (const info of this.filteredFiles.slice(0, 50)) {
+		const displayCount = Math.min(this.displayedRowCount, this.filteredFiles.length);
+		for (const info of this.filteredFiles.slice(0, displayCount)) {
 			this.renderLinkRow(tbody, info);
 		}
 
-		if (this.filteredFiles.length > 50) {
+		// Show more / pagination controls
+		if (this.filteredFiles.length > displayCount) {
+			const remaining = this.filteredFiles.length - displayCount;
+			const paginationEl = container.createDiv({ cls: 'cr-media-linker__pagination' });
+
+			paginationEl.createSpan({
+				cls: 'cr-media-linker__pagination-info',
+				text: `Showing ${displayCount} of ${this.filteredFiles.length} files`,
+			});
+
+			const showMoreBtn = paginationEl.createEl('button', {
+				cls: 'cr-media-linker__show-more',
+				text: `Show ${Math.min(this.ROWS_PER_PAGE, remaining)} more`,
+			});
+			showMoreBtn.addEventListener('click', () => {
+				this.displayedRowCount += this.ROWS_PER_PAGE;
+				this.render();
+			});
+
+			if (this.filteredFiles.length > this.ROWS_PER_PAGE * 2) {
+				const showAllBtn = paginationEl.createEl('button', {
+					cls: 'cr-media-linker__show-all',
+					text: `Show all (${this.filteredFiles.length})`,
+				});
+				showAllBtn.addEventListener('click', () => {
+					this.displayedRowCount = this.filteredFiles.length;
+					this.render();
+				});
+			}
+		} else if (this.filteredFiles.length > this.ROWS_PER_PAGE) {
+			// All rows shown, but there are more than default - show count
 			container.createDiv({
-				cls: 'cr-media-linker__info',
-				text: `Showing 50 of ${this.filteredFiles.length} files`,
+				cls: 'cr-media-linker__pagination-info',
+				text: `Showing all ${this.filteredFiles.length} files`,
 			});
 		}
 	}
@@ -580,20 +839,23 @@ export class SourceMediaLinkerModal extends Modal {
 		// Image cell with confidence indicator
 		const imageCell = row.createEl('td', { cls: 'cr-media-linker__cell-image' });
 
+		// Wrapper for dot + filename
+		const fileWrapper = imageCell.createDiv({ cls: 'cr-media-linker__file-wrapper' });
+
 		// Confidence dot
 		if (hasSuggestions) {
-			const confidenceDot = imageCell.createSpan({
+			const confidenceDot = fileWrapper.createSpan({
 				cls: `cr-media-linker__confidence cr-media-linker__confidence--${confidence}`,
 			});
 			confidenceDot.setAttribute('aria-label', `${confidence} confidence match`);
 		} else {
-			const confidenceDot = imageCell.createSpan({
+			const confidenceDot = fileWrapper.createSpan({
 				cls: 'cr-media-linker__confidence cr-media-linker__confidence--none',
 			});
 			confidenceDot.setAttribute('aria-label', 'No suggestions found');
 		}
 
-		const fileNameEl = imageCell.createEl('code', { cls: 'cr-media-linker__filename' });
+		const fileNameEl = fileWrapper.createEl('code', { cls: 'cr-media-linker__filename' });
 		fileNameEl.textContent = info.file.name;
 
 		// Source dropdown cell
@@ -666,10 +928,39 @@ export class SourceMediaLinkerModal extends Modal {
 
 		// Status cell
 		const statusCell = row.createEl('td', { cls: 'cr-media-linker__cell-status' });
-		if (info.linkedSource) {
-			statusCell.createSpan({ text: '✓', cls: 'cr-media-linker__status-ok' });
+		if (info.isApplied) {
+			// Already applied - show checkmark
+			statusCell.createSpan({ text: '✓', cls: 'cr-media-linker__status-applied' });
+		} else if (info.linkedSource) {
+			// Has selection but not applied - show Apply button
+			const applyBtn = statusCell.createEl('button', {
+				cls: 'cr-media-linker__apply-btn',
+				text: 'Apply',
+			});
+			applyBtn.addEventListener('click', () => {
+				void this.applyLinkForRow(info);
+			});
 		} else {
 			statusCell.createSpan({ text: '—', cls: 'crc-text-muted' });
+		}
+	}
+
+	/**
+	 * Apply link for a single row
+	 */
+	private async applyLinkForRow(info: MediaFileInfo): Promise<void> {
+		if (!info.linkedSource || info.isApplied) return;
+
+		try {
+			await this.linkMediaToSource(info);
+			info.isApplied = true;
+			// Remove the linked source from available sources
+			this.sourcesWithoutMedia = this.sourcesWithoutMedia.filter(
+				(s) => s.crId !== info.linkedSource!.crId
+			);
+			this.render();
+		} catch (error) {
+			new Notice(`Failed to link: ${error instanceof Error ? error.message : String(error)}`);
 		}
 	}
 
@@ -682,12 +973,21 @@ export class SourceMediaLinkerModal extends Modal {
 			text: 'Review changes',
 		});
 
-		const linkedFiles = this.filteredFiles.filter((f) => f.linkedSource !== null);
+		// Only show files that are linked but NOT already applied
+		const pendingFiles = this.filteredFiles.filter((f) => f.linkedSource !== null && !f.isApplied);
+		const appliedCount = this.filteredFiles.filter((f) => f.isApplied).length;
 
-		if (linkedFiles.length === 0) {
+		if (pendingFiles.length === 0 && appliedCount === 0) {
 			const emptyEl = container.createDiv({ cls: 'cr-media-linker__empty' });
 			emptyEl.createSpan({ text: 'No images have been linked to sources.' });
 			emptyEl.createSpan({ cls: 'crc-text-muted', text: ' Go back and select sources for your images.' });
+			return;
+		}
+
+		if (pendingFiles.length === 0 && appliedCount > 0) {
+			const emptyEl = container.createDiv({ cls: 'cr-media-linker__empty' });
+			emptyEl.createSpan({ text: `All ${appliedCount} linked images have already been applied.` });
+			emptyEl.createSpan({ cls: 'crc-text-muted', text: ' Nothing more to do.' });
 			return;
 		}
 
@@ -700,15 +1000,18 @@ export class SourceMediaLinkerModal extends Modal {
 			item.createDiv({ cls: 'cr-media-linker__summary-value', text: value });
 		};
 
-		createSummaryItem('Images to link', String(linkedFiles.length));
-		createSummaryItem('Sources to update', String(new Set(linkedFiles.map((f) => f.linkedSource!.crId)).size));
+		createSummaryItem('Images to link', String(pendingFiles.length));
+		createSummaryItem('Sources to update', String(new Set(pendingFiles.map((f) => f.linkedSource!.crId)).size));
+		if (appliedCount > 0) {
+			createSummaryItem('Already applied', String(appliedCount));
+		}
 
 		// Preview list
 		container.createDiv({ cls: 'cr-media-linker__section-header', text: 'Changes to be made' });
 
 		const previewList = container.createDiv({ cls: 'cr-media-linker__review-list' });
 
-		for (const info of linkedFiles) {
+		for (const info of pendingFiles) {
 			const item = previewList.createDiv({ cls: 'cr-media-linker__review-item' });
 
 			// Image name
@@ -836,10 +1139,11 @@ export class SourceMediaLinkerModal extends Modal {
 			case 'select':
 				return this.filteredFiles.length > 0 && this.sourcesWithoutMedia.length > 0;
 			case 'link':
-				// At least one file must be linked
-				return this.filteredFiles.some((f) => f.linkedSource !== null);
+				// At least one file must be linked (and not already applied)
+				return this.filteredFiles.some((f) => f.linkedSource !== null && !f.isApplied);
 			case 'review':
-				return this.filteredFiles.some((f) => f.linkedSource !== null);
+				// At least one file must be linked and not already applied
+				return this.filteredFiles.some((f) => f.linkedSource !== null && !f.isApplied);
 			default:
 				return false;
 		}
@@ -880,13 +1184,15 @@ export class SourceMediaLinkerModal extends Modal {
 		this.render();
 
 		try {
-			const linkedFiles = this.filteredFiles.filter((f) => f.linkedSource !== null);
-			const total = linkedFiles.length;
+			// Only process files that are linked but not already applied
+			const pendingFiles = this.filteredFiles.filter((f) => f.linkedSource !== null && !f.isApplied);
+			const total = pendingFiles.length;
 
-			for (let i = 0; i < linkedFiles.length; i++) {
-				const info = linkedFiles[i];
+			for (let i = 0; i < pendingFiles.length; i++) {
+				const info = pendingFiles[i];
 				try {
 					await this.linkMediaToSource(info);
+					info.isApplied = true;
 					this.executionResults.push({
 						success: true,
 						mediaPath: info.file.name,

@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-26 18:08:09 UTC
+ * - Generated: 2025-12-26 22:44:38 UTC
  * - Components: 38 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -23605,7 +23605,7 @@ body.wide-timeline .view-content {
    COMPONENT: SOURCES.CSS
    ========================================================================== */
 
-/* Component Size: 2659 lines, 53.94 KB */
+/* Component Size: 2796 lines, 56.78 KB */
 
 /**
  * Sources Styles
@@ -25974,14 +25974,14 @@ body:has(.cr-media-linker) .suggestion-container {
 
 /* Tables */
 .cr-media-linker__table-container {
-  max-height: 400px;
-  overflow-y: auto;
+  overflow-x: hidden;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
 }
 
 .cr-media-linker__table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: var(--font-ui-small);
 }
@@ -25998,10 +25998,24 @@ body:has(.cr-media-linker) .suggestion-container {
   z-index: 1;
 }
 
+/* Column widths for fixed table layout */
+.cr-media-linker__table th:first-child {
+  width: 40%;
+}
+
+.cr-media-linker__table th:nth-child(2) {
+  width: calc(60% - 80px);
+}
+
+.cr-media-linker__table th:last-child {
+  width: 80px;
+}
+
 .cr-media-linker__table td {
   padding: var(--size-4-2) var(--size-4-3);
   border-bottom: 1px solid var(--background-modifier-border);
   vertical-align: middle;
+  overflow: hidden;
 }
 
 .cr-media-linker__table tr:hover {
@@ -26009,7 +26023,7 @@ body:has(.cr-media-linker) .suggestion-container {
 }
 
 .cr-media-linker__th-status {
-  width: 40px;
+  width: 80px;
 }
 
 .cr-media-linker__row {
@@ -26026,7 +26040,19 @@ body:has(.cr-media-linker) .suggestion-container {
 }
 
 .cr-media-linker__cell-image {
-  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Wrapper for confidence dot + filename */
+.cr-media-linker__file-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  background: var(--background-secondary);
+  padding: var(--size-4-1) var(--size-4-2);
+  border-radius: var(--radius-s);
+  max-width: 100%;
 }
 
 /* Confidence indicator dot */
@@ -26035,7 +26061,6 @@ body:has(.cr-media-linker) .suggestion-container {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin-right: var(--size-4-2);
   flex-shrink: 0;
 }
 
@@ -26057,16 +26082,18 @@ body:has(.cr-media-linker) .suggestion-container {
 }
 
 .cr-media-linker__filename {
-  background: var(--background-modifier-border);
-  padding: 2px 6px;
-  border-radius: var(--radius-s);
   font-family: var(--font-monospace);
   font-size: var(--font-ui-smaller);
   word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .cr-media-linker__cell-source {
-  min-width: 300px;
+  /* Let it fill remaining space after image column */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Wrapper for select + badge */
@@ -26074,6 +26101,13 @@ body:has(.cr-media-linker) .suggestion-container {
   display: flex;
   align-items: center;
   gap: var(--size-4-2);
+  min-width: 0; /* Allow flexbox to shrink */
+}
+
+.cr-media-linker__select-wrapper select {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* "+N more" badge */
@@ -26096,9 +26130,44 @@ body:has(.cr-media-linker) .suggestion-container {
   font-weight: var(--font-semibold);
 }
 
+.cr-media-linker__status-applied {
+  color: var(--color-green);
+  font-weight: var(--font-semibold);
+}
+
+.cr-media-linker__apply-btn {
+  font-size: var(--font-ui-smaller);
+  padding: 2px 8px;
+}
+
 /* Summary detail text */
 .cr-media-linker__summary-detail {
   color: var(--text-faint);
+}
+
+.cr-media-linker__summary-applied {
+  color: var(--color-green);
+}
+
+/* Pagination controls */
+.cr-media-linker__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--size-4-3);
+  padding: var(--size-4-3);
+  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.cr-media-linker__pagination-info {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.cr-media-linker__show-more,
+.cr-media-linker__show-all {
+  font-size: var(--font-ui-small);
 }
 
 /* Review Step */
@@ -26255,6 +26324,74 @@ body:has(.cr-media-linker) .suggestion-container {
 
 .cr-media-linker__log-item--error {
   color: var(--color-red);
+}
+
+/* Folder Source Options */
+.cr-media-linker__folder-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-3);
+}
+
+.cr-media-linker__folder-option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--size-4-2);
+  padding: var(--size-4-2) var(--size-4-3);
+  background: var(--background-secondary);
+  border-radius: var(--radius-m);
+}
+
+.cr-media-linker__folder-option input[type="radio"] {
+  margin-top: 3px;
+}
+
+.cr-media-linker__folder-option label {
+  cursor: pointer;
+}
+
+.cr-media-linker__folder-option-label {
+  font-weight: var(--font-medium);
+}
+
+.cr-media-linker__folder-option-hint {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+/* Configured folders list (checkboxes) */
+.cr-media-linker__configured-folders {
+  width: 100%;
+  margin-top: var(--size-4-2);
+  margin-left: var(--size-4-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-1);
+}
+
+.cr-media-linker__configured-folder-item {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.cr-media-linker__configured-folder-label {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+/* Custom folder input container */
+.cr-media-linker__custom-folder-input {
+  width: 100%;
+  margin-top: var(--size-4-2);
+}
+
+.cr-media-linker__custom-folder-input .setting-item {
+  padding-top: 0;
+  border-top: none;
 }
 
 /* Navigation Buttons */
@@ -31438,11 +31575,11 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-26 18:08:09 UTC
+ * Build completed: 2025-12-26 22:44:38 UTC
  * Components processed: 38
- * Total lines: 31073
- * Total size: 612.8 KB
- * Build duration: 0.07 seconds
+ * Total lines: 31210
+ * Total size: 615.64 KB
+ * Build duration: 0.03 seconds
  *
  * Component breakdown:
  * - variables.css: 56 lines, 1.61 KB
@@ -31472,7 +31609,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - events.css: 1419 lines, 28.58 KB
  * - timeline-callouts.css: 321 lines, 10.66 KB
  * - organizations.css: 245 lines, 4.36 KB
- * - sources.css: 2659 lines, 53.94 KB
+ * - sources.css: 2796 lines, 56.78 KB
  * - statistics.css: 1518 lines, 30.21 KB
  * - dashboard.css: 397 lines, 7.7 KB
  * - universe-wizard.css: 621 lines, 11.05 KB
