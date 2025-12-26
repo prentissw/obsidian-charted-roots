@@ -9,6 +9,24 @@ import type CanvasRootsPlugin from '../../../main';
 import type { SourceConfidence, SourceNote } from '../types/source-types';
 import { getSourceTypesByCategory, SOURCE_CATEGORY_NAMES } from '../types/source-types';
 import { SourceService } from '../services/source-service';
+import { ModalStatePersistence, renderResumePromptBanner } from '../../ui/modal-state-persistence';
+
+/**
+ * Form data structure for persistence
+ */
+interface SourceFormData {
+	title: string;
+	sourceType: string;
+	date: string;
+	dateAccessed: string;
+	repository: string;
+	repositoryUrl: string;
+	collection: string;
+	location: string;
+	confidence: SourceConfidence;
+	transcription: string;
+	media: string[];
+}
 
 /** Supported media file extensions */
 const MEDIA_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'pdf'];
@@ -113,6 +131,11 @@ export class CreateSourceModal extends Modal {
 	// UI state
 	private mediaListContainer: HTMLElement | null = null;
 
+	// State persistence
+	private persistence?: ModalStatePersistence<SourceFormData>;
+	private savedSuccessfully: boolean = false;
+	private resumeBanner?: HTMLElement;
+
 	constructor(app: App, plugin: CanvasRootsPlugin, optionsOrCallback?: SourceModalOptions | (() => void)) {
 		super(app);
 		this.plugin = plugin;
@@ -144,6 +167,11 @@ export class CreateSourceModal extends Modal {
 		} else {
 			this.onSuccess = () => {};
 		}
+
+		// Set up persistence (only in create mode)
+		if (!this.editMode) {
+			this.persistence = new ModalStatePersistence<SourceFormData>(this.plugin, 'source');
+		}
 	}
 
 	onOpen() {
@@ -152,6 +180,33 @@ export class CreateSourceModal extends Modal {
 		contentEl.addClass('cr-create-source-modal');
 
 		contentEl.createEl('h2', { text: this.editMode ? 'Edit source' : 'Create source' });
+
+		// Check for persisted state (only in create mode)
+		if (this.persistence && !this.editMode) {
+			const existingState = this.persistence.getValidState();
+			if (existingState) {
+				const timeAgo = this.persistence.getTimeAgoString(existingState);
+				this.resumeBanner = renderResumePromptBanner(
+					contentEl,
+					timeAgo,
+					() => {
+						// Discard - clear state and remove banner
+						void this.persistence?.clear();
+						this.resumeBanner?.remove();
+						this.resumeBanner = undefined;
+					},
+					() => {
+						// Restore - populate form with saved data
+						this.restoreFromPersistedState(existingState.formData as unknown as SourceFormData);
+						this.resumeBanner?.remove();
+						this.resumeBanner = undefined;
+						// Re-render form with restored data
+						contentEl.empty();
+						this.onOpen();
+					}
+				);
+			}
+		}
 
 		// Title (required)
 		new Setting(contentEl)
@@ -318,7 +373,52 @@ export class CreateSourceModal extends Modal {
 
 	onClose() {
 		const { contentEl } = this;
+
+		// Persist state if not saved successfully and we have persistence enabled
+		if (this.persistence && !this.editMode && !this.savedSuccessfully) {
+			const formData = this.gatherFormData();
+			if (this.persistence.hasContent(formData)) {
+				void this.persistence.persist(formData);
+			}
+		}
+
 		contentEl.empty();
+	}
+
+	/**
+	 * Gather current form data for persistence
+	 */
+	private gatherFormData(): SourceFormData {
+		return {
+			title: this.title,
+			sourceType: this.sourceType,
+			date: this.date,
+			dateAccessed: this.dateAccessed,
+			repository: this.repository,
+			repositoryUrl: this.repositoryUrl,
+			collection: this.collection,
+			location: this.location,
+			confidence: this.confidence,
+			transcription: this.transcription,
+			media: [...this.media]
+		};
+	}
+
+	/**
+	 * Restore form state from persisted data
+	 */
+	private restoreFromPersistedState(formData: SourceFormData): void {
+		this.title = formData.title || '';
+		this.sourceType = formData.sourceType || 'vital_record';
+		this.date = formData.date || '';
+		this.dateAccessed = formData.dateAccessed || '';
+		this.repository = formData.repository || '';
+		this.repositoryUrl = formData.repositoryUrl || '';
+		this.collection = formData.collection || '';
+		this.location = formData.location || '';
+		this.confidence = formData.confidence || 'unknown';
+		this.transcription = formData.transcription || '';
+		this.media = formData.media ? [...formData.media] : [];
 	}
 
 	/**
@@ -419,6 +519,12 @@ export class CreateSourceModal extends Modal {
 					media: this.media.length > 0 ? this.media : undefined,
 					transcription: this.transcription.trim() || undefined
 				});
+
+				// Mark as saved successfully and clear persisted state
+				this.savedSuccessfully = true;
+				if (this.persistence) {
+					void this.persistence.clear();
+				}
 
 				// Open the newly created file
 				await this.app.workspace.openLinkText(file.path, '');

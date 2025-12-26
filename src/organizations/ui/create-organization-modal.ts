@@ -9,6 +9,21 @@ import type CanvasRootsPlugin from '../../../main';
 import type { OrganizationType, OrganizationInfo } from '../types/organization-types';
 import { DEFAULT_ORGANIZATION_TYPES } from '../constants/organization-types';
 import { OrganizationService } from '../services/organization-service';
+import { ModalStatePersistence, renderResumePromptBanner } from '../../ui/modal-state-persistence';
+
+/**
+ * Form data structure for persistence
+ */
+interface OrganizationFormData {
+	name: string;
+	orgType: OrganizationType;
+	parentOrg: string;
+	universe: string;
+	founded: string;
+	motto: string;
+	seat: string;
+	folder: string;
+}
 
 /**
  * Options for the CreateOrganizationModal
@@ -42,6 +57,11 @@ export class CreateOrganizationModal extends Modal {
 	private seat: string = '';
 	private folder: string;
 
+	// State persistence
+	private persistence?: ModalStatePersistence<OrganizationFormData>;
+	private savedSuccessfully: boolean = false;
+	private resumeBanner?: HTMLElement;
+
 	constructor(app: App, plugin: CanvasRootsPlugin, options: CreateOrganizationModalOptions | (() => void)) {
 		super(app);
 		this.plugin = plugin;
@@ -68,6 +88,11 @@ export class CreateOrganizationModal extends Modal {
 		}
 
 		this.folder = plugin.settings.organizationsFolder;
+
+		// Set up persistence (only in create mode)
+		if (!this.editMode) {
+			this.persistence = new ModalStatePersistence<OrganizationFormData>(this.plugin, 'organization');
+		}
 	}
 
 	onOpen() {
@@ -76,6 +101,33 @@ export class CreateOrganizationModal extends Modal {
 		contentEl.addClass('cr-create-org-modal');
 
 		contentEl.createEl('h2', { text: this.editMode ? 'Edit organization' : 'Create organization' });
+
+		// Check for persisted state (only in create mode)
+		if (this.persistence && !this.editMode) {
+			const existingState = this.persistence.getValidState();
+			if (existingState) {
+				const timeAgo = this.persistence.getTimeAgoString(existingState);
+				this.resumeBanner = renderResumePromptBanner(
+					contentEl,
+					timeAgo,
+					() => {
+						// Discard - clear state and remove banner
+						void this.persistence?.clear();
+						this.resumeBanner?.remove();
+						this.resumeBanner = undefined;
+					},
+					() => {
+						// Restore - populate form with saved data
+						this.restoreFromPersistedState(existingState.formData as unknown as OrganizationFormData);
+						this.resumeBanner?.remove();
+						this.resumeBanner = undefined;
+						// Re-render form with restored data
+						contentEl.empty();
+						this.onOpen();
+					}
+				);
+			}
+		}
 
 		// Name
 		new Setting(contentEl)
@@ -179,7 +231,48 @@ export class CreateOrganizationModal extends Modal {
 
 	onClose() {
 		const { contentEl } = this;
+
+		// Persist state if not saved successfully and we have persistence enabled
+		if (this.persistence && !this.editMode && !this.savedSuccessfully) {
+			const formData = this.gatherFormData();
+			if (this.persistence.hasContent(formData)) {
+				void this.persistence.persist(formData);
+			}
+		}
+
 		contentEl.empty();
+	}
+
+	/**
+	 * Gather current form data for persistence
+	 */
+	private gatherFormData(): OrganizationFormData {
+		return {
+			name: this.name,
+			orgType: this.orgType,
+			parentOrg: this.parentOrg,
+			universe: this.universe,
+			founded: this.founded,
+			motto: this.motto,
+			seat: this.seat,
+			folder: this.folder
+		};
+	}
+
+	/**
+	 * Restore form state from persisted data
+	 */
+	private restoreFromPersistedState(formData: OrganizationFormData): void {
+		this.name = formData.name || '';
+		this.orgType = formData.orgType || 'custom';
+		this.parentOrg = formData.parentOrg || '';
+		this.universe = formData.universe || '';
+		this.founded = formData.founded || '';
+		this.motto = formData.motto || '';
+		this.seat = formData.seat || '';
+		if (formData.folder) {
+			this.folder = formData.folder;
+		}
 	}
 
 	private async createOrganization(): Promise<void> {
@@ -198,6 +291,12 @@ export class CreateOrganizationModal extends Modal {
 				seat: this.seat.trim() || undefined,
 				folder: this.folder.trim() || undefined
 			});
+
+			// Mark as saved successfully and clear persisted state
+			this.savedSuccessfully = true;
+			if (this.persistence) {
+				void this.persistence.clear();
+			}
 
 			this.close();
 			this.onSuccess();
