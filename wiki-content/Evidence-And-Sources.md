@@ -22,6 +22,7 @@ Canvas Roots provides tools for managing genealogical sources and evidence, help
 - [Best Practices](#best-practices)
   - [Organizing Source Notes](#organizing-source-notes)
   - [Naming Conventions](#naming-conventions)
+    - [Page-Level Naming for Multi-Page Records](#page-level-naming-for-multi-page-records)
   - [Media Organization](#media-organization)
 - [Bulk Source Image Import](#bulk-source-image-import)
   - [Opening the Wizard](#opening-the-wizard)
@@ -246,6 +247,26 @@ Consider consistent naming for source notes:
 - `1900 Census - Smith Family - Brooklyn NY`
 - `Birth Certificate - John Smith - 1865`
 - `Marriage License - Smith-Jones - 1890`
+
+#### Page-Level Naming for Multi-Page Records
+
+For census records, tax rolls, and other records where you capture multiple pages, consider naming by enumeration district (ED) and page number rather than by surname. This allows you to:
+
+- Link multiple families or individuals to the same page
+- Capture pages before and after your target for FAN (Friends, Associates, Neighbors) research
+- Document enslaved ancestor research where multiple individuals appear on the same schedule
+
+**Pattern:** `YYYY-recordType_State_County_Locality-ED-p`
+
+**Examples:**
+- `1880-census_SC_Chester_Baton-Rouge-ED37-p60`
+- `1850-slave-schedule_VA_Henrico-ED12-p3`
+- `1870-census_TN_Davidson_Nashville-ED45-p22`
+
+This approach is especially valuable for:
+- **Enslaved ancestor research** — Slave schedules and property records often need full-page context
+- **FAN cluster analysis** — Neighbors and associates appear on adjacent enumeration pages
+- **Urban research** — Multiple families of interest may appear on the same tenement page
 
 ### Media Organization
 
