@@ -435,7 +435,7 @@ export class CreatePlaceModal extends Modal {
 					},
 					() => {
 						// Restore - populate form with saved data
-						this.restoreFromPersistedState(existingState.formData as PlaceFormData);
+						this.restoreFromPersistedState(existingState.formData as unknown as PlaceFormData);
 						this.resumeBanner?.remove();
 						this.resumeBanner = undefined;
 						// Re-render form with restored data

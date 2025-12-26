@@ -51,7 +51,7 @@ const MODAL_SETTINGS_KEYS: Record<ModalType, ModalStateSettingsKey> = {
  * await persistence.clear();
  * ```
  */
-export class ModalStatePersistence<T extends Record<string, unknown>> {
+export class ModalStatePersistence<T extends object> {
 	private plugin: CanvasRootsPlugin;
 	private modalType: ModalType;
 	private settingsKey: ModalStateSettingsKey;
@@ -176,7 +176,7 @@ export class ModalStatePersistence<T extends Record<string, unknown>> {
 	 * @returns true if the form has meaningful data
 	 */
 	hasContent(formData: T): boolean {
-		for (const [, value] of Object.entries(formData)) {
+		for (const [, value] of Object.entries(formData as Record<string, unknown>)) {
 			if (value === null || value === undefined) {
 				continue;
 			}

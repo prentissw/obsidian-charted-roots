@@ -169,7 +169,7 @@ export class CreateEventModal extends Modal {
 					},
 					() => {
 						// Restore - populate form with saved data
-						this.restoreFromPersistedState(existingState.formData as EventFormData);
+						this.restoreFromPersistedState(existingState.formData as unknown as EventFormData);
 						this.resumeBanner?.remove();
 						this.resumeBanner = undefined;
 						// Re-render form with restored data

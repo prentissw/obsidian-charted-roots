@@ -2196,6 +2196,7 @@ export class ControlCenterModal extends Modal {
 						includeDynamicBlocks: false,
 						dynamicBlockTypes: ['timeline', 'relationships'],
 						existingUniverses: allUniverses,
+						plugin: this.plugin,
 						onCreated: () => {
 							// Refresh the People tab
 							this.showTab('people');

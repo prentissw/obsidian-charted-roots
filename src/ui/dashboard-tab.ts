@@ -159,6 +159,7 @@ function renderQuickActionsSection(
 			directory: plugin.settings.peopleFolder || '',
 			familyGraph,
 			propertyAliases: plugin.settings.propertyAliases,
+			plugin,
 			onCreated: (file) => {
 				// Track the newly created person in recent files
 				const recentService = plugin.getRecentFilesService();
@@ -174,6 +175,7 @@ function renderQuickActionsSection(
 		closeModal();
 		const eventService = new EventService(app, plugin.settings);
 		new CreateEventModal(app, eventService, plugin.settings, {
+			plugin,
 			onCreated: (file) => {
 				// Track the newly created event in recent files
 				const recentService = plugin.getRecentFilesService();

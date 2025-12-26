@@ -283,7 +283,7 @@ export class CreatePersonModal extends Modal {
 					},
 					() => {
 						// Restore - populate form with saved data
-						this.restoreFromPersistedState(existingState.formData as PersonFormData);
+						this.restoreFromPersistedState(existingState.formData as unknown as PersonFormData);
 						this.resumeBanner?.remove();
 						this.resumeBanner = undefined;
 						// Re-render form with restored data
