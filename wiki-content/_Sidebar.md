@@ -50,6 +50,7 @@
 ### Project
 - [Roadmap](Roadmap)
 - [Release History](Release-History)
+- [Community Use Cases](Community-Use-Cases)
 
 ### For Developers
 - [Developer Guide](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/development.md)
