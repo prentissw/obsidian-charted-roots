@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.17.3] - 2025-12-26
+
 ### Fixed
 
 - **Duplicate name wikilinks in GEDCOM import** - When importing GEDCOM files with duplicate names (e.g., two people named "John Smith"), the relationship wikilinks now correctly point to the actual filenames (e.g., `[[John Smith]]` and `[[John Smith-1]]`) instead of all pointing to the same name.
