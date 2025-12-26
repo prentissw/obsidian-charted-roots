@@ -8,7 +8,6 @@ This document outlines planned features for Canvas Roots. For completed features
 
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
-  - [Excalidraw Export Enhancements](#excalidraw-export-enhancements) 📋 Medium
   - [Cleanup Wizard Phase 4](#cleanup-wizard-phase-4) 📋 Medium
   - [Universe Management Enhancements](#universe-management-enhancements) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
@@ -34,6 +33,7 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.17.1 | [Excalidraw Export Enhancements](Release-History#excalidraw-export-enhancements-v0171) | ExcalidrawAutomate API integration, smart connectors, wiki links, style customization |
 | v0.17.0 | [Post-Import Cleanup Wizard](Release-History#post-import-cleanup-wizard-v0170) | 10-step guided wizard for post-import data quality (relationships, dates, genders, places, sources) |
 | v0.17.0 | [Source Array Migration](Release-History#source-array-migration-v0170) | Migrate indexed source properties to YAML array format with wizard integration |
 | v0.16.0 | [Import/Export Hub](Release-History#importexport-hub-v0160) | Modal-based hub with 7-step import and 6-step export wizards, integrated reference numbering |
@@ -55,53 +55,6 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 | ⚡ High | Core workflow | Completes essential data portability |
 | 📋 Medium | User value | Highly requested sharing/output features |
 | 💡 Low | Specialized | Advanced use cases, niche workflows |
-
----
-
-### Excalidraw Export Enhancements
-
-**Priority:** 📋 Medium — Richer Excalidraw output with smart connectors and wiki links
-
-**Summary:** Enhance the Excalidraw export feature to leverage the full capabilities of the Obsidian Excalidraw plugin's ExcalidrawAutomate API. Current implementation generates basic shapes; enhancements add smart connectors, clickable wiki links, richer node content, and relationship-aware styling.
-
-**Current Limitations:**
-- Manual text sizing (approximate character width calculation)
-- Point-to-point arrows that don't adapt when elements are moved
-- No wiki links (can't click to navigate to person notes)
-- All edges styled the same (no spouse vs parent-child distinction)
-
-**Planned Enhancements:**
-
-| Phase | Feature | Value |
-|-------|---------|-------|
-| 1 | API Integration | Use ExcalidrawAutomate when available, fallback to JSON |
-| 2 | Rich Node Content | Add dates/places like PDF export |
-| 3 | Wiki Links | Clickable `[[Person Note]]` links in labels |
-| 4 | Smart Connectors | `connectObjects()` for adaptive arrows |
-| 5 | Relationship Styling | Dashed lines for spouses, solid for parent-child |
-| 6 | Element Grouping | Keep rect+text together as units |
-
-**Technical Approach:**
-
-Detect ExcalidrawAutomate API at runtime:
-```typescript
-const ea = (window as any).ExcalidrawAutomate;
-if (ea) {
-    // Use API for smart connectors, accurate text sizing
-    ea.connectObjects(personA, "bottom", personB, "top");
-} else {
-    // Fall back to current JSON generation
-}
-```
-
-**Key API Features:**
-- `ea.measureText()` — Accurate text dimensions
-- `ea.connectObjects()` — Smart connectors that snap and adapt
-- `ea.addText()` with `box` — Contained text boxes
-- `ea.addToGroup()` — Group related elements
-
-**Documentation:**
-- See [Excalidraw Export Enhancements Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/excalidraw-export-enhancements.md) for implementation details
 
 ---
 
