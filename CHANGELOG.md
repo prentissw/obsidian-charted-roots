@@ -9,11 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Resume unsaved work in create entity modals** - All create entity modals (Person, Place, Event, Organization, Source) now persist form state when closed without saving. When reopened, a banner offers to restore the previous session's data or discard it. State expires after 24 hours. Edit mode is excluded from persistence.
+
 ### Fixed
 
 - **Base templates not created on import** - Import Wizard now auto-creates base templates (people, places, events, sources, organizations) after successful imports, matching the Control Center behavior.
 
 - **Dynamic blocks not updating on frontmatter changes** - The `canvas-roots-media`, `canvas-roots-timeline`, and `canvas-roots-relationships` code blocks now automatically re-render when frontmatter properties are modified, without requiring the note to be closed and reopened.
+
+### Changed
+
+- **Dynamic block order** - When automatically added to person notes, dynamic code blocks now appear in the order: Media, Timeline, Relationships (previously Timeline, Relationships, Media).
 
 ---
 
