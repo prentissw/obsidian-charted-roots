@@ -12,6 +12,7 @@ Real-world examples of how people use Canvas Roots for genealogy, worldbuilding,
 - [Generating a Family Reunion Report](#generating-a-family-reunion-report)
 - [Visualizing Migration Patterns](#visualizing-migration-patterns)
 - [Tracking DNA Matches](#tracking-dna-matches)
+- [Researching Enslaved Ancestors (Beyond Kin)](#researching-enslaved-ancestors-beyond-kin)
 - [Exporting to Share with Family](#exporting-to-share-with-family)
 - [Using Bases for Data Views](#using-bases-for-data-views)
 
@@ -190,6 +191,58 @@ You've received DNA match results and want to track potential relatives, documen
 - **Start with high matches:** Focus on matches over 100 cM first—these are more likely to be identifiable relatives.
 - **Document everything:** Use the note body to record your reasoning, shared matches, and correspondence.
 - **Speculative links:** You can add speculative relationships and mark them with a custom `relationship_confidence: speculative` property.
+
+---
+
+### Researching Enslaved Ancestors (Beyond Kin)
+
+**User type:** Genealogist
+**Features used:** Custom Relationships, Person Notes, Source Notes, Wikilinks
+**Complexity:** Intermediate
+
+**The Challenge**
+
+You're researching enslaved ancestors using the [Beyond Kin methodology](https://beyondkin.org/), which documents enslaved populations by working outward from slaveholder records. You need to track non-biological connections: enslaved persons to slaveholders, enslaved persons to each other through shared enslavement, and individuals to the source documents where they appear.
+
+**The Approach**
+
+1. Create **Person Notes** for enslaved individuals, using the Beyond Kin naming conventions if desired
+2. Create Person Notes for slaveholders and other connected individuals
+3. Use the `custom_relationships` property to define non-family connections:
+   ```yaml
+   custom_relationships:
+     - type: enslaved_by
+       person: "[[John Slaveholder]]"
+       date: "1850"
+       source: "[[1850 Slave Schedule]]"
+     - type: co_enslaved_with
+       person: "[[Mary (enslaved, Smith plantation)]]"
+       date: "1850-1860"
+   ```
+4. Create **Source Notes** for each record (slave schedules, property inventories, estate records)
+5. Link source notes to all individuals who appear in them
+6. Use the note body to document research notes, hypotheses, and evidence analysis
+
+**Relationship Types for Beyond Kin**
+
+| Type | Description |
+|------|-------------|
+| `enslaved_by` | Links an enslaved person to their enslaver |
+| `co_enslaved_with` | Links individuals enslaved on the same property |
+| `documented_in` | Links a person to a source record |
+| `possibly_related_to` | Speculative family connection pending evidence |
+
+**Tips**
+
+- **Naming conventions:** Beyond Kin uses specific naming patterns like "Mary (enslaved, Smith plantation, b. abt 1820)". Use these as note titles if it helps your research.
+- **Source-centric approach:** In enslaved ancestor research, sources often come first. Create source notes for records, then create person notes as you identify individuals within them.
+- **FAN clusters:** This approach also works for documenting Friends, Associates, and Neighbors (FAN) clusters in any genealogical research.
+- **Custom properties:** Add properties like `enslaver`, `plantation`, or `enslaved_status` to person notes for filtering and analysis in Bases.
+
+**Further Reading**
+
+- [Beyond Kin Project](https://beyondkin.org/) — Methodology and naming conventions for documenting enslaved populations
+- [Custom Relationships](Custom-Relationships) — Full documentation for the `custom_relationships` property
 
 ---
 
