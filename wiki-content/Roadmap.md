@@ -10,6 +10,7 @@ This document outlines planned features for Canvas Roots. For completed features
 - [Planned Features](#planned-features)
   - [Create Person Enhancements](#create-person-enhancements) 📋 Medium
   - [Cleanup Wizard Phase 4](#cleanup-wizard-phase-4) 📋 Medium
+  - [Gramps Notes Import](#gramps-notes-import) 📋 Medium
   - [Universe Management Enhancements](#universe-management-enhancements) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
@@ -120,6 +121,48 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Documentation:**
 - See [Cleanup Wizard Phase 4 Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/cleanup-wizard-phase4.md) for detailed specifications
+
+---
+
+### Gramps Notes Import
+
+**Priority:** 📋 Medium — Preserve research notes from Gramps imports
+
+**Status:** Planning
+
+**Summary:** Import notes attached to Gramps entities (people, events, places, etc.) during Gramps XML import. Gramps allows users to attach free-form notes containing research notes, biographical information, and source transcriptions. These should be preserved when importing into Canvas Roots.
+
+**Background:**
+- Gramps notes can be attached to people, families, events, places, sources, citations, media, and repositories
+- Each note has a type (Person Note, Research, Transcript, etc.) and text content
+- Notes are stored separately and referenced via `noteref` elements
+- Source notes are already imported (used in source note content)
+
+**Phase 1: Person Notes**
+
+| Feature | Description |
+|---------|-------------|
+| Parse person noteRefs | Extract note references from person elements |
+| Import toggle | Add "Import notes" checkbox in Import Wizard |
+| Append to content | Add "## Notes" section to person note body |
+| Preserve note type | Include note type as subsection header |
+
+**Phase 2: Other Entity Notes (Future)**
+
+| Entity | Approach |
+|--------|----------|
+| Events | Append to event note content |
+| Places | Append to place note content |
+| Families | TBD - attach to marriage event or both spouses? |
+
+**Open Questions:**
+- Where should notes appear? (content body vs frontmatter vs separate files)
+- How to handle Gramps note formatting/styling?
+- Should private notes (`priv="1"`) be imported?
+- Default: opt-in or opt-out?
+
+**Documentation:**
+- See [Gramps Notes Import Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/gramps-notes-import.md) for detailed specifications
 
 ---
 
