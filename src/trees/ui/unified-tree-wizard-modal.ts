@@ -145,6 +145,15 @@ interface UnifiedWizardFormData {
 	pdfColorScheme: VisualTreeColorScheme;
 	largeTreeHandling: LargeTreeHandling;
 
+	// Excalidraw-specific
+	excalidrawRoughness: 0 | 1 | 2;
+	excalidrawFontFamily: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+	excalidrawFontSize: number;
+	excalidrawStrokeWidth: number;
+	excalidrawFillStyle: 'solid' | 'hachure' | 'cross-hatch';
+	excalidrawStrokeStyle: 'solid' | 'dashed' | 'dotted';
+	excalidrawNodeContent: 'name' | 'name-dates' | 'name-dates-places';
+
 	// Output settings
 	canvasName: string;
 	saveFolder: string;
@@ -254,6 +263,15 @@ export class UnifiedTreeWizardModal extends Modal {
 			nodeContent: 'name-dates',
 			pdfColorScheme: 'gender',
 			largeTreeHandling: 'auto-page-size',
+
+			// Excalidraw defaults
+			excalidrawRoughness: 1,
+			excalidrawFontFamily: 1,
+			excalidrawFontSize: 16,
+			excalidrawStrokeWidth: 2,
+			excalidrawFillStyle: 'solid',
+			excalidrawStrokeStyle: 'solid',
+			excalidrawNodeContent: 'name-dates-places',
 
 			// Output defaults
 			canvasName: 'Family Tree',
@@ -1235,6 +1253,84 @@ export class UnifiedTreeWizardModal extends Modal {
 				.setValue(this.formData.openAfterGenerate)
 				.onChange(value => { this.formData.openAfterGenerate = value; }));
 
+		// Excalidraw-specific options (only shown when output format is Excalidraw)
+		if (this.formData.outputFormat === 'excalidraw') {
+			const excalidrawSection = form.createDiv({ cls: 'crc-wizard-excalidraw-options' });
+			excalidrawSection.createEl('h4', { text: 'Excalidraw Style', cls: 'cr-wizard-subsection' });
+
+			// Node content level
+			new Setting(excalidrawSection)
+				.setName('Node content')
+				.setDesc('What information to show in each person box')
+				.addDropdown(dropdown => dropdown
+					.addOption('name', 'Name only')
+					.addOption('name-dates', 'Name and dates')
+					.addOption('name-dates-places', 'Name, dates, and places')
+					.setValue(this.formData.excalidrawNodeContent)
+					.onChange(value => {
+						this.formData.excalidrawNodeContent = value as 'name' | 'name-dates' | 'name-dates-places';
+					}));
+
+			// Drawing style (roughness)
+			const roughnessDescriptions: Record<number, string> = {
+				0: 'Clean, precise lines',
+				1: 'Natural hand-drawn look',
+				2: 'Expressive cartoon style'
+			};
+			const roughnessSetting = new Setting(excalidrawSection)
+				.setName('Drawing style')
+				.setDesc(roughnessDescriptions[this.formData.excalidrawRoughness])
+				.addDropdown(dropdown => dropdown
+					.addOption('0', 'Architect (clean)')
+					.addOption('1', 'Artist (natural)')
+					.addOption('2', 'Cartoonist (rough)')
+					.setValue(String(this.formData.excalidrawRoughness))
+					.onChange(value => {
+						this.formData.excalidrawRoughness = parseInt(value) as 0 | 1 | 2;
+						roughnessSetting.setDesc(roughnessDescriptions[this.formData.excalidrawRoughness]);
+					}));
+
+			// Font family
+			new Setting(excalidrawSection)
+				.setName('Font')
+				.setDesc('Font style for text labels')
+				.addDropdown(dropdown => dropdown
+					.addOption('1', 'Virgil (hand-drawn)')
+					.addOption('5', 'Excalifont (hand-drawn)')
+					.addOption('4', 'Comic Shanns (comic)')
+					.addOption('2', 'Helvetica (clean)')
+					.addOption('6', 'Nunito (rounded)')
+					.addOption('7', 'Lilita One (display)')
+					.addOption('3', 'Cascadia (monospace)')
+					.setValue(String(this.formData.excalidrawFontFamily))
+					.onChange(value => {
+						this.formData.excalidrawFontFamily = parseInt(value) as 1 | 2 | 3 | 4 | 5 | 6 | 7;
+					}));
+
+			// Font size
+			new Setting(excalidrawSection)
+				.setName('Font size')
+				.setDesc('Size of text labels')
+				.addSlider(slider => slider
+					.setLimits(10, 32, 2)
+					.setValue(this.formData.excalidrawFontSize)
+					.setDynamicTooltip()
+					.onChange(value => { this.formData.excalidrawFontSize = value; }));
+
+			// Fill style
+			new Setting(excalidrawSection)
+				.setName('Fill style')
+				.setDesc('How shapes are filled')
+				.addDropdown(dropdown => dropdown
+					.addOption('solid', 'Solid')
+					.addOption('hachure', 'Hachure (diagonal lines)')
+					.addOption('cross-hatch', 'Cross-hatch')
+					.setValue(this.formData.excalidrawFillStyle)
+					.onChange(value => {
+						this.formData.excalidrawFillStyle = value as 'solid' | 'hachure' | 'cross-hatch';
+					}));
+		}
+
 		// Summary
 		const summarySection = form.createDiv({ cls: 'crc-wizard-output-summary' });
 		summarySection.createEl('h4', { text: 'Summary', cls: 'cr-wizard-subsection' });
@@ -1765,7 +1861,15 @@ export class UnifiedTreeWizardModal extends Modal {
 			const excalidrawResult = await excalidrawExporter.exportToExcalidraw({
 				canvasFile,
 				fileName: fileName.replace('.canvas', ''),
-				preserveColors: true
+				preserveColors: true,
+				// Pass Excalidraw style options from wizard
+				roughness: this.formData.excalidrawRoughness,
+				fontFamily: this.formData.excalidrawFontFamily,
+				fontSize: this.formData.excalidrawFontSize,
+				strokeWidth: this.formData.excalidrawStrokeWidth,
+				fillStyle: this.formData.excalidrawFillStyle,
+				strokeStyle: this.formData.excalidrawStrokeStyle,
+				nodeContent: this.formData.excalidrawNodeContent
 			});
 
 			if (excalidrawResult.success && excalidrawResult.excalidrawContent) {

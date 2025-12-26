@@ -74,7 +74,10 @@ export interface ExcalidrawExportOptions {
 	/** Include wiki links in text elements for navigation (default: true) */
 	includeWikiLinks?: boolean;
 
-	/** Include dates/places in node labels (default: true) */
+	/** Node content level: 'name', 'name-dates', or 'name-dates-places' (default: 'name-dates-places') */
+	nodeContent?: 'name' | 'name-dates' | 'name-dates-places';
+
+	/** @deprecated Use nodeContent instead. Include dates/places in node labels (default: true) */
 	includePersonDetails?: boolean;
 
 	/** Use smart connectors that adapt when elements move (requires API, default: true) */
@@ -445,8 +448,10 @@ export class ExcalidrawExporter {
 	/**
 	 * Build rich label for node including dates and places
 	 * Note: Wiki links are handled via the element's `link` property, not inline [[]] syntax
+	 * @param node - Canvas node to build label for
+	 * @param contentLevel - 'name', 'name-dates', or 'name-dates-places'
 	 */
-	private buildRichLabel(node: CanvasNode): string {
+	private buildRichLabel(node: CanvasNode, contentLevel: 'name' | 'name-dates' | 'name-dates-places' = 'name-dates-places'): string {
 		const details = this.personDetailsCache.get(node.id);
 
 		if (!details) {
@@ -460,8 +465,8 @@ export class ExcalidrawExporter {
 		// Strip any wiki link syntax from the name
 		lines.push(this.stripWikiLinks(details.name));
 
-		// Date line
-		if (details.birthDate || details.deathDate) {
+		// Date line (only for name-dates or name-dates-places)
+		if (contentLevel !== 'name' && (details.birthDate || details.deathDate)) {
 			const birth = this.stripWikiLinks(details.birthDate || '?');
 			const death = this.stripWikiLinks(details.deathDate || '');
 			if (death) {
@@ -471,8 +476,8 @@ export class ExcalidrawExporter {
 			}
 		}
 
-		// Place (if available) - strip wiki links
-		if (details.birthPlace) {
+		// Place (only for name-dates-places) - strip wiki links
+		if (contentLevel === 'name-dates-places' && details.birthPlace) {
 			lines.push(this.stripWikiLinks(details.birthPlace));
 		}
 
@@ -517,7 +522,9 @@ export class ExcalidrawExporter {
 		const viewBackgroundColor = options.viewBackgroundColor ?? '#ffffff';
 		const opacity = options.opacity ?? 100;
 		const includeWikiLinks = options.includeWikiLinks !== false;
-		const includePersonDetails = options.includePersonDetails !== false;
+		// nodeContent replaces includePersonDetails - support both for backward compatibility
+		const nodeContent: 'name' | 'name-dates' | 'name-dates-places' = options.nodeContent ??
+			(options.includePersonDetails === false ? 'name' : 'name-dates-places');
 		const useSmartConnectors = options.useSmartConnectors !== false;
 		const styleSpouseRelationships = options.styleSpouseRelationships !== false;
 		const groupElements = options.groupElements !== false;
@@ -572,10 +579,10 @@ export class ExcalidrawExporter {
 				}
 			}
 
-			// Create text label (rich content if enabled)
+			// Create text label based on content level
 			let labelText: string;
-			if (includePersonDetails && this.personDetailsCache.has(node.id)) {
-				labelText = this.buildRichLabel(node);
+			if (nodeContent !== 'name' && this.personDetailsCache.has(node.id)) {
+				labelText = this.buildRichLabel(node, nodeContent);
 			} else {
 				labelText = this.extractNodeLabel(node);
 			}
@@ -715,7 +722,9 @@ export class ExcalidrawExporter {
 		const viewBackgroundColor = options.viewBackgroundColor ?? '#ffffff';
 		const opacity = options.opacity ?? 100;
 		const includeWikiLinks = options.includeWikiLinks !== false;
-		const includePersonDetails = options.includePersonDetails !== false;
+		// nodeContent replaces includePersonDetails - support both for backward compatibility
+		const nodeContent: 'name' | 'name-dates' | 'name-dates-places' = options.nodeContent ??
+			(options.includePersonDetails === false ? 'name' : 'name-dates-places');
 		const styleSpouseRelationships = options.styleSpouseRelationships !== false;
 		const groupElements = options.groupElements !== false;
 
@@ -777,11 +786,11 @@ export class ExcalidrawExporter {
 			);
 			elements.push(rectangle);
 
-			// Create text label (with coordinate offset applied)
-			// Use rich content if enabled - wiki links are on the rectangle, not in text
+			// Create text label based on content level
+			// Wiki links are on the rectangle, not in text
 			let labelText: string;
-			if (includePersonDetails && this.personDetailsCache.has(node.id)) {
-				labelText = this.buildRichLabel(node);
+			if (nodeContent !== 'name' && this.personDetailsCache.has(node.id)) {
+				labelText = this.buildRichLabel(node, nodeContent);
 			} else {
 				labelText = this.extractNodeLabel(node);
 			}
