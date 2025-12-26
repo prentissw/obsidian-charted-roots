@@ -25,12 +25,12 @@ Canvas Roots transforms structured genealogical data in your Markdown notes into
 ## Key Features
 
 ### Import & Export
-Bring in existing family data or share your research with others.
+Bring in existing family data or share your research with others through guided wizards.
 
-- **GEDCOM Import v2** - Import people, events, sources, and places from standard genealogy format
-- **Export v2** - Export to GEDCOM, GEDCOM X, Gramps, and CSV with round-trip fidelity
-- **Selective export** - Export specific branches or lineages
-- **Privacy protection** - Configurable privacy controls for living persons
+- **Import/Export Hub** - Centralized entry point with step-by-step wizards
+- **Multi-format support** - GEDCOM 5.5.1, Gramps XML/.gpkg, and CSV import
+- **Dynamic blocks** - Optionally add timeline, relationships, and media blocks during import
+- **Privacy protection** - Configurable privacy controls for living persons on export
 
 [Learn about import/export](Import-Export)
 
