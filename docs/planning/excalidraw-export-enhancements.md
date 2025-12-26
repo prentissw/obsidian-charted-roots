@@ -284,13 +284,12 @@ interface ExcalidrawAutomate {
 
 ## Recommended Release Groupings
 
-Based on priority and dependencies:
+Based on priority and dependencies. These are point releases since Excalidraw export is an existing (non-central) feature:
 
 | Release | Phases | Theme | Rationale |
 |---------|--------|-------|-----------|
-| v0.18.0 | 1, 2, 3 | Core API + Content + Links | Foundation + immediate user value |
-| v0.19.0 | 4, 5, 6 | Smart Connectors + Styling | Enhanced editing experience |
-| Future | 7, 8 | Performance + Power User | Optimization and advanced features |
+| v0.17.1 | 1-6 | Complete Excalidraw Enhancement | API, content, links, connectors, styling, grouping |
+| Future | 7, 8 | Performance + Power User | Direct generation, SVG/PNG export (requires open view) |
 
 **Note:** Phase 7 (Direct Generation) should offer both paths:
 - "Export to Excalidraw" (direct from person data)
