@@ -62,32 +62,37 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 ### Create Person Enhancements
 
-**Priority:** 📋 Medium — Improved data entry for family relationships
+**Priority:** 📋 Medium — Continuous family creation workflow
 
 **Status:** Planning
 
-**Summary:** Enhance the Create/Edit Person modal to support linking children and improve the overall data entry experience. Phase 1 adds children linking to the Edit modal; Phase 2 considers a wizard or tabbed modal for comprehensive data entry.
+**The Problem:** Building a family tree from scratch requires constant jumping in and out of modals. Create person, save, close, create another, save, close, go back and link them, save, close... endlessly.
 
-**Phase 1: Children Section in Edit Modal**
+**Goal:** Enable continuous family creation without leaving the modal flow.
+
+**Phase 1: Inline Person Creation**
 
 | Feature | Description |
 |---------|-------------|
-| Children picker | Multi-select person picker in Edit mode to link children |
+| "Create new" in pickers | When selecting father/mother/spouse/child, offer "Create new person" option |
+| Sub-modal creation | Opens simplified create form, returns to parent modal with link |
+| Smart defaults | Pre-fill sex for parents, pre-fill relationships for children/spouses |
+
+**Phase 2: Children Section in Edit Modal**
+
+| Feature | Description |
+|---------|-------------|
+| Children picker | Multi-select person picker to view/manage children |
+| Inline creation | Create new children directly (builds on Phase 1) |
 | Auto-detection | Infer `father`/`mother` field from parent's `sex` |
-| Bidirectional sync | Leverage existing bidirectional linker for automatic updates |
 
-**Phase 2: Wizard/Tabbed Modal (Future)**
+**Phase 3: "Add Another" Flow (Future)**
 
-| Approach | Description |
-|----------|-------------|
-| Tabbed modal | Organize fields into collapsible sections (Basic, Dates & Places, Family, Extended) |
-| Full wizard | Step-by-step guided entry similar to Report Wizard |
+After creating a person, offer quick actions: "Add spouse", "Add child", "Add parent", "Done" — keeping users in a family-building flow.
 
-**When This Becomes Relevant:**
+**Phase 4: Family Creation Wizard (Future)**
 
-- Users report the modal is overwhelming
-- Need to add more relationship types or source linking
-- Mobile users need simplified entry flow
+Dedicated wizard for creating an entire nuclear family at once with a guided step-by-step flow.
 
 **Documentation:**
 - See [Create Person Enhancements Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/create-person-enhancements.md) for detailed specifications
