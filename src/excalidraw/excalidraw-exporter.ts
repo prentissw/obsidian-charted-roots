@@ -2,6 +2,7 @@
  * Excalidraw Exporter for Canvas Roots
  *
  * Converts Obsidian Canvas family trees to Excalidraw format for manual annotation and customization.
+ * Supports both ExcalidrawAutomate API (when available) and fallback JSON generation.
  */
 
 import { App, TFile, Notice } from 'obsidian';
@@ -9,6 +10,7 @@ import { getLogger } from '../core/logging';
 import { getErrorMessage } from '../core/error-utils';
 import type { CanvasData } from '../core/canvas-generator';
 import type { CanvasNode } from '../models/canvas';
+import type { ExcalidrawAutomate, ExcalidrawAutomateElement } from './excalidraw-automate.d';
 
 const logger = getLogger('ExcalidrawExporter');
 
@@ -68,6 +70,21 @@ export interface ExcalidrawExportOptions {
 
 	/** Element opacity (0-100) */
 	opacity?: number;
+
+	/** Include wiki links in text elements for navigation (default: true) */
+	includeWikiLinks?: boolean;
+
+	/** Include dates/places in node labels (default: true) */
+	includePersonDetails?: boolean;
+
+	/** Use smart connectors that adapt when elements move (requires API, default: true) */
+	useSmartConnectors?: boolean;
+
+	/** Style spouse relationships with dashed lines (default: true) */
+	styleSpouseRelationships?: boolean;
+
+	/** Group rectangle and text elements together (default: true) */
+	groupElements?: boolean;
 }
 
 /**
@@ -88,6 +105,25 @@ export interface ExcalidrawExportResult {
 
 	/** Output filename */
 	fileName: string;
+
+	/** Whether API mode was used (vs fallback JSON) */
+	usedApi: boolean;
+}
+
+/**
+ * Relationship type for edge styling
+ */
+type RelationshipType = 'parent-child' | 'spouse' | 'unknown';
+
+/**
+ * Person details extracted from frontmatter
+ */
+interface PersonDetails {
+	name: string;
+	birthDate?: string;
+	deathDate?: string;
+	birthPlace?: string;
+	filePath?: string;
 }
 
 /**
@@ -202,21 +238,39 @@ const CANVAS_TO_EXCALIDRAW_COLORS: Record<string, string> = {
 export class ExcalidrawExporter {
 	private app: App;
 	private idCounter: number;
+	private personDetailsCache: Map<string, PersonDetails>;
 
 	constructor(app: App) {
 		this.app = app;
 		this.idCounter = 0;
+		this.personDetailsCache = new Map();
+	}
+
+	/**
+	 * Check if ExcalidrawAutomate API is available
+	 */
+	private getExcalidrawAutomate(): ExcalidrawAutomate | null {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const ea = (window as any).ExcalidrawAutomate;
+		if (ea && typeof ea.addRect === 'function') {
+			logger.info('export', 'ExcalidrawAutomate API detected');
+			return ea as ExcalidrawAutomate;
+		}
+		logger.info('export', 'ExcalidrawAutomate API not available, using JSON fallback');
+		return null;
 	}
 
 	/**
 	 * Export canvas file to Excalidraw format
+	 * Automatically uses ExcalidrawAutomate API if available, otherwise falls back to JSON generation.
 	 */
 	async exportToExcalidraw(options: ExcalidrawExportOptions): Promise<ExcalidrawExportResult> {
 		const result: ExcalidrawExportResult = {
 			success: false,
 			elementsExported: 0,
 			errors: [],
-			fileName: options.fileName || options.canvasFile.basename
+			fileName: options.fileName || options.canvasFile.basename,
+			usedApi: false
 		};
 
 		try {
@@ -228,11 +282,27 @@ export class ExcalidrawExporter {
 
 			logger.info('export', `Loaded canvas with ${canvasData.nodes.length} nodes and ${canvasData.edges.length} edges`);
 
-			// Convert to Excalidraw elements
-			new Notice('Converting to Excalidraw format...');
-			const excalidrawData = this.convertCanvasToExcalidraw(canvasData, options);
+			// Pre-load person details for all nodes (for rich content)
+			if (options.includePersonDetails !== false) {
+				await this.loadPersonDetails(canvasData.nodes);
+			}
 
-			logger.info('export', `Converted to ${excalidrawData.elements.length} Excalidraw elements`);
+			// Check for ExcalidrawAutomate API
+			const ea = this.getExcalidrawAutomate();
+
+			let excalidrawData: ExcalidrawFile;
+			if (ea) {
+				// Use API mode for enhanced features
+				new Notice('Converting with ExcalidrawAutomate API...');
+				excalidrawData = await this.convertWithApi(ea, canvasData, options);
+				result.usedApi = true;
+			} else {
+				// Fallback to JSON generation
+				new Notice('Converting to Excalidraw format...');
+				excalidrawData = this.convertCanvasToExcalidraw(canvasData, options);
+			}
+
+			logger.info('export', `Converted to ${excalidrawData.elements.length} Excalidraw elements (API: ${result.usedApi})`);
 
 			// Build Excalidraw markdown content (Obsidian Excalidraw plugin format)
 			logger.info('export', 'Building Excalidraw markdown...');
@@ -244,8 +314,9 @@ export class ExcalidrawExporter {
 			result.elementsExported = excalidrawData.elements.length;
 			result.success = true;
 
-			logger.info('export', 'Export completed successfully');
-			new Notice(`Export complete: ${result.elementsExported} elements exported`);
+			const modeLabel = result.usedApi ? ' (with smart connectors)' : '';
+			logger.info('export', `Export completed successfully${modeLabel}`);
+			new Notice(`Export complete: ${result.elementsExported} elements exported${modeLabel}`);
 
 		} catch (error: unknown) {
 			const errorMsg = getErrorMessage(error);
@@ -255,17 +326,158 @@ export class ExcalidrawExporter {
 			new Notice(`Export failed: ${errorMsg}`);
 		}
 
+		// Clear cache
+		this.personDetailsCache.clear();
+
 		return result;
 	}
 
 	/**
-	 * Convert Canvas data to Excalidraw format
+	 * Load person details from frontmatter for all file nodes
 	 */
-	private convertCanvasToExcalidraw(
+	private async loadPersonDetails(nodes: CanvasNode[]): Promise<void> {
+		for (const node of nodes) {
+			if (node.type === 'file' && node.file) {
+				const details = await this.extractPersonDetails(node.file);
+				if (details) {
+					this.personDetailsCache.set(node.id, details);
+				}
+			}
+		}
+		logger.info('export', `Loaded person details for ${this.personDetailsCache.size} nodes`);
+	}
+
+	/**
+	 * Extract person details from file frontmatter
+	 */
+	private async extractPersonDetails(filePath: string): Promise<PersonDetails | null> {
+		try {
+			const file = this.app.vault.getAbstractFileByPath(filePath);
+			if (!(file instanceof TFile)) return null;
+
+			const cache = this.app.metadataCache.getFileCache(file);
+			if (!cache?.frontmatter) return null;
+
+			const fm = cache.frontmatter;
+
+			// Extract name (try various common frontmatter fields)
+			const name = fm.name || fm.full_name || fm.fullname ||
+				file.basename;
+
+			// Extract dates
+			const birthDate = fm.birth_date || fm.birthDate || fm.born || fm.dob;
+			const deathDate = fm.death_date || fm.deathDate || fm.died || fm.dod;
+
+			// Extract place
+			const birthPlace = fm.birth_place || fm.birthPlace || fm.birthplace;
+
+			return {
+				name,
+				birthDate: this.formatDate(birthDate),
+				deathDate: this.formatDate(deathDate),
+				birthPlace,
+				filePath
+			};
+		} catch (error) {
+			logger.warn('export', `Failed to extract person details from ${filePath}`, error);
+			return null;
+		}
+	}
+
+	/**
+	 * Format date for display
+	 */
+	private formatDate(date: unknown): string | undefined {
+		if (!date) return undefined;
+		if (typeof date === 'string') return date;
+		if (typeof date === 'number') return String(date);
+		if (date instanceof Date) return date.toLocaleDateString();
+		return String(date);
+	}
+
+	/**
+	 * Determine relationship type from edge
+	 */
+	private getRelationshipType(edge: {
+		fromSide?: string;
+		toSide?: string;
+		label?: string;
+	}): RelationshipType {
+		// Check edge label for relationship hints
+		const label = edge.label?.toLowerCase() || '';
+		if (label.includes('spouse') || label.includes('married') || label.includes('partner')) {
+			return 'spouse';
+		}
+		if (label.includes('child') || label.includes('parent') || label.includes('son') || label.includes('daughter')) {
+			return 'parent-child';
+		}
+
+		// Check edge sides - spouse relationships often connect from side to side
+		const fromSide = edge.fromSide || '';
+		const toSide = edge.toSide || '';
+		if ((fromSide === 'left' || fromSide === 'right') && (toSide === 'left' || toSide === 'right')) {
+			return 'spouse';
+		}
+		// Parent-child typically goes top-to-bottom
+		if ((fromSide === 'bottom' && toSide === 'top') || (fromSide === 'top' && toSide === 'bottom')) {
+			return 'parent-child';
+		}
+
+		return 'unknown';
+	}
+
+	/**
+	 * Build rich label for node including dates and places
+	 */
+	private buildRichLabel(node: CanvasNode, includeWikiLink: boolean): string {
+		const details = this.personDetailsCache.get(node.id);
+
+		if (!details) {
+			// Fall back to simple label
+			return this.extractNodeLabel(node);
+		}
+
+		const lines: string[] = [];
+
+		// Name with optional wiki link
+		if (includeWikiLink && details.filePath) {
+			lines.push(`[[${details.name}]]`);
+		} else {
+			lines.push(details.name);
+		}
+
+		// Date line
+		if (details.birthDate || details.deathDate) {
+			const birth = details.birthDate || '?';
+			const death = details.deathDate || '';
+			if (death) {
+				lines.push(`${birth} – ${death}`);
+			} else {
+				lines.push(`b. ${birth}`);
+			}
+		}
+
+		// Place (if available)
+		if (details.birthPlace) {
+			lines.push(details.birthPlace);
+		}
+
+		return lines.join('\n');
+	}
+
+	/**
+	 * Convert Canvas data to Excalidraw format using ExcalidrawAutomate API
+	 * This method provides enhanced features: smart connectors, wiki links, grouping
+	 */
+	private async convertWithApi(
+		ea: ExcalidrawAutomate,
 		canvasData: CanvasData,
 		options: ExcalidrawExportOptions
-	): ExcalidrawFile {
-		const elements: (ExcalidrawRectangle | ExcalidrawText | ExcalidrawArrow)[] = [];
+	): Promise<ExcalidrawFile> {
+		// Reset EA state
+		ea.reset();
+		ea.setView(null); // API-only mode, no open view required
+
 		const nodeIdMap = new Map<string, string>(); // Canvas ID -> Excalidraw ID
 
 		// Extract options with defaults
@@ -279,6 +491,186 @@ export class ExcalidrawExporter {
 		const shapeBackgroundColor = options.shapeBackgroundColor ?? 'transparent';
 		const viewBackgroundColor = options.viewBackgroundColor ?? '#ffffff';
 		const opacity = options.opacity ?? 100;
+		const includeWikiLinks = options.includeWikiLinks !== false;
+		const includePersonDetails = options.includePersonDetails !== false;
+		const useSmartConnectors = options.useSmartConnectors !== false;
+		const styleSpouseRelationships = options.styleSpouseRelationships !== false;
+		const groupElements = options.groupElements !== false;
+
+		// Calculate bounds to normalize coordinates
+		let minX = Infinity;
+		let minY = Infinity;
+		for (const node of canvasData.nodes) {
+			minX = Math.min(minX, node.x);
+			minY = Math.min(minY, node.y);
+		}
+
+		const padding = 50;
+		const offsetX = -minX + padding;
+		const offsetY = -minY + padding;
+
+		// Set EA styles
+		ea.style.strokeWidth = strokeWidth;
+		ea.style.roughness = roughness;
+		ea.style.fillStyle = fillStyle as 'solid' | 'hachure' | 'cross-hatch';
+		ea.style.strokeStyle = strokeStyle as 'solid' | 'dashed' | 'dotted';
+		ea.style.opacity = opacity;
+		ea.style.fontFamily = fontFamily;
+		ea.style.fontSize = fontSize;
+
+		// Convert nodes
+		for (const node of canvasData.nodes) {
+			const rectColor = preserveColors && node.color
+				? CANVAS_TO_EXCALIDRAW_COLORS[node.color] || CANVAS_TO_EXCALIDRAW_COLORS['none']
+				: CANVAS_TO_EXCALIDRAW_COLORS['none'];
+
+			ea.style.strokeColor = rectColor;
+			ea.style.backgroundColor = shapeBackgroundColor;
+
+			// Create rectangle
+			const rectId = ea.addRect(
+				node.x + offsetX,
+				node.y + offsetY,
+				node.width,
+				node.height
+			);
+			nodeIdMap.set(node.id, rectId);
+
+			// Create text label (rich content if enabled)
+			let labelText: string;
+			if (includePersonDetails && this.personDetailsCache.has(node.id)) {
+				labelText = this.buildRichLabel(node, includeWikiLinks);
+			} else if (includeWikiLinks && node.type === 'file' && node.file) {
+				const name = this.extractNodeLabel(node);
+				labelText = `[[${name}]]`;
+			} else {
+				labelText = this.extractNodeLabel(node);
+			}
+
+			if (labelText) {
+				ea.style.strokeColor = '#1e1e1e'; // Text always dark
+
+				// Use box parameter to position text within container
+				const textId = ea.addText(
+					node.x + offsetX,
+					node.y + offsetY,
+					labelText,
+					{
+						box: {
+							topX: node.x + offsetX,
+							topY: node.y + offsetY,
+							width: node.width,
+							height: node.height
+						},
+						textAlign: 'center',
+						textVerticalAlign: 'middle'
+					}
+				);
+
+				// Group rectangle and text if enabled
+				if (groupElements) {
+					ea.addToGroup([rectId, textId]);
+				}
+			}
+		}
+
+		// Convert edges
+		for (const edge of canvasData.edges) {
+			const fromExcalidrawId = nodeIdMap.get(edge.fromNode);
+			const toExcalidrawId = nodeIdMap.get(edge.toNode);
+
+			if (!fromExcalidrawId || !toExcalidrawId) {
+				logger.warn('export', `Skipping edge with missing node: ${edge.id}`);
+				continue;
+			}
+
+			const edgeColor = preserveColors && edge.color
+				? CANVAS_TO_EXCALIDRAW_COLORS[edge.color] || CANVAS_TO_EXCALIDRAW_COLORS['none']
+				: CANVAS_TO_EXCALIDRAW_COLORS['none'];
+
+			// Determine relationship type for styling
+			const relType = this.getRelationshipType(edge);
+			const isSpouse = relType === 'spouse' && styleSpouseRelationships;
+
+			ea.style.strokeColor = edgeColor;
+			ea.style.strokeStyle = isSpouse ? 'dashed' : strokeStyle as 'solid' | 'dashed' | 'dotted';
+			ea.style.strokeWidth = strokeWidth;
+
+			if (useSmartConnectors) {
+				// Use connectObjects for smart, adaptive arrows
+				ea.connectObjects(
+					fromExcalidrawId,
+					null, // auto-detect connection point
+					toExcalidrawId,
+					null, // auto-detect connection point
+					{
+						endArrowHead: 'arrow',
+						startArrowHead: null,
+						numberOfPoints: 1
+					}
+				);
+			} else {
+				// Fall back to manual arrow creation (handled in JSON mode)
+				// For now, still use connectObjects but it's logged as non-smart
+				ea.connectObjects(
+					fromExcalidrawId,
+					null,
+					toExcalidrawId,
+					null,
+					{
+						endArrowHead: 'arrow',
+						startArrowHead: null,
+						numberOfPoints: 1
+					}
+				);
+			}
+		}
+
+		// Get elements from EA
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const elements = Object.values(ea.elementsDict) as any as (ExcalidrawRectangle | ExcalidrawText | ExcalidrawArrow)[];
+
+		return {
+			type: 'excalidraw',
+			version: 2,
+			source: 'https://github.com/banisterious/obsidian-canvas-roots',
+			elements,
+			appState: {
+				gridSize: null,
+				viewBackgroundColor
+			},
+			files: {}
+		};
+	}
+
+	/**
+	 * Convert Canvas data to Excalidraw format (JSON fallback mode)
+	 * This method is used when ExcalidrawAutomate API is not available.
+	 * Supports rich content, wiki links, relationship styling, and grouping.
+	 */
+	private convertCanvasToExcalidraw(
+		canvasData: CanvasData,
+		options: ExcalidrawExportOptions
+	): ExcalidrawFile {
+		const elements: (ExcalidrawRectangle | ExcalidrawText | ExcalidrawArrow)[] = [];
+		const nodeIdMap = new Map<string, string>(); // Canvas ID -> Excalidraw ID
+		const textIdMap = new Map<string, string>(); // Canvas ID -> Text element ID (for grouping)
+
+		// Extract options with defaults
+		const fontSize = options.fontSize ?? 16;
+		const strokeWidth = options.strokeWidth ?? 2;
+		const preserveColors = options.preserveColors ?? true;
+		const roughness = options.roughness ?? 1;
+		const fontFamily = options.fontFamily ?? 1;
+		const fillStyle = options.fillStyle ?? 'solid';
+		const strokeStyle = options.strokeStyle ?? 'solid';
+		const shapeBackgroundColor = options.shapeBackgroundColor ?? 'transparent';
+		const viewBackgroundColor = options.viewBackgroundColor ?? '#ffffff';
+		const opacity = options.opacity ?? 100;
+		const includeWikiLinks = options.includeWikiLinks !== false;
+		const includePersonDetails = options.includePersonDetails !== false;
+		const styleSpouseRelationships = options.styleSpouseRelationships !== false;
+		const groupElements = options.groupElements !== false;
 
 		// Calculate bounds to normalize coordinates
 		let minX = Infinity;
@@ -295,6 +687,14 @@ export class ExcalidrawExporter {
 
 		logger.info('export', `Coordinate offset: (${offsetX}, ${offsetY}) from bounds (${minX}, ${minY})`);
 
+		// Generate group IDs for grouped elements
+		const groupIdMap = new Map<string, string>();
+		if (groupElements) {
+			for (const node of canvasData.nodes) {
+				groupIdMap.set(node.id, this.generateId());
+			}
+		}
+
 		// Convert nodes
 		for (const node of canvasData.nodes) {
 			const excalidrawId = this.generateId();
@@ -305,6 +705,7 @@ export class ExcalidrawExporter {
 				? CANVAS_TO_EXCALIDRAW_COLORS[node.color] || CANVAS_TO_EXCALIDRAW_COLORS['none']
 				: CANVAS_TO_EXCALIDRAW_COLORS['none'];
 
+			const groupId = groupIdMap.get(node.id);
 			const rectangle = this.createRectangle(
 				excalidrawId,
 				node.x + offsetX,
@@ -318,17 +719,29 @@ export class ExcalidrawExporter {
 					strokeStyle,
 					strokeWidth,
 					backgroundColor: shapeBackgroundColor,
-					opacity
+					opacity,
+					groupIds: groupId ? [groupId] : []
 				}
 			);
 			elements.push(rectangle);
 
 			// Create text label (with coordinate offset applied)
-			// Extract person name from file path or text content
-			const labelText = this.extractNodeLabel(node);
+			// Use rich content if enabled
+			let labelText: string;
+			if (includePersonDetails && this.personDetailsCache.has(node.id)) {
+				labelText = this.buildRichLabel(node, includeWikiLinks);
+			} else if (includeWikiLinks && node.type === 'file' && node.file) {
+				const name = this.extractNodeLabel(node);
+				labelText = `[[${name}]]`;
+			} else {
+				labelText = this.extractNodeLabel(node);
+			}
+
 			if (labelText) {
+				const textId = this.generateId();
+				textIdMap.set(node.id, textId);
 				const textElement = this.createText(
-					this.generateId(),
+					textId,
 					node.x + offsetX + node.width / 2,
 					node.y + offsetY + node.height / 2,
 					labelText,
@@ -336,7 +749,8 @@ export class ExcalidrawExporter {
 					excalidrawId, // container ID
 					{
 						fontFamily,
-						opacity
+						opacity,
+						groupIds: groupId ? [groupId] : []
 					}
 				);
 				elements.push(textElement);
@@ -363,6 +777,11 @@ export class ExcalidrawExporter {
 				? CANVAS_TO_EXCALIDRAW_COLORS[edge.color] || CANVAS_TO_EXCALIDRAW_COLORS['none']
 				: CANVAS_TO_EXCALIDRAW_COLORS['none'];
 
+			// Determine relationship type for styling
+			const relType = this.getRelationshipType(edge);
+			const isSpouse = relType === 'spouse' && styleSpouseRelationships;
+			const edgeStrokeStyle = isSpouse ? 'dashed' : strokeStyle;
+
 			const arrow = this.createArrow(
 				this.generateId(),
 				fromNode,
@@ -376,7 +795,7 @@ export class ExcalidrawExporter {
 				edge.label,
 				{
 					roughness,
-					strokeStyle,
+					strokeStyle: edgeStrokeStyle,
 					opacity
 				}
 			);
@@ -413,6 +832,7 @@ export class ExcalidrawExporter {
 			strokeWidth?: number;
 			backgroundColor?: string;
 			opacity?: number;
+			groupIds?: string[];
 		}
 	): ExcalidrawRectangle {
 		return {
@@ -430,7 +850,7 @@ export class ExcalidrawExporter {
 			strokeStyle: styleOptions?.strokeStyle ?? 'solid',
 			roughness: styleOptions?.roughness ?? 1,
 			opacity: styleOptions?.opacity ?? 100,
-			groupIds: [],
+			groupIds: styleOptions?.groupIds ?? [],
 			frameId: null,
 			roundness: { type: 3 },
 			seed: this.generateSeed(),
@@ -457,11 +877,14 @@ export class ExcalidrawExporter {
 		styleOptions?: {
 			fontFamily?: ExcalidrawFontFamily;
 			opacity?: number;
+			groupIds?: string[];
 		}
 	): ExcalidrawText {
-		// Center text within container
-		const textWidth = text.length * fontSize * 0.6; // Approximate width
-		const textHeight = fontSize * 1.2;
+		// Handle multi-line text for rich labels
+		const lines = text.split('\n');
+		const maxLineLength = Math.max(...lines.map(l => l.length));
+		const textWidth = maxLineLength * fontSize * 0.6; // Approximate width
+		const textHeight = fontSize * 1.2 * lines.length; // Account for multiple lines
 
 		return {
 			id,
@@ -478,7 +901,7 @@ export class ExcalidrawExporter {
 			strokeStyle: 'solid',
 			roughness: 0, // Text should always be clean
 			opacity: styleOptions?.opacity ?? 100,
-			groupIds: [],
+			groupIds: styleOptions?.groupIds ?? [],
 			frameId: null,
 			roundness: null,
 			seed: this.generateSeed(),
