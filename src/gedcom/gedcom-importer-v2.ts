@@ -955,8 +955,29 @@ export class GedcomImporterV2 {
 		// Track this path as created before actually creating the file
 		createdEventPaths?.add(finalPath);
 
-		const file = await this.app.vault.create(finalPath, content);
-		return file;
+		// Try to create the file, with retry logic for race conditions
+		// where the vault index hasn't caught up with recently created files
+		const maxRetries = 10;
+		let lastError: Error | null = null;
+		for (let attempt = 0; attempt < maxRetries; attempt++) {
+			try {
+				const file = await this.app.vault.create(finalPath, content);
+				return file;
+			} catch (error) {
+				if (error instanceof Error && error.message.includes('File already exists')) {
+					// File exists but wasn't detected by vault.getAbstractFileByPath
+					// Increment counter and try again
+					const baseName = this.formatFilename(`${title}-${counter}`, eventFormat);
+					finalPath = normalizePath(`${options.eventsFolder}/${baseName}`);
+					createdEventPaths?.add(finalPath);
+					counter++;
+					lastError = error;
+				} else {
+					throw error;
+				}
+			}
+		}
+		throw lastError || new Error(`Failed to create event note after ${maxRetries} attempts`);
 	}
 
 	private buildEventFrontmatter(

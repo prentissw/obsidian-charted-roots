@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Duplicate name wikilinks in GEDCOM import** - When importing GEDCOM files with duplicate names (e.g., two people named "John Smith"), the relationship wikilinks now correctly point to the actual filenames (e.g., `[[John Smith]]` and `[[John Smith-1]]`) instead of all pointing to the same name.
 
-- **Duplicate event note filenames during import** - Fixed "File already exists" errors when importing GEDCOM files with multiple events that generate identical titles (e.g., multiple "Marriage of Unknown and Unknown" events). The importer now tracks created filenames during the import session to prevent race conditions with vault indexing.
+- **Duplicate event note filenames during import** - Fixed "File already exists" errors when importing GEDCOM files with multiple events that generate identical titles (e.g., multiple "Marriage of Unknown and Unknown" events). The importer now tracks created filenames during the import session and includes retry logic to handle race conditions with vault indexing.
 
 - **Missing space in timeline block** - Fixed missing space between event type and "in" preposition (e.g., "Bornin" now correctly displays as "Born in").
 
