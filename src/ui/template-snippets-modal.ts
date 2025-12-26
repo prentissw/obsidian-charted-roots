@@ -330,6 +330,9 @@ ${p('birth_place')}:
 ${p('death_place')}:
 burial_place:
 
+# Sources
+${p('sources')}:
+
 # Organization
 collection:
 ---
@@ -616,7 +619,7 @@ location:
 ${p('confidence')}: <% tp.system.suggester(["High", "Medium", "Low", "Unknown"], ["high", "medium", "low", "unknown"]) %>
 source_quality: <% tp.system.suggester(["Primary (original record)", "Secondary (later account)", "Derivative (copy/transcription)"], ["primary", "secondary", "derivative"]) %>
 media:
-media_2:
+  -
 citation_override:
 ---
 
@@ -992,6 +995,7 @@ ${p('date')}:
 ${p('date_precision')}: <% tp.system.suggester(["Exact date", "Month only", "Year only", "Decade", "Estimated", "Date range", "Unknown"], ["exact", "month", "year", "decade", "estimated", "range", "unknown"]) %>
 ${p('person')}:
 ${p('place')}:
+${p('sources')}:
 ${p('confidence')}: <% tp.system.suggester(["High", "Medium", "Low", "Unknown"], ["high", "medium", "low", "unknown"]) %>
 ---
 

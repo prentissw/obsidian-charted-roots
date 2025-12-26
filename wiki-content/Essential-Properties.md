@@ -14,6 +14,7 @@ A quick-reference guide to the most important frontmatter properties for each en
 | `father` / `mother` | Wikilinks to parents | No |
 | `spouse` | Array of spouse wikilinks | No |
 | `born` / `died` | Dates (YYYY-MM-DD) | No |
+| `sources` | Array of source wikilinks | No |
 
 ```yaml
 ---
@@ -26,6 +27,8 @@ father: "[[William Smith]]"
 mother: "[[Mary Jones]]"
 spouse:
   - "[[Sarah Brown]]"
+sources:
+  - "[[1860 Census - Smith Household]]"
 ---
 ```
 
@@ -65,6 +68,7 @@ parent_place: "[[Massachusetts]]"
 | `date_precision` | exact, month, year, decade, estimated, range | No |
 | `person` | Primary person wikilink | No |
 | `place` | Location wikilink | No |
+| `sources` | Array of source wikilinks | No |
 | `confidence` | high, medium, low, or unknown | No |
 
 ```yaml
@@ -76,6 +80,9 @@ event_type: birth
 date: 1850-03-15
 person: "[[John Smith]]"
 place: "[[Boston]]"
+sources:
+  - "[[Birth Certificate - John Smith]]"
+  - "[[1850 Census - Smith Household]]"
 confidence: high
 ---
 ```

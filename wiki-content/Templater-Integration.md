@@ -106,12 +106,11 @@ father: ""
 mother: ""
 spouses: []
 children: []
+sources: []
 group_name: ""
 ---
 
 ## Biography
-
-## Sources
 ```
 
 ### Place Note Template
@@ -146,12 +145,11 @@ date: ""
 date_precision: unknown
 person: ""
 place: ""
+sources: []
 confidence: unknown
 ---
 
 ## Description
-
-## Sources
 ```
 
 ### Source Note Template
