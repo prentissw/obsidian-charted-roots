@@ -8,6 +8,8 @@ Canvas Roots includes comprehensive data quality tools to help you maintain accu
 
 - [Overview](#overview)
 - [Post-Import Cleanup Workflow](#post-import-cleanup-workflow)
+  - [Using the Cleanup Wizard (Recommended)](#using-the-cleanup-wizard-recommended)
+  - [Manual Cleanup Steps](#manual-cleanup-steps)
 - [Control Center Data Quality Tab](#control-center-data-quality-tab)
   - [Quality Report](#quality-report)
   - [Issue Categories](#issue-categories)
@@ -27,9 +29,48 @@ Data quality tools are available in two contexts:
 
 ## Post-Import Cleanup Workflow
 
-After importing a GEDCOM file (especially a "messy" one with data quality issues), follow this recommended sequence:
+After importing a GEDCOM file (especially a "messy" one with data quality issues), use the **Cleanup Wizard** to guide you through the recommended sequence of fixes.
 
-### Step 1: Review the Quality Report
+### Using the Cleanup Wizard (Recommended)
+
+**Location:** Control Center → Data Quality tab → "Cleanup Wizard"
+
+The Cleanup Wizard provides a guided, step-by-step workflow that walks you through all data quality operations in the correct order. It's the recommended approach for post-import cleanup.
+
+**Wizard Features:**
+- **10 sequential steps** covering all cleanup operations
+- **Progress tracking** with completed/pending status for each step
+- **Session persistence** — your progress is saved, so you can close the wizard and resume later
+- **Preview before apply** — each operation shows what will change before making modifications
+- **Skip/reset options** — skip steps that don't apply or reset to re-run a step
+
+**Wizard Steps:**
+
+| Step | Operation | Description |
+|------|-----------|-------------|
+| 1 | Migrate Legacy Type | Convert `type` to `cr_type` property |
+| 2 | Flatten Nested Properties | Convert nested frontmatter to flat properties |
+| 3 | Normalize Date Formats | Standardize dates to YYYY-MM-DD format |
+| 4 | Normalize Sex Values | Normalize to GEDCOM-standard M/F/X/U |
+| 5 | Fix Bidirectional Relationships | Ensure parent-child and spouse links are reciprocated |
+| 6 | Migrate Source Arrays | Convert `source`, `source_2`, `source_3` to `sources: []` |
+| 7 | Clear Orphan References | Remove references to non-existent people |
+| 8 | Standardize Place Names | Unify spelling variations |
+| 9 | Geocode Places | Look up coordinates for map display |
+| 10 | Enrich Place Hierarchy | Add `contained_by` relationships |
+
+**Tips:**
+- Run the Quality Report first to understand the scope of issues
+- Steps can be skipped if they don't apply to your data
+- The wizard remembers which steps you've completed
+
+---
+
+### Manual Cleanup Steps
+
+If you prefer to run individual operations manually, or need more control over specific steps, you can access each operation directly from the Control Center tabs.
+
+#### Step 1: Review the Quality Report
 **Location:** Control Center → Data Quality tab → "Run analysis"
 
 Start here to understand the scope of issues. The report shows:
@@ -39,7 +80,7 @@ Start here to understand the scope of issues. The report shows:
 
 This gives you the big picture before diving into fixes.
 
-### Step 2: Fix Bidirectional Relationships
+#### Step 2: Fix Bidirectional Relationships
 **Location:** Control Center → People tab → Batch operations → "Fix bidirectional relationship inconsistencies"
 
 Run this early — it ensures the family graph is internally consistent. If a child lists a parent, the parent should list the child. This step is essential for tree generation and navigation to work correctly.
@@ -54,37 +95,42 @@ Run this early — it ensures the family graph is internally consistent. If a ch
 - After GEDCOM imports — the importer creates bidirectional relationships automatically
 - After using the plugin's built-in relationship editing UI — those create both sides automatically
 
-### Step 3: Normalize Date Formats
+#### Step 3: Normalize Date Formats
 **Location:** Control Center → Data Quality tab → "Normalize date formats"
 
 Converts varied date formats (`15 Mar 1920`, `Mar 15, 1920`, etc.) to the standard `YYYY-MM-DD` format. Standardized dates enable proper sorting, filtering, and age calculations.
 
-### Step 4: Normalize Sex Values
+#### Step 4: Normalize Sex Values
 **Location:** Control Center → Data Quality tab → "Normalize sex values"
 
 Converts `male`, `female`, `man`, `woman`, etc. to GEDCOM-standard canonical values (`M`, `F`, `X`, `U`). Consistent sex values are required for parent role validation (father vs. mother) and GEDCOM export compatibility.
 
-### Step 5: Clear Orphan References
+#### Step 5: Clear Orphan References
 **Location:** Control Center → Data Quality tab → "Clear orphan references"
 
 Removes `father_id` and `mother_id` values that point to non-existent people. This cleans up dangling references that can cause errors in tree generation.
 
-### Step 6: Standardize Place Names
+#### Step 6: Migrate Source Arrays
+**Location:** Control Center → Data Quality tab → "Migrate source arrays"
+
+Converts indexed source properties (`source`, `source_2`, `source_3`) to a single `sources` YAML array. This aligns with the modern array-based property format used throughout Canvas Roots.
+
+#### Step 7: Standardize Place Names
 **Location:** Control Center → Places tab → "Standardize variants"
 
 Unifies spelling variations ("USA" vs "United States of America", state abbreviations). Consistent place names enable proper grouping and hierarchy building.
 
-### Step 7: Geocode Places
+#### Step 8: Geocode Places
 **Location:** Control Center → Places tab → "Bulk geocode"
 
 Looks up coordinates for place notes that don't have them. Required for map visualizations. Note: Rate-limited to 1 request/second.
 
-### Step 8: Enrich Place Hierarchy
+#### Step 9: Enrich Place Hierarchy
 **Location:** Control Center → Places tab → "Enrich place hierarchy"
 
 Uses geocoding API to fill in `contained_by` relationships (city → county → state → country). Creates proper place containment chains.
 
-### Optional: Flatten Nested Properties
+#### Optional: Flatten Nested Properties
 **Location:** Control Center → Data Quality tab → "Flatten nested properties"
 
 If your GEDCOM import created nested frontmatter (e.g., `coordinates: { lat: ..., long: ... }`), this converts them to flat properties (`coordinates_lat`, `coordinates_long`). Flat properties work better with Obsidian's property editor.
