@@ -26,6 +26,7 @@ export type KnownPlaceType =
 	| 'province'
 	| 'region'
 	| 'county'
+	| 'township'
 	| 'city'
 	| 'town'
 	| 'village'
@@ -269,6 +270,7 @@ export const KNOWN_PLACE_TYPES: KnownPlaceType[] = [
 	'province',
 	'region',
 	'county',
+	'township',
 	'city',
 	'town',
 	'village',

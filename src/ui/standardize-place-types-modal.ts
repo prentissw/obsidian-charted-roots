@@ -11,7 +11,7 @@ import { PlaceNode, KnownPlaceType } from '../models/place';
 /**
  * Place types that should be reviewed/standardized
  */
-const NON_STANDARD_TYPES = ['locality', 'township', 'municipality', 'hamlet', 'settlement'];
+const NON_STANDARD_TYPES = ['locality', 'municipality', 'hamlet', 'settlement'];
 
 /**
  * Standard place types to convert to

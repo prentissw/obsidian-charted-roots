@@ -76,6 +76,14 @@ export const DEFAULT_PLACE_TYPES: PlaceTypeDefinition[] = [
 		category: 'political',
 		builtIn: true
 	},
+	{
+		id: 'township',
+		name: 'Township',
+		description: 'Civil township (US Midwest/Northeast administrative division)',
+		hierarchyLevel: 6,
+		category: 'political',
+		builtIn: true
+	},
 
 	// Settlements (6-9)
 	{

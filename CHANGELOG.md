@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Source Media Linker showing already-linked images** - The Link Media to Sources wizard now excludes images that are already attached to a source note. Previously, images would appear in the list even after being linked, requiring manual tracking of which files had been processed.
 
+- **Townships incorrectly flagged as non-standard place types** - Townships are now recognized as valid administrative divisions and will no longer appear in the "Standardize place types" cleanup wizard. Added `township` as a built-in place type at hierarchy level 6 (below county), appropriate for US Midwest/Northeast civil townships.
+
 ---
 
 ## [0.17.4] - 2025-12-27
