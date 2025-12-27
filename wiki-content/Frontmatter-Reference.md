@@ -178,6 +178,7 @@ Tracks research progress toward GPS-compliant documentation, based on Yvette Hoi
 - If `research_level` is not set, the person is treated as "not assessed" (distinct from level 0)
 - Level 0 means "we know this ancestor exists but don't know their name" (a placeholder)
 - Manual entry only — research level is a qualitative judgment about exhaustiveness, not just data completeness
+- UI for editing research level requires "Enable fact-level source tracking" in [Settings](Settings-And-Configuration#research-tools-optional)
 
 ### Parent Relationships
 

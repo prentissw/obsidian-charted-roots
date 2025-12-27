@@ -345,6 +345,11 @@ When fact-level source tracking is enabled:
 - Person notes can include `sourced_facts` property
 - Data Quality tab shows research coverage statistics
 - Helps identify which facts need documentary evidence
+- **Research level** dropdown appears in Edit Person modal
+- **Research level filter** appears in Gaps Report options
+- Bases views include "By research level", "Needs research", and "Not assessed"
+
+When disabled, research level UI elements are hidden but existing `research_level` values in notes are preserved.
 
 > **Note:** These are opt-in tools for serious researchers. Casual users can leave them disabled.
 
