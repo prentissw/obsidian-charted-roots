@@ -93,6 +93,14 @@ export interface GrampsChildRef {
 }
 
 /**
+ * Person attribute (custom key-value pair)
+ */
+export interface GrampsAttribute {
+	type: string;
+	value: string;
+}
+
+/**
  * Person record
  */
 export interface GrampsPerson {
@@ -104,6 +112,7 @@ export interface GrampsPerson {
 	childof: string[];   // Handle links to families where this person is a child
 	parentin: string[];  // Handle links to families where this person is a parent
 	mediaRefs: string[]; // Handle links to media objects
+	attributes: GrampsAttribute[];  // Custom person attributes
 }
 
 /**

@@ -623,6 +623,14 @@ export class GrampsImporter {
 			media: resolvedMedia.length > 0 ? resolvedMedia : undefined
 		};
 
+		// Handle Research Level attribute (from Gramps person attributes)
+		if (person.attributes && person.attributes['Research Level']) {
+			const level = parseInt(person.attributes['Research Level'], 10);
+			if (!isNaN(level) && level >= 0 && level <= 6) {
+				personData.researchLevel = level as 0 | 1 | 2 | 3 | 4 | 5 | 6;
+			}
+		}
+
 		// Add relationship references with Gramps handles (temporary) and names
 		if (person.fatherRef) {
 			personData.fatherCrId = person.fatherRef; // Temporary Gramps handle

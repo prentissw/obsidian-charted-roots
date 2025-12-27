@@ -61,6 +61,8 @@ export interface ParsedGrampsPerson {
 	marriages: Map<string, { date?: string; place?: string }>;
 	// Media references
 	mediaRefs: string[];
+	// Custom attributes (e.g., Research Level)
+	attributes: Record<string, string>;
 }
 
 /**
@@ -558,7 +560,8 @@ export class GrampsParser {
 			eventrefs: [],
 			childof: [],
 			parentin: [],
-			mediaRefs: []
+			mediaRefs: [],
+			attributes: []
 		};
 
 		// Parse names
@@ -600,6 +603,15 @@ export class GrampsParser {
 			const hlink = refEl.getAttribute('hlink');
 			if (hlink) {
 				person.mediaRefs.push(hlink);
+			}
+		});
+
+		// Parse person attributes (e.g., Research Level)
+		el.querySelectorAll(':scope > attribute').forEach(attrEl => {
+			const type = attrEl.getAttribute('type');
+			const value = attrEl.getAttribute('value');
+			if (type && value) {
+				person.attributes.push({ type, value });
 			}
 		});
 
@@ -1030,6 +1042,12 @@ export class GrampsParser {
 			}
 		}
 
+		// Convert attributes array to Record for easier access
+		const attributes: Record<string, string> = {};
+		for (const attr of person.attributes || []) {
+			attributes[attr.type] = attr.value;
+		}
+
 		return {
 			id: person.id || person.handle,
 			handle: person.handle,
@@ -1046,7 +1064,8 @@ export class GrampsParser {
 			stepmotherRefs: [],
 			spouseRefs: [],
 			marriages: new Map(),
-			mediaRefs: person.mediaRefs || []
+			mediaRefs: person.mediaRefs || [],
+			attributes
 		};
 	}
 

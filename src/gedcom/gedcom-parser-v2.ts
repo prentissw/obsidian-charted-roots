@@ -344,6 +344,15 @@ export class GedcomParserV2 {
 				return { currentEvent, currentCitation, currentFamcRef: undefined };
 			}
 
+			// Check for custom _RESEARCH_LEVEL tag (Canvas Roots export)
+			if (tag === '_RESEARCH_LEVEL' && value) {
+				const level = parseInt(value, 10);
+				if (!isNaN(level) && level >= 0 && level <= 6) {
+					individual.attributes['researchLevel'] = String(level);
+				}
+				return { currentEvent, currentCitation, currentFamcRef: undefined };
+			}
+
 			// Basic individual fields
 			switch (tag) {
 				case 'NAME':

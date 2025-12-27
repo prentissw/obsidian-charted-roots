@@ -515,7 +515,15 @@ export class GedcomImporterV2 {
 
 		// Add extended attributes
 		for (const [propName, value] of Object.entries(individual.attributes)) {
-			(personData as unknown as Record<string, unknown>)[propName] = value;
+			// Handle researchLevel specially - convert from string to number
+			if (propName === 'researchLevel') {
+				const level = parseInt(value, 10);
+				if (!isNaN(level) && level >= 0 && level <= 6) {
+					personData.researchLevel = level as 0 | 1 | 2 | 3 | 4 | 5 | 6;
+				}
+			} else {
+				(personData as unknown as Record<string, unknown>)[propName] = value;
+			}
 		}
 
 		// Add relationship references (biological parents)

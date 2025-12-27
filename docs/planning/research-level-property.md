@@ -188,23 +188,28 @@ Research level is exported to both GEDCOM and Gramps formats as custom tags/attr
 
 ---
 
-## Import Support
+## Import Support ✅
 
-**GEDCOM/Gramps import:**
+**Status:** Complete
 
-Research level should be importable from GEDCOM/Gramps custom attributes. Users may have tracked this in:
-- GEDCOM `_RESEARCH_LEVEL` or similar custom tag
-- Gramps custom person attributes
+Research level is imported from GEDCOM and Gramps files when present:
 
-**Implementation:**
-- Add optional mapping in import settings
-- Allow user to specify which custom attribute maps to `research_level`
-- Validate imported values are 0-6
+| Format | Tag/Attribute | Description |
+|--------|---------------|-------------|
+| **GEDCOM** | `_RESEARCH_LEVEL` | Custom tag with value 0-6 |
+| **Gramps XML** | `attribute type="Research Level"` | Person attribute with value 0-6 |
 
-**Files to update:**
-- [ ] `src/gedcom/gedcom-parser.ts` - Parse custom tags
-- [ ] `src/gramps/gramps-parser.ts` - Parse custom attributes
-- [ ] `src/ui/import-wizard-modal.ts` - Add mapping option
+**Implementation details:**
+- Values are validated to be integers 0-6
+- Invalid values are silently ignored
+- No user configuration required - automatic when tag/attribute is present
+
+**Files updated:**
+- [x] `src/gedcom/gedcom-parser-v2.ts` - Parse `_RESEARCH_LEVEL` custom tag
+- [x] `src/gedcom/gedcom-importer-v2.ts` - Map to `researchLevel` property
+- [x] `src/gramps/gramps-types.ts` - Added `GrampsAttribute` type and `attributes` field to `GrampsPerson`
+- [x] `src/gramps/gramps-parser.ts` - Parse person `<attribute>` elements
+- [x] `src/gramps/gramps-importer.ts` - Map "Research Level" attribute to `researchLevel`
 
 ---
 
@@ -262,6 +267,4 @@ Research level should be importable from GEDCOM/Gramps custom attributes. Users 
 - ✅ Bases "By Research Level" grouped view (shipped with Phase 1)
 - ✅ Settings integration: UI hidden when `trackFactSourcing` disabled
 - ✅ Export support for GEDCOM (`_RESEARCH_LEVEL`) and Gramps (`attribute type="Research Level"`)
-
-**Remaining work:**
-- Import support for GEDCOM/Gramps custom attributes (future)
+- ✅ Import support for GEDCOM (`_RESEARCH_LEVEL`) and Gramps (`attribute type="Research Level"`)
