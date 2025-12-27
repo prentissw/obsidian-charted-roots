@@ -2,10 +2,10 @@
 
 Planning document for consolidating `person` and `persons` event properties into a single unified property.
 
-**Status:** Planning
-**GitHub Issue:** #TBD
-**Created:** 2025-12-27
-**Updated:** 2025-12-27
+- **Status:** Planning
+- **GitHub Issue:** #TBD
+- **Created:** 2025-12-27
+- **Updated:** 2025-12-27
 
 ---
 
