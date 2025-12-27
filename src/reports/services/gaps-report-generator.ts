@@ -56,6 +56,20 @@ export class GapsReportGenerator {
 			allPeople = allPeople.filter(p => p.file.path.startsWith(options.collectionPath!));
 		}
 
+		// Filter by research level if specified
+		if (options.researchLevelMax !== undefined) {
+			allPeople = allPeople.filter(p => {
+				if (p.researchLevel === undefined) {
+					// Include unassessed people only if option is set
+					return options.includeUnassessed !== false;
+				}
+				return p.researchLevel <= options.researchLevelMax!;
+			});
+		}
+
+		// Calculate research level statistics before further filtering
+		const researchLevelStats = this.calculateResearchLevelStats(allPeople);
+
 		// Analyze gaps
 		const missingBirthDates: ReportPerson[] = [];
 		const missingDeathDates: ReportPerson[] = [];
@@ -90,6 +104,20 @@ export class GapsReportGenerator {
 			}
 		}
 
+		// Sort by research level if requested (lowest first = most needs work)
+		if (options.sortByResearchLevel) {
+			const sortByLevel = (a: ReportPerson, b: ReportPerson) => {
+				// Unassessed (undefined) sorts after all levels
+				const aLevel = a.researchLevel ?? 999;
+				const bLevel = b.researchLevel ?? 999;
+				return aLevel - bLevel;
+			};
+			missingBirthDates.sort(sortByLevel);
+			missingDeathDates.sort(sortByLevel);
+			missingParents.sort(sortByLevel);
+			unsourcedPeople.sort(sortByLevel);
+		}
+
 		// Apply limits
 		const limitedMissingBirthDates = missingBirthDates.slice(0, options.maxItemsPerCategory);
 		const limitedMissingDeathDates = missingDeathDates.slice(0, options.maxItemsPerCategory);
@@ -102,7 +130,8 @@ export class GapsReportGenerator {
 			missingBirthDate: missingBirthDates.length,
 			missingDeathDate: missingDeathDates.length,
 			missingParents: missingParents.length,
-			unsourced: unsourcedPeople.length
+			unsourced: unsourcedPeople.length,
+			byResearchLevel: researchLevelStats
 		};
 
 		// Generate markdown content
@@ -137,6 +166,39 @@ export class GapsReportGenerator {
 	}
 
 	/**
+	 * Calculate research level statistics
+	 */
+	private calculateResearchLevelStats(people: PersonNode[]): {
+		levels: Record<number, number>;
+		unassessed: number;
+		needsWork: number;
+		partial: number;
+		complete: number;
+	} {
+		const levels: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+		let unassessed = 0;
+
+		for (const person of people) {
+			if (person.researchLevel === undefined) {
+				unassessed++;
+			} else if (person.researchLevel >= 0 && person.researchLevel <= 6) {
+				levels[person.researchLevel]++;
+			}
+		}
+
+		return {
+			levels,
+			unassessed,
+			// Levels 0-2: needs significant work
+			needsWork: levels[0] + levels[1] + levels[2],
+			// Levels 3-4: partially researched
+			partial: levels[3] + levels[4],
+			// Levels 5-6: well researched / complete
+			complete: levels[5] + levels[6]
+		};
+	}
+
+	/**
 	 * Check if a person is likely still living based on birth date
 	 */
 	private isLikelyLiving(person: PersonNode): boolean {
@@ -166,7 +228,8 @@ export class GapsReportGenerator {
 			deathPlace: node.deathPlace,
 			sex: this.normalizeSex(node.sex),
 			occupation: node.occupation,
-			filePath: node.file.path
+			filePath: node.file.path,
+			researchLevel: node.researchLevel
 		};
 	}
 
@@ -191,6 +254,15 @@ export class GapsReportGenerator {
 	}
 
 	/**
+	 * Format research level for display
+	 */
+	private formatResearchLevel(level?: number): string {
+		if (level === undefined) return '—';
+		const names = ['Unidentified', 'Name Only', 'Vital Stats', 'Life Events', 'Extended', 'GPS Complete', 'Biography'];
+		return `${level} - ${names[level] ?? 'Unknown'}`;
+	}
+
+	/**
 	 * Generate markdown content for the Gaps Report
 	 */
 	private generateMarkdown(
@@ -200,6 +272,13 @@ export class GapsReportGenerator {
 			missingDeathDate: number;
 			missingParents: number;
 			unsourced: number;
+			byResearchLevel: {
+				levels: Record<number, number>;
+				unassessed: number;
+				needsWork: number;
+				partial: number;
+				complete: number;
+			};
 		},
 		missingBirthDates: ReportPerson[],
 		missingDeathDates: ReportPerson[],
@@ -217,6 +296,9 @@ export class GapsReportGenerator {
 		if (options.scope === 'collection' && options.collectionPath) {
 			lines.push(`Scope: ${options.collectionPath}`);
 		}
+		if (options.researchLevelMax !== undefined) {
+			lines.push(`Research level filter: Level ${options.researchLevelMax} and below`);
+		}
 		lines.push('');
 
 		// Summary
@@ -229,18 +311,39 @@ export class GapsReportGenerator {
 		lines.push(`- **Unsourced people:** ${summary.unsourced} (${this.percent(summary.unsourced, summary.totalPeople)}%)`);
 		lines.push('');
 
+		// Research level summary
+		lines.push('### Research level breakdown');
+		lines.push('');
+		const rl = summary.byResearchLevel;
+		lines.push(`| Category | Count | % |`);
+		lines.push(`|----------|------:|--:|`);
+		lines.push(`| Needs work (0-2) | ${rl.needsWork} | ${this.percent(rl.needsWork, summary.totalPeople)}% |`);
+		lines.push(`| Partially researched (3-4) | ${rl.partial} | ${this.percent(rl.partial, summary.totalPeople)}% |`);
+		lines.push(`| Well researched (5-6) | ${rl.complete} | ${this.percent(rl.complete, summary.totalPeople)}% |`);
+		lines.push(`| Not assessed | ${rl.unassessed} | ${this.percent(rl.unassessed, summary.totalPeople)}% |`);
+		lines.push('');
+		lines.push('**By level:**');
+		lines.push('');
+		for (let i = 0; i <= 6; i++) {
+			const count = rl.levels[i];
+			if (count > 0) {
+				lines.push(`- Level ${i}: ${count} (${this.percent(count, summary.totalPeople)}%)`);
+			}
+		}
+		lines.push('');
+
 		// Missing Birth Dates
 		if (options.fieldsToCheck.birthDate && missingBirthDates.length > 0) {
 			lines.push(`## Missing birth dates (${summary.missingBirthDate})`);
 			lines.push('');
-			lines.push('| Person | Death | Parents |');
-			lines.push('|--------|-------|---------|');
+			lines.push('| Person | Death | Research Level |');
+			lines.push('|--------|-------|----------------|');
 
 			for (const person of missingBirthDates) {
 				const name = `[[${person.name}]]`;
 				const death = person.deathDate ?? '';
-				const parents = ''; // Would need to look up parents
-				lines.push(`| ${name} | ${death} | ${parents} |`);
+				const level = this.formatResearchLevel(person.researchLevel);
+				lines.push(`| ${name} | ${death} | ${level} |`);
 			}
 
 			if (summary.missingBirthDate > options.maxItemsPerCategory) {
@@ -254,14 +357,14 @@ export class GapsReportGenerator {
 		if (options.fieldsToCheck.deathDate && missingDeathDates.length > 0) {
 			lines.push(`## Missing death dates (${summary.missingDeathDate})`);
 			lines.push('');
-			lines.push('| Person | Birth | Notes |');
-			lines.push('|--------|-------|-------|');
+			lines.push('| Person | Birth | Research Level |');
+			lines.push('|--------|-------|----------------|');
 
 			for (const person of missingDeathDates) {
 				const name = `[[${person.name}]]`;
 				const birth = person.birthDate ?? '';
-				const notes = '';
-				lines.push(`| ${name} | ${birth} | ${notes} |`);
+				const level = this.formatResearchLevel(person.researchLevel);
+				lines.push(`| ${name} | ${birth} | ${level} |`);
 			}
 
 			if (summary.missingDeathDate > options.maxItemsPerCategory) {
@@ -275,14 +378,15 @@ export class GapsReportGenerator {
 		if (options.fieldsToCheck.parents && missingParents.length > 0) {
 			lines.push(`## Missing parents (${summary.missingParents})`);
 			lines.push('');
-			lines.push('| Person | Birth | Death |');
-			lines.push('|--------|-------|-------|');
+			lines.push('| Person | Birth | Death | Research Level |');
+			lines.push('|--------|-------|-------|----------------|');
 
 			for (const person of missingParents) {
 				const name = `[[${person.name}]]`;
 				const birth = person.birthDate ?? '';
 				const death = person.deathDate ?? '';
-				lines.push(`| ${name} | ${birth} | ${death} |`);
+				const level = this.formatResearchLevel(person.researchLevel);
+				lines.push(`| ${name} | ${birth} | ${death} | ${level} |`);
 			}
 
 			if (summary.missingParents > options.maxItemsPerCategory) {
@@ -296,14 +400,15 @@ export class GapsReportGenerator {
 		if (options.fieldsToCheck.sources && unsourcedPeople.length > 0) {
 			lines.push(`## Unsourced people (${summary.unsourced})`);
 			lines.push('');
-			lines.push('| Person | Birth | Death |');
-			lines.push('|--------|-------|-------|');
+			lines.push('| Person | Birth | Death | Research Level |');
+			lines.push('|--------|-------|-------|----------------|');
 
 			for (const person of unsourcedPeople) {
 				const name = `[[${person.name}]]`;
 				const birth = person.birthDate ?? '';
 				const death = person.deathDate ?? '';
-				lines.push(`| ${name} | ${birth} | ${death} |`);
+				const level = this.formatResearchLevel(person.researchLevel);
+				lines.push(`| ${name} | ${birth} | ${death} | ${level} |`);
 			}
 
 			if (summary.unsourced > options.maxItemsPerCategory) {

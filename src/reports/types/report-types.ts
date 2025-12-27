@@ -109,6 +109,12 @@ export interface GapsReportOptions extends ReportOptions {
 	};
 	/** Maximum number of items per category */
 	maxItemsPerCategory: number;
+	/** Research level filter: only include people at or below this level (0-6, undefined = all) */
+	researchLevelMax?: number;
+	/** Include people with no research level set */
+	includeUnassessed?: boolean;
+	/** Sort by research level (lowest first = most needs work) */
+	sortByResearchLevel?: boolean;
 }
 
 /**
@@ -288,6 +294,8 @@ export interface ReportPerson {
 	sex?: 'male' | 'female' | 'other' | 'unknown';
 	occupation?: string;
 	filePath: string;
+	/** Research level (0-6) based on Hoitink's Six Levels */
+	researchLevel?: number;
 }
 
 /**
@@ -371,6 +379,19 @@ export interface GapsReportResult extends ReportResult {
 		missingDeathDate: number;
 		missingParents: number;
 		unsourced: number;
+		/** Research level breakdown */
+		byResearchLevel: {
+			/** Count of people at each level (0-6) */
+			levels: Record<number, number>;
+			/** Count of people without research level set */
+			unassessed: number;
+			/** Count at levels 0-2 (needs significant work) */
+			needsWork: number;
+			/** Count at levels 3-4 (partially researched) */
+			partial: number;
+			/** Count at levels 5-6 (well researched) */
+			complete: number;
+		};
 	};
 	/** People missing birth dates */
 	missingBirthDates: ReportPerson[];

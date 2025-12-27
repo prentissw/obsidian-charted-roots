@@ -29,6 +29,7 @@ export interface PersonNode {
 	burialPlace?: string;
 	occupation?: string;
 	sex?: string;
+	researchLevel?: number;  // Research level (0-6) based on Hoitink's Six Levels
 	file: TFile;
 
 	// Biological parent relationships (as cr_ids)
@@ -1357,6 +1358,7 @@ export class FamilyGraphService {
 		const collectionName = this.resolveProperty<string>(fm, 'group_name');
 		const collection = this.resolveProperty<string>(fm, 'collection');
 		const universe = this.resolveProperty<string>(fm, 'universe');
+		const researchLevel = this.resolveProperty<number>(fm, 'research_level');
 
 		// Parse media array
 		const media = this.parseMediaProperty(fm);
@@ -1388,6 +1390,7 @@ export class FamilyGraphService {
 			collectionName,
 			collection,
 			universe,
+			researchLevel,
 			media: media.length > 0 ? media : undefined
 		};
 	}
