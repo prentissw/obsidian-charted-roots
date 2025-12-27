@@ -70,6 +70,7 @@ export function generatePeopleBaseTemplate(aliasesOrOptions: PropertyAliases | P
 	const spouse = getPropertyName('spouse', aliases);
 	const child = getPropertyName('child', aliases);
 	const media = getPropertyName('media', aliases);
+	const research_level = getPropertyName('research_level', aliases);
 
 	return `visibleProperties:
   - formula.thumbnail
@@ -81,6 +82,7 @@ export function generatePeopleBaseTemplate(aliasesOrOptions: PropertyAliases | P
   - formula.birth_display
   - formula.death_display
   - note.${sex}
+  - note.${research_level}
   - note.collection
   - note.group_name
   - note.root_person
@@ -122,6 +124,8 @@ properties:
     displayName: Age
   note.${sex}:
     displayName: Sex
+  note.${research_level}:
+    displayName: Research Level
   note.collection:
     displayName: Collection
   note.group_name:
@@ -338,6 +342,39 @@ views:
       - ${born}
     summaries:
       generation: Unique
+  - type: table
+    name: By research level
+    filters:
+      and:
+        - '!${cr_id}.isEmpty()'
+        - '!${research_level}.isEmpty()'
+    groupBy:
+      property: note.${research_level}
+      direction: ASC
+    order:
+      - ${research_level}
+      - ${name}
+    summaries:
+      ${research_level}: Unique
+  - type: table
+    name: Needs research
+    filters:
+      and:
+        - '!${cr_id}.isEmpty()'
+        - '${research_level} <= 2'
+    order:
+      - ${research_level}
+      - ${name}
+    summaries:
+      ${research_level}: Average
+  - type: table
+    name: Not assessed
+    filters:
+      and:
+        - '!${cr_id}.isEmpty()'
+        - '${research_level}.isEmpty()'
+    order:
+      - ${name}
   - type: table
     name: Ahnentafel ordered
     filters:

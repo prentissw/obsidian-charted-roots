@@ -8,6 +8,35 @@
 import type { SourcedFacts } from '../sources/types/source-types';
 
 /**
+ * Research level values based on Yvette Hoitink's "Six Levels of Ancestral Profiles"
+ *
+ * Tracks research progress toward GPS-compliant documentation:
+ * - 0: Unidentified - Ancestor exists but no name established (placeholder)
+ * - 1: Name Only - Name known, appears in others' records, no vital dates
+ * - 2: Vital Statistics - Birth, marriage, death dates researched
+ * - 3: Life Events - Occupations, residences, children, spouses documented
+ * - 4: Extended Records - Property, military, religion, legal records researched
+ * - 5: GPS Complete - Exhaustive research complete, written proof summary exists
+ * - 6: Biography - Full narrative biography with historical context
+ *
+ * Use null/undefined for "not assessed" (distinct from level 0 "unidentified")
+ */
+export type ResearchLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/**
+ * Research level metadata for display purposes
+ */
+export const RESEARCH_LEVELS: Record<ResearchLevel, { name: string; description: string }> = {
+	0: { name: 'Unidentified', description: 'Ancestor exists but no name established' },
+	1: { name: 'Name Only', description: 'Name known, appears in others\' records' },
+	2: { name: 'Vital Statistics', description: 'Birth, marriage, death dates researched' },
+	3: { name: 'Life Events', description: 'Occupations, residences, children documented' },
+	4: { name: 'Extended Records', description: 'Property, military, legal records researched' },
+	5: { name: 'GPS Complete', description: 'Exhaustive research, written proof summary' },
+	6: { name: 'Biography', description: 'Full narrative with historical context' }
+};
+
+/**
  * Basic frontmatter fields for a person note.
  * Uses index signature to allow dynamic spouse properties (spouse1, spouse2, etc.)
  */
@@ -46,8 +75,14 @@ export interface PersonFrontmatter {
 	 * Maps fact keys (birth_date, death_date, etc.) to source citations
 	 */
 	sourced_facts?: SourcedFacts;
+	/**
+	 * Research level tracking based on Hoitink's Six Levels
+	 * 0-6 scale from "Unidentified" to "Biography"
+	 * undefined = not assessed (distinct from 0 = unidentified)
+	 */
+	research_level?: ResearchLevel;
 	// Index signature for dynamic properties (spouse1, spouse1_id, spouse2, etc.)
-	[key: string]: string | string[] | SourcedFacts | undefined;
+	[key: string]: string | string[] | number | SourcedFacts | undefined;
 }
 
 /**

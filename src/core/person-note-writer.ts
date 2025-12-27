@@ -6,6 +6,7 @@
 import { App, TFile, normalizePath } from 'obsidian';
 import { generateCrId } from './uuid';
 import { getLogger } from './logging';
+import type { ResearchLevel } from '../types/frontmatter';
 
 const logger = getLogger('PersonNoteWriter');
 
@@ -64,6 +65,8 @@ export interface PersonData {
 	deathPlaceName?: string;     // Death place name for wikilink display
 	// Media references
 	media?: string[];            // Wikilinks to media files (e.g., ["[[photo.jpg]]"])
+	// Research tracking
+	researchLevel?: ResearchLevel;  // Research level (0-6) based on Hoitink's Six Levels
 }
 
 /**
@@ -138,7 +141,7 @@ export async function createPersonNote(
 	// Build frontmatter with essential properties
 	// Essential properties are always included (per Guide documentation)
 	// Property names respect user-configured aliases
-	const frontmatter: Record<string, string | string[]> = {
+	const frontmatter: Record<string, string | string[] | number> = {
 		[prop('cr_id')]: crId,
 		[prop('cr_type')]: 'person',
 		[prop('name')]: person.name || '',
@@ -182,6 +185,10 @@ export async function createPersonNote(
 
 	if (person.universe) {
 		frontmatter[prop('universe')] = person.universe;
+	}
+
+	if (person.researchLevel !== undefined) {
+		frontmatter[prop('research_level')] = person.researchLevel;
 	}
 
 	// Handle relationships using dual storage: wikilinks for Obsidian + _id fields for reliability
@@ -618,6 +625,13 @@ export async function updatePersonNote(
 				frontmatter.occupation = person.occupation;
 			} else {
 				delete frontmatter.occupation;
+			}
+		}
+		if (person.researchLevel !== undefined) {
+			if (person.researchLevel !== null) {
+				frontmatter.research_level = person.researchLevel;
+			} else {
+				delete frontmatter.research_level;
 			}
 		}
 		// Handle birth place (dual storage: wikilink + ID)

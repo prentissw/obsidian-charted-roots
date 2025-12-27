@@ -13,6 +13,7 @@ import { PlacePickerModal, SelectedPlaceInfo } from './place-picker';
 import type { CanvasRootsSettings } from '../settings';
 import type CanvasRootsPlugin from '../../main';
 import { ModalStatePersistence, renderResumePromptBanner } from './modal-state-persistence';
+import { ResearchLevel, RESEARCH_LEVELS } from '../types/frontmatter';
 
 /**
  * Relationship field data
@@ -31,6 +32,7 @@ interface PersonFormData {
 	birthDate?: string;
 	deathDate?: string;
 	occupation?: string;
+	researchLevel?: ResearchLevel;
 	collection?: string;
 	universe?: string;
 	directory?: string;
@@ -124,6 +126,7 @@ export class CreatePersonModal extends Modal {
 				deathPlaceId?: string;
 				deathPlaceName?: string;
 				occupation?: string;
+				researchLevel?: ResearchLevel;
 				fatherId?: string;
 				fatherName?: string;
 				motherId?: string;
@@ -183,6 +186,7 @@ export class CreatePersonModal extends Modal {
 				birthPlace: ep.birthPlace,
 				deathPlace: ep.deathPlace,
 				occupation: ep.occupation,
+				researchLevel: ep.researchLevel,
 				collection: ep.collection,
 				universe: ep.universe
 			};
@@ -365,6 +369,22 @@ export class CreatePersonModal extends Modal {
 
 		// Death place (link field)
 		this.createPlaceField(form, 'Death place', this.deathPlaceField);
+
+		// Research level
+		new Setting(form)
+			.setName('Research level')
+			.setDesc('Research progress toward GPS-compliant documentation')
+			.addDropdown(dropdown => {
+				dropdown.addOption('', '(Not assessed)');
+				for (const [level, info] of Object.entries(RESEARCH_LEVELS)) {
+					dropdown.addOption(level, `${level} - ${info.name}`);
+				}
+				dropdown
+					.setValue(this.personData.researchLevel?.toString() || '')
+					.onChange(value => {
+						this.personData.researchLevel = value ? parseInt(value) as ResearchLevel : undefined;
+					});
+			});
 
 		// Relationship fields section header
 		const relSection = form.createDiv({ cls: 'crc-relationship-section' });
@@ -586,6 +606,7 @@ export class CreatePersonModal extends Modal {
 			birthDate: this.personData.birthDate,
 			deathDate: this.personData.deathDate,
 			occupation: this.personData.occupation,
+			researchLevel: this.personData.researchLevel,
 			collection: this.getCollectionValue(),
 			universe: this.getUniverseValue(),
 			directory: this.directory,
@@ -623,6 +644,7 @@ export class CreatePersonModal extends Modal {
 		this.personData.birthDate = formData.birthDate;
 		this.personData.deathDate = formData.deathDate;
 		this.personData.occupation = formData.occupation;
+		this.personData.researchLevel = formData.researchLevel;
 		this.personData.collection = formData.collection;
 		this.personData.universe = formData.universe;
 		if (formData.directory) {
@@ -943,7 +965,8 @@ export class CreatePersonModal extends Modal {
 				birthDate: this.personData.birthDate,
 				deathDate: this.personData.deathDate,
 				sex: this.personData.sex,
-				occupation: this.personData.occupation
+				occupation: this.personData.occupation,
+				researchLevel: this.personData.researchLevel
 			};
 
 			// Add father relationship

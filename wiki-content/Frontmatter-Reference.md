@@ -158,6 +158,26 @@ erDiagram
 | `gender` | `string` | Gender (backwards compatibility - prefer `sex` or `gender_identity`) | `"Male"`, `"Female"` |
 | `gender_identity` | `string` | Gender identity (distinct from biological sex) | `"male"`, `"female"`, `"nonbinary"`, `"genderfluid"` |
 | `occupation` | `string` | Primary occupation | `"Farmer"` |
+| `research_level` | `number` | Research progress level (0-6) | `3` |
+
+### Research Level
+
+Tracks research progress toward GPS-compliant documentation, based on Yvette Hoitink's "Six Levels of Ancestral Profiles" system.
+
+| Level | Name | Description |
+|-------|------|-------------|
+| 0 | Unidentified | Ancestor exists but no name established (placeholder) |
+| 1 | Name Only | Name known, appears in others' records, no vital dates |
+| 2 | Vital Statistics | Birth, marriage, death dates researched |
+| 3 | Life Events | Occupations, residences, children, spouses documented |
+| 4 | Extended Records | Property, military, religion, legal records researched |
+| 5 | GPS Complete | Exhaustive research complete, written proof summary exists |
+| 6 | Biography | Full narrative biography with historical context |
+
+**Notes:**
+- If `research_level` is not set, the person is treated as "not assessed" (distinct from level 0)
+- Level 0 means "we know this ancestor exists but don't know their name" (a placeholder)
+- Manual entry only — research level is a qualitative judgment about exhaustiveness, not just data completeness
 
 ### Parent Relationships
 
@@ -875,7 +895,7 @@ All person note properties can be aliased:
 | Places | `birth_place`, `death_place` |
 | Relationships | `father`, `father_id`, `mother`, `mother_id`, `spouse`, `spouse_id`, `child`, `children_id` |
 | Sources | `sources` |
-| Other | `occupation`, `universe`, `image`, `sourced_facts`, `relationships` |
+| Other | `occupation`, `universe`, `image`, `sourced_facts`, `relationships`, `research_level` |
 
 ### Tips
 
