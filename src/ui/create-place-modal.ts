@@ -862,7 +862,7 @@ export class CreatePlaceModal extends Modal {
 	private restoreFromPersistedState(formData: PlaceFormData): void {
 		this.placeData.name = formData.name || '';
 		this.placeData.placeCategory = formData.placeCategory;
-		this.placeData.placeType = formData.placeType as PlaceType | undefined;
+		this.placeData.placeType = formData.placeType;
 		this.placeData.universe = formData.universe;
 		this.placeData.parentPlaceId = formData.parentPlaceId;
 		this.placeData.parentPlace = formData.parentPlace;

@@ -69,6 +69,9 @@ ISSUES.md
 # Internal planning documents (not for publication)
 docs/planning/community-outreach-strategy.md
 
+# User feedback (private)
+docs/user-feedback/
+
 # Personal deployment scripts
 deploy.sh
 dev-deploy.sh

@@ -1,9 +1,10 @@
 # Research Level Property
 
-**Status:** Planning
+**Status:** In Progress (Phases 1-3 Complete)
 **Target Version:** TBD
 **Created:** 2025-12-26
 **Source:** GitHub Discussion #38
+**Branch:** `feature/research-level-property`
 
 ---
 
@@ -31,7 +32,9 @@ This provides a simple, single-property way to track how thoroughly each ancesto
 
 ## Implementation
 
-### Phase 1: Property Support
+### Phase 1: Property Support ✅
+
+**Status:** Complete
 
 **Add to Person frontmatter schema:**
 
@@ -57,40 +60,41 @@ enum ResearchLevel {
 }
 ```
 
-**Files to update:**
-- [ ] `src/types.ts` - Add ResearchLevel type
-- [ ] `src/schemas/person-schema.ts` - Add to frontmatter schema
-- [ ] `wiki-content/Frontmatter-Reference.md` - Document property
+**Files updated:**
+- [x] `src/types/frontmatter.ts` - Added ResearchLevel type and RESEARCH_LEVELS metadata
+- [x] `src/core/person-note-writer.ts` - Added researchLevel to PersonData
+- [x] `wiki-content/Frontmatter-Reference.md` - Documented property
 
-### Phase 2: Edit Modal Integration
+### Phase 2: Edit Modal Integration ✅
+
+**Status:** Complete
 
 **Add research level selector to Edit Person modal:**
 
-- Dropdown or segmented control showing levels 0-6
-- Show level name and brief description
-- Optional: Show tooltip with full description on hover
+- Dropdown showing levels 0-6 with "(Not assessed)" option
+- Shows level number and name (e.g., "3 - Life Events")
 
-**Location in modal:**
-- Option A: In main form, after dates section
-- Option B: In a collapsible "Research Status" section
-- Option C: As a badge/indicator in the modal header
+**Location in modal:** In main form, after dates section
 
-**Files to update:**
-- [ ] `src/ui/edit-person-modal.ts` - Add selector
-- [ ] `styles/modals.css` - Styling if needed
+**Files updated:**
+- [x] `src/ui/create-person-modal.ts` - Added dropdown selector
 
-### Phase 3: Research Gaps Report Integration
+### Phase 3: Research Gaps Report Integration ✅
+
+**Status:** Complete
 
 **Enhance Research Gaps Report to use research_level:**
 
-- Filter by research level (e.g., "Show only Level 0-2")
-- Sort by research level (lowest first = most needs work)
-- Show research level in report table
-- Summary statistics: "X ancestors at Level 0-2, Y at Level 3-4, Z at Level 5-6"
+- [x] Filter by research level (e.g., "Show only Level 0-2")
+- [x] Sort by research level (lowest first = most needs work)
+- [x] Show research level in report table
+- [x] Summary statistics: "X ancestors at Level 0-2, Y at Level 3-4, Z at Level 5-6"
 
-**Files to update:**
-- [ ] `src/reports/research-gaps-report.ts` - Add filtering/sorting
-- [ ] `src/ui/research-gaps-modal.ts` - Add filter controls
+**Files updated:**
+- [x] `src/core/family-graph.ts` - Added researchLevel to PersonNode
+- [x] `src/reports/types/report-types.ts` - Added researchLevel to ReportPerson, filtering options to GapsReportOptions, statistics to GapsReportResult
+- [x] `src/reports/services/gaps-report-generator.ts` - Filtering, sorting, statistics, Research Level column in tables
+- [x] `src/reports/ui/report-generator-modal.ts` - UI controls for research level filter
 
 ### Phase 4: Canvas Tree Visualization (Deferred)
 
@@ -152,16 +156,18 @@ Level 6: Biography - Full narrative with historical context
 
 ---
 
-## Bases Integration
+## Bases Integration ✅
 
-**Add research_level to Person base views:**
+**Status:** Complete (shipped with Phase 1)
 
-- "By Research Level" grouped view (priority)
-- "Needs Research" filtered view (Level 0-2)
-- "Well Documented" filtered view (Level 4+)
+**Added research_level to Person base views:**
 
-**Files to update:**
-- [ ] `src/bases/templates/person-base-template.ts` - Add views
+- [x] "By research level" grouped view
+- [x] "Needs research" filtered view (Level ≤ 2)
+- [x] "Not assessed" filtered view (empty research_level)
+
+**Files updated:**
+- [x] `src/constants/base-template.ts` - Added views and research_level property
 
 ---
 
@@ -230,15 +236,14 @@ Research level should be importable from GEDCOM/Gramps custom attributes. Users 
 
 ## Implementation Order
 
-1. **Phase 1: Property Support** - Low effort, foundation
-2. **Phase 2: Edit Modal** - Medium effort, primary UI
-3. **Phase 3: Research Gaps Report** - Medium effort, high value
+1. **Phase 1: Property Support** ✅ Complete
+2. **Phase 2: Edit Modal** ✅ Complete
+3. **Phase 3: Research Gaps Report** ✅ Complete
 4. **Phase 4: Canvas Visualization** - Deferred, may conflict with existing indicators
 
-Phases 1-2 could ship together as minimum viable feature.
-Phase 3 adds significant value for research prioritization.
-Phase 4 deferred pending evaluation of visual indicator conflicts.
+**Completed additional work:**
+- ✅ Bases "By Research Level" grouped view (shipped with Phase 1)
+- ✅ Settings integration: UI hidden when `trackFactSourcing` disabled
 
-**Additional work (can be done in parallel):**
-- Bases "By Research Level" grouped view (with Phase 1)
-- Import support for GEDCOM/Gramps custom attributes (after Phase 1)
+**Remaining work:**
+- Import support for GEDCOM/Gramps custom attributes (future)

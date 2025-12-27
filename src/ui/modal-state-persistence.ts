@@ -6,7 +6,7 @@
  */
 
 import type CanvasRootsPlugin from '../../main';
-import type { CanvasRootsSettings, CreateEntityPersistedState } from '../settings';
+import type { CreateEntityPersistedState } from '../settings';
 
 export type ModalType = 'person' | 'place' | 'event' | 'organization' | 'source';
 
@@ -87,7 +87,7 @@ export class ModalStatePersistence<T extends object> {
 			savedAt: Date.now()
 		};
 
-		(this.plugin.settings as CanvasRootsSettings)[this.settingsKey] = state;
+		this.plugin.settings[this.settingsKey] = state;
 		await this.plugin.saveSettings();
 	}
 
@@ -95,7 +95,7 @@ export class ModalStatePersistence<T extends object> {
 	 * Get the raw persisted state (without validity check)
 	 */
 	getRawState(): CreateEntityPersistedState | undefined {
-		return (this.plugin.settings as CanvasRootsSettings)[this.settingsKey];
+		return this.plugin.settings[this.settingsKey];
 	}
 
 	/**
@@ -138,7 +138,7 @@ export class ModalStatePersistence<T extends object> {
 	 * Clear the persisted state
 	 */
 	async clear(): Promise<void> {
-		(this.plugin.settings as CanvasRootsSettings)[this.settingsKey] = undefined;
+		this.plugin.settings[this.settingsKey] = undefined;
 		await this.plugin.saveSettings();
 	}
 
@@ -189,7 +189,7 @@ export class ModalStatePersistence<T extends object> {
 				return true;
 			}
 
-			if (typeof value === 'object' && Object.keys(value as object).length > 0) {
+			if (typeof value === 'object' && value !== null && Object.keys(value).length > 0) {
 				return true;
 			}
 		}
