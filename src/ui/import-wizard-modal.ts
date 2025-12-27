@@ -902,6 +902,7 @@ export class ImportWizardModal extends Modal {
 					createSourceNotes: this.formData.importSources,
 					createPlaceNotes: this.formData.importPlaces,
 					includeDynamicBlocks: this.formData.includeDynamicBlocks,
+					dynamicBlockTypes: ['media', 'timeline', 'relationships'],
 					onProgress: (progress) => {
 						// Update UI based on progress
 						const percent = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
@@ -985,6 +986,7 @@ export class ImportWizardModal extends Modal {
 					eventsFolder: settings.eventsFolder,
 					propertyAliases: settings.propertyAliases,
 					includeDynamicBlocks: this.formData.includeDynamicBlocks,
+					dynamicBlockTypes: ['media', 'timeline', 'relationships'],
 					// Pass media files from .gpkg extraction if available
 					mediaFiles: this.formData.gpkgExtractionResult?.mediaFiles,
 					mediaFolder: this.formData.mediaFolder,
