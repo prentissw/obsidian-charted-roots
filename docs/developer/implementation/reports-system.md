@@ -78,6 +78,23 @@ interface AhnentafelOptions extends ReportOptions {
   includeDetails: boolean;
 }
 
+// Gaps Report with research level filtering
+interface GapsReportOptions extends ReportOptions {
+  scope: 'all' | 'collection';
+  collectionPath?: string;
+  fieldsToCheck: {
+    birthDate: boolean;
+    deathDate: boolean;
+    parents: boolean;
+    sources: boolean;
+  };
+  maxItemsPerCategory: number;
+  // Research level filtering (requires trackFactSourcing setting)
+  researchLevelMax?: number;      // 0-6, undefined = all
+  includeUnassessed?: boolean;    // Include people without research_level
+  sortByResearchLevel?: boolean;  // Sort lowest first (most needs work)
+}
+
 // Result returned by generators
 interface ReportResult {
   success: boolean;

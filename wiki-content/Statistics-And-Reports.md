@@ -194,10 +194,27 @@ See [Canvas Trees](Visual-Trees) for detailed wizard documentation.
 | **Family Group Sheet** | Single family unit with parents, marriage, and children |
 | **Individual Summary** | Complete record of one person with all events and sources |
 | **Ahnentafel Report** | Numbered ancestor list (1=subject, 2=father, 3=mother, etc.) |
-| **Gaps Report** | Analysis of missing data by category |
+| **Gaps Report** | Analysis of missing data by category with research level filtering |
 | **Register Report** | Descendants with NGSQ-style numbering |
 | **Pedigree Chart** | Ancestor tree in ASCII art format |
 | **Descendant Chart** | Descendant tree in ASCII art format |
+
+#### Gaps Report
+
+The Gaps Report identifies missing data across your person notes. When Research Tools are enabled in settings, the report includes research level features:
+
+**Research Level Filter**: Limit the report to people at or below a specific research level (0-6). This helps you focus on ancestors who need the most work.
+
+**Research Level Statistics**: The report summary includes:
+- Breakdown by category (Needs work 0-2, Partially researched 3-4, Well researched 5-6)
+- Count of unassessed people
+- Per-level counts
+
+**Research Level Column**: Each table (missing birth dates, missing parents, etc.) shows each person's research level.
+
+**Sort by Research Level**: Optionally sort results with lowest research levels first, so the ancestors needing most work appear at the top.
+
+See [Frontmatter Reference](Frontmatter-Reference#research-level) for details on the research level system.
 
 ### Research Reports
 
