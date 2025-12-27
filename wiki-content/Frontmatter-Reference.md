@@ -180,6 +180,10 @@ Tracks research progress toward GPS-compliant documentation, based on Yvette Hoi
 - Manual entry only — research level is a qualitative judgment about exhaustiveness, not just data completeness
 - UI for editing research level requires "Enable fact-level source tracking" in [Settings](Settings-And-Configuration#research-tools-optional)
 
+**Import/Export:**
+- GEDCOM: Exported as `_RESEARCH_LEVEL` custom tag, imported when present
+- Gramps: Exported as `<attribute type="Research Level">`, imported from person attributes
+
 ### Parent Relationships
 
 Canvas Roots supports dual storage: wikilinks for Obsidian graph visibility, plus `_id` fields for reliable programmatic resolution.

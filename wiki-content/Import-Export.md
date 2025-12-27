@@ -181,6 +181,7 @@ During import, a modal shows:
 - `NCHI` → `childrenCount`
 - `NMR` → `marriageCount`
 - `SSN` → `ssn` (automatically redacted from exports)
+- `_RESEARCH_LEVEL` → `research_level` (custom tag, 0-6 research progress level)
 
 *Sources:*
 - `SOUR` - Source records → source notes
@@ -257,6 +258,7 @@ Export your family data back to GEDCOM format for sharing with other genealogy s
 - Marriage metadata (dates, locations, divorce dates)
 - `cr_id` values preserved as `_UUID` tags
 - `group_name` values preserved as collection codes
+- `research_level` preserved as `_RESEARCH_LEVEL` custom tag (0-6)
 
 ### Privacy Protection for Export
 
@@ -349,6 +351,16 @@ Gramps events are mapped to Canvas Roots event types:
 | Education, Graduation | education |
 
 Events not in this list are imported as "custom" type.
+
+### Person Attributes
+
+Gramps person attributes are imported when present:
+
+| Gramps Attribute | Canvas Roots Property | Description |
+|------------------|----------------------|-------------|
+| `Research Level` | `research_level` | Research progress level (0-6) |
+
+The `Research Level` attribute is automatically recognized from Gramps person records and imported as the `research_level` property. See [Research Level](Frontmatter-Reference#research-level) for details on the 0-6 scale.
 
 ### Place Type Mapping
 
