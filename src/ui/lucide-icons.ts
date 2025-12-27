@@ -181,6 +181,7 @@ export type LucideIconName =
 	| 'plus-circle' // Add/create new
 	// Statistics
 	| 'briefcase' // Occupation/work
+	| 'chart-bar-decreasing' // Statistics dashboard
 	// Visual tree reports
 	| 'file-image' // PDF/image export
 	| 'git-fork' // Descendant tree fallback
@@ -278,7 +279,7 @@ export const TOOL_CONFIGS: ToolConfig[] = [
 	{
 		id: 'statistics',
 		name: 'Statistics',
-		icon: 'bar-chart-2',
+		icon: 'chart-bar-decreasing',
 		description: 'Open the statistics dashboard'
 	}
 ];
