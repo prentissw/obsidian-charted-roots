@@ -2666,6 +2666,16 @@
   margin-top: 16px;
 }
 
+/* Custom folder input for import wizard */
+.crc-custom-folder-input {
+  display: flex;
+  margin-left: 8px;
+}
+
+.crc-custom-folder-input__field {
+  width: 200px;
+}
+
 /* ==========================================================================
    UTILITY CLASSES
    ========================================================================== */

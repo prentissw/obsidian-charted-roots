@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2025-12-27 22:40:00 UTC
+ * - Generated: 2025-12-27 22:47:41 UTC
  * - Components: 38 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -681,7 +681,7 @@ settings:
    COMPONENT: MODALS.CSS
    ========================================================================== */
 
-/* Component Size: 12213 lines, 227.15 KB */
+/* Component Size: 12223 lines, 227.31 KB */
 
 /* ==========================================================================
    Canvas Roots Control Center - Styling
@@ -3349,6 +3349,16 @@ settings:
 
 .crc-import-export-content {
   margin-top: 16px;
+}
+
+/* Custom folder input for import wizard */
+.crc-custom-folder-input {
+  display: flex;
+  margin-left: 8px;
+}
+
+.crc-custom-folder-input__field {
+  width: 200px;
 }
 
 /* ==========================================================================
@@ -31575,10 +31585,10 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2025-12-27 22:40:00 UTC
+ * Build completed: 2025-12-27 22:47:41 UTC
  * Components processed: 38
- * Total lines: 31210
- * Total size: 615.64 KB
+ * Total lines: 31220
+ * Total size: 615.8 KB
  * Build duration: 0.03 seconds
  *
  * Component breakdown:
@@ -31590,7 +31600,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - nodes.css: 12 lines, 0.3 KB
  * - edges.css: 4 lines, 0.07 KB
  * - settings.css: 131 lines, 3.53 KB
- * - modals.css: 12213 lines, 227.15 KB
+ * - modals.css: 12223 lines, 227.31 KB
  * - duplicate-detection.css: 163 lines, 2.82 KB
  * - tree-statistics.css: 41 lines, 0.6 KB
  * - validation.css: 84 lines, 1.47 KB

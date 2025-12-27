@@ -10076,13 +10076,13 @@ export class ControlCenterModal extends Modal {
 							if (value === '__custom__') {
 								// Show custom folder input
 								if (customFolderContainer) {
-									customFolderContainer.style.display = 'flex';
+									customFolderContainer.removeClass('crc-hidden');
 								}
 								selectedMediaFolder = customMediaFolder || 'Canvas Roots/Media';
 							} else {
 								// Hide custom folder input
 								if (customFolderContainer) {
-									customFolderContainer.style.display = 'none';
+									customFolderContainer.addClass('crc-hidden');
 								}
 								selectedMediaFolder = value;
 							}
@@ -10090,15 +10090,12 @@ export class ControlCenterModal extends Modal {
 					);
 
 				// Add custom folder text input (initially hidden)
-				customFolderContainer = mediaFolderSetting.controlEl.createDiv({ cls: 'crc-custom-folder-input' });
-				customFolderContainer.style.display = 'none';
-				customFolderContainer.style.marginLeft = '8px';
+				customFolderContainer = mediaFolderSetting.controlEl.createDiv({ cls: 'crc-custom-folder-input crc-hidden' });
 				const customInput = customFolderContainer.createEl('input', {
 					type: 'text',
 					placeholder: 'Enter folder path...',
-					cls: 'crc-input'
+					cls: 'crc-input crc-custom-folder-input__field'
 				});
-				customInput.style.width = '200px';
 				customInput.addEventListener('input', () => {
 					customMediaFolder = customInput.value.trim();
 					selectedMediaFolder = customMediaFolder || 'Canvas Roots/Media';

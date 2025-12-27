@@ -648,21 +648,20 @@ export class ImportWizardModal extends Modal {
 			}
 
 			// Custom folder input (hidden by default)
-			const customFolderRow = mediaFolderSection.createDiv({ cls: 'crc-import-option-row crc-mt-1' });
+			const customFolderRow = mediaFolderSection.createDiv({ cls: `crc-import-option-row crc-mt-1${isCustom ? '' : ' crc-hidden'}` });
 			const customFolderInput = customFolderRow.createEl('input', {
 				type: 'text',
 				cls: 'crc-import-input',
 				placeholder: 'Enter custom folder path',
 				value: isCustom ? this.formData.mediaFolder : ''
 			});
-			customFolderRow.style.display = isCustom ? 'block' : 'none';
 
 			mediaFolderSelect.addEventListener('change', () => {
 				if (mediaFolderSelect.value === '__custom__') {
-					customFolderRow.style.display = 'block';
+					customFolderRow.removeClass('crc-hidden');
 					customFolderInput.focus();
 				} else {
-					customFolderRow.style.display = 'none';
+					customFolderRow.addClass('crc-hidden');
 					this.formData.mediaFolder = mediaFolderSelect.value;
 				}
 			});
