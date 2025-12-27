@@ -450,6 +450,9 @@ export class SourceService {
 				for (const item of frontmatter.media) {
 					if (typeof item === 'string') {
 						media.push(item);
+					} else if (Array.isArray(item) && item.length === 1 && typeof item[0] === 'string') {
+						// Obsidian sometimes parses [[link]] in YAML arrays as nested arrays
+						media.push(`[[${item[0]}]]`);
 					}
 				}
 			} else {

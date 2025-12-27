@@ -117,6 +117,7 @@ export class SourceMediaLinkerModal extends Modal {
 	private allFiles: MediaFileInfo[] = [];
 	private filteredFiles: MediaFileInfo[] = [];
 	private sourcesWithoutMedia: SourceNote[] = [];
+	private alreadyLinkedMediaPaths: Set<string> = new Set();
 
 	// Step 2: Link - pagination
 	private displayedRowCount: number = 10;
@@ -177,9 +178,26 @@ export class SourceMediaLinkerModal extends Modal {
 
 	/**
 	 * Load all source notes that don't have media attached
+	 * Also builds a set of media paths that are already linked to sources
 	 */
 	private loadSourcesWithoutMedia(): void {
 		this.sourcesWithoutMedia = this.sourceService.getSourcesWithoutMedia();
+
+		// Build set of already-linked media paths from sources that have media
+		this.alreadyLinkedMediaPaths.clear();
+		const sourcesWithMedia = this.sourceService.getSourcesWithMedia();
+		for (const source of sourcesWithMedia) {
+			for (const mediaRef of source.media) {
+				// Extract path from wikilink: [[path]] or [[path|alias]]
+				const wikilinkMatch = mediaRef.match(/^\[\[([^\]|]+)(?:\|[^\]]+)?\]\]$/);
+				if (wikilinkMatch) {
+					this.alreadyLinkedMediaPaths.add(wikilinkMatch[1]);
+				} else {
+					// Plain path
+					this.alreadyLinkedMediaPaths.add(mediaRef);
+				}
+			}
+		}
 	}
 
 	/**
@@ -487,6 +505,9 @@ export class SourceMediaLinkerModal extends Modal {
 		for (const file of files) {
 			if (!isImageFile(file.name)) continue;
 
+			// Skip files that are already linked to a source
+			if (this.alreadyLinkedMediaPaths.has(file.path)) continue;
+
 			const suggestions = this.calculateSuggestions(file);
 
 			this.allFiles.push({
@@ -537,6 +558,9 @@ export class SourceMediaLinkerModal extends Modal {
 		// Process each file
 		for (const file of allCollectedFiles) {
 			if (!isImageFile(file.name)) continue;
+
+			// Skip files that are already linked to a source
+			if (this.alreadyLinkedMediaPaths.has(file.path)) continue;
 
 			const suggestions = this.calculateSuggestions(file);
 
@@ -954,10 +978,28 @@ export class SourceMediaLinkerModal extends Modal {
 		try {
 			await this.linkMediaToSource(info);
 			info.isApplied = true;
+
 			// Remove the linked source from available sources
+			const linkedCrId = info.linkedSource.crId;
 			this.sourcesWithoutMedia = this.sourcesWithoutMedia.filter(
-				(s) => s.crId !== info.linkedSource!.crId
+				(s) => s.crId !== linkedCrId
 			);
+
+			// Update suggestions for all files to remove the now-used source
+			for (const fileInfo of this.filteredFiles) {
+				if (fileInfo === info) continue; // Skip the one we just applied
+
+				// Remove the linked source from suggestions
+				fileInfo.suggestedSources = fileInfo.suggestedSources.filter(
+					(s) => s.source.crId !== linkedCrId
+				);
+
+				// If the linked source was selected, clear it
+				if (fileInfo.linkedSource?.crId === linkedCrId) {
+					fileInfo.linkedSource = null;
+				}
+			}
+
 			this.render();
 		} catch (error) {
 			new Notice(`Failed to link: ${error instanceof Error ? error.message : String(error)}`);
@@ -1233,20 +1275,57 @@ export class SourceMediaLinkerModal extends Modal {
 
 		// Update the source file's frontmatter
 		await this.app.fileManager.processFrontMatter(sourceFile, (frontmatter) => {
-			// Find the next available media slot
+			// Use array format for media (modern format)
 			if (!frontmatter.media) {
-				frontmatter.media = mediaWikilink;
-			} else {
-				// Find next available media_N slot
-				let slot = 2;
-				while (frontmatter[`media_${slot}`]) {
-					slot++;
+				// No media yet - set as array with single item
+				frontmatter.media = [mediaWikilink];
+			} else if (Array.isArray(frontmatter.media)) {
+				// Already an array - add to it if not already present
+				if (!frontmatter.media.includes(mediaWikilink)) {
+					frontmatter.media.push(mediaWikilink);
 				}
-				frontmatter[`media_${slot}`] = mediaWikilink;
+			} else {
+				// Single value (legacy format) - convert to array and add new item
+				const existing = String(frontmatter.media);
+				frontmatter.media = [existing, mediaWikilink];
 			}
 		});
 
+		// Wait for Obsidian's metadata cache to update
+		// processFrontMatter modifies the file, but metadataCache updates asynchronously
+		await this.waitForMetadataCacheUpdate(sourceFile, mediaWikilink);
+
+		// Track this media as linked so it won't appear again
+		this.alreadyLinkedMediaPaths.add(info.file.path);
+
 		// Invalidate source cache
 		this.sourceService.invalidateCache();
+	}
+
+	/**
+	 * Wait for Obsidian's metadata cache to reflect the updated media array.
+	 * This is necessary because processFrontMatter completes before the cache updates.
+	 */
+	private async waitForMetadataCacheUpdate(file: TFile, expectedMedia: string, maxWaitMs: number = 2000): Promise<void> {
+		const startTime = Date.now();
+		const checkInterval = 50; // Check every 50ms
+
+		while (Date.now() - startTime < maxWaitMs) {
+			const cache = this.app.metadataCache.getFileCache(file);
+			const media = cache?.frontmatter?.media;
+
+			// Check if the media array contains our expected value
+			if (Array.isArray(media) && media.includes(expectedMedia)) {
+				return;
+			}
+
+			// Also check if it's a single value match
+			if (media === expectedMedia) {
+				return;
+			}
+
+			// Wait and check again
+			await new Promise(resolve => setTimeout(resolve, checkInterval));
+		}
 	}
 }
