@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Events base: unified Person(s) column** - The events base template now uses a single "Person(s)" column that displays clickable links for both single-person events (`person` property) and multi-person events (`persons` property). Previously, these were separate columns or the multi-person events didn't display properly.
 
+### Fixed
+
+- **Create Person modal crash with array collection property** - Fixed TypeError when opening the Create Person modal if any person note had a `collection` property stored as an array instead of a string. The modal now safely handles array-type collection values.
+
 ---
 
 ## [0.17.6] - 2025-12-27

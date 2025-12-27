@@ -501,10 +501,18 @@ export class FamilyGraphService {
 		// Group people by their collection property
 		for (const person of this.personCache.values()) {
 			if (person.collection) {
-				if (!peopleByCollection.has(person.collection)) {
-					peopleByCollection.set(person.collection, []);
+				// Handle case where collection might be an array or non-string
+				const collectionName = typeof person.collection === 'string'
+					? person.collection
+					: Array.isArray(person.collection)
+						? person.collection[0]
+						: String(person.collection);
+				if (collectionName) {
+					if (!peopleByCollection.has(collectionName)) {
+						peopleByCollection.set(collectionName, []);
+					}
+					peopleByCollection.get(collectionName)!.push(person);
 				}
-				peopleByCollection.get(person.collection)!.push(person);
 			}
 		}
 
