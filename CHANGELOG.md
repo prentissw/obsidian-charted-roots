@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Control Center Tools icons and order** - Updated icons: Reports now uses `file-text`, Statistics uses `chart-bar-decreasing`. Reordered tools to: Templates, Media Manager, Family Chart, Import/Export, Reports, Statistics.
+
 ---
 
 ## [0.17.4] - 2025-12-27
