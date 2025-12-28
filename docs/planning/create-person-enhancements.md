@@ -241,6 +241,8 @@ This becomes valuable when:
 ## Bundled Enhancement: Nickname Property Support
 
 > **Standalone feature:** Can be implemented independently. Bundled here for v0.18.1 release.
+>
+> **GitHub Issue:** [#46](https://github.com/banisterious/obsidian-canvas-roots/issues/46)
 
 Add `nickname` as a first-class frontmatter property on Person notes, with import support.
 
