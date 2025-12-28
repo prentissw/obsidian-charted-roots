@@ -9,7 +9,6 @@ This document outlines planned features for Canvas Roots. For completed features
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [Create Person Enhancements](#create-person-enhancements) 📋 Medium
-  - [Event Person Property Consolidation](#event-person-property-consolidation) 📋 Medium
   - [Timeline Export Consolidation](#timeline-export-consolidation) 📋 Medium
   - [Inclusive Parent Relationships](#inclusive-parent-relationships) 📋 Medium
   - [Cleanup Wizard Phase 4](#cleanup-wizard-phase-4) 📋 Medium
@@ -40,15 +39,11 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.18.0 | [Event Person Property Consolidation](Release-History#event-person-property-consolidation-v0180) | Unified `persons` array for all events, migration wizard step, backward-compatible reading |
 | v0.17.5 | [Research Level Property](Release-History#research-level-property-v0175) | Track research progress with 7-level GPS-based system, Edit Modal selector, Research Gaps Report integration |
-| v0.17.1 | [Excalidraw Export Enhancements](Release-History#excalidraw-export-enhancements-v0171) | ExcalidrawAutomate API integration, smart connectors, wiki links, style customization |
 | v0.17.0 | [Post-Import Cleanup Wizard](Release-History#post-import-cleanup-wizard-v0170) | 10-step guided wizard for post-import data quality (relationships, dates, genders, places, sources) |
 | v0.17.0 | [Source Array Migration](Release-History#source-array-migration-v0170) | Migrate indexed source properties to YAML array format with wizard integration |
 | v0.16.0 | [Import/Export Hub](Release-History#importexport-hub-v0160) | Modal-based hub with 7-step import and 6-step export wizards, integrated reference numbering |
-| v0.15.3 | [Visual Tree PDF Quality Improvements](Release-History#visual-tree-pdf-quality-improvements-v0153) | 4× scale rendering for crisp PDF output, aspect ratio preservation |
-| v0.15.3 | [Report Wizard Enhancements](Release-History#report-wizard-enhancements-v0153) | Multi-step wizard with 5 steps, preset system, recent reports tracking |
-| v0.15.3 | [Report Generator ODT Export](Release-History#report-generator-odt-export-v0153) | ODT export for all reports, JSZip-based generation, image embedding |
-| v0.15.2 | [Calendarium Integration Phase 2](Release-History#calendarium-integration-phase-2-v0152) | Display fc-* dated events on timelines, calendar filter dropdown, timeline badges |
 
 **Earlier releases:** GEDCOM/Gramps/GEDCOM X import, geographic maps, evidence visualization, custom relationship types, fictional calendars, and more. See [Release History](Release-History) for details.
 
@@ -102,38 +97,6 @@ Dedicated wizard for creating an entire nuclear family at once with a guided ste
 
 **Documentation:**
 - See [Create Person Enhancements Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/create-person-enhancements.md) for detailed specifications
-
----
-
-### Event Person Property Consolidation
-
-**Priority:** 📋 Medium — Schema simplification for events
-
-**Status:** Planning
-
-**The Problem:** Event notes currently use two different properties to track participants:
-- `person` (string): Single participant for individual events (birth, death, occupation)
-- `persons` (array): Multiple participants for family events (marriage, divorce, residence)
-
-This duality creates complexity in base templates (requires formula workarounds), importers (must decide which property to use), and user understanding.
-
-**Goal:** Consolidate to a single `persons` array property that works for all events.
-
-**Phased Implementation:**
-
-| Phase | Feature | Description |
-|-------|---------|-------------|
-| 1 | Update Importers | Gramps and GEDCOM importers always use `persons` array |
-| 2 | Update Base Templates | Simplify formula now that all events use `persons` |
-| 3 | Migration Tool | Cleanup wizard step to migrate `person` → `persons` |
-| 4 | Documentation | Update Frontmatter Reference, add migration notes |
-
-**Backward Compatibility:**
-- Base templates continue reading both properties during transition
-- Migration is opt-in via cleanup wizard
-
-**Documentation:**
-- See [Event Person Property Consolidation Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/event-person-property-consolidation.md) for detailed specifications
 
 ---
 

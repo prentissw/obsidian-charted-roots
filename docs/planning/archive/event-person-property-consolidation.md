@@ -2,10 +2,11 @@
 
 Planning document for consolidating `person` and `persons` event properties into a single unified property.
 
-- **Status:** In Progress (Phase 1, 2, 4 Complete)
+- **Status:** ✅ Complete (v0.18.0)
 - **GitHub Issue:** #TBD
 - **Created:** 2025-12-27
 - **Updated:** 2025-12-28
+- **Released:** 2025-12-28
 
 ---
 
@@ -217,10 +218,12 @@ Users with property aliases for `person` should be notified and guided to update
 - [x] Add one-time migration notice for v0.18.0 upgrades
 - [x] Create `src/events/services/event-person-migration-service.ts`
 
-### Phase 5: Documentation
-- [ ] Update Frontmatter Reference documentation
-- [ ] Add CHANGELOG entry
-- [ ] Test with existing vaults containing both property types
+### Phase 5: Documentation ✅
+- [x] Update Frontmatter Reference documentation
+- [x] Add CHANGELOG entry
+- [x] Update Events-And-Timelines.md
+- [x] Update Roadmap.md (move to Completed Features)
+- [x] Update Release-History.md
 
 ---
 

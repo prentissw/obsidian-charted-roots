@@ -8,6 +8,8 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 
 ## Table of Contents
 
+- [v0.18.x](#v018x)
+  - [Event Person Property Consolidation](#event-person-property-consolidation-v0180)
 - [v0.17.x](#v017x)
   - [Research Level Property](#research-level-property-v0175)
   - [Excalidraw Export Enhancements](#excalidraw-export-enhancements-v0171)
@@ -66,6 +68,58 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
   - [Maps Tab](#maps-tab-v062)
   - [Geographic Features](#geographic-features-v060)
   - [Import/Export Enhancements](#importexport-enhancements-v060)
+
+---
+
+## v0.18.x
+
+### Event Person Property Consolidation (v0.18.0)
+
+Consolidates the dual `person`/`persons` event properties into a single unified `persons` array format for all event types.
+
+**Problem Solved:**
+
+Event notes previously used two different properties to track participants:
+- `person` (string): Single participant for individual events (birth, death, occupation)
+- `persons` (array): Multiple participants for family events (marriage, divorce, residence)
+
+This duality created complexity in base templates (required formula workarounds), importers (must decide which property to use), and user understanding.
+
+**Solution:**
+
+All events now use the `persons` array property. Single-participant events simply have an array with one element:
+
+```yaml
+# Single-participant event
+persons:
+  - "[[John Smith]]"
+
+# Multi-participant event
+persons:
+  - "[[John Smith]]"
+  - "[[Jane Doe]]"
+```
+
+**Features:**
+
+| Feature | Description |
+|---------|-------------|
+| **Unified Property** | All importers (GEDCOM, Gramps, GEDCOM X) now write `persons` array |
+| **Migration Wizard Step** | Cleanup Wizard Step 11 detects and migrates legacy `person` properties |
+| **Backward Compatibility** | Base templates and services continue reading both properties |
+| **Migration Notice** | Users upgrading from v0.17.x see a one-time notice with migration guidance |
+
+**Migration:**
+
+1. Open the Cleanup Wizard (Control Center → Data Quality, or command palette)
+2. Navigate to Step 11: "Migrate Event Person Properties"
+3. Review detected notes and click "Apply All"
+
+The legacy `person` property continues to be read indefinitely for backward compatibility.
+
+**Documentation:**
+- [Events And Timelines](Events-And-Timelines) - Updated property documentation
+- [Frontmatter Reference](Frontmatter-Reference#person-and-place-links) - Updated event properties
 
 ---
 
