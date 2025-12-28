@@ -1416,3 +1416,39 @@
   max-height: 70vh;
   overflow-y: auto;
 }
+
+/* ==========================================================================
+   Deprecation Notice
+   ========================================================================== */
+
+.crc-deprecation-notice {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: hsl(var(--color-yellow-hsl) / 15%);
+  border: 1px solid hsl(var(--color-yellow-hsl) / 30%);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-normal);
+}
+
+.crc-deprecation-notice svg {
+  flex-shrink: 0;
+  color: var(--text-warning);
+  margin-top: 2px;
+}
+
+.crc-deprecation-notice__link {
+  color: var(--interactive-accent);
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.crc-deprecation-notice__link:hover {
+  color: var(--interactive-accent-hover);
+}

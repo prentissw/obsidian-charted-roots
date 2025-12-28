@@ -713,6 +713,28 @@ function renderExportCard(
 	});
 	const content = card.querySelector('.crc-card__content') as HTMLElement;
 
+	// Deprecation notice - direct users to Reports
+	const deprecationNotice = content.createDiv({ cls: 'crc-deprecation-notice' });
+	const noticeIcon = createLucideIcon('info', 16);
+	deprecationNotice.appendChild(noticeIcon);
+	const noticeText = deprecationNotice.createSpan();
+	noticeText.innerHTML = 'Timeline exports are moving to <strong>Statistics & Reports → Reports → Timeline</strong> for a unified experience with all formats and options.';
+	const openReportsLink = deprecationNotice.createEl('a', {
+		text: 'Open Reports',
+		cls: 'crc-deprecation-notice__link'
+	});
+	openReportsLink.addEventListener('click', (e) => {
+		e.preventDefault();
+		// Navigate to Reports tab in Control Center
+		const controlCenter = document.querySelector('.canvas-roots-control-center');
+		if (controlCenter) {
+			const reportsTab = controlCenter.querySelector('[data-tab-id="reports"]') as HTMLElement;
+			if (reportsTab) {
+				reportsTab.click();
+			}
+		}
+	});
+
 	if (allEvents.length === 0) {
 		const emptyState = content.createDiv({ cls: 'crc-empty-state' });
 		emptyState.createEl('p', {
