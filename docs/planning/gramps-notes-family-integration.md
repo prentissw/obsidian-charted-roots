@@ -58,6 +58,20 @@ A Gramps user provided detailed feedback suggesting:
 
 **Takeaway:** This is a power user. Simpler users may still benefit from Phase 1's embedded approach, but the phased plan is validated — each phase serves real needs.
 
+**User feedback received (2025-12-27):** [GitHub issue #36 comment](https://github.com/banisterious/obsidian-canvas-roots/issues/36#issuecomment-3694263634)
+
+| Question | Answer | Implication |
+|----------|--------|-------------|
+| Where should notes appear? | Appended to note content | Phase 1 approach is correct |
+| Multiple notes organization? | Separate subsections by note type | Phase 1 approach is correct |
+| Preserve note types? | Yes, as subsection headers (e.g., `### Research`) | Phase 1 approach is correct |
+| Formatted notes handling? | Convert Gramps styling to Markdown | Need style conversion in Phase 1 |
+| Private notes handling? | Import and add `private: true` to frontmatter | Phase 1 approach is correct |
+| Default behavior? | Notes import enabled by default | Phase 1 approach is correct |
+| Family notes? | **Attach to marriage event** | Alternative to Phase 3 Family entity |
+
+**Takeaway:** This user prefers the simpler embedded approach (Phase 1) and suggests attaching family notes to marriage events rather than creating a separate Family entity. This validates Phase 1 as the default and suggests Phase 3 (Family entity) should remain opt-in for power users who need it.
+
 **Additional feedback (2025-12-27):** https://gramps.discourse.group/t/genealogy-research-in-obsidian-for-those-who-want-to-try/8926/8
 
 Same user shared screenshots of their Obsidian vault structure:
@@ -206,6 +220,17 @@ Introduce Family as a new entity type in Canvas Roots.
 - Requires new UI components, service layer, etc.
 
 **Should be opt-in:** Import wizard checkbox "Create family notes" (default: off)
+
+**Alternative: Attach to Marriage Event**
+
+User feedback suggests a simpler approach: attach family notes to the marriage/partnership event instead of creating a separate Family entity. This avoids adding a new entity type while still preserving the notes.
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| Family entity | Matches Gramps model; dedicated place for family-level data | Adds complexity; duplicates relationship data |
+| Marriage event | Simpler; no new entity type; already have events | Family notes without marriage event have no home; less organized |
+
+**Recommendation:** Default to "attach to marriage event" approach. Offer Family entity as opt-in for power users who need full Gramps fidelity.
 
 ### Phase 4: Separate Note Files (Advanced, Opt-in)
 
