@@ -216,12 +216,64 @@ A dedicated wizard for creating an entire nuclear family at once.
 
 ### Motivation
 
-For users starting completely fresh, a guided flow could be faster:
-1. **Step 1:** Create yourself (or central person)
-2. **Step 2:** Add spouse(s)
-3. **Step 3:** Add children
-4. **Step 4:** Add parents
-5. **Review:** See the family structure, confirm and create all notes
+For users starting completely fresh, a guided flow could be faster than creating individuals one at a time. The wizard collects all family member information upfront, then creates all notes with relationships automatically linked.
+
+### Wizard Steps
+
+1. **Start:** Choose mode (start from scratch vs. build around existing person)
+2. **Step 1:** Create central person (name, nickname, sex, birth date)
+3. **Step 2:** Add spouse(s) - supports multiple
+4. **Step 3:** Add children
+5. **Step 4:** Add parents (father and mother)
+6. **Step 5:** Review - visual family tree preview, stats summary, confirm
+7. **Complete:** Success message with list of created notes
+
+### Entry Points
+
+1. **Command palette** - `Canvas Roots: Create family wizard`
+2. **Control Center Dashboard** - Quick action tile (replaces Reports tile after merging into Statistics)
+3. **Control Center Tools category** - "Create Family" tool entry in sidebar
+4. **Control Center People tab > Actions card** - Button alongside "Create person"
+5. **People folder context menu** - "Create family" in Canvas Roots submenu
+
+### Bundled Change: Merge Statistics and Reports
+
+To make room for "Create Family" on the Dashboard while keeping 12 tiles:
+- Rename "Statistics" tool to "Statistics & Reports"
+- Update description to cover both data analysis and report generation
+- Remove separate "Reports" tool entry
+- Statistics dashboard already has or can link to report generation
+
+### Implementation Checklist
+
+#### Entry Points
+- [ ] Add command: `Canvas Roots: Create family wizard`
+- [ ] Add "Create Family" tile to Dashboard (after removing Reports)
+- [ ] Add "Create Family" to TOOL_CONFIGS in lucide-icons.ts
+- [ ] Add "Create family" button to People tab Actions card
+- [ ] Add "Create family" to People folder context menu
+
+#### Statistics/Reports Consolidation
+- [ ] Rename "Statistics" to "Statistics & Reports" in TOOL_CONFIGS
+- [ ] Update description to mention reports
+- [ ] Remove "Reports" entry from TOOL_CONFIGS
+
+#### Wizard Modal
+- [ ] Create `src/ui/family-creation-wizard.ts`
+- [ ] Implement step-based navigation with state management
+- [ ] Step 1: Central person form (reuse QuickCreatePersonModal patterns)
+- [ ] Step 2: Spouse list with add/edit/remove
+- [ ] Step 3: Children list with add/edit/remove
+- [ ] Step 4: Parents (father/mother) with add/edit/remove
+- [ ] Step 5: Review with family tree visualization and stats
+- [ ] Batch note creation with relationship linking
+- [ ] Completion screen with created notes list
+
+#### Styles
+- [ ] Add wizard-specific styles to styles.css
+- [ ] Step indicator styles
+- [ ] Person card list styles
+- [ ] Family tree preview styles
 
 ### Alternative: Tabbed Modal
 
