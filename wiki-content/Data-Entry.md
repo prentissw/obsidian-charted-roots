@@ -8,6 +8,9 @@ This page covers how to create person notes with relationship data that Canvas R
 
 ## Table of Contents
 
+- [Create Person Modal](#create-person-modal)
+- [Family Creation Wizard](#family-creation-wizard)
+- [Edit Modal Enhancements](#edit-modal-enhancements)
 - [Quick Start: Adding Properties via Context Menu](#quick-start-adding-properties-via-context-menu)
 - [Individual Markdown Notes](#individual-markdown-notes)
 - [Example Person Note](#example-person-note)
@@ -16,6 +19,117 @@ This page covers how to create person notes with relationship data that Canvas R
 - [Bulk Data Entry](#bulk-data-entry)
 - [Other Data Types](#other-data-types)
 - [Next Steps](#next-steps)
+
+---
+
+## Create Person Modal
+
+The Create Person Modal provides a form-based interface for creating new person notes with all essential properties pre-populated.
+
+### Opening the Modal
+
+| Method | Description |
+|--------|-------------|
+| Command palette | `Canvas Roots: Create person` |
+| Dashboard | Click "Create Person" tile |
+| Control Center | People tab → Actions → Create person |
+| Folder context menu | Right-click a people folder → Create person |
+
+### Features
+
+- **Auto-generated cr_id** — Unique identifier created automatically
+- **Folder selection** — Choose destination folder (pre-populated from folder context menu)
+- **Basic fields** — Name, nickname, sex, birth date
+- **State persistence** — If accidentally closed, your progress is saved and can be restored
+
+### "Add Another" Flow
+
+After creating a person, you have two options:
+
+| Button | Action |
+|--------|--------|
+| **Create & Open** | Creates the person and opens the new note |
+| **Create & Add Another** | Creates the person and resets the form to create another in the same folder |
+
+The "Add Another" flow is useful when entering multiple family members in sequence.
+
+---
+
+## Family Creation Wizard
+
+The Family Creation Wizard is a 5-step guided workflow for creating interconnected family groups with automatic bidirectional relationship linking.
+
+### Opening the Wizard
+
+| Method | Description |
+|--------|-------------|
+| Command palette | `Canvas Roots: Create family wizard` |
+| Dashboard | Click "Create Family" tile |
+| Control Center | People tab → Actions → Create family |
+| Folder context menu | Right-click a people folder → Create family |
+
+### Workflow Steps
+
+| Step | Name | Description |
+|------|------|-------------|
+| Start | Choose Mode | Select "Start from Scratch" or "Build Around Person" |
+| 1 | Central Person | Create the central person (skipped in "Build Around" mode) |
+| 2 | Add Spouses | Add spouse(s) — create new or pick existing |
+| 3 | Add Children | Add children — create new or pick existing |
+| 4 | Add Parents | Add father and/or mother — create new or pick existing |
+| 5 | Review | Preview family tree and confirm creation |
+
+### Modes
+
+**Start from Scratch**
+- Create yourself first as the central person
+- Add family members around you step by step
+- All people are created fresh
+
+**Build Around Person**
+- Select an existing person from your vault
+- Add family members around them
+- Mix of existing and new people
+
+### Features
+
+- **Bidirectional linking** — All relationships are linked in both directions automatically
+- **Existing person picker** — Select existing people instead of creating duplicates
+- **Tree preview** — Visual preview shows the family structure before creation
+- **State persistence** — Progress is saved if the wizard is accidentally closed
+- **Relationship merging** — When building around an existing person, new relationships merge with existing ones
+
+---
+
+## Edit Modal Enhancements
+
+The Edit Modal (opened by right-clicking a person note → Edit) includes features for managing relationships.
+
+### Inline Person Creation
+
+Create new people directly from relationship fields without leaving the Edit Modal:
+
+1. Open the Edit Modal for a person
+2. Find a relationship field (Spouse, Father, Mother, Children)
+3. Click the **+** button next to the field
+4. Fill in the mini-form (name, sex, birth date)
+5. Click "Create" — the new person is created and linked automatically
+
+### Children Management
+
+The Edit Modal includes a dedicated Children section:
+
+- **View existing children** — Displayed as clickable links
+- **Add child via picker** — Click "Add existing" to select from your vault
+- **Create new child** — Click "+" to create and link a new child inline
+
+Children are stored using two array properties:
+- `child` — Display names (wikilinks)
+- `children_id` — cr_id references for robust linking
+
+### Nickname Display
+
+The Edit Modal header displays the person's nickname (if set) alongside their formal name, making it easy to identify people with informal names.
 
 ---
 
