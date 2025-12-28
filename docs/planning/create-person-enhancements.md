@@ -320,6 +320,31 @@ The current CreatePersonModal only handles a single spouse field, with a comment
 
 ---
 
+## Out of Scope: Custom Relationships
+
+This plan focuses on **family relationships** (father, mother, spouse, children), which are stored as dedicated frontmatter properties. **Custom relationships** are intentionally out of scope.
+
+### Why Custom Relationships Are Separate
+
+| Aspect | Family Relationships | Custom Relationships |
+|--------|---------------------|---------------------|
+| **Storage** | Individual properties (`father`, `mother`, `spouse`, `child`) | `relationships` array in frontmatter |
+| **Modal** | `CreatePersonModal` | `AddRelationshipModal` |
+| **Entry point** | Create/Edit Person flow | Separate action on existing person note |
+| **Types** | Fixed (biological/step/adoptive parents, spouse, child) | Configurable via `RelationshipService` |
+
+Custom relationships are added via `AddRelationshipModal` after a person exists. The inline creation pattern (creating people while picking them) doesn't apply because:
+
+1. Custom relationship targets must already exist to be meaningful
+2. The modal flow is different (select type → select target → add notes)
+3. Custom relationships are typically added later, not during initial person creation
+
+### Future Consideration
+
+Phase 4 (Tabbed Modal) mentions an "Extended" section that could include custom relationships. If users request managing custom relationships from within the Create/Edit Person modal, that would be a separate enhancement building on the existing `AddRelationshipModal` infrastructure.
+
+---
+
 ## Related Documents
 
 - [Frontmatter Reference](../../wiki-content/Frontmatter-Reference.md) - Property documentation
