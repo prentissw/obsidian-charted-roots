@@ -1381,6 +1381,38 @@ export class FamilyCreationWizardModal extends Modal {
 	 * Link all relationships after people are created
 	 */
 	private async linkRelationships(): Promise<void> {
+		// Helper to get existing array values from frontmatter
+		const getExistingArray = (file: TFile, idProp: string, nameProp: string): { ids: string[], names: string[] } => {
+			const cache = this.app.metadataCache.getFileCache(file);
+			const existingIds = cache?.frontmatter?.[idProp] || [];
+			const existingNames = cache?.frontmatter?.[nameProp] || [];
+
+			// Normalize to arrays
+			const ids = Array.isArray(existingIds) ? [...existingIds] : existingIds ? [existingIds] : [];
+			const names = Array.isArray(existingNames) ? [...existingNames] : existingNames ? [existingNames] : [];
+
+			return { ids, names };
+		};
+
+		// Helper to merge new values with existing, avoiding duplicates
+		const mergeArrays = (
+			existing: { ids: string[], names: string[] },
+			newIds: string[],
+			newNames: string[]
+		): { ids: string[], names: string[] } => {
+			const resultIds = [...existing.ids];
+			const resultNames = [...existing.names];
+
+			for (let i = 0; i < newIds.length; i++) {
+				if (!resultIds.includes(newIds[i])) {
+					resultIds.push(newIds[i]);
+					resultNames.push(newNames[i]);
+				}
+			}
+
+			return { ids: resultIds, names: resultNames };
+		};
+
 		// Get central person info
 		let centralCrId: string;
 		let centralName: string;
@@ -1412,24 +1444,31 @@ export class FamilyCreationWizardModal extends Modal {
 		// Link spouses (bidirectional)
 		for (const spouse of this.state.spouses) {
 			if (spouse.file && spouse.crId) {
-				// Add central person as spouse of spouse
+				// Add central person as spouse of spouse (merge with existing)
+				const existingSpousesOnSpouse = getExistingArray(spouse.file, 'spouse_id', 'spouse');
+				const mergedSpousesOnSpouse = mergeArrays(existingSpousesOnSpouse, [centralCrId], [centralName]);
 				await updatePersonNote(this.app, spouse.file, {
-					spouseCrId: [centralCrId],
-					spouseName: [centralName]
+					spouseCrId: mergedSpousesOnSpouse.ids,
+					spouseName: mergedSpousesOnSpouse.names
 				});
-				// Add spouse to central person
+
+				// Add spouse to central person (merge with existing)
 				if (centralFile) {
+					const existingSpousesOnCentral = getExistingArray(centralFile, 'spouse_id', 'spouse');
+					const mergedSpousesOnCentral = mergeArrays(existingSpousesOnCentral, [spouse.crId], [spouse.name]);
 					await updatePersonNote(this.app, centralFile, {
-						spouseCrId: [spouse.crId],
-						spouseName: [spouse.name]
+						spouseCrId: mergedSpousesOnCentral.ids,
+						spouseName: mergedSpousesOnCentral.names
 					});
 				}
 
-				// Add children to spouse
+				// Add children to spouse (merge with existing)
 				if (childCrIds.length > 0 && spouse.file) {
+					const existingChildrenOnSpouse = getExistingArray(spouse.file, 'children_id', 'child');
+					const mergedChildrenOnSpouse = mergeArrays(existingChildrenOnSpouse, childCrIds, childNames);
 					await updatePersonNote(this.app, spouse.file, {
-						childCrId: childCrIds,
-						childName: childNames
+						childCrId: mergedChildrenOnSpouse.ids,
+						childName: mergedChildrenOnSpouse.names
 					});
 				}
 			}
@@ -1470,11 +1509,13 @@ export class FamilyCreationWizardModal extends Modal {
 			}
 		}
 
-		// Add children to central person (reciprocal of parent links on children)
+		// Add children to central person (merge with existing)
 		if (childCrIds.length > 0 && centralFile) {
+			const existingChildrenOnCentral = getExistingArray(centralFile, 'children_id', 'child');
+			const mergedChildrenOnCentral = mergeArrays(existingChildrenOnCentral, childCrIds, childNames);
 			await updatePersonNote(this.app, centralFile, {
-				childCrId: childCrIds,
-				childName: childNames
+				childCrId: mergedChildrenOnCentral.ids,
+				childName: mergedChildrenOnCentral.names
 			});
 		}
 
@@ -1487,11 +1528,13 @@ export class FamilyCreationWizardModal extends Modal {
 					fatherName: this.state.father.name
 				});
 			}
-			// Add central person as child of father
+			// Add central person as child of father (merge with existing)
 			if (this.state.father.file) {
+				const existingChildrenOnFather = getExistingArray(this.state.father.file, 'children_id', 'child');
+				const mergedChildrenOnFather = mergeArrays(existingChildrenOnFather, [centralCrId], [centralName]);
 				await updatePersonNote(this.app, this.state.father.file, {
-					childCrId: [centralCrId],
-					childName: [centralName]
+					childCrId: mergedChildrenOnFather.ids,
+					childName: mergedChildrenOnFather.names
 				});
 			}
 		}
@@ -1504,27 +1547,33 @@ export class FamilyCreationWizardModal extends Modal {
 					motherName: this.state.mother.name
 				});
 			}
-			// Add central person as child of mother
+			// Add central person as child of mother (merge with existing)
 			if (this.state.mother.file) {
+				const existingChildrenOnMother = getExistingArray(this.state.mother.file, 'children_id', 'child');
+				const mergedChildrenOnMother = mergeArrays(existingChildrenOnMother, [centralCrId], [centralName]);
 				await updatePersonNote(this.app, this.state.mother.file, {
-					childCrId: [centralCrId],
-					childName: [centralName]
+					childCrId: mergedChildrenOnMother.ids,
+					childName: mergedChildrenOnMother.names
 				});
 			}
 		}
 
-		// Link father and mother as spouses to each other
+		// Link father and mother as spouses to each other (merge with existing)
 		if (this.state.father?.crId && this.state.mother?.crId) {
 			if (this.state.father.file) {
+				const existingSpousesOnFather = getExistingArray(this.state.father.file, 'spouse_id', 'spouse');
+				const mergedSpousesOnFather = mergeArrays(existingSpousesOnFather, [this.state.mother.crId], [this.state.mother.name]);
 				await updatePersonNote(this.app, this.state.father.file, {
-					spouseCrId: [this.state.mother.crId],
-					spouseName: [this.state.mother.name]
+					spouseCrId: mergedSpousesOnFather.ids,
+					spouseName: mergedSpousesOnFather.names
 				});
 			}
 			if (this.state.mother.file) {
+				const existingSpousesOnMother = getExistingArray(this.state.mother.file, 'spouse_id', 'spouse');
+				const mergedSpousesOnMother = mergeArrays(existingSpousesOnMother, [this.state.father.crId], [this.state.father.name]);
 				await updatePersonNote(this.app, this.state.mother.file, {
-					spouseCrId: [this.state.father.crId],
-					spouseName: [this.state.father.name]
+					spouseCrId: mergedSpousesOnMother.ids,
+					spouseName: mergedSpousesOnMother.names
 				});
 			}
 		}
