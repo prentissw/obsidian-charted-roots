@@ -33,6 +33,28 @@ function getWriteProperty(canonical: string, aliases: Record<string, string>): s
 }
 
 /**
+ * Create a wikilink with proper handling of duplicate filenames
+ * Uses [[basename|name]] format when basename differs from name
+ * @param name The display name
+ * @param app The Obsidian app instance for file resolution
+ */
+function createSmartWikilink(name: string, app: App): string {
+	// If already a wikilink, return as-is
+	if (name.startsWith('[[') && name.endsWith(']]')) {
+		return name;
+	}
+
+	// Try to resolve the name to a file
+	const resolvedFile = app.metadataCache.getFirstLinkpathDest(name, '');
+	if (resolvedFile && resolvedFile.basename !== name) {
+		return `[[${resolvedFile.basename}|${name}]]`;
+	}
+
+	// Standard format
+	return `[[${name}]]`;
+}
+
+/**
  * Service for managing organization notes
  */
 export class OrganizationService {
@@ -237,7 +259,7 @@ export class OrganizationService {
 		];
 
 		if (options?.parentOrg) {
-			frontmatterLines.push(`parent_org: "${options.parentOrg}"`);
+			frontmatterLines.push(`parent_org: "${createSmartWikilink(options.parentOrg, this.app)}"`);
 		}
 		if (options?.universe) {
 			frontmatterLines.push(`${prop('universe')}: ${options.universe}`);
@@ -249,7 +271,7 @@ export class OrganizationService {
 			frontmatterLines.push(`motto: "${options.motto}"`);
 		}
 		if (options?.seat) {
-			frontmatterLines.push(`seat: "${options.seat}"`);
+			frontmatterLines.push(`seat: "${createSmartWikilink(options.seat, this.app)}"`);
 		}
 
 		frontmatterLines.push('---');
