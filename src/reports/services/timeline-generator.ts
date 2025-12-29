@@ -31,6 +31,7 @@ import { EventNote } from '../../events/types/event-types';
 import { TimelineCanvasExporter, TimelineCanvasOptions } from '../../events/services/timeline-canvas-exporter';
 import { ExcalidrawExporter, ExcalidrawExportOptions } from '../../excalidraw/excalidraw-exporter';
 import { getLogger } from '../../core/logging';
+import { extractWikilinkPath } from '../../utils/wikilink-resolver';
 
 const logger = getLogger('TimelineGenerator');
 
@@ -576,13 +577,7 @@ export class TimelineGenerator {
 	 * Extract the name from a wikilink
 	 */
 	private extractLinkName(link: string): string {
-		// Remove [[ and ]]
-		let name = link.replace(/^\[\[/, '').replace(/\]\]$/, '');
-		// Handle aliases [[Name|Alias]] - take the name part
-		if (name.includes('|')) {
-			name = name.split('|')[0];
-		}
-		return name.trim();
+		return extractWikilinkPath(link);
 	}
 
 	/**
