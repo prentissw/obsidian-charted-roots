@@ -706,25 +706,22 @@ export class TimelineGenerator {
 			lines.push(`>> [!${calloutType}|${color}] [[${year}]]`);
 
 			for (const entry of yearEntries) {
-				const participants = entry.participants
-					.map(p => p.crId ? `[[${p.name}]]` : p.name)
-					.join(', ');
+				// Format event display: [[event|Type]] of [[Person|Name]]
+				const eventDisplay = this.formatEventDisplay(entry);
+				lines.push(`>> - ${eventDisplay}`);
 
-				// Event title line - link to the event note
-				const eventLink = entry.eventName ? `[[${entry.eventName}]]` : `**${entry.type}**`;
-				const eventTitle = participants
-					? `${eventLink} (${participants})`
-					: eventLink;
-				lines.push(`>> - ${eventTitle}`);
-
-				// Date line (indented)
-				if (entry.date) {
-					lines.push(`>> \t- (${entry.date})`);
+				// Date line (indented) - use human-readable format
+				// Only show if we have more precision than just the year
+				if (entry.date && entry.date !== year) {
+					const formattedDate = this.formatDateForDisplay(entry.date);
+					if (formattedDate && formattedDate !== year) {
+						lines.push(`>> \t- (${formattedDate})`);
+					}
 				}
 
-				// Place line (indented)
+				// Place line (indented) - no "Location:" prefix
 				if (entry.place && options.includeDescriptions) {
-					lines.push(`>> \t- Location: [[${entry.place}]]`);
+					lines.push(`>> \t- [[${entry.place}]]`);
 				}
 
 				// Description line (indented)
@@ -733,7 +730,8 @@ export class TimelineGenerator {
 				}
 			}
 
-			lines.push('>>');
+			// Single '>' to separate year blocks (not '>>')
+			lines.push('>');
 		}
 
 		return lines.join('\n');
@@ -772,6 +770,70 @@ export class TimelineGenerator {
 		}
 
 		return typeColors[dominantType] || 'blue';
+	}
+
+	/**
+	 * Format a date for human-readable display
+	 * Converts ISO dates (YYYY-MM-DD) to "Month Day, Year" format
+	 */
+	private formatDateForDisplay(date: string): string {
+		if (!date) return '';
+
+		// Already formatted dates (e.g., "March 15, 1850")
+		if (date.includes(',')) return date;
+
+		// ISO format dates
+		const parts = date.split('-');
+		if (parts.length === 3) {
+			const [year, month, day] = parts;
+			const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+				'July', 'August', 'September', 'October', 'November', 'December'];
+			const monthIndex = parseInt(month, 10) - 1;
+			if (monthIndex >= 0 && monthIndex < 12) {
+				return `${monthNames[monthIndex]} ${parseInt(day, 10)}, ${year}`;
+			}
+		}
+
+		// Return as-is for non-standard formats (fictional dates, etc.)
+		return date;
+	}
+
+	/**
+	 * Format event display with separate links for event type and participants
+	 * e.g., "[[event-note|Birth]] of [[Person Name|Person Name]]"
+	 */
+	private formatEventDisplay(entry: TimelineEntry): string {
+		// Get the type label (capitalize first letter)
+		const typeLabel = entry.type.charAt(0).toUpperCase() + entry.type.slice(1);
+
+		// Build the event link using eventName as the file path
+		const eventLink = entry.eventName
+			? `[[${entry.eventName}|${typeLabel}]]`
+			: `**${typeLabel}**`;
+
+		// Build participant links with [[name|name]] format
+		const participantLinks = entry.participants.map(p => {
+			if (p.crId) {
+				return `[[${p.name}|${p.name}]]`;
+			}
+			return p.name;
+		});
+
+		// Format based on number of participants
+		if (participantLinks.length === 0) {
+			// No participants, just return the event link
+			return entry.eventName
+				? `[[${entry.eventName}|${entry.eventName}]]`
+				: `**${typeLabel}**`;
+		} else if (participantLinks.length === 1) {
+			return `${eventLink} of ${participantLinks[0]}`;
+		} else if (participantLinks.length === 2) {
+			return `${eventLink} of ${participantLinks[0]} and ${participantLinks[1]}`;
+		} else {
+			// 3+ participants: comma-separated with "and" before last
+			const lastParticipant = participantLinks.pop();
+			return `${eventLink} of ${participantLinks.join(', ')}, and ${lastParticipant}`;
+		}
 	}
 
 	/**

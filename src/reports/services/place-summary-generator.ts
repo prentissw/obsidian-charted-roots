@@ -175,6 +175,7 @@ export class PlaceSummaryGenerator {
 					date: event.date || '',
 					sortDate: this.extractSortDate(event.date || '') || '9999-99-99',
 					type: event.eventType,
+					eventName: event.title,
 					description: event.description,
 					participants,
 					place: eventPlaceName,
