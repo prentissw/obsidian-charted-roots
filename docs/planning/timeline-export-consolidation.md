@@ -2,11 +2,12 @@
 
 Planning document for merging timeline export functionality from the Events tab into the unified Reports system.
 
-- **Status:** Planning
-- **Target Version:** v0.18.2
+- **Status:** Phase 3 In Progress
+- **Target Version:** v0.18.2 (Phases 1-2), v0.18.3 (deprecation notice), v0.19.0 (removal)
 - **GitHub Issue:** #TBD
 - **Priority:** Medium
 - **Created:** 2025-12-27
+- **Updated:** 2025-12-28
 
 ---
 
@@ -265,9 +266,8 @@ Dynamically shows options based on selected format:
 
 ### Phase 3: Deprecate Events Tab Export
 
-1. Add deprecation notice to Events tab Export card:
-   "Timeline exports have moved to Reports → Timeline. [Open Reports]"
-2. Remove Export card from Events tab in next minor version
+1. ~~Add deprecation notice to Events tab Export card~~ ✓ (implemented in events-tab.ts:716-736)
+2. Remove Export card from Events tab in next minor version (v0.19.0)
 3. Update documentation
 
 ---
@@ -329,10 +329,11 @@ interface TimelineReportOptions {
 
 ## Success Criteria
 
-- [ ] All 8 export formats available from Reports → Timeline
-- [ ] All filters from both systems available
-- [ ] Canvas/Excalidraw styling options preserved
-- [ ] PDF/ODT cover page options preserved
-- [ ] Data quality insights visible in preview step
-- [ ] Events tab Export card removed without user complaints
+- [x] All 8 export formats available from Reports → Timeline
+- [x] All filters from both systems available
+- [x] Canvas/Excalidraw styling options preserved
+- [x] PDF/ODT cover page options preserved
+- [x] Data quality insights visible in preview step
+- [x] Deprecation notice added to Events tab Export card
+- [ ] Events tab Export card removed (v0.19.0)
 - [ ] Documentation updated for new workflow
