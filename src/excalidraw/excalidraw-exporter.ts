@@ -130,6 +130,17 @@ interface PersonDetails {
 }
 
 /**
+ * Event details extracted from frontmatter
+ */
+interface EventDetails {
+	title: string;
+	eventType?: string;
+	date?: string;
+	person?: string;
+	filePath?: string;
+}
+
+/**
  * Excalidraw element base properties
  */
 interface ExcalidrawElement {
@@ -242,11 +253,13 @@ export class ExcalidrawExporter {
 	private app: App;
 	private idCounter: number;
 	private personDetailsCache: Map<string, PersonDetails>;
+	private eventDetailsCache: Map<string, EventDetails>;
 
 	constructor(app: App) {
 		this.app = app;
 		this.idCounter = 0;
 		this.personDetailsCache = new Map();
+		this.eventDetailsCache = new Map();
 	}
 
 	/**
@@ -300,11 +313,13 @@ export class ExcalidrawExporter {
 
 			logger.info('export', `Loaded canvas with ${canvasData.nodes.length} nodes and ${canvasData.edges.length} edges`);
 
-			// Pre-load person details for all nodes (for rich content)
+			// Pre-load person and event details for all nodes (for rich content)
 			const nodeContent = this.resolveNodeContent(options);
 			if (nodeContent !== 'name') {
 				this.loadPersonDetails(canvasData.nodes);
 			}
+			// Always load event details for timeline exports
+			this.loadEventDetails(canvasData.nodes);
 
 			// Check for ExcalidrawAutomate API
 			const ea = this.getExcalidrawAutomate();
@@ -345,8 +360,9 @@ export class ExcalidrawExporter {
 			new Notice(`Export failed: ${errorMsg}`);
 		}
 
-		// Clear cache
+		// Clear caches
 		this.personDetailsCache.clear();
+		this.eventDetailsCache.clear();
 
 		return result;
 	}
@@ -418,6 +434,117 @@ export class ExcalidrawExporter {
 			if (!str.startsWith('[object ')) return str;
 		}
 		return undefined;
+	}
+
+	/**
+	 * Load event details from frontmatter for all file nodes
+	 */
+	private loadEventDetails(nodes: CanvasNode[]): void {
+		let fileNodes = 0;
+		let textNodes = 0;
+		for (const node of nodes) {
+			if (node.type === 'file' && node.file) {
+				fileNodes++;
+				const details = this.extractEventDetails(node.file);
+				if (details) {
+					this.eventDetailsCache.set(node.id, details);
+					logger.info('export', `Loaded event: ${details.title} (${details.eventType}) from ${node.file}`);
+				} else {
+					logger.info('export', `No event details for file node: ${node.file}`);
+				}
+			} else if (node.type === 'text') {
+				textNodes++;
+			}
+		}
+		logger.info('export', `Event loading summary: ${this.eventDetailsCache.size} events from ${fileNodes} file nodes, ${textNodes} text nodes`);
+	}
+
+	/**
+	 * Extract event details from file frontmatter
+	 */
+	private extractEventDetails(filePath: string): EventDetails | null {
+		try {
+			const file = this.app.vault.getAbstractFileByPath(filePath);
+			if (!(file instanceof TFile)) {
+				logger.info('export', `extractEventDetails: File not found in vault: ${filePath}`);
+				return null;
+			}
+
+			const cache = this.app.metadataCache.getFileCache(file);
+			if (!cache?.frontmatter) {
+				logger.info('export', `extractEventDetails: No frontmatter cache for: ${filePath}`);
+				return null;
+			}
+
+			const fm = cache.frontmatter;
+			const fmKeys = Object.keys(fm);
+			logger.info('export', `extractEventDetails: ${filePath} has keys: ${fmKeys.join(', ')}`);
+
+			// Check if this is an event note - look for cr_type: event OR event_type field
+			const isEvent = fm.cr_type === 'event' || fm.event_type || fm.eventType;
+			if (!isEvent) {
+				logger.info('export', `extractEventDetails: Not an event (cr_type=${fm.cr_type}, event_type=${fm.event_type})`);
+				return null;
+			}
+
+			// Extract title - use frontmatter title or file basename
+			const title = fm.title || file.basename;
+
+			// Extract event type - try multiple property names
+			const eventType = fm.event_type || fm.eventType || fm.type || 'event';
+
+			// Extract date
+			const date = fm.date;
+
+			// Extract person - check both 'person' and 'persons' fields
+			let person = fm.person;
+			if (!person && fm.persons && Array.isArray(fm.persons) && fm.persons.length > 0) {
+				person = fm.persons[0]; // Use first person from array
+			}
+
+			return {
+				title,
+				eventType,
+				date: this.formatDate(date),
+				person,
+				filePath
+			};
+		} catch (error) {
+			logger.warn('export', `Failed to extract event details from ${filePath}`, error);
+			return null;
+		}
+	}
+
+	/**
+	 * Get formatted label for event node
+	 */
+	private getEventLabel(eventDetails: EventDetails): string {
+		const lines: string[] = [];
+
+		// Format: "Birth of Person" or just the title
+		if (eventDetails.eventType) {
+			const typeLabel = eventDetails.eventType.charAt(0).toUpperCase() +
+				eventDetails.eventType.slice(1);
+			if (eventDetails.person) {
+				// Extract name from wikilink if present
+				const personName = eventDetails.person
+					.replace(/^\[\[/, '')
+					.replace(/\]\]$/, '')
+					.split('|').pop() || eventDetails.person;
+				lines.push(`${typeLabel} of ${personName}`);
+			} else {
+				lines.push(typeLabel);
+			}
+		} else {
+			lines.push(eventDetails.title);
+		}
+
+		// Add date if available
+		if (eventDetails.date) {
+			lines.push(eventDetails.date);
+		}
+
+		return lines.join('\n');
 	}
 
 	/**
@@ -570,6 +697,12 @@ export class ExcalidrawExporter {
 		ea.style.fontFamily = fontFamily;
 		ea.style.fontSize = fontSize;
 
+		// Log cache keys and node IDs for debugging
+		const cacheKeys = Array.from(this.eventDetailsCache.keys());
+		const nodeIds = canvasData.nodes.slice(0, 5).map(n => n.id);
+		logger.info('export', `convertWithApi: eventCache keys (first 5): ${cacheKeys.slice(0, 5).join(', ')}`);
+		logger.info('export', `convertWithApi: node IDs (first 5): ${nodeIds.join(', ')}`);
+
 		// Convert nodes
 		for (const node of canvasData.nodes) {
 			const rectColor = preserveColors && node.color
@@ -599,11 +732,16 @@ export class ExcalidrawExporter {
 				}
 			}
 
-			// Create text label based on content level
+			// Create text label - check event cache first (for timeline exports), then person cache
 			let labelText: string;
-			if (nodeContent !== 'name' && this.personDetailsCache.has(node.id)) {
+			if (this.eventDetailsCache.has(node.id)) {
+				// Event node - use event label
+				labelText = this.extractNodeLabel(node);
+			} else if (nodeContent !== 'name' && this.personDetailsCache.has(node.id)) {
+				// Person node with rich content
 				labelText = this.buildRichLabel(node, nodeContent);
 			} else {
+				// Fallback to simple label
 				labelText = this.extractNodeLabel(node);
 			}
 
@@ -615,32 +753,54 @@ export class ExcalidrawExporter {
 					verticalAlign: 'middle'
 				});
 
-				// Calculate text dimensions for centering
-				// Note: We cannot use ea.measureText() as it requires an active view
-				// Using the same estimation as JSON fallback mode
-				const lines = labelText.split('\n');
-				const maxLineLength = Math.max(...lines.map(l => l.length));
-				const charWidthMultiplier = 0.6;
-				const lineHeightMultiplier = 1.25;
-				const estimatedTextWidth = maxLineLength * fontSize * charWidthMultiplier;
-				const estimatedTextHeight = lines.length * fontSize * lineHeightMultiplier;
+				// Calculate wrap width based on node width and font size
+				// Virgil font is roughly 0.6 * fontSize per character
+				const charsPerLine = Math.floor(node.width / (fontSize * 0.6));
+				const wrapAt = Math.max(15, charsPerLine); // Minimum 15 chars
 
-				// Calculate centered position within the node
-				// Position the text so its center aligns with the rectangle's center
-				const nodeCenterX = node.x + offsetX + node.width / 2;
-				const nodeCenterY = node.y + offsetY + node.height / 2;
-				const textX = nodeCenterX - estimatedTextWidth / 2;
-				const textY = nodeCenterY - estimatedTextHeight / 2;
+				// Estimate text dimensions for centering
+				// Split by existing newlines and apply wrapping
+				const rawLines = labelText.split('\n');
+				let wrappedLines: string[] = [];
+				for (const line of rawLines) {
+					if (line.length <= wrapAt) {
+						wrappedLines.push(line);
+					} else {
+						// Simple word wrap
+						const words = line.split(' ');
+						let currentLine = '';
+						for (const word of words) {
+							if (currentLine.length + word.length + 1 <= wrapAt) {
+								currentLine += (currentLine ? ' ' : '') + word;
+							} else {
+								if (currentLine) wrappedLines.push(currentLine);
+								currentLine = word;
+							}
+						}
+						if (currentLine) wrappedLines.push(currentLine);
+					}
+				}
 
-				// Add text at the calculated centered position
-				// Do NOT use the box parameter as it creates a visible container
+				const lineCount = wrappedLines.length;
+				const maxLineLength = Math.max(...wrappedLines.map(l => l.length));
+				const charWidth = fontSize * 0.55; // Virgil font character width estimate
+				const lineHeight = fontSize * 1.25;
+				const textWidth = maxLineLength * charWidth;
+				const textHeight = lineCount * lineHeight;
+
+				// Calculate top-left position to center text in rectangle
+				const textX = node.x + offsetX + (node.width - textWidth) / 2;
+				const textY = node.y + offsetY + (node.height - textHeight) / 2;
+
+				// Add text at calculated position
 				const textId = ea.addText(
 					textX,
 					textY,
 					labelText,
 					{
 						textAlign: 'center',
-						textVerticalAlign: 'middle'
+						textVerticalAlign: 'middle',
+						wrapAt
 					}
 				);
 
@@ -763,6 +923,12 @@ export class ExcalidrawExporter {
 
 		logger.info('export', `Coordinate offset: (${offsetX}, ${offsetY}) from bounds (${minX}, ${minY})`);
 
+		// Log cache keys and node IDs for debugging
+		const cacheKeys = Array.from(this.eventDetailsCache.keys());
+		const nodeIds = canvasData.nodes.slice(0, 5).map(n => n.id);
+		logger.info('export', `convertCanvas: eventCache keys (first 5): ${cacheKeys.slice(0, 5).join(', ')}`);
+		logger.info('export', `convertCanvas: node IDs (first 5): ${nodeIds.join(', ')}`);
+
 		// Generate group IDs for grouped elements
 		const groupIdMap = new Map<string, string>();
 		if (groupElements) {
@@ -806,12 +972,17 @@ export class ExcalidrawExporter {
 			);
 			elements.push(rectangle);
 
-			// Create text label based on content level
+			// Create text label - check event cache first (for timeline exports), then person cache
 			// Wiki links are on the rectangle, not in text
 			let labelText: string;
-			if (nodeContent !== 'name' && this.personDetailsCache.has(node.id)) {
+			if (this.eventDetailsCache.has(node.id)) {
+				// Event node - use event label
+				labelText = this.extractNodeLabel(node);
+			} else if (nodeContent !== 'name' && this.personDetailsCache.has(node.id)) {
+				// Person node with rich content
 				labelText = this.buildRichLabel(node, nodeContent);
 			} else {
+				// Fallback to simple label
 				labelText = this.extractNodeLabel(node);
 			}
 
@@ -1130,10 +1301,24 @@ export class ExcalidrawExporter {
 	 * Extract label text from canvas node
 	 */
 	private extractNodeLabel(node: CanvasNode): string {
+		// Check if this is an event node with cached details
+		const eventDetails = this.eventDetailsCache.get(node.id);
+		logger.info('export', `extractNodeLabel: node.id=${node.id}, hasEventDetails=${!!eventDetails}, cacheSize=${this.eventDetailsCache.size}`);
+		if (eventDetails) {
+			const label = this.getEventLabel(eventDetails);
+			logger.info('export', `extractNodeLabel: Using event label: ${label}`);
+			return label;
+		}
+
 		if (node.type === 'file' && node.file) {
 			// Extract filename without extension and path
 			const match = node.file.match(/([^/]+)\.(md|markdown)$/);
-			return match ? match[1] : node.file;
+			let label = match ? match[1] : node.file;
+			// Truncate long filenames to fit in node (approx 20 chars fit comfortably)
+			if (label.length > 25) {
+				label = label.substring(0, 22) + '...';
+			}
+			return label;
 		} else if (node.type === 'text' && node.text) {
 			// Use first line of text
 			const firstLine = node.text.split('\n')[0];
