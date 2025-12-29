@@ -307,9 +307,11 @@ export class RelationshipsRenderer {
 			if (entry.filePath) {
 				const linkEl = li.createSpan({ cls: 'cr-relationships__link' });
 				const basename = entry.filePath.replace(/\.md$/, '').split('/').pop() || entry.name;
+				// Use alias format if basename differs from name (duplicate handling)
+				const wikilink = basename !== entry.name ? `[[${basename}|${entry.name}]]` : `[[${basename}]]`;
 				await MarkdownRenderer.render(
 					context.familyGraph['app'],
-					`[[${basename}]]`,
+					wikilink,
 					linkEl,
 					context.file.path,
 					component
@@ -380,7 +382,8 @@ export class RelationshipsRenderer {
 				// Add wikilink if we have a file path
 				if (entry.filePath) {
 					const basename = entry.filePath.replace(/\.md$/, '').split('/').pop() || entry.name;
-					line += `[[${basename}]]`;
+					// Use alias format if basename differs from name (duplicate handling)
+					line += basename !== entry.name ? `[[${basename}|${entry.name}]]` : `[[${basename}]]`;
 				} else {
 					line += entry.name;
 				}
