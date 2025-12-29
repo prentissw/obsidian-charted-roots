@@ -9,6 +9,7 @@ import { MarkdownRenderChild, TFile, Notice, setIcon, setTooltip } from 'obsidia
 import type CanvasRootsPlugin from '../../../main';
 import type { DynamicBlockContext, DynamicBlockConfig } from '../services/dynamic-content-service';
 import type { DynamicContentService } from '../services/dynamic-content-service';
+import { extractWikilinkPath } from '../../utils/wikilink-resolver';
 
 /**
  * Media item extracted from frontmatter
@@ -153,8 +154,8 @@ export class MediaRenderer {
 	private parseMediaLink(link: string, isFirst: boolean): MediaItem | null {
 		if (!link) return null;
 
-		// Strip wikilink brackets
-		const path = link.replace(/^\[\[/, '').replace(/\]\]$/, '').trim();
+		// Strip wikilink brackets and handle alias format
+		const path = extractWikilinkPath(link);
 
 		if (!path) return null;
 
