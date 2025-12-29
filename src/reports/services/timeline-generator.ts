@@ -660,7 +660,11 @@ export class TimelineGenerator {
 
 		for (const entry of entries) {
 			const date = entry.date || '';
-			const type = entry.type;
+			// Capitalize event type and link to event note
+			const typeLabel = entry.type.charAt(0).toUpperCase() + entry.type.slice(1);
+			const eventCell = entry.eventName
+				? `[[${entry.eventName}|${typeLabel}]]`
+				: typeLabel;
 			const participants = entry.participants
 				.map(p => p.crId ? `[[${p.name}]]` : p.name)
 				.join(', ');
@@ -668,9 +672,9 @@ export class TimelineGenerator {
 			const description = entry.description || '';
 
 			if (options.includeDescriptions) {
-				lines.push(`| ${date} | ${type} | ${participants} | ${place} | ${description} |`);
+				lines.push(`| ${date} | ${eventCell} | ${participants} | ${place} | ${description} |`);
 			} else {
-				lines.push(`| ${date} | ${type} | ${participants} | ${place} |`);
+				lines.push(`| ${date} | ${eventCell} | ${participants} | ${place} |`);
 			}
 		}
 	}
@@ -869,8 +873,14 @@ export class TimelineGenerator {
 					.map(p => p.crId ? `[[${p.name}]]` : p.name)
 					.join(', ');
 
+				// Capitalize event type and link to event note
+				const typeLabel = entry.type.charAt(0).toUpperCase() + entry.type.slice(1);
+				const eventLink = entry.eventName
+					? `[[${entry.eventName}|${typeLabel}]]`
+					: `**${typeLabel}**`;
+
 				// Main bullet point
-				let line = `- **${entry.type}**`;
+				let line = `- ${eventLink}`;
 				if (participants) {
 					line += `: ${participants}`;
 				}

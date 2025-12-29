@@ -272,6 +272,10 @@ export class ReportWizardModal extends Modal {
 			if (reportMeta) {
 				this.formData.selectedCategory = reportMeta.category;
 			}
+			// Sync output format for timeline reports
+			if (options.reportType === 'timeline-report') {
+				this.syncOutputFormatFromTimeline();
+			}
 			this.updateFilename();
 		}
 
@@ -541,6 +545,10 @@ export class ReportWizardModal extends Modal {
 				this.formData.selectedCategory = reportMeta.category;
 				// Reset subject when changing report type
 				this.formData.subject = {};
+				// Sync output format for timeline reports
+				if (selectedType === 'timeline-report') {
+					this.syncOutputFormatFromTimeline();
+				}
 				this.updateFilename();
 				this.renderCurrentStep();
 			}
