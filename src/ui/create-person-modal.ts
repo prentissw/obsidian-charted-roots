@@ -1056,6 +1056,7 @@ export class CreatePersonModal extends Modal {
 			const icon = createLucideIcon('link', 16);
 			button.buttonEl.empty();
 			button.buttonEl.appendChild(icon);
+			button.buttonEl.appendText(' Link');
 			button.setTooltip('Link spouse');
 
 			button.onClick(() => {
@@ -1458,24 +1459,44 @@ export class CreatePersonModal extends Modal {
 
 				data.childCrId = childIds;
 				data.childName = childNames;
-
-				// Bidirectional: add created person as parent to the child
-				await addParentToChild(this.app, person.crId, createdPersonCrId, createdPersonName, createdPersonSex, this.directory);
 			} else if (relationshipType === 'father') {
 				data.fatherCrId = person.crId;
 				data.fatherName = person.name;
-
-				// Bidirectional: add created person as child to the father
-				await addChildToParent(this.app, person.crId, createdPersonCrId, createdPersonName, this.directory);
 			} else if (relationshipType === 'mother') {
 				data.motherCrId = person.crId;
 				data.motherName = person.name;
-
-				// Bidirectional: add created person as child to the mother
-				await addChildToParent(this.app, person.crId, createdPersonCrId, createdPersonName, this.directory);
 			}
 
-			await updatePersonNote(this.app, this.createdFile, data);
+			// Suspend bidirectional linker to prevent interference
+			const wasSuspended = this.plugin?.bidirectionalLinker?.['suspended'];
+			if (this.plugin?.bidirectionalLinker && !wasSuspended) {
+				this.plugin.bidirectionalLinker.suspend();
+			}
+
+			try {
+				// Update the created person's note first
+				await updatePersonNote(this.app, this.createdFile, data);
+
+				// Wait a bit for Obsidian to update metadata cache
+				await new Promise(resolve => setTimeout(resolve, 100));
+
+				// Then do bidirectional linking (needs to happen AFTER update so cache is fresh)
+				if (relationshipType === 'child') {
+					// Bidirectional: add created person as parent to the child
+					await addParentToChild(this.app, person.crId, createdPersonCrId, createdPersonName, createdPersonSex, this.directory);
+				} else if (relationshipType === 'father') {
+					// Bidirectional: add created person as child to the father
+					await addChildToParent(this.app, person.crId, createdPersonCrId, createdPersonName, this.directory);
+				} else if (relationshipType === 'mother') {
+					// Bidirectional: add created person as child to the mother
+					await addChildToParent(this.app, person.crId, createdPersonCrId, createdPersonName, this.directory);
+				}
+			} finally {
+				// Resume bidirectional linker if we suspended it
+				if (this.plugin?.bidirectionalLinker && !wasSuspended) {
+					this.plugin.bidirectionalLinker.resume();
+				}
+			}
 			new Notice(`Added ${relationshipType}: ${person.name}`);
 		} catch (error) {
 			console.error(`Failed to add ${relationshipType}:`, error);

@@ -24,20 +24,37 @@ function getWriteProperty(canonical: string, aliases: Record<string, string>): s
 }
 
 /**
+ * Strip wikilink brackets from a string
+ * Handles both [[Name]] and [[Basename|Display]] formats
+ */
+function stripWikilink(text: string): string {
+	// Match [[basename|display]] or [[name]]
+	const match = text.match(/^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/);
+	if (match) {
+		// Return the display name if present, otherwise the basename
+		return match[2] || match[1];
+	}
+	return text;
+}
+
+/**
  * Create a wikilink with proper handling of duplicate filenames
  * Uses [[basename|name]] format when basename differs from name
- * @param name The display name
+ * @param name The display name (can already be a wikilink)
  * @param app The Obsidian app instance for file resolution
  */
 function createSmartWikilink(name: string, app: App): string {
+	// Strip existing brackets if present
+	const cleanName = stripWikilink(name);
+
 	// Try to resolve the name to a file
-	const resolvedFile = app.metadataCache.getFirstLinkpathDest(name, '');
-	if (resolvedFile && resolvedFile.basename !== name) {
-		return `[[${resolvedFile.basename}|${name}]]`;
+	const resolvedFile = app.metadataCache.getFirstLinkpathDest(cleanName, '');
+	if (resolvedFile && resolvedFile.basename !== cleanName) {
+		return `[[${resolvedFile.basename}|${cleanName}]]`;
 	}
 
 	// Standard format
-	return `[[${name}]]`;
+	return `[[${cleanName}]]`;
 }
 
 /**
@@ -665,6 +682,7 @@ export async function addChildToParent(
 /**
  * Add a parent relationship to a child's father_id/mother_id field
  * Updates the child's father or mother field based on parent's sex
+ * Also automatically links the parent's spouse as the other parent
  */
 export async function addParentToChild(
 	app: App,
@@ -720,6 +738,65 @@ export async function addParentToChild(
 	}
 
 	logger.info('bidirectional-parent', `Updated parent link in ${childFile.path}`);
+
+	// Also link the parent's spouse as the other parent (if they have one)
+	const parentFile = await findPersonByCrId(app, parentCrId, directory);
+	if (parentFile) {
+		const parentCache = app.metadataCache.getFileCache(parentFile);
+		const spouseIds = parentCache?.frontmatter?.spouse_id;
+		const spouseNames = parentCache?.frontmatter?.spouse;
+
+		logger.debug('bidirectional-parent', `Checking for spouse - spouseIds: ${JSON.stringify(spouseIds)}, spouseNames: ${JSON.stringify(spouseNames)}`);
+
+		if (spouseIds) {
+			// Normalize to arrays
+			const spouseIdArray = Array.isArray(spouseIds) ? spouseIds : [spouseIds];
+			const spouseNameArray = Array.isArray(spouseNames) ? spouseNames : spouseNames ? [spouseNames] : [];
+
+			// Link the first spouse as the other parent
+			if (spouseIdArray.length > 0 && spouseNameArray.length > 0) {
+				const spouseCrId = spouseIdArray[0];
+				const spouseName = spouseNameArray[0];
+
+				logger.debug('bidirectional-parent', `Also linking spouse ${spouseCrId} (${spouseName}) as other parent`);
+
+				// Set the spouse as the other parent on the child
+				if (isMother) {
+					// Parent is mother, so spouse is father
+					if (!existingFatherId) {
+						await updatePersonNote(app, childFile, {
+							fatherCrId: spouseCrId,
+							fatherName: spouseName
+						});
+						logger.info('bidirectional-parent', `Set spouse as father in ${childFile.path}`);
+					} else {
+						logger.debug('bidirectional-parent', `Skipping father link - already set to ${existingFatherId}`);
+					}
+				} else {
+					// Parent is father, so spouse is mother
+					if (!existingMotherId) {
+						await updatePersonNote(app, childFile, {
+							motherCrId: spouseCrId,
+							motherName: spouseName
+						});
+						logger.info('bidirectional-parent', `Set spouse as mother in ${childFile.path}`);
+					} else {
+						logger.debug('bidirectional-parent', `Skipping mother link - already set to ${existingMotherId}`);
+					}
+				}
+
+				// Add child to spouse's children array
+				logger.debug('bidirectional-parent', `Adding child ${childCrId} to spouse ${spouseCrId}`);
+				await addChildToParent(app, spouseCrId, childCrId, cache?.frontmatter?.name || childFile.basename, directory);
+			} else {
+				logger.debug('bidirectional-parent', `Spouse arrays empty or mismatched lengths`);
+			}
+		} else {
+			logger.debug('bidirectional-parent', `Parent ${parentCrId} has no spouse`);
+		}
+	} else {
+		logger.warn('bidirectional-parent', `Could not find parent file for cr_id: ${parentCrId}`);
+	}
 }
 
 /**
