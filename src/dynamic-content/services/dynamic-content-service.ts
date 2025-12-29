@@ -12,6 +12,7 @@ import type CanvasRootsPlugin from '../../../main';
 import type { FamilyGraphService, PersonNode } from '../../core/family-graph';
 import type { EventService } from '../../events/services/event-service';
 import type { EventNote } from '../../events/types/event-types';
+import { extractWikilinkPath } from '../../utils/wikilink-resolver';
 
 /** Block type for freeze operations */
 export type DynamicBlockType = 'canvas-roots-timeline' | 'canvas-roots-relationships' | 'canvas-roots-media';
@@ -297,10 +298,11 @@ export class DynamicContentService {
 
 	/**
 	 * Strip wikilink brackets from a string
+	 * Now supports alias format: [[basename|name]]
 	 */
 	stripWikilink(value: string | undefined): string {
 		if (!value) return '';
-		return value.replace(/^\[\[/, '').replace(/\]\]$/, '').trim();
+		return extractWikilinkPath(value);
 	}
 
 	/**
