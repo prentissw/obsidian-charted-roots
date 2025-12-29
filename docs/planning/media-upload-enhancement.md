@@ -142,13 +142,25 @@ input.multiple = true;
 input.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx';
 ```
 
-**Destination Folder Logic:**
-1. If `enableMediaFolderFilter` is enabled and `mediaFolders` has entries:
-   - Default to first configured media folder
-   - Allow user to select from configured folders
-2. Otherwise:
-   - Prompt user for destination folder
-   - Remember last-used folder in settings
+**Destination Folder Logic ("Read Many, Write One"):**
+
+Files always upload to `mediaFolders[0]` (first folder in array), while MediaPickerModal shows files from ALL folders in `mediaFolders[]`.
+
+**Rationale:**
+- Simplifies UX (no dropdown needed)
+- Predictable behavior (first folder = upload bucket)
+- Users can reorganize files later via Obsidian's file explorer
+- Clearer mental model: "Browse everywhere, upload to one place"
+
+**Edge cases:**
+1. If `mediaFolders` is empty → Prompt user to configure media folder first
+2. If `enableMediaFolderFilter` is false → Show warning or use vault root
+3. If first folder doesn't exist → Create automatically or show error
+
+**Media vs. Maps separation:**
+- Media folders: Entity media linking (people, places, events)
+- Maps folder: Custom place map images (separate workflow via place map picker)
+- Upload modal only writes to media folders, never maps folder
 
 **File Naming/Collision Handling:**
 - Check if file exists: `app.vault.getAbstractFileByPath()`
@@ -164,7 +176,7 @@ input.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx';
 - Browse files button
 - Multiple file selection
 - File type validation (check against supported extensions)
-- Destination folder picker
+- Destination folder display (read-only, shows first media folder)
 - Optional: immediate entity linking after upload
 - Progress indicator for large files
 
@@ -178,8 +190,9 @@ input.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx';
 │ │  [Browse Files]             │ │
 │ └─────────────────────────────┘ │
 │                                 │
-│ Destination folder:             │
-│ [Canvas Roots/Media       ▼]    │
+│ Files will be uploaded to:      │
+│ Canvas Roots/Media              │
+│ (You can move files later)      │
 │                                 │
 │ Files to upload:                │
 │ • photo.jpg (2.3 MB)      [×]   │
@@ -188,6 +201,8 @@ input.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx';
 │         [Cancel]  [Upload]      │
 └─────────────────────────────────┘
 ```
+
+See mockups at `docs/mockups/media-upload-simple.html` and `docs/mockups/media-upload-modal.html`
 
 ### Enhanced MediaPickerModal
 
@@ -214,15 +229,53 @@ uploadBtn.addEventListener('click', () => {
 5. Auto-select newly uploaded files
 6. User proceeds with normal linking flow
 
-### Settings Extensions
+### Settings Enhancements
 
-**Optional new settings:**
+**Media Folder Reordering (Priority Enhancement)**
+
+Currently, users must delete and re-add media folders to change their order. Since `mediaFolders[0]` determines upload destination, reordering is essential.
+
+**Implementation:**
+- Add drag-and-drop handles to media folder list in Preferences
+- Enable drag-and-drop reordering using HTML5 Drag API
+- Update `mediaFolders` array and save on drop
+- Visual feedback during drag operation
+
+**Location:** `src/ui/preferences-tab.ts`, function `renderMediaFoldersList()` (lines 849-918)
+
+**Example code:**
+```typescript
+// Add drag handle
+const dragHandle = folderItem.createDiv({ cls: 'cr-drag-handle' });
+const gripIcon = createLucideIcon('grip-vertical', 14);
+dragHandle.appendChild(gripIcon);
+
+// Make draggable
+folderItem.setAttribute('draggable', 'true');
+folderItem.addEventListener('dragstart', (e) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+});
+
+folderItem.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    const toIndex = index;
+
+    // Reorder array
+    const item = plugin.settings.mediaFolders.splice(fromIndex, 1)[0];
+    plugin.settings.mediaFolders.splice(toIndex, 0, item);
+    await plugin.saveSettings();
+
+    // Re-render
+    renderMediaFoldersList(container, plugin);
+});
+```
+
+**Future Optional Settings:**
 ```typescript
 interface CanvasRootsSettings {
     // ... existing settings
-
-    /** Default upload destination for media files */
-    defaultMediaUploadFolder?: string;
 
     /** Handle file name collisions */
     mediaUploadCollisionBehavior: 'auto-rename' | 'prompt';
@@ -231,6 +284,8 @@ interface CanvasRootsSettings {
     maxMediaUploadSize: number;
 }
 ```
+
+Note: No need for `defaultMediaUploadFolder` - always use `mediaFolders[0]`
 
 ---
 
@@ -244,49 +299,85 @@ interface CanvasRootsSettings {
 
 ---
 
-## Open Questions
+## Resolved Design Decisions
 
 ### File Organization
-- Should we auto-organize uploads by entity type? (e.g., `Media/People/`, `Media/Events/`)
-- Should we support custom folder picker per upload session?
+- **Decision:** Files always upload to `mediaFolders[0]`
+- **Rationale:** Simplified "read many, write one" model; users can reorganize later
+- **Requirement:** Add drag-and-drop reordering to media folders settings
 
-### Entity Linking
-- In MediaUploadModal (Dashboard), should entity linking be optional or required?
-- Should we support linking uploaded files to multiple entities at once?
+### Media vs. Maps Separation
+- **Decision:** Keep separate (Option A)
+- Media folders: Entity media linking (people, places, events)
+- Maps folder: Custom place map images via place map picker
+- Upload modal never writes to maps folder
+
+### Modal Architecture
+- **Decision:** Expand existing MediaPickerModal instead of new separate upload modal
+- Follows PlacePickerModal pattern (inline "Create new" button)
+- Same modal serves both context menu (entity-first) and Dashboard (media-first) workflows
+
+### Destination Picker
+- **Decision:** No dropdown - show read-only destination info instead
+- Clearer UX, predictable behavior
+- Users reorganize files via Obsidian's file explorer if needed
+
+## Open Questions
 
 ### File Type Validation
-- Should we enforce media folder filter during upload?
 - Should we warn/block uploads of unsupported file types?
+- Recommended: Validate and show error message
 
 ### Progress & Feedback
 - For large files, show upload progress bar?
 - What happens if upload fails (network error, disk full, etc.)?
+- Recommended: Progress indicator + error handling with retry option
+
+### Collision Behavior
+- Auto-rename with number suffix (e.g., `photo.jpg` → `photo 1.jpg`)?
+- Or prompt user for action?
+- Recommended: Auto-rename for MVP, add prompt option later
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Dashboard Upload Tile
-- New MediaUploadModal
-- Add 5th tile to MediaManagerModal
-- Basic file upload (single folder, auto-rename collisions)
-- No entity linking (just upload to vault)
+### Phase 1: Settings Enhancement (Foundation)
+**Priority:** Critical - Required before upload feature
+- Add drag-and-drop reordering to media folders list in Preferences
+- Location: `src/ui/preferences-tab.ts`, `renderMediaFoldersList()` function
+- Allows users to set upload destination by reordering folders
 
 ### Phase 2: Dashboard Layout Expansion
-- Add 6th "Link Media" tile
-- Reorganize into 3×2 grid
+- Expand MediaManagerModal from 4 to 6 tiles (3×2 grid)
+- Add "Upload Media" tile (opens simple standalone upload modal)
+- Add "Link Media" tile (opens MediaPickerModal in media-first mode)
 - Rename "Bulk Link Media" to "Bulk Link to Entities"
 
-### Phase 3: Context Menu Enhancement
-- Add "Upload files..." button to MediaPickerModal
-- Implement inline upload workflow
-- Auto-select uploaded files
+### Phase 3: Simple Upload Modal (Dashboard)
+- Create lightweight MediaUploadModal
+- Drag-and-drop zone + browse button
+- Upload to `mediaFolders[0]` with read-only destination display
+- Optional entity linking checkbox
+- Auto-rename collision handling
+- File type validation
 
-### Phase 4: Polish & Settings
-- Add upload-related settings
-- Enhanced collision handling (prompt option)
-- File size limits
-- Drag-and-drop support
+### Phase 4: Enhanced MediaPickerModal (Context Menu)
+- Add "Upload files..." button at top (like PlacePickerModal pattern)
+- Inline upload workflow:
+  1. User clicks "Upload files..."
+  2. Select files from computer
+  3. Upload to `mediaFolders[0]`
+  4. Auto-select newly uploaded files in grid
+  5. User links to pre-selected entity
+- Serves both context menu (entity pre-selected) and Dashboard "Link Media" tile (no pre-selected entity)
+
+### Phase 5: Polish & Advanced Features
+- Progress indicators for large uploads
+- Enhanced error handling with retry
+- Optional: Prompt-based collision handling (vs. auto-rename)
+- Optional: File size limits setting
+- Documentation and user guidance
 
 ---
 

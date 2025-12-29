@@ -77,32 +77,43 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Proposed Solution:**
 
-**Phase 1: Dashboard Enhancement (6-tile layout)**
+**Architecture:** "Read Many, Write One"
+- Files upload to first configured media folder (`mediaFolders[0]`)
+- MediaPickerModal browses all media folders
+- Users can reorganize files later via Obsidian's file explorer
+- Requires drag-and-drop reordering in Preferences (critical foundation)
+
+**Dashboard Enhancement (6-tile layout)**
 - Expand Media Manager from 4 tiles to 6 tiles in 3×2 grid
-- Add "Upload Media" tile for standalone file upload with optional entity linking
-- Add "Link Media" tile for media-first workflow (pick files → pick entities)
-- Rename "Bulk Link Media" to "Bulk Link to Entities" for clarity
-- Layout: Top row = browse/discover (read), bottom row = add/link (write)
+- Row 1 (Browse & Discover): Linked Gallery, Find Unlinked, Source Linker
+- Row 2 (Add & Link): Upload Media, Link Media, Bulk Link to Entities
+- "Upload Media" tile: Simple standalone upload modal with optional entity linking
+- "Link Media" tile: MediaPickerModal in media-first mode (pick files → pick entities)
 
-**Phase 2: Context Menu Enhancement**
-- Add "Upload files..." button to MediaPickerModal (similar to PlacePickerModal's "Create new place")
-- Inline upload workflow: right-click entity → Media → Link media → Upload files → auto-select uploaded files
-- Streamlined single-entity workflow
+**Context Menu Enhancement**
+- Add "Upload files..." button to MediaPickerModal (follows PlacePickerModal pattern)
+- Inline upload workflow: right-click entity → Media → Link media → Upload → auto-select
+- Same enhanced MediaPickerModal serves both context menu (entity-first) and Dashboard (media-first)
 
-**Phase 3: Upload Features**
-- Drag-and-drop file upload
+**Upload Features**
+- Drag-and-drop file upload with browse fallback
 - Multiple file selection
-- Destination folder configuration (respects media folder settings)
-- Auto-rename collision handling
-- File type validation
+- Auto-upload to `mediaFolders[0]` (read-only destination display)
+- Auto-rename collision handling (e.g., `photo.jpg` → `photo 1.jpg`)
+- File type validation with error feedback
 - Progress indicators for large files
 
+**Key Design Decisions:**
+- Media folders separate from maps folder (maps via place map picker)
+- No destination dropdown (simplified UX)
+- Expand existing MediaPickerModal instead of new separate modal
+
 **Implementation Phases:**
-1. New MediaUploadModal with basic upload
-2. Add 5th and 6th tiles to MediaManagerModal
-3. Reorganize into 3×2 grid
-4. Add inline upload to MediaPickerModal
-5. Polish: drag-drop, advanced settings, collision handling
+1. Media folder drag-and-drop reordering in Preferences (critical foundation)
+2. Dashboard 6-tile layout expansion
+3. Simple MediaUploadModal for standalone uploads
+4. Enhanced MediaPickerModal with inline upload
+5. Polish: progress indicators, error handling, advanced settings
 
 **Documentation:**
 - See [Media Upload Enhancement Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/media-upload-enhancement.md) for detailed specifications
