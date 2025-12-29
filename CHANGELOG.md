@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Wikilink handling for duplicate names** - The plugin now properly handles entities with duplicate names (e.g., "John Doe 1.md" for a person named "John Doe") throughout the codebase using Obsidian's wikilink alias format `[[filename|display name]]`. This fixes:
+  - Bidirectional relationship linking when adding parents, spouses, or children
+  - Note creation for persons, events, places, and organizations
+  - All importers (GEDCOM, Gramps XML, GedcomX JSON, CSV)
+  - All exporters (GEDCOM, Gramps XML, GedcomX JSON)
+  - Dynamic content blocks (timeline, relationships, media gallery)
+  - Report generators (timeline, place summary, collection overview, media inventory)
+
 ---
 
 ## [0.18.2] - 2025-12-28
