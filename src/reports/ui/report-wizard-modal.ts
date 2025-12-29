@@ -2157,6 +2157,12 @@ export class ReportWizardModal extends Modal {
 			return;
 		}
 
+		// Check if this is a timeline visual export (canvas/excalidraw)
+		if (this.isTimelineReport() && this.isTimelineVisualFormat()) {
+			await this.handleTimelineVisualExport();
+			return;
+		}
+
 		try {
 			// Build report options dynamically based on form data
 			// The options object is built to match the specific report type's requirements
@@ -2187,6 +2193,67 @@ export class ReportWizardModal extends Modal {
 		} catch (error) {
 			console.error('Report generation failed:', error);
 			new Notice(`Report generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	}
+
+	/**
+	 * Check if current timeline format is a visual format (canvas/excalidraw)
+	 */
+	private isTimelineVisualFormat(): boolean {
+		return this.formData.timelineFormat === 'canvas' ||
+			this.formData.timelineFormat === 'excalidraw';
+	}
+
+	/**
+	 * Handle visual timeline exports (Canvas/Excalidraw)
+	 * These bypass the normal markdown generation and use dedicated exporters
+	 */
+	private async handleTimelineVisualExport(): Promise<void> {
+		try {
+			const options = this.buildReportOptions();
+
+			let result: { success: boolean; path?: string; error?: string; warnings?: string[] };
+
+			if (this.formData.timelineFormat === 'canvas') {
+				result = await this.reportService.exportTimelineToCanvas(
+					options as unknown as Parameters<ReportGenerationService['exportTimelineToCanvas']>[0]
+				);
+			} else {
+				result = await this.reportService.exportTimelineToExcalidraw(
+					options as unknown as Parameters<ReportGenerationService['exportTimelineToExcalidraw']>[0]
+				);
+			}
+
+			if (!result.success) {
+				new Notice(`Export failed: ${result.error || 'Unknown error'}`);
+				return;
+			}
+
+			// Show any warnings
+			if (result.warnings?.length) {
+				for (const warning of result.warnings) {
+					new Notice(warning, 8000);
+				}
+			}
+
+			// Close the wizard
+			this.close();
+
+			// Show success notice
+			const formatName = this.formData.timelineFormat === 'canvas' ? 'Canvas' : 'Excalidraw';
+			new Notice(`${formatName} timeline exported to ${result.path}`);
+
+			// Open the created file
+			if (result.path) {
+				const file = this.plugin.app.vault.getAbstractFileByPath(result.path);
+				if (file) {
+					void this.plugin.app.workspace.getLeaf(false).openFile(file as import('obsidian').TFile);
+				}
+			}
+
+		} catch (error) {
+			console.error('Visual timeline export failed:', error);
+			new Notice(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	}
 

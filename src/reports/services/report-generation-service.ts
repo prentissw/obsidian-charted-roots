@@ -249,6 +249,32 @@ export class ReportGenerationService {
 		collectFolders(this.app.vault.getRoot());
 		return folders.sort();
 	}
+
+	/**
+	 * Export timeline to Canvas format
+	 * Used for visual canvas exports which bypass the normal markdown generation
+	 */
+	async exportTimelineToCanvas(options: TimelineReportOptions): Promise<{
+		success: boolean;
+		path?: string;
+		error?: string;
+		warnings?: string[];
+	}> {
+		return this.timelineGenerator.exportToCanvas(options);
+	}
+
+	/**
+	 * Export timeline to Excalidraw format
+	 * Used for visual excalidraw exports which bypass the normal markdown generation
+	 */
+	async exportTimelineToExcalidraw(options: TimelineReportOptions): Promise<{
+		success: boolean;
+		path?: string;
+		error?: string;
+		warnings?: string[];
+	}> {
+		return this.timelineGenerator.exportToExcalidraw(options);
+	}
 }
 
 /**
