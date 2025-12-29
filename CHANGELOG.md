@@ -44,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Intermediate canvas file cleanup** - When exporting to Excalidraw format, the intermediate canvas file is now automatically deleted after successful conversion.
 
+- **Restored "Open in family chart" context menu action** - Re-added the missing menu item for person notes under the Canvas Roots submenu.
+
 ---
 
 ## [0.18.1] - 2025-12-28
