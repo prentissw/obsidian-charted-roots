@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Dynamic content blocks (timeline, relationships, media gallery)
   - Report generators (timeline, place summary, collection overview, media inventory)
 
+- **"Add essential properties" using wrong property name** - Fixed "Add essential source properties" and "Add essential event properties" context menu actions incorrectly setting `type` instead of `cr_type`. Person, place, and universe actions already used the correct property name. Also updated place standardization and organization membership filtering to check both `cr_type` (preferred) and legacy `type` for backward compatibility.
+
 ---
 
 ## [0.18.2] - 2025-12-28
