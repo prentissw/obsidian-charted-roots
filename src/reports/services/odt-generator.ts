@@ -506,15 +506,46 @@ ${coverPage}${imageContent}${bodyContent}
 
 	/**
 	 * Parse a single markdown table row into cells
+	 * Handles wikilinks with aliases like [[file|display]] without splitting on the internal |
 	 */
 	private parseTableRow(line: string): string[] {
-		// Remove leading and trailing pipes and split
+		// Remove leading and trailing pipes
 		const trimmed = line.trim();
 		const withoutPipes = trimmed.startsWith('|') ? trimmed.slice(1) : trimmed;
 		const withoutEndPipe = withoutPipes.endsWith('|') ? withoutPipes.slice(0, -1) : withoutPipes;
 
-		// Split by pipe and trim each cell
-		return withoutEndPipe.split('|').map(cell => cell.trim());
+		// Split by pipe, but not pipes inside [[ ]] wikilinks
+		const cells: string[] = [];
+		let current = '';
+		let bracketDepth = 0;
+
+		for (let i = 0; i < withoutEndPipe.length; i++) {
+			const char = withoutEndPipe[i];
+			const nextChar = withoutEndPipe[i + 1];
+
+			if (char === '[' && nextChar === '[') {
+				bracketDepth++;
+				current += '[[';
+				i++; // Skip next char
+			} else if (char === ']' && nextChar === ']') {
+				bracketDepth = Math.max(0, bracketDepth - 1);
+				current += ']]';
+				i++; // Skip next char
+			} else if (char === '|' && bracketDepth === 0) {
+				// Cell delimiter - split here
+				cells.push(current.trim());
+				current = '';
+			} else {
+				current += char;
+			}
+		}
+
+		// Don't forget the last cell
+		if (current) {
+			cells.push(current.trim());
+		}
+
+		return cells;
 	}
 
 	/** Genealogy labels to render in small caps */
@@ -564,8 +595,9 @@ ${coverPage}${imageContent}${bodyContent}
 		result = result.replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<text:span text:style-name="Italic">$1</text:span>');
 		result = result.replace(/(?<!_)_([^_]+?)_(?!_)/g, '<text:span text:style-name="Italic">$1</text:span>');
 
-		// Convert wikilinks [[Name]] to plain text (bold for emphasis)
-		result = result.replace(/\[\[([^\]|]+?)(\|([^\]]+?))?\]\]/g, (_, target, __, display) => {
+		// Convert wikilinks [[Name]] or [[Name|Display]] to plain text (bold for emphasis)
+		// Use [^\][\]] to match any char except brackets, allowing | in the target
+		result = result.replace(/\[\[([^\][\]]+?)(?:\|([^\][\]]+?))?\]\]/g, (_, target, display) => {
 			const linkText = display || target;
 			return `<text:span text:style-name="Bold">${linkText}</text:span>`;
 		});
