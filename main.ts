@@ -1822,21 +1822,17 @@ export default class CanvasRootsPlugin extends Plugin {
 
 									relationshipSubmenu.addItem((relItem) => {
 										relItem
-											.setTitle('Add parent')
+											.setTitle('Add father')
 											.setIcon('user')
-											.onClick(async () => {
-												// Ask which parent type first
-												const parentType = await this.promptParentType();
-												if (!parentType) return;
-
+											.onClick(() => {
 												// Build context for inline creation
 												const cache = this.app.metadataCache.getFileCache(file);
 												const crId = cache?.frontmatter?.cr_id;
 												const directory = file.parent?.path || '';
 
 												const createContext: RelationshipContext = {
-													relationshipType: parentType,
-													suggestedSex: parentType === 'father' ? 'male' : 'female',
+													relationshipType: 'father',
+													suggestedSex: 'male',
 													parentCrId: crId,
 													directory: directory
 												};
@@ -1847,11 +1843,49 @@ export default class CanvasRootsPlugin extends Plugin {
 														await relationshipMgr.addParentRelationship(
 															file,
 															selectedPerson.file,
-															parentType
+															'father'
 														);
 													})();
 												}, {
-													title: `Select ${parentType}`,
+													title: 'Select father',
+													createContext: createContext,
+													onCreateNew: () => {
+														// Callback signals inline creation support
+													},
+													plugin: this
+												});
+												picker.open();
+											});
+									});
+
+									relationshipSubmenu.addItem((relItem) => {
+										relItem
+											.setTitle('Add mother')
+											.setIcon('user')
+											.onClick(() => {
+												// Build context for inline creation
+												const cache = this.app.metadataCache.getFileCache(file);
+												const crId = cache?.frontmatter?.cr_id;
+												const directory = file.parent?.path || '';
+
+												const createContext: RelationshipContext = {
+													relationshipType: 'mother',
+													suggestedSex: 'female',
+													parentCrId: crId,
+													directory: directory
+												};
+
+												const picker = new PersonPickerModal(this.app, (selectedPerson) => {
+													void (async () => {
+														const relationshipMgr = new RelationshipManager(this.app, this.relationshipHistory);
+														await relationshipMgr.addParentRelationship(
+															file,
+															selectedPerson.file,
+															'mother'
+														);
+													})();
+												}, {
+													title: 'Select mother',
 													createContext: createContext,
 													onCreateNew: () => {
 														// Callback signals inline creation support
