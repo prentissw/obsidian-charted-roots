@@ -16,6 +16,7 @@ import { BulkMediaLinkModal } from './bulk-media-link-modal';
 import { MediaGalleryModal } from './media-gallery-modal';
 import { UnlinkedMediaModal } from './unlinked-media-modal';
 import { SourceMediaLinkerModal } from '../../sources/ui/source-media-linker';
+import { MediaUploadModal } from './media-upload-modal';
 import { FamilyGraphService } from '../family-graph';
 import { PlaceGraphService } from '../place-graph';
 import { EventService } from '../../events/services/event-service';
@@ -361,12 +362,11 @@ export class MediaManagerModal extends Modal {
 	}
 
 	/**
-	 * Open Upload Media modal (Phase 3 - to be implemented)
+	 * Open Upload Media modal
 	 */
 	private openUploadMedia(): void {
 		this.close();
-		// TODO: Phase 3 - Open MediaUploadModal
-		console.log('Upload Media - to be implemented in Phase 3');
+		new MediaUploadModal(this.app, this.plugin).open();
 	}
 
 	/**
