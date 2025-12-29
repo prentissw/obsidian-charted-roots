@@ -1,0 +1,542 @@
+/* ==========================================================================
+   PERSON PICKER MODAL
+   ========================================================================== */
+
+.crc-person-picker-modal {
+  width: 600px;
+  max-width: 90vw;
+  height: 500px;
+  max-height: 80vh;
+}
+
+.crc-person-picker-modal .modal-content {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.crc-picker-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.crc-picker-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.crc-picker-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.crc-picker-search {
+  padding: 16px 20px 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+/* "Create new" button in person picker - add spacing below */
+.crc-picker-create-new-btn {
+  margin-bottom: 12px;
+}
+
+.crc-picker-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.crc-picker-sort__label {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.crc-picker-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 20px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.crc-picker-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crc-picker-filter__label {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.crc-form-select--small {
+  font-size: 12px;
+  padding: 4px 8px;
+  min-width: 120px;
+}
+
+.crc-picker-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 0;
+}
+
+.crc-picker-sidebar {
+  width: 180px;
+  flex-shrink: 0;
+  background: var(--background-secondary);
+  border-right: 1px solid var(--background-modifier-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.crc-picker-sidebar__header {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.crc-picker-sidebar__tabs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.crc-picker-sidebar-tab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  border: 1px solid transparent;
+}
+
+.crc-picker-sidebar-tab:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.crc-picker-sidebar-tab--active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-weight: 500;
+}
+
+.crc-picker-sidebar-tab__label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crc-picker-sidebar-tab__badge {
+  padding: 2px 6px;
+  background: var(--background-modifier-border);
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+
+.crc-picker-sidebar-tab--active .crc-picker-sidebar-tab__badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-on-accent);
+}
+
+.crc-picker-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  min-height: 0;
+}
+
+.crc-picker-item {
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.crc-picker-item:hover,
+.crc-picker-item--hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.crc-picker-item--selected {
+  background: var(--interactive-accent-hover);
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
+.crc-picker-item__main {
+  margin-bottom: 8px;
+}
+
+.crc-picker-item__name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+.crc-picker-item__meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.crc-picker-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.crc-picker-badge--id {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  opacity: 0.8;
+}
+
+.crc-picker-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-top: 16px;
+  background: var(--background-secondary);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+.crc-picker-group-header:first-child {
+  margin-top: 0;
+}
+
+.crc-picker-group-header__text {
+  flex: 1;
+}
+
+.crc-picker-group-header__badge {
+  padding: 2px 8px;
+  background: var(--background-modifier-border);
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.crc-picker-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.crc-picker-empty p {
+  margin: 8px 0;
+}
+
+.crc-picker-empty p:first-of-type {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+.crc-picker-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  text-align: center;
+  min-height: 200px;
+}
+
+.crc-picker-loading__spinner {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 12px;
+  border: 3px solid var(--background-modifier-border);
+  border-top-color: var(--interactive-accent);
+  border-radius: 50%;
+  animation: crc-spinner-rotate 1s linear infinite;
+}
+
+@keyframes crc-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.crc-picker-loading__text {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.crc-picker-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.crc-picker-footer--spaced {
+  justify-content: space-between;
+}
+
+.crc-picker-footer__buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crc-picker-footer .crc-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Place picker specific styles */
+.crc-place-picker-modal .modal-content {
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.crc-place-picker-modal .crc-picker-results {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+/* ==========================================================================
+
+   Spouses Multi-Select Field (similar to children field)
+   ========================================================================== */
+
+.crc-spouses-field {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+}
+
+.crc-spouses-field__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.crc-spouses-field__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+.crc-spouses-field__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crc-spouses-field__empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.crc-spouses-field__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--background-primary);
+  border-radius: var(--radius-s);
+}
+
+.crc-spouses-field__name {
+  font-size: 14px;
+  color: var(--text-normal);
+}
+
+/* ==========================================================================
+   Post-Create Actions Panel (Add Another Flow)
+   ========================================================================== */
+
+/* Success title styling */
+.crc-modal-title--success {
+  color: var(--text-success);
+}
+
+.crc-modal-title--success svg {
+  color: var(--text-success);
+}
+
+/* Created person info section */
+.crc-post-create-info {
+  text-align: center;
+  padding: 16px 0 24px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: 24px;
+}
+
+.crc-post-create-info__name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 8px;
+}
+
+.crc-post-create-info__hint {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Actions section */
+.crc-post-create-actions {
+  padding: 0 0 24px;
+}
+
+.crc-post-create-actions__header {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+}
+
+.crc-post-create-actions__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* Action buttons */
+.crc-post-create-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.crc-post-create-action-btn:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
+.crc-post-create-action-btn svg {
+  color: var(--interactive-accent);
+}
+
+.crc-post-create-action-btn span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+/* ==========================================================================
+   Parent Type Choice (for Add Parent flow)
+   ========================================================================== */
+
+.crc-parent-type-choice {
+  padding: 24px 0;
+  text-align: center;
+}
+
+.crc-parent-type-choice__hint {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.crc-parent-type-choice__grid {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.crc-parent-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 32px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 120px;
+}
+
+.crc-parent-type-btn:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
+.crc-parent-type-btn svg {
+  color: var(--interactive-accent);
+}
+
+.crc-parent-type-btn span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-normal);
+}

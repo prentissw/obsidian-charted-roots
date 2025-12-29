@@ -31,7 +31,12 @@ const CONFIG = {
     'base.css',          // Base structural elements
     'layout.css',        // Layout utilities
     'settings.css',      // Settings interface
-    'modals.css',        // Modal dialogs
+    'control-center.css', // Control Center core UI (formerly modals.css)
+    'entity-create-modals.css', // Person picker and entity creation modals
+    'place-modals.css',  // Place-specific modals
+    'media-modals.css',  // Media management modals
+    'import-export-wizard.css', // Import/Export wizard modals
+    'cleanup-wizard.css', // Cleanup wizard modal (all steps)
     'duplicate-detection.css', // Duplicate detection modal
     'tree-statistics.css', // Tree statistics modal
     'validation.css',    // Validation results modal
