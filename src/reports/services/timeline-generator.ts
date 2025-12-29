@@ -263,6 +263,12 @@ export class TimelineGenerator {
 					await this.app.vault.create(excalidrawPath, excalidrawResult.excalidrawContent);
 				}
 
+				// Clean up intermediate Canvas file
+				if (canvasFile instanceof TFile) {
+					await this.app.vault.delete(canvasFile);
+					logger.info('exportToExcalidraw', 'Deleted intermediate canvas file', { path: canvasResult.path });
+				}
+
 				return { success: true, path: excalidrawPath };
 			} else {
 				return {

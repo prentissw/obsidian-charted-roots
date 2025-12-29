@@ -839,7 +839,7 @@ export class TimelineCanvasExporter {
 			markers.push({
 				id: generateCanvasId(),
 				type: 'text',
-				text: `**${year}**`,
+				text: String(year),
 				x,
 				y,
 				width: markerWidth,
