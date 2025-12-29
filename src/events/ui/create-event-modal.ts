@@ -7,6 +7,7 @@ import { App, Modal, Setting, TFile, Notice } from 'obsidian';
 import type { CanvasRootsSettings } from '../../settings';
 import { createLucideIcon } from '../../ui/lucide-icons';
 import { PersonPickerModal, PersonInfo } from '../../ui/person-picker';
+import { PlacePickerModal, SelectedPlaceInfo } from '../../ui/place-picker';
 import { RelationshipContext } from '../../ui/quick-create-person-modal';
 import { EventService } from '../services/event-service';
 import {
@@ -292,15 +293,7 @@ export class CreateEventModal extends Modal {
 		// TODO: Add multiple person picker support
 
 		// Place
-		new Setting(form)
-			.setName('Place')
-			.setDesc('Where did this event occur? (wikilink to place note)')
-			.addText(text => text
-				.setPlaceholder('e.g., [[London, England]]')
-				.setValue(this.place)
-				.onChange(value => {
-					this.place = value;
-				}));
+		this.createPlaceField(form, 'Place', 'Where did this event occur?');
 
 		// Timeline
 		new Setting(form)
@@ -573,6 +566,71 @@ export class CreateEventModal extends Modal {
 						onCreateNew: () => {
 							// Callback signals inline creation support
 						},
+						plugin: this.plugin
+					});
+					picker.open();
+				}
+			});
+		});
+	}
+
+	/**
+	 * Create a place picker field
+	 */
+	private createPlaceField(container: HTMLElement, label: string, description: string): void {
+		const setting = new Setting(container)
+			.setName(label)
+			.setDesc(this.place ? `Linked to: ${this.place}` : description);
+
+		// Text input (readonly, shows selected place name)
+		let inputEl: HTMLInputElement;
+
+		setting.addText(text => {
+			inputEl = text.inputEl;
+			text.setPlaceholder('Click "Link" to select place')
+				.setValue(this.place);
+			text.inputEl.readOnly = true;
+			if (this.place) {
+				text.inputEl.addClass('crc-input--linked');
+			}
+		});
+
+		// Link/Unlink button
+		setting.addButton(btn => {
+			const updateButton = (isLinked: boolean) => {
+				btn.buttonEl.empty();
+				btn.buttonEl.addClass('crc-btn', 'crc-btn--secondary');
+				if (isLinked) {
+					const unlinkIcon = createLucideIcon('unlink', 16);
+					btn.buttonEl.appendChild(unlinkIcon);
+					btn.buttonEl.appendText(' Unlink');
+				} else {
+					const linkIcon = createLucideIcon('link', 16);
+					btn.buttonEl.appendChild(linkIcon);
+					btn.buttonEl.appendText(' Link');
+				}
+			};
+
+			updateButton(!!this.place);
+
+			btn.onClick(() => {
+				if (this.place) {
+					// Unlink
+					this.place = '';
+					inputEl.value = '';
+					inputEl.removeClass('crc-input--linked');
+					setting.setDesc(description);
+					updateButton(false);
+				} else {
+					// Open place picker
+					const picker = new PlacePickerModal(this.app, (place: SelectedPlaceInfo) => {
+						this.place = place.name;
+						inputEl.value = place.name;
+						inputEl.addClass('crc-input--linked');
+						setting.setDesc(`Linked to: ${place.name}`);
+						updateButton(true);
+					}, {
+						settings: this.settings,
 						plugin: this.plugin
 					});
 					picker.open();
