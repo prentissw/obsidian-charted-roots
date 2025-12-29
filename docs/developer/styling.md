@@ -27,11 +27,16 @@ Canvas Roots uses a modular CSS architecture with component files that are conca
 
 ```
 canvas-roots/
-├── styles/                    # Component CSS files (36 files)
+├── styles/                    # Component CSS files (39 files)
 │   ├── variables.css          # CSS custom properties
 │   ├── style-settings.css     # Style Settings plugin config
 │   ├── base.css               # Base structural elements
-│   ├── modals.css             # Modal dialogs (~120KB)
+│   ├── control-center.css     # Control Center core UI (~23KB)
+│   ├── cleanup-wizard.css     # Cleanup wizard modal (~38KB)
+│   ├── import-export-wizard.css # Import/Export wizards (~31KB)
+│   ├── media-modals.css       # Media management modals (~25KB)
+│   ├── place-modals.css       # Place-specific modals (~18KB)
+│   ├── entity-create-modals.css # Person/entity creation (~11KB)
 │   ├── map-view.css           # Leaflet map styling (~40KB)
 │   ├── sources.css            # Sources tab (~55KB)
 │   └── ...                    # Other component files
@@ -84,15 +89,15 @@ componentOrder: [
   'style-settings.css',      // 2. Style Settings plugin config
   'base.css',                // 3. Base structural elements
   'layout.css',              // 4. Layout utilities
-  'canvas.css',              // 5. Canvas-specific styling
-  'nodes.css',               // 6. Family tree node styling
-  'edges.css',               // 7. Relationship edge styling
-  'settings.css',            // 8. Settings interface
-  'modals.css',              // 9. Modal dialogs
+  'settings.css',            // 5. Settings interface
+  'control-center.css',      // 6. Control Center core UI
+  'entity-create-modals.css', // 7. Person picker and entity creation
+  'place-modals.css',        // 8. Place-specific modals
+  'media-modals.css',        // 9. Media management modals
+  'import-export-wizard.css', // 10. Import/Export wizards
+  'cleanup-wizard.css',      // 11. Cleanup wizard (all steps)
   // ... additional components
-  'animations.css',          // Animation keyframes
-  'responsive.css',          // Responsive breakpoints
-  'theme.css'                // Theme compatibility (last)
+  'responsive.css'           // Responsive breakpoints (last)
 ]
 ```
 
@@ -222,29 +227,42 @@ Users with Style Settings installed can customize these values in Settings → S
 | `variables.css` | CSS custom properties and design tokens | 1 KB |
 | `style-settings.css` | Style Settings plugin configuration | 6 KB |
 | `base.css` | Base structural elements | 1 KB |
-| `modals.css` | Modal dialogs (Control Center, pickers, wizards) | 120 KB |
-| `map-view.css` | Leaflet map view (includes bundled Leaflet CSS) | 40 KB |
 | `sources.css` | Sources tab, media gallery, citations | 55 KB |
+| `map-view.css` | Leaflet map view (includes bundled Leaflet CSS) | 40 KB |
+| `cleanup-wizard.css` | Cleanup wizard modal (all 9 steps) | 38 KB |
+| `import-export-wizard.css` | Import/Export wizard modals | 31 KB |
 | `statistics.css` | Statistics tab and workspace view | 30 KB |
-| `data-quality.css` | Data quality analysis tab | 28 KB |
+| `tree-output.css` | Tree output two-panel layout | 30 KB |
 | `events.css` | Events tab, timeline components | 28 KB |
+| `data-quality.css` | Data quality analysis tab | 28 KB |
 | `family-chart-view.css` | Interactive family chart | 24 KB |
+| `control-center.css` | Control Center core UI (tabs, navigation, cards) | 23 KB |
+| `media-modals.css` | Media picker, manager, gallery, bulk link | 25 KB |
+| `report-wizard.css` | Report generator wizard | 19 KB |
+| `place-modals.css` | Place creation, standardization, merge, network | 18 KB |
+| `family-wizard.css` | Family creation wizard | 15 KB |
 | `canvas-navigation.css` | Canvas navigation and split wizard | 15 KB |
+| `family-chart-export.css` | Family chart export wizard | 15 KB |
 | `universe-wizard.css` | Universe setup wizard | 11 KB |
+| `entity-create-modals.css` | Person picker, create forms, relationships | 11 KB |
 | `timeline-callouts.css` | Timeline callout styles for markdown export | 11 KB |
+| `dynamic-content.css` | Dynamic content blocks | 11 KB |
 | `relationships.css` | Relationships tab | 10 KB |
-| `tree-output.css` | Tree output two-panel layout | 9 KB |
 | `leaflet-distortable.css` | Leaflet toolbar plugins (vendored) | 8 KB |
+| `dashboard.css` | Dashboard tab (Control Center home) | 8 KB |
+| `preferences.css` | Preferences tab | 7 KB |
 | `date-systems.css` | Date systems card | 5 KB |
 | `relationship-calculator.css` | Relationship calculator modal | 5 KB |
-| `preferences.css` | Preferences tab | 5 KB |
 | `organizations.css` | Organizations tab | 4 KB |
-| `dynamic-content.css` | Dynamic content blocks | 4 KB |
 | `settings.css` | Plugin settings tab | 4 KB |
 | `duplicate-detection.css` | Duplicate detection modal | 3 KB |
+| `migration-notice.css` | Migration notice view | 3 KB |
+| `tree-statistics.css` | Tree statistics modal | 3 KB |
 | `folder-scan.css` | Folder scan modal | 3 KB |
 | `find-on-canvas.css` | Find on canvas modal | 2 KB |
 | `validation.css` | Validation results modal | 2 KB |
+| `layout.css` | Layout utilities | 1 KB |
+| `responsive.css` | Responsive breakpoints | <1 KB |
 
 ---
 
@@ -297,7 +315,7 @@ Canvas Roots provides basic mobile support for Obsidian on tablets and phones. T
 
 ### JavaScript-Applied Classes
 
-The primary mobile styling is in `modals.css` and uses classes applied via JavaScript when `Platform.isMobile` is detected:
+The primary mobile styling is in `control-center.css` and uses classes applied via JavaScript when `Platform.isMobile` is detected:
 
 ```css
 /* Full-screen modal on mobile */
@@ -372,11 +390,12 @@ Component files use standard CSS media queries for responsive adjustments:
 
 When adding new mobile styles:
 
-1. **For Control Center modals**: Add to the `.crc-mobile-mode` section in `modals.css`
-2. **For view components**: Add `@media` queries at the end of the component file
-3. **Use Obsidian's classes**: Check for `.is-mobile`, `.is-phone`, `.is-tablet` on `body` if needed
-4. **Touch targets**: Ensure tappable elements are at least 44px × 44px
-5. **Font size**: Use minimum 16px for inputs to prevent iOS zoom
+1. **For Control Center modals**: Add to the `.crc-mobile-mode` section in `control-center.css`
+2. **For wizard modals**: Add mobile styles in the respective wizard CSS file (e.g., `cleanup-wizard.css`)
+3. **For view components**: Add `@media` queries at the end of the component file
+4. **Use Obsidian's classes**: Check for `.is-mobile`, `.is-phone`, `.is-tablet` on `body` if needed
+5. **Touch targets**: Ensure tappable elements are at least 44px × 44px
+6. **Font size**: Use minimum 16px for inputs to prevent iOS zoom
 
 ---
 
