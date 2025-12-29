@@ -1853,6 +1853,9 @@ export default class CanvasRootsPlugin extends Plugin {
 												}, {
 													title: `Select ${parentType}`,
 													createContext: createContext,
+													onCreateNew: () => {
+														// Callback signals inline creation support
+													},
 													plugin: this
 												});
 												picker.open();
@@ -1893,6 +1896,9 @@ export default class CanvasRootsPlugin extends Plugin {
 												}, {
 													title: 'Select spouse',
 													createContext: createContext,
+													onCreateNew: () => {
+														// Callback signals inline creation support
+													},
 													plugin: this
 												});
 												picker.open();
@@ -1924,6 +1930,9 @@ export default class CanvasRootsPlugin extends Plugin {
 												}, {
 													title: 'Select child',
 													createContext: createContext,
+													onCreateNew: () => {
+														// Callback signals inline creation support
+													},
 													plugin: this
 												});
 												picker.open();

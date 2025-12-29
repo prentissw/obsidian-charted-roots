@@ -115,6 +115,9 @@ export class AddRelationshipModal extends Modal {
 				}, {
 					title: 'Select person',
 					createContext: createContext,
+					onCreateNew: () => {
+						// Callback signals inline creation support
+					},
 					plugin: this.plugin
 				});
 				picker.open();
