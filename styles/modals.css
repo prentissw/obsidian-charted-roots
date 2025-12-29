@@ -1602,12 +1602,13 @@
   font-weight: 600;
 }
 
-.crc-field-list {
+/* Field list within guide steps */
+.crc-guide-step__content .crc-field-list {
   margin: 0;
   padding-left: 20px;
 }
 
-.crc-field-list li {
+.crc-guide-step__content .crc-field-list li {
   margin-bottom: 8px;
   line-height: 1.6;
 }
@@ -1866,16 +1867,7 @@
   margin-top: 2px;
 }
 
-/* Field List Styles (Guide tab Card 2) */
-.crc-field-list {
-  margin: 0;
-  padding-left: 16px;
-}
-
-.crc-field-list li {
-  margin-bottom: 6px;
-  font-size: 13px;
-}
+/* Compact field list - defined earlier with scoped selectors */
 
 .crc-field-list code {
   background: var(--background-secondary-alt);
@@ -3118,14 +3110,15 @@
   margin: 0 0 8px 0;
 }
 
-.crc-field-list {
+/* Field list within standardize explanation (monospace variant) */
+.crc-standardize-explanation .crc-field-list {
   margin: 0;
   padding-left: 20px;
   font-size: var(--font-ui-small);
   color: var(--text-muted);
 }
 
-.crc-field-list li {
+.crc-standardize-explanation .crc-field-list li {
   margin: 2px 0;
   font-family: var(--font-monospace);
 }
@@ -5861,13 +5854,7 @@
   margin-bottom: 12px;
 }
 
-.cr-progress-bar {
-  height: 100%;
-  width: var(--progress-width, 0%);
-  background: var(--interactive-accent);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
+/* .cr-progress-bar defined earlier in file (line 2481) with modifier classes */
 
 .cr-geocode-results-list {
   flex: 1;

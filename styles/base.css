@@ -74,3 +74,13 @@
 .crc-link:hover {
   text-decoration: underline;
 }
+
+/* Modal/Dialog button container */
+.cr-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 1em;
+  padding-top: 1em;
+  border-top: 1px solid var(--background-modifier-border);
+}

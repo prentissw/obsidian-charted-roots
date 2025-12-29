@@ -102,7 +102,7 @@ export class BulkGeocodeModal extends Modal {
 		this.progressText = progressHeader.createEl('span', { text: 'Starting...' });
 
 		const progressBarContainer = this.progressContainer.createDiv({ cls: 'cr-progress-bar-container' });
-		this.progressBar = progressBarContainer.createDiv({ cls: 'cr-progress-bar' });
+		this.progressBar = progressBarContainer.createDiv({ cls: 'cr-progress-bar cr-progress-bar--good' });
 		this.progressBar.setCssProps({ '--progress-width': '0%' });
 
 		// Results list (scrollable)

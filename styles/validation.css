@@ -75,9 +75,4 @@
   margin-top: 0.25em;
 }
 
-.cr-modal-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 1.5em;
-}
+/* .cr-modal-buttons defined in base.css */
