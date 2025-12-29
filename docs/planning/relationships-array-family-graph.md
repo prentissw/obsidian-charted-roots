@@ -2,11 +2,11 @@
 
 Planning document for integrating the `relationships` array with the family graph and canvas tree generation.
 
-**Status:** Planning
-**GitHub Issue:** #TBD
-**Priority:** Low
-**Created:** 2025-12-27
-**Updated:** 2025-12-27
+- **Status:** Planning
+- **GitHub Issue:** [#41](https://github.com/banisterious/obsidian-canvas-roots/issues/41)
+- **Priority:** Low
+- **Created:** 2025-12-27
+- **Updated:** 2025-12-28
 
 ---
 
