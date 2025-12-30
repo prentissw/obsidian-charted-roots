@@ -7,6 +7,7 @@
  * Supported migrations:
  * - v0.17.0: Source property format (source, source_2 → sources array)
  * - v0.18.0: Event person property (person → persons array)
+ * - v0.18.9: Nested properties redesign (sourced_facts → sourced_*, events → event notes)
  */
 
 import { ItemView, WorkspaceLeaf, setIcon } from 'obsidian';
@@ -17,7 +18,7 @@ export const VIEW_TYPE_MIGRATION_NOTICE = 'canvas-roots-migration-notice';
 /**
  * Migration type for the notice
  */
-type MigrationType = 'sources' | 'event-persons';
+type MigrationType = 'sources' | 'event-persons' | 'nested-properties';
 
 export class MigrationNoticeView extends ItemView {
 	private plugin: CanvasRootsPlugin;
@@ -36,6 +37,10 @@ export class MigrationNoticeView extends ItemView {
 
 	getDisplayText(): string {
 		const version = this.plugin.manifest.version;
+		// Check for 0.18.9+ first (nested properties migration)
+		if (this.migrationType === 'nested-properties') {
+			return 'Canvas Roots v0.18.9';
+		}
 		if (version.startsWith('0.18')) {
 			return 'Canvas Roots v0.18.0';
 		}
@@ -51,10 +56,30 @@ export class MigrationNoticeView extends ItemView {
 	 */
 	private determineMigrationType(): MigrationType {
 		const version = this.plugin.manifest.version;
+		// Check for 0.18.9+ (nested properties migration)
+		if (this.isVersionAtLeast(version, '0.18.9')) {
+			return 'nested-properties';
+		}
 		if (version.startsWith('0.18')) {
 			return 'event-persons';
 		}
 		return 'sources';
+	}
+
+	/**
+	 * Compare version strings (semver-like comparison)
+	 */
+	private isVersionAtLeast(current: string, minimum: string): boolean {
+		const currentParts = current.split('.').map(p => parseInt(p) || 0);
+		const minimumParts = minimum.split('.').map(p => parseInt(p) || 0);
+
+		for (let i = 0; i < Math.max(currentParts.length, minimumParts.length); i++) {
+			const curr = currentParts[i] || 0;
+			const min = minimumParts[i] || 0;
+			if (curr > min) return true;
+			if (curr < min) return false;
+		}
+		return true; // Equal versions
 	}
 
 	// eslint-disable-next-line @typescript-eslint/require-await
@@ -63,7 +88,9 @@ export class MigrationNoticeView extends ItemView {
 		container.empty();
 		container.addClass('cr-migration-notice');
 
-		if (this.migrationType === 'event-persons') {
+		if (this.migrationType === 'nested-properties') {
+			this.renderNestedPropertiesMigration(container);
+		} else if (this.migrationType === 'event-persons') {
 			this.renderEventPersonsMigration(container);
 		} else {
 			this.renderSourcesMigration(container);
@@ -136,6 +163,161 @@ persons:
 
 		// Buttons
 		this.renderButtons(content);
+	}
+
+	/**
+	 * Render the v0.18.9 nested properties migration notice
+	 */
+	private renderNestedPropertiesMigration(container: Element): void {
+		// Header
+		const header = container.createDiv({ cls: 'cr-migration-header' });
+		const iconEl = header.createSpan({ cls: 'cr-migration-icon' });
+		setIcon(iconEl, 'sparkles');
+		header.createEl('h2', { text: "What's New in v0.18.9" });
+
+		// Content
+		const content = container.createDiv({ cls: 'cr-migration-content' });
+
+		// Introduction
+		const introSection = content.createDiv({ cls: 'cr-migration-section' });
+		introSection.createEl('p', {
+			text: 'This version fixes compatibility issues with Obsidian\'s Properties panel. Two features have been redesigned to use flat property formats that work seamlessly with Obsidian.'
+		});
+
+		// Get migration status
+		const migration = this.plugin.settings.nestedPropertiesMigration || {};
+		const sourcedFactsComplete = migration.sourcedFactsComplete ?? false;
+		const eventsComplete = migration.eventsComplete ?? false;
+
+		// === Evidence Tracking Migration ===
+		const evidenceSection = content.createDiv({ cls: 'cr-migration-section' });
+		const evidenceHeader = evidenceSection.createDiv({ cls: 'cr-migration-section-header' });
+		if (sourcedFactsComplete) {
+			const checkIcon = evidenceHeader.createSpan({ cls: 'cr-migration-check' });
+			setIcon(checkIcon, 'check-circle');
+		}
+		evidenceHeader.createEl('h3', { text: 'Evidence Tracking Property Format' });
+
+		evidenceSection.createEl('p', {
+			text: 'The nested sourced_facts object is replaced with individual flat properties for each fact type.'
+		});
+
+		// Code comparison for sourced_facts
+		const evidenceCode = evidenceSection.createDiv({ cls: 'cr-migration-code' });
+
+		const oldEvidenceCode = evidenceCode.createDiv({ cls: 'cr-code-example cr-code-old' });
+		oldEvidenceCode.createEl('div', { cls: 'cr-code-label', text: 'Old format (nested object)' });
+		oldEvidenceCode.createEl('pre', {
+			text: `sourced_facts:
+  birth_date:
+    sources:
+      - "[[Census 1870]]"
+  death_date:
+    sources:
+      - "[[Death Certificate]]"`
+		});
+
+		const newEvidenceCode = evidenceCode.createDiv({ cls: 'cr-code-example cr-code-new' });
+		newEvidenceCode.createEl('div', { cls: 'cr-code-label', text: 'New format (flat properties)' });
+		newEvidenceCode.createEl('pre', {
+			text: `sourced_birth_date:
+  - "[[Census 1870]]"
+sourced_death_date:
+  - "[[Death Certificate]]"`
+		});
+
+		// === Life Events Migration ===
+		const eventsSection = content.createDiv({ cls: 'cr-migration-section' });
+		const eventsHeader = eventsSection.createDiv({ cls: 'cr-migration-section-header' });
+		if (eventsComplete) {
+			const checkIcon = eventsHeader.createSpan({ cls: 'cr-migration-check' });
+			setIcon(checkIcon, 'check-circle');
+		}
+		eventsHeader.createEl('h3', { text: 'Life Events Property Format' });
+
+		eventsSection.createEl('p', {
+			text: 'Inline events arrays are replaced with links to separate event note files.'
+		});
+
+		// Code comparison for events
+		const eventsCode = eventsSection.createDiv({ cls: 'cr-migration-code' });
+
+		const oldEventsCode = eventsCode.createDiv({ cls: 'cr-code-example cr-code-old' });
+		oldEventsCode.createEl('div', { cls: 'cr-code-label', text: 'Old format (inline array)' });
+		oldEventsCode.createEl('pre', {
+			text: `events:
+  - event_type: residence
+    place: "[[New York]]"
+    date_from: "1920"`
+		});
+
+		const newEventsCode = eventsCode.createDiv({ cls: 'cr-code-example cr-code-new' });
+		newEventsCode.createEl('div', { cls: 'cr-code-label', text: 'New format (event note links)' });
+		newEventsCode.createEl('pre', {
+			text: `life_events:
+  - "[[Events/John Smith - Residence 1920]]"`
+		});
+
+		// Benefits section
+		const benefitsSection = content.createDiv({ cls: 'cr-migration-section' });
+		benefitsSection.createEl('h3', { text: 'Benefits' });
+
+		const benefitsList = benefitsSection.createEl('ul');
+		benefitsList.createEl('li', { text: 'No more "Type mismatch" warnings in Properties panel' });
+		benefitsList.createEl('li', { text: 'Safe to edit properties without data corruption' });
+		benefitsList.createEl('li', { text: 'Better Dataview and Bases compatibility' });
+		benefitsList.createEl('li', { text: 'Each event as a note enables linking, tags, and attachments' });
+
+		// Action section
+		const actionSection = content.createDiv({ cls: 'cr-migration-section' });
+		actionSection.createEl('h3', { text: 'Action Recommended' });
+		actionSection.createEl('p', {
+			text: 'Use the Cleanup Wizard to migrate existing data. The plugin reads both old and new formats, so migration can be done at your convenience.'
+		});
+
+		// Buttons with multi-action aware dismiss
+		this.renderNestedPropertiesButtons(content, sourcedFactsComplete, eventsComplete);
+	}
+
+	/**
+	 * Render buttons for nested properties migration (with multi-action completion tracking)
+	 */
+	private renderNestedPropertiesButtons(content: Element, sourcedFactsComplete: boolean, eventsComplete: boolean): void {
+		const buttons = content.createDiv({ cls: 'cr-migration-buttons' });
+
+		const wizardBtn = buttons.createEl('button', {
+			cls: 'mod-cta',
+			text: 'Open Cleanup Wizard'
+		});
+		wizardBtn.addEventListener('click', () => {
+			this.leaf.detach();
+			// Open the cleanup wizard
+			this.app.workspace.trigger('canvas-roots:open-cleanup-wizard');
+		});
+
+		// Only enable dismiss if both migrations are complete OR user has no data to migrate
+		const canDismiss = (sourcedFactsComplete && eventsComplete);
+		const dismissBtn = buttons.createEl('button', {
+			cls: 'cr-migration-dismiss',
+			text: canDismiss ? 'Dismiss' : 'Complete migrations to dismiss'
+		});
+		dismissBtn.disabled = !canDismiss;
+		if (canDismiss) {
+			dismissBtn.addEventListener('click', () => {
+				void this.markAsSeen();
+				this.leaf.detach();
+			});
+		}
+
+		// Add skip button for users who want to dismiss without migrating
+		const skipBtn = buttons.createEl('button', {
+			cls: 'cr-migration-skip',
+			text: 'Skip for now'
+		});
+		skipBtn.addEventListener('click', () => {
+			void this.markAsSeen();
+			this.leaf.detach();
+		});
 	}
 
 	/**

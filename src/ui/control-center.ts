@@ -58,6 +58,7 @@ import {
 	EvidenceService,
 	FACT_KEY_LABELS,
 	FACT_KEYS,
+	FACT_KEY_TO_SOURCED_PROPERTY,
 	SourcePickerModal,
 	SOURCE_QUALITY_LABELS,
 	ProofSummaryService,
@@ -4142,25 +4143,24 @@ export class ControlCenterModal extends Modal {
 			const sourceFileName = source.filePath.split('/').pop()?.replace('.md', '') || source.title;
 			const wikilink = `[[${sourceFileName}]]`;
 
-			// Update the person's sourced_facts frontmatter
+			// Update using new flat sourced_* property
 			await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
-				// Initialize sourced_facts if it doesn't exist
-				if (!frontmatter.sourced_facts) {
-					frontmatter.sourced_facts = {};
-				}
+				const propName = FACT_KEY_TO_SOURCED_PROPERTY[factKey];
 
-				const sourcedFacts = frontmatter.sourced_facts as SourcedFacts;
-
-				// Initialize the fact entry if it doesn't exist
-				if (!sourcedFacts[factKey]) {
-					sourcedFacts[factKey] = { sources: [] };
+				// Get existing sources array (normalize to array)
+				let sources: string[] = [];
+				if (frontmatter[propName]) {
+					if (Array.isArray(frontmatter[propName])) {
+						sources = frontmatter[propName] as string[];
+					} else {
+						sources = [String(frontmatter[propName])];
+					}
 				}
 
 				// Add the source if not already present
-				// TypeScript doesn't narrow index signatures, so we use non-null assertion
-				const sources = sourcedFacts[factKey]!.sources;
 				if (!sources.includes(wikilink)) {
 					sources.push(wikilink);
+					frontmatter[propName] = sources;
 					new Notice(`Added "${source.title}" as source for ${FACT_KEY_LABELS[factKey]}`);
 				} else {
 					new Notice(`"${source.title}" is already linked to ${FACT_KEY_LABELS[factKey]}`);
@@ -7739,7 +7739,7 @@ export class ControlCenterModal extends Modal {
 			const emptyState = section.createDiv({ cls: 'crc-empty-state crc-compact' });
 			setIcon(emptyState.createSpan({ cls: 'crc-empty-icon' }), 'file-search');
 			emptyState.createEl('p', {
-				text: `No fact-level source tracking data found. Add sourced_facts to your person notes to track research coverage.`
+				text: `No fact-level source tracking data found. Add sourced_* properties to your person notes to track research coverage.`
 			});
 			container.appendChild(card);
 			return;
@@ -9871,16 +9871,19 @@ export class ControlCenterModal extends Modal {
 						}
 					}
 
-					// Deduplicate children/child arrays
+					// Deduplicate and normalize children arrays
+					// Prefer 'children' (plural), migrate from 'child' (legacy) if present
 					const childrenArray = fm.children || fm.child;
-					if (Array.isArray(childrenArray) && childrenArray.length > 1) {
+					if (Array.isArray(childrenArray) && childrenArray.length > 0) {
 						const unique = [...new Set(childrenArray)];
+						// Always write to 'children' (preferred name)
+						frontmatter.children = unique.length === 1 ? unique[0] : unique;
+						// Remove legacy 'child' property if present
+						if (fm.child) {
+							delete frontmatter.child;
+							hasChanges = true;
+						}
 						if (unique.length < childrenArray.length) {
-							if (fm.children) {
-								frontmatter.children = unique;
-							} else {
-								frontmatter.child = unique;
-							}
 							hasChanges = true;
 						}
 					}

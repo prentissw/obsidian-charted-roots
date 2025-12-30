@@ -41,6 +41,7 @@ export {
 	BUILT_IN_SOURCE_TYPES,
 	FACT_KEYS,
 	FACT_KEY_LABELS,
+	FACT_KEY_TO_SOURCED_PROPERTY,
 	DEFAULT_SOURCE_QUALITY,
 	SOURCE_QUALITY_LABELS,
 	getSourceType,
@@ -62,6 +63,7 @@ export {
 export { SourceService } from './services/source-service';
 export { EvidenceService, type ResearchGapsSummary } from './services/evidence-service';
 export { ProofSummaryService } from './services/proof-summary-service';
+export { SourcedFactsMigrationService, type LegacySourcedFactsNote } from './services/sourced-facts-migration-service';
 export {
 	generateCitation,
 	generateAllCitations,
