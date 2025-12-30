@@ -370,6 +370,16 @@ export interface CanvasRootsSettings {
 	// Version tracking (for migration notices)
 	/** Last plugin version the user has acknowledged (for showing upgrade notices) */
 	lastSeenVersion?: string;
+	/**
+	 * Tracks completion of individual v0.18.9 nested property migrations.
+	 * Migration notice remains visible until all applicable migrations are complete.
+	 */
+	nestedPropertiesMigration?: {
+		/** True when sourced_facts → sourced_* migration is complete */
+		sourcedFactsComplete?: boolean;
+		/** True when events → event note files migration is complete */
+		eventsComplete?: boolean;
+	};
 	// Inclusive parent relationships (opt-in feature)
 	/** Enable gender-neutral parent relationships */
 	enableInclusiveParents: boolean;
