@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Context menu relationship actions** - "Add father/mother/spouse/child" now correctly write both wikilink and ID fields (dual storage pattern), fixing bidirectional linking
+- **Metadata cache timing** - Pass cr_id directly when selecting newly created people, avoiding cache timing issues that caused "could not find cr_id" errors
+
 ---
 
 ## [0.18.7] - 2025-12-29
