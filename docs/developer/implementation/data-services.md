@@ -167,6 +167,28 @@ The alias system is used throughout the plugin:
 
 The data quality system detects issues in genealogical data and provides batch operations to fix them. This complements the wiki documentation with implementation details for developers.
 
+### Nested Properties and Obsidian Limitations
+
+**Important technical limitation:** Obsidian's property system does not support nested YAML structures (objects within arrays, nested objects, etc.). The property panel only handles simple, flat values:
+
+- Supported: Text, Number, List (of simple values), Checkbox, Date, Date & time, Tags
+- **Not supported:** Nested objects, arrays of objects, deeply nested structures
+
+Canvas Roots uses nested properties for advanced features like the Evidence Service (`sourced_facts`, `events`). These properties are valid YAML but incompatible with Obsidian's property UI, resulting in:
+
+1. **Type mismatch warnings** in the property panel ("expected text")
+2. **Data corruption risk** if users click "update" (converts to `"[object Object]"` strings)
+
+**Implementation strategy:**
+- Nested properties are whitelisted in `DataQualityService.checkNestedProperties()` to avoid false warnings
+- User documentation warns against using Obsidian's property panel "update" button on mismatched types
+- Recommended editing method: Source mode (Settings → Editor → Properties in document → Source)
+
+**For developers:**
+- When adding new nested properties, add them to the whitelist in `data-quality.ts`
+- Document the limitation in wiki pages where nested properties are used
+- Consider whether simpler flat structures can achieve the same goal
+
 ### DataQualityService Architecture
 
 `DataQualityService` (`src/core/data-quality.ts`) is the central service for analyzing and fixing data quality issues.

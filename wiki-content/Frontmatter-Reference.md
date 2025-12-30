@@ -40,6 +40,14 @@ See [Flexible Note Type Detection](Release-History#flexible-note-type-detection-
 
 ## Data Model Overview
 
+**⚠️ Nested Properties and Obsidian Compatibility**
+
+Canvas Roots uses nested YAML structures for certain advanced features (like the Evidence Service). Obsidian's property panel doesn't support nested properties and will show "Type mismatch" warnings for them.
+
+**Important:** Do not click "update" on any property showing a type mismatch warning, as this will corrupt the data by converting it to `"[object Object]"` strings.
+
+To view or edit nested properties, use **Source mode** (Settings → Editor → Properties in document → Source) instead of the property panel.
+
 The following diagram shows how the main entity types relate to each other:
 
 ```mermaid
