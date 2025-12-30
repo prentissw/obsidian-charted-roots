@@ -11,7 +11,6 @@ This document outlines planned features for Canvas Roots. For completed features
   - [Cleanup Wizard Phase 4](#cleanup-wizard-phase-4) 📋 Medium
   - [Gramps Notes & Family Integration](#gramps-notes--family-integration) 📋 Medium
   - [Property Naming Normalization](#property-naming-normalization) 📋 Medium
-  - [Custom Map Authoring](#custom-map-authoring) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
   - [Staging Management](#staging-management) 💡 Low
   - [Universe Management Enhancements](#universe-management-enhancements) 💡 Low
@@ -37,6 +36,7 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.18.10 | [Custom Map Authoring](Release-History#custom-map-authoring-v01810) | 4-step Map Creation Wizard, right-click to create places, draggable place markers with undo, icon-only Map View toolbar |
 | v0.18.9 | [Nested Properties Redesign](Release-History#nested-properties-redesign-v0189) | Flat property format for evidence tracking (`sourced_*`) and life events (`life_events` → event notes), 13-step Cleanup Wizard |
 | v0.18.9 | [Custom Relationships on Canvas Trees](Release-History#custom-relationships-on-canvas-trees-v0189) | Custom relationship types with flat properties, family tree integration via `includeOnFamilyTree` and `familyGraphMapping` |
 | v0.18.7 | [Inclusive Parent Relationships](Release-History#inclusive-parent-relationships-v0187) | Gender-neutral parent support with customizable labels, bidirectional linking, and full family graph integration |
@@ -155,54 +155,6 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Documentation:**
 - See [Deprecate Child Property Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/deprecate-child-property.md) for detailed specifications
-
----
-
-### Custom Map Authoring
-
-**Priority:** 💡 Low — Streamlined map creation and place positioning for custom maps
-
-**Status:** Planning
-
-**Summary:** Enable intuitive custom map creation and place positioning. Currently, setting up a custom map requires understanding coordinate systems and bounds, while adding places requires tedious manual coordinate entry. This feature set provides a guided wizard for map creation and eliminates coordinate friction for place management.
-
-**The Problems:**
-
-1. **Map Creation:** Setting up a custom map requires understanding coordinate systems, bounds, and configuration options upfront
-2. **Place Positioning:** Adding places requires opening the map in an external editor, finding pixel coordinates, typing them into frontmatter, and repeating until correct
-
-**Phased Implementation:**
-
-| Phase | Feature | Description |
-|-------|---------|-------------|
-| 1 | Map Creation Wizard | 4-step guided wizard: select image → configure map → add initial places → review & create |
-| 2 | Right-Click to Create Place | Right-click on map → "Create place here" → coordinates auto-filled |
-| 3 | Draggable Place Markers | Drag markers to reposition (edit mode), auto-update frontmatter, undo support |
-| 4 | Place Coordinate Import | Bulk import places from CSV/JSON with preview and conflict handling |
-
-**Phase 1: Map Creation Wizard**
-- Guided 4-step wizard for creating custom maps
-- Step 1: Select map image from vault (with preview)
-- Step 2: Configure name, universe, coordinate system (pixel default)
-- Step 3: Click on map to add initial places (optional)
-- Step 4: Review and create all notes at once
-- Entry points: Control Center, command palette, image context menu
-
-**Phase 2: Right-Click to Create Place**
-- Right-click anywhere on a custom map in Map View
-- Context menu: "Create place here"
-- Opens Create Place modal with coordinates pre-filled
-- No edit mode required (right-click is intentional)
-- Works with both geographic and pixel-based maps
-
-**Phase 3: Draggable Place Markers**
-- Edit mode required (prevents accidental moves when panning)
-- Drag markers to reposition, frontmatter updates automatically
-- Toast notification with Undo option (5-second window)
-- Rounds to appropriate precision (integers for pixel, 6 decimals for geo)
-
-**Documentation:**
-- See [Custom Map Authoring Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/custom-map-authoring.md) for detailed specifications
 
 ---
 

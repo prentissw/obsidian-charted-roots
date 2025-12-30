@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.18.x](#v018x)
+  - [Custom Map Authoring](#custom-map-authoring-v01810)
   - [Nested Properties Redesign](#nested-properties-redesign-v0189)
   - [Inclusive Parent Relationships](#inclusive-parent-relationships-v0187)
   - [Media Upload and Management Enhancement](#media-upload-and-management-enhancement-v0186)
@@ -77,6 +78,41 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.18.x
+
+### Custom Map Authoring (v0.18.10)
+
+Streamlined custom map creation and place positioning, eliminating manual coordinate entry.
+
+**Features:**
+
+| Feature | Description |
+|---------|-------------|
+| Map Creation Wizard | 4-step guided wizard: select image → configure map → add initial places → review & create |
+| Right-Click to Create Place | Right-click on custom map → "Create place here" → coordinates auto-filled |
+| Draggable Place Markers | Drag markers to reposition (edit mode required), auto-update frontmatter, undo support |
+| Place Marker Context Menu | Right-click markers to edit, open note, or copy coordinates |
+| Icon-Only Toolbar | Map View toolbar buttons converted to icons with tooltips for space efficiency |
+
+**Map Creation Wizard Steps:**
+1. **Select Image** — Browse vault for map image with preview and auto-detected dimensions
+2. **Configure Map** — Set name, universe (optional), coordinate system (pixel default for fantasy maps)
+3. **Add Places** — Click on map preview to add initial locations (optional, can skip)
+4. **Review & Create** — Summary view, then create map note and all place notes at once
+
+**Entry Points:**
+- Control Center → Maps → "Create map wizard"
+- Command palette: "Canvas Roots: Create custom map"
+- Context menu on image files: "Use as custom map"
+
+**Technical Notes:**
+- Wizard supports inline universe creation
+- Modal state persistence allows resuming interrupted sessions
+- Coordinates properly convert between DOM (y=0 at top) and Leaflet Simple CRS (y=0 at bottom)
+
+**Documentation:**
+- See [Custom Map Authoring Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/custom-map-authoring.md) for detailed specifications
+
+---
 
 ### Nested Properties Redesign (v0.18.9)
 
