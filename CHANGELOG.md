@@ -11,6 +11,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.18.10] - 2025-12-30
+
+### Added
+
+- **Custom Map Authoring** - Streamlined custom map creation and place positioning ([#66](https://github.com/banisterious/obsidian-canvas-roots/issues/66)):
+
+  **Map Creation Wizard**
+  - 4-step guided wizard: select image → configure map → add initial places → review & create
+  - Click on map preview to add places with coordinates auto-filled
+  - Inline universe creation (create new universe without leaving wizard)
+  - Modal state persistence allows resuming interrupted sessions
+  - Entry point: Control Center → Maps → "Create map wizard"
+
+  **Place Management in Map View**
+  - Right-click on empty map space → "Create place here" with coordinates pre-filled
+  - Right-click place markers → Edit place, Open note, or Copy coordinates
+  - Draggable place markers in Move Places mode with undo support
+  - Proper coordinate conversion between DOM and Leaflet Simple CRS
+
+  **Map View UX Improvements**
+  - Toolbar buttons converted to icons with tooltips for space efficiency
+  - Improved toolbar wrapping when sidebar reduces available width
+  - "Open map" button in wizard now opens the newly created map
+
+### Fixed
+
+- **Event essential properties** - "Add essential event properties" context menu now adds `persons: []` array instead of deprecated singular `person` property ([#69](https://github.com/banisterious/obsidian-canvas-roots/issues/69))
+
+---
+
 ## [0.18.9] - 2025-12-30
 
 ### Added
