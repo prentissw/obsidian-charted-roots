@@ -9,6 +9,9 @@ The maps module (`src/maps/`) provides interactive geographic visualization usin
 - [Data Flow](#data-flow)
 - [Layer Management](#layer-management)
 - [Custom Image Maps](#custom-image-maps)
+- [Map Creation Wizard](#map-creation-wizard)
+- [Draggable Place Markers](#draggable-place-markers)
+- [Place Marker Context Menu](#place-marker-context-menu)
 - [Geocoding](#geocoding)
 - [Time Slider](#time-slider)
 
@@ -18,8 +21,8 @@ The maps module (`src/maps/`) provides interactive geographic visualization usin
 
 ```
 src/maps/
-├── map-controller.ts          # Core Leaflet map management
-├── map-view.ts                # ItemView UI for map rendering
+├── map-controller.ts          # Core Leaflet map management, marker interactions
+├── map-view.ts                # ItemView UI for map rendering, toolbar
 ├── map-data-service.ts        # Data preparation from notes
 ├── image-map-manager.ts       # Custom image map handling
 ├── types/
@@ -29,6 +32,10 @@ src/maps/
 │   └── geocoding-service.ts   # OpenStreetMap Nominatim integration
 └── ui/
     └── bulk-geocode-modal.ts  # Batch geocoding UI
+
+src/ui/
+├── create-map-wizard-modal.ts # 4-step map creation wizard
+└── create-place-modal.ts      # Place creation/editing (used by wizard)
 ```
 
 ## Coordinate Systems
@@ -145,6 +152,118 @@ image_height: 3072
 - Flat format (preferred): `bounds_north`, `corner_nw_lat`
 - Nested format (legacy): `bounds: {north: 50}`
 - Automatic fallback between formats
+
+## Map Creation Wizard
+
+`CreateMapWizardModal` (`src/ui/create-map-wizard-modal.ts`) provides a guided 4-step workflow for creating custom maps with interactive place marker placement.
+
+**Steps:**
+1. **Select Image** - Browse vault for map image with preview
+2. **Configure Map** - Name, universe, coordinate system, bounds
+3. **Place Markers** - Interactive click-to-place with drag repositioning
+4. **Review & Create** - Summary and confirmation
+
+**Key implementation details:**
+
+```typescript
+interface WizardState {
+  currentStep: number;
+  imagePath: string;
+  mapName: string;
+  universe: string;
+  coordinateSystem: 'geographic' | 'pixel';
+  bounds: MapBounds;
+  places: PlaceMarkerData[];  // Markers added during step 3
+}
+```
+
+**Coordinate system handling:**
+- The wizard preview uses DOM coordinates (Y=0 at top)
+- Leaflet Simple CRS uses Y=0 at bottom
+- Coordinates are flipped when storing: `storedY = imageHeight - domY`
+- Coordinates are flipped back when rendering markers
+
+**State persistence:**
+- Wizard state is saved via `ModalStatePersistence` on close
+- Users can resume interrupted sessions
+- State includes all places added during step 3
+
+**Place creation flow:**
+1. User clicks on map image
+2. Click coordinates converted to map coordinate system
+3. `CreatePlaceModal` opens with pre-filled coordinates
+4. On save, marker added to wizard's places array
+5. Marker rendered on preview with drag support
+
+## Draggable Place Markers
+
+Place markers on custom maps support drag-to-reposition in both the wizard preview and the live Map View.
+
+**Implementation in MapController:**
+
+```typescript
+// Enable dragging on place markers
+marker.options.draggable = true;
+
+marker.on('dragend', async (e: L.DragEndEvent) => {
+  const newLatLng = e.target.getLatLng();
+
+  // Update place note frontmatter
+  await this.updatePlaceCoordinates(placeId, {
+    lat: newLatLng.lat,
+    lng: newLatLng.lng
+  });
+});
+```
+
+**Coordinate conversion for pixel maps:**
+- Leaflet returns coordinates in its internal format
+- For pixel maps: Y must be converted back to image coordinates
+- `imageY = imageHeight - leafletY`
+
+**In the wizard preview:**
+- Markers are standard DOM elements with drag event handlers
+- Position updates stored in wizard state
+- Final coordinates written when map is created
+
+## Place Marker Context Menu
+
+Right-click on place markers opens a context menu with quick actions.
+
+**Implementation in MapController:**
+
+```typescript
+marker.on('contextmenu', (e: L.LeafletMouseEvent) => {
+  L.DomEvent.stopPropagation(e);
+
+  const menu = new Menu();
+
+  menu.addItem((item) => {
+    item.setTitle('Open place note')
+        .setIcon('file-text')
+        .onClick(() => this.openPlaceNote(placeId));
+  });
+
+  menu.addItem((item) => {
+    item.setTitle('Edit place')
+        .setIcon('pencil')
+        .onClick(() => this.openEditPlaceModal(placeId));
+  });
+
+  menu.addItem((item) => {
+    item.setTitle('Remove from map')
+        .setIcon('trash-2')
+        .onClick(() => this.removeMarkerFromMap(placeId));
+  });
+
+  menu.showAtMouseEvent(e.originalEvent);
+});
+```
+
+**Remove from map action:**
+- Clears coordinates from place note frontmatter
+- Marker disappears on next refresh
+- Does not delete the place note itself
 
 ## Geocoding
 

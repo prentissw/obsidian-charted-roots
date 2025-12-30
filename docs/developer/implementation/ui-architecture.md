@@ -13,6 +13,9 @@ This document covers the user interface implementation including context menus, 
   - [Navigation and Routing](#navigation-and-routing)
   - [Public API](#public-api)
   - [Mobile Adaptations](#mobile-adaptations-1)
+- [Wizard Modals](#wizard-modals)
+  - [Map Creation Wizard](#map-creation-wizard)
+  - [State Persistence](#state-persistence)
 - [Settings and Configuration](#settings-and-configuration)
   - [Settings Interface](#settings-interface)
   - [Type Definitions](#type-definitions)
@@ -395,6 +398,165 @@ private closeMobileDrawer(): void {
 // Auto-close after tab selection on mobile
 if (Platform.isMobile) {
   this.closeMobileDrawer();
+}
+```
+
+---
+
+## Wizard Modals
+
+Canvas Roots uses multi-step wizard modals for complex workflows that benefit from guided step-by-step completion.
+
+### Map Creation Wizard
+
+`CreateMapWizardModal` (`src/ui/create-map-wizard-modal.ts`) provides a 4-step workflow for creating custom image maps with interactive place marker placement.
+
+**Modal structure:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Create Custom Map                              Step 2 of 4 │  ← Header with progress
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │                                                         ││
+│  │              Step-specific content                      ││
+│  │              (form, image preview, etc.)                ││
+│  │                                                         ││
+│  └─────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────┤
+│  [Back]                                    [Next] / [Create]│  ← Navigation footer
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Step flow:**
+
+| Step | Content | Validation |
+|------|---------|------------|
+| 1. Select Image | File browser, image preview | Image must be selected |
+| 2. Configure Map | Name, universe, coordinate system, bounds | Name required, valid bounds |
+| 3. Place Markers | Interactive click-to-place on image preview | Optional (can skip) |
+| 4. Review | Configuration summary, place list | Confirmation only |
+
+**Key implementation patterns:**
+
+```typescript
+class CreateMapWizardModal extends Modal {
+  private currentStep: number = 1;
+  private state: WizardState;
+
+  private renderStep(): void {
+    this.contentEl.empty();
+
+    switch (this.currentStep) {
+      case 1: this.renderImageSelectionStep(); break;
+      case 2: this.renderConfigurationStep(); break;
+      case 3: this.renderPlaceMarkersStep(); break;
+      case 4: this.renderReviewStep(); break;
+    }
+
+    this.renderNavigationFooter();
+  }
+
+  private canProceed(): boolean {
+    // Step-specific validation
+    switch (this.currentStep) {
+      case 1: return !!this.state.imagePath;
+      case 2: return !!this.state.mapName && this.validateBounds();
+      default: return true;
+    }
+  }
+}
+```
+
+**Place marker placement (Step 3):**
+
+The wizard renders the map image in a scrollable container. Click events create markers:
+
+```typescript
+imageContainer.addEventListener('click', (e) => {
+  const rect = imageEl.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  // Convert to map coordinates
+  const coords = this.domToMapCoordinates(x, y);
+
+  // Open Create Place modal with pre-filled coordinates
+  const placeModal = new CreatePlaceModal(this.app, this.plugin, {
+    prefillCoordinates: coords,
+    universe: this.state.universe,
+    onSave: (place) => {
+      this.state.places.push({ ...place, x, y });
+      this.renderPlaceMarkers();
+    }
+  });
+  placeModal.open();
+});
+```
+
+**Coordinate system conversion:**
+
+The wizard preview uses DOM coordinates (Y=0 at top), but Leaflet Simple CRS uses Y=0 at bottom. Coordinates are flipped when storing and rendering:
+
+```typescript
+// Storing: DOM → Leaflet
+storedY = imageHeight - domY;
+
+// Rendering: Leaflet → DOM
+domY = imageHeight - storedY;
+```
+
+### State Persistence
+
+Wizard state is persisted via `ModalStatePersistence` (`src/ui/modal-state-persistence.ts`) to allow resuming interrupted sessions.
+
+**How it works:**
+
+```typescript
+// On modal close (without completing)
+onClose(): void {
+  if (!this.completed) {
+    ModalStatePersistence.save('create-map-wizard', this.state);
+  }
+}
+
+// On modal open
+onOpen(): void {
+  const savedState = ModalStatePersistence.get('create-map-wizard');
+  if (savedState) {
+    // Show resume prompt
+    this.showResumeDialog(savedState);
+  }
+}
+```
+
+**Resume dialog:**
+
+When reopening a wizard with saved state, users see a prompt:
+
+```
+┌─────────────────────────────────────────────┐
+│  Resume previous session?                    │
+│                                              │
+│  You have an incomplete map creation from    │
+│  your last session:                          │
+│  • Image: maps/middle-earth.png              │
+│  • Name: Middle-earth                        │
+│  • Places: 3 markers                         │
+│                                              │
+│  [Start Fresh]              [Resume Session] │
+└─────────────────────────────────────────────┘
+```
+
+**State cleanup:**
+
+```typescript
+// Clear state on successful completion
+private async createMap(): Promise<void> {
+  await this.doCreateMap();
+  ModalStatePersistence.clear('create-map-wizard');
+  this.completed = true;
+  this.close();
 }
 ```
 
