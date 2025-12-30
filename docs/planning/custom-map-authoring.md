@@ -2,7 +2,7 @@
 
 Planning document for custom map creation and place management workflows.
 
-- **Status:** Planning
+- **Status:** In Progress (Phase 1-3 Complete)
 - **GitHub Issue:** #66
 - **Created:** 2025-12-28
 - **Updated:** 2025-12-30
@@ -460,6 +460,30 @@ Right-click an image file in the file explorer:
 3. **Mobile/touch support?** Long-press for context menu? Long-press to enter drag mode?
 
 4. **Settings cleanup:** Should we rename `mapsFolder` setting or add a separate `mapNotesFolder` setting for clarity?
+
+---
+
+## Session Notes
+
+### 2025-12-30 Session
+
+**Implemented:**
+- Fixed "Open map" button to open newly created map (passes `activeMap` state)
+- Fixed place marker coordinate mismatch between wizard and Map View
+  - Issue: Wizard used DOM coordinates (Y=0 at top), Leaflet Simple CRS uses Y=0 at bottom
+  - Solution: Flip Y coordinate when saving and rendering markers
+- Fixed Map View toolbar button overflow when sidebar is open
+  - Added `flex-wrap: wrap` to toolbar and sections
+- Converted Map View toolbar buttons to icon-only with `aria-label` tooltips
+  - Saves horizontal space, cleaner look
+  - Icons: layers, move, edit, git-compare, clock, refresh-cw, download
+- Fixed broken CSS comment blocks in control-center.css
+- Added modal state persistence for wizard resume functionality
+- Added inline universe creation in wizard Step 2
+
+**UX improvements added during session:**
+- Icon-only buttons reduce toolbar width significantly
+- Tooltips appear on hover via Obsidian's aria-label handling
 
 ---
 
