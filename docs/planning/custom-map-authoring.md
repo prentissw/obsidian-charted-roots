@@ -3,9 +3,9 @@
 Planning document for custom map creation and place management workflows.
 
 - **Status:** Planning
-- **GitHub Issue:** #TBD
+- **GitHub Issue:** #66
 - **Created:** 2025-12-28
-- **Updated:** 2025-12-28
+- **Updated:** 2025-12-30
 
 ---
 
