@@ -66,7 +66,7 @@ parent_place: "[[Massachusetts]]"
 | `event_type` | Type (birth, death, marriage, etc.) | Yes |
 | `date` | Event date (ISO format) | No |
 | `date_precision` | exact, month, year, decade, estimated, range | No |
-| `person` | Primary person wikilink | No |
+| `persons` | Array of person wikilinks | No |
 | `place` | Location wikilink | No |
 | `sources` | Array of source wikilinks | No |
 | `confidence` | high, medium, low, or unknown | No |
@@ -78,7 +78,8 @@ cr_id: john-smith-birth
 title: Birth of John Smith
 event_type: birth
 date: 1850-03-15
-person: "[[John Smith]]"
+persons:
+  - "[[John Smith]]"
 place: "[[Boston]]"
 sources:
   - "[[Birth Certificate - John Smith]]"
