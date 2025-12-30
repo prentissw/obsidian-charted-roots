@@ -9,7 +9,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.18.6] - 2025-12-29
+
 ### Added
+
+- **Media Upload and Management Enhancement** - Comprehensive file upload system allowing users to upload media directly from Canvas Roots and link to entities without manual file management ([#60](https://github.com/banisterious/obsidian-canvas-roots/issues/60)):
+
+  **1. Settings Enhancement**
+  - Drag-and-drop reordering of media folders in Preferences
+  - First folder in list becomes upload destination
+  - Visual feedback during drag operations with grip handle
+
+  **2. Expanded Media Manager Dashboard**
+  - 6-tile layout (3×2 grid) vs. previous 4-tile layout
+  - Row 1 (Browse & Discover): Linked Media Gallery, Find Unlinked, Source Media Linker
+  - Row 2 (Add & Link): Upload Media, Link Media, Bulk Link to Entities
+
+  **3. Standalone Upload Modal**
+  - Drag-and-drop file upload with browse fallback
+  - Upload to first configured media folder
+  - Read-only destination display with helpful hint
+  - Multiple file selection support
+  - Auto-rename collision handling (incremental numbering: `photo.jpg` → `photo 1.jpg`)
+  - File type validation
+  - Optional entity linking after upload
+
+  **4. Inline Upload in Media Picker**
+  - "Upload files..." button in MediaPickerModal
+  - Follows PlacePickerModal "Create new place" pattern
+  - Auto-selects newly uploaded files
+  - Available in both context menu and Dashboard workflows
+
+  **5. Entity Picker Modal**
+  - Select entities after choosing media files (media-first workflow)
+  - Supports all entity types: Person, Event, Place, Organization, Source
+  - **Person-specific filters:**
+    - Living status: All / Living only / Deceased only
+    - Birth date: All / Has date / Missing date
+    - Sex: All / Male / Female
+  - **Person-specific sorting:**
+    - Name (A-Z / Z-A)
+    - Birth year (oldest first / youngest first)
+    - Recently modified
+  - Shows which entities already have selected media linked
+  - Bulk linking with progress modal for ≥5 entities
+
+  **6. Consistent Upload Availability**
+  - Context menu flow: Right-click entity → Media → Link media → Upload files
+  - Media Manager tile: Link Media → Upload files
+  - Both workflows use same enhanced MediaPickerModal
 
 - **"Create new" buttons in picker modals** - Added inline creation to streamline workflows:
   - **Context menu relationship flows**: All relationship context menu options now show "Create new" buttons
