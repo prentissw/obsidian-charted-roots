@@ -1,7 +1,8 @@
 # Nested Properties Redesign Plan
 
 - **Created:** 2025-12-29
-- **Status:** Planning
+- **Updated:** 2025-12-30
+- **Status:** Planning → v0.18.9
 - **Priority:** High - Architectural incompatibility with Obsidian
 
 ---
@@ -168,7 +169,7 @@ life_events:
 
 ## Migration Strategy
 
-### Phase 1: Add Flat Property Support (v0.19.0)
+### Phase 1: Add Flat Property Support (v0.18.9)
 
 **`sourced_facts` migration:**
 1. Add new flat properties: `sourced_birth_date`, `sourced_death_date`, etc.
@@ -181,23 +182,31 @@ life_events:
 2. Update `MapDataService` to read from both `events` and `life_events`
 3. Update map view to recognize both formats
 
-### Phase 2: Migration Wizard (v0.19.0)
+### Phase 2: Migration Wizard (v0.18.9)
 
-Add two steps to Cleanup Wizard:
+**Cleanup Wizard Integration:**
 
-**Step: "Migrate Evidence Tracking"**
+The Cleanup Wizard currently has 11 steps, including:
+- **Step 10: "Flatten Nested Properties"** - Generic flattening (e.g., `sourced_facts_birth_date_sources_0`)
+- **Step 11: "Event Person Migration"** - `person` → `persons` array
+
+The existing Step 10 does NOT produce the desired format. We need **purpose-built migration steps** that understand the semantic meaning:
+
+**New Step 12: "Migrate Evidence Tracking"** (after Step 11)
 - Scan for person notes with nested `sourced_facts`
-- Convert to individual `sourced_*` properties
+- Convert to individual `sourced_*` properties (NOT generic underscore flattening)
 - Preview changes before applying
 - Option to keep or remove old property
 
-**Step: "Migrate Life Events to Event Notes"**
+**New Step 13: "Migrate Life Events to Event Notes"** (after Step 12)
 - Scan for person notes with `events` array
 - Create event note files for each item
 - Update person notes with `life_events` links
 - Option to keep or remove old property
 
-### Phase 3: Deprecation Notice (v0.20.0)
+**Note:** Consider hiding/deprecating Step 10 since its generic flattening is harmful for these specific cases.
+
+### Phase 3: Deprecation Notice (v0.19.0)
 
 - Add deprecation warnings when reading old format
 - Update documentation to recommend new format
@@ -215,6 +224,21 @@ Add two steps to Cleanup Wizard:
 
 ### For `sourced_facts` → Individual Properties
 
+**Property Names (10 fact types from `FACT_KEYS`):**
+```typescript
+sourced_birth_date: string[]    // sources for birth date
+sourced_birth_place: string[]   // sources for birth place
+sourced_death_date: string[]    // sources for death date
+sourced_death_place: string[]   // sources for death place
+sourced_parents: string[]       // sources for parents
+sourced_marriage_date: string[] // sources for marriage date
+sourced_marriage_place: string[] // sources for marriage place
+sourced_spouse: string[]        // sources for spouse
+sourced_occupation: string[]    // sources for occupation
+sourced_residence: string[]     // sources for residence
+```
+
+**Implementation:**
 - [ ] Define new property names in `frontmatter.ts`
 - [ ] Update `EvidenceService.getFactCoverageForFile()` to check new properties
 - [ ] Update Control Center Research Gaps widget
@@ -236,18 +260,65 @@ Add two steps to Cleanup Wizard:
 - [ ] Update Geographic Features documentation
 - [ ] Add deprecation notice in settings
 
+### Migration Notice View (v0.18.9)
+
+Extend the existing migration notice infrastructure to inform users about the nested properties changes.
+
+**Files to modify:**
+- `src/ui/views/migration-notice-view.ts` - Add `'nested-properties'` migration type
+- `src/settings.ts` - Add migration completion tracking
+- `main.ts` - Update `shouldShowMigrationNotice()` to trigger for v0.18.9
+
+**Multi-Action Completion Tracking:**
+
+The migration notice must remain visible until BOTH migration actions are completed. Add a new setting to track individual migration completions:
+
+```typescript
+// In settings.ts - add to CanvasRootsSettings interface
+/** Tracks completion of individual v0.18.9 migrations */
+nestedPropertiesMigration?: {
+  /** True when sourced_facts → sourced_* migration is complete */
+  sourcedFactsComplete?: boolean;
+  /** True when events → event note files migration is complete */
+  eventsComplete?: boolean;
+};
+```
+
+**Notice behavior:**
+- Show notice when upgrading to v0.18.9+ AND either migration is incomplete
+- Display checkmarks next to completed migrations
+- "Dismiss" button only enabled when both migrations are complete OR user has no data requiring migration
+- Each wizard step marks its corresponding migration as complete when finished
+- If user has no data for a migration (no `sourced_facts` or `events`), auto-mark as complete
+
+**Implementation:**
+- [ ] Add `nestedPropertiesMigration` to `CanvasRootsSettings` interface in `settings.ts`
+- [ ] Add `'nested-properties'` to `MigrationType` union
+- [ ] Create `renderNestedPropertiesMigration()` method with:
+  - Before/after code examples for `sourced_facts` → `sourced_*` properties
+  - Before/after code examples for `events` → event note files
+  - Benefits list (no more type mismatch, safe editing, etc.)
+  - Completion status indicators (checkmarks) for each migration
+  - "Open Cleanup Wizard" button (always enabled)
+  - "Dismiss" button (enabled only when both complete or N/A)
+- [ ] Add `checkMigrationNeeded()` method to scan vault for legacy data
+- [ ] Update `determineMigrationType()` to detect v0.18.9+
+- [ ] Update `shouldShowMigrationNotice()` to check migration completion status
+- [ ] Update `getDisplayText()` to return "Canvas Roots v0.18.9"
+- [ ] Update Cleanup Wizard steps to mark migrations complete on finish
+
 ---
 
 ## Timeline
 
-**v0.19.0 (Target: Early January 2026)**
-- Implement flat alternatives
-- Add migration wizards
+**v0.18.9 (Target: Early January 2026)**
+- Implement flat alternatives for `sourced_facts` and `events`
+- Add migration wizard steps to Cleanup Wizard
 - Update documentation
-- Maintain backward compatibility
+- Maintain backward compatibility (read both formats)
 
-**v0.20.0 (Target: Mid January 2026)**
-- Add deprecation warnings
+**v0.19.0 (Target: Mid January 2026)**
+- Add deprecation warnings when reading old formats
 - Encourage migration via notices
 
 **v1.0.0 (Target: TBD)**
@@ -280,19 +351,35 @@ We're redesigning two features to fix an architectural incompatibility with Obsi
 
 **Why?** Obsidian's property panel doesn't support nested structures, causing "Type mismatch" warnings and potential data corruption.
 
-**Timeline:** Migration tools in v0.19.0 (January 2026)
+**Timeline:** Migration tools in v0.18.9 (January 2026)
 
 **Action needed:** None immediately - migration wizard will handle conversion automatically.
 ```
 
 ---
 
-## Open Questions
+## Decisions (2025-12-30)
 
-1. Should we fast-track this to v0.18.7 instead of v0.19.0?
-2. For `sourced_*` properties, should we use arrays or comma-separated strings?
-3. Should migration be automatic on upgrade or require user action?
-4. What should happen to users who click "update" and corrupt their data? (Recovery tool?)
+1. **Target version:** v0.18.9 (bundled with Custom Relationships flat properties work)
+2. **`sourced_*` properties:** Use **arrays** (Obsidian-native List type, consistent with other properties)
+3. **Migration approach:** **Wizard-based** (user-triggered via Cleanup Wizard, not automatic on upgrade)
+4. **Data recovery:** Out of scope for now - focus on preventing future corruption via migration
+5. **Migration notice persistence:** Notice remains until BOTH migrations complete (tracked separately via `nestedPropertiesMigration` setting)
+
+---
+
+## Related Work
+
+### `relationships` Array (Also v0.18.9)
+
+A third nested property (`relationships` array for custom relationships) is being addressed separately as part of the Custom Relationships on Canvas Trees feature:
+
+- **Planning doc:** `docs/planning/relationships-array-family-graph.md`
+- **Flat format:** Individual properties per type (e.g., `godparent: ["[[John]]"]`, `godparent_id: ["john_123"]`)
+- **Implementation:** Already done in `RelationshipService` and `AddRelationshipModal`
+- **Migration:** Will need a wizard step (Step 14?) to convert legacy `relationships` arrays
+
+This work is related but tracked separately since it's part of a larger feature.
 
 ---
 
@@ -301,4 +388,7 @@ We're redesigning two features to fix an architectural incompatibility with Obsi
 - Implementation: `src/sources/services/evidence-service.ts`
 - Types: `src/sources/types/source-types.ts`, `src/types/frontmatter.ts`
 - Map integration: `src/maps/map-data-service.ts`
+- Migration notice: `src/ui/views/migration-notice-view.ts`, `main.ts` (checkVersionUpgrade)
+- Migration notice styles: `styles/migration-notice.css`
 - Documentation: `wiki-content/Evidence-And-Sources.md`, `wiki-content/Geographic-Features.md`
+- Cleanup Wizard: `src/ui/cleanup-wizard-modal.ts`, `src/core/data-quality.ts`

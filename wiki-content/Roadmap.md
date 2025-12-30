@@ -68,7 +68,7 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Priority:** 📋 Medium — Fix architectural incompatibility with Obsidian's property panel
 
-**Status:** Planning
+**Status:** In Progress → v0.18.9
 
 **The Problem:** Two features (`sourced_facts` for evidence tracking, `events` for life events) use nested YAML structures (objects within objects, arrays of objects) that are incompatible with Obsidian's property panel. This causes "Type mismatch" warnings and risks data corruption if users click "update" in the property panel.
 
