@@ -6,7 +6,7 @@ Planning document for integrating the `relationships` array with the family grap
 - **GitHub Issue:** [#41](https://github.com/banisterious/obsidian-canvas-roots/issues/41)
 - **Priority:** Low
 - **Created:** 2025-12-27
-- **Updated:** 2025-12-28
+- **Updated:** 2025-12-30
 
 ---
 
@@ -185,6 +185,64 @@ adoptive_mother: "[[John Doe]]"
 2. **Guardians on trees?** Guardians are often temporary/legal rather than familial. Should they appear on family trees at all, or only on a separate "legal relationships" view?
 
 3. **Custom parent types?** If a user defines a custom relationship type like `milk_mother` (wet nurse who also acts as surrogate mother), should there be a way to mark it as "include on family tree"?
+
+---
+
+## Design Decisions (2025-12-30)
+
+### Gender-Neutral Parents Integration
+
+When the Inclusive Parents feature is enabled (v0.18.7+), `relationships` array entries with type `parent` should map to the `parents`/`parents_id` fields:
+
+| Relationship Type | Target Sex | Maps To |
+|-------------------|------------|---------|
+| `parent` | any | `parentsCrIds` (gender-neutral) |
+| `step_parent` | M | `stepfatherCrIds` |
+| `step_parent` | F | `stepmotherCrIds` |
+| `adoptive_parent` | M | `adoptiveFatherCrId` |
+| `adoptive_parent` | F | `adoptiveMotherCrId` |
+
+This maintains consistency - if users enable inclusive parents and use `parent` in the relationships array, it populates `parents`/`parents_id` just like the direct property.
+
+### `includeOnFamilyTree` Flag for Relationship Types
+
+Add new properties to `RelationshipTypeDefinition`:
+
+```typescript
+interface RelationshipTypeDefinition {
+  // existing fields...
+
+  /** Whether this relationship type should appear on family trees/charts */
+  includeOnFamilyTree?: boolean;  // default: false for safety
+
+  /** Which family graph property this maps to (for parent-like types) */
+  familyGraphMapping?: 'parent' | 'stepparent' | 'adoptive_parent' | 'foster_parent' | 'guardian' | 'spouse' | 'child';
+}
+```
+
+**Default values for built-in types:**
+
+| Type | `includeOnFamilyTree` | `familyGraphMapping` |
+|------|----------------------|---------------------|
+| `step_parent` | `true` | `stepparent` |
+| `step_child` | `true` | `child` |
+| `adoptive_parent` | `true` | `adoptive_parent` |
+| `adopted_child` | `true` | `child` |
+| `foster_parent` | `false` | `foster_parent` |
+| `foster_child` | `false` | `child` |
+| `guardian` | `false` | `guardian` |
+| `ward` | `false` | `child` |
+| `parent` | `true` | `parent` |
+| Custom types | `false` | `undefined` |
+
+This keeps it **opt-in** - custom relationship types won't appear on trees unless the user explicitly sets `includeOnFamilyTree: true` in their custom type definition.
+
+### Benefits
+
+1. **Opt-in by default** - Custom types don't unexpectedly appear on trees
+2. **Explicit mapping** - `familyGraphMapping` clearly defines how types integrate with the graph
+3. **User control** - Users can enable tree inclusion for custom types they create
+4. **Backward compatible** - Existing direct properties continue to work
 
 ---
 
