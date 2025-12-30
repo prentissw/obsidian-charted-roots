@@ -305,7 +305,7 @@ parents_id: ["I0045"]         # For reliable graph traversal
 - Deletion detection for relationship cleanup
 
 **Planning Documentation:**
-- See [planning document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/inclusive-parent-relationships.md) for detailed specifications and design decisions
+- See [planning document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/inclusive-parent-relationships.md) for detailed specifications and design decisions
 
 ---
 

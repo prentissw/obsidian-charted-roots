@@ -375,7 +375,7 @@ We're redesigning two features to fix an architectural incompatibility with Obsi
 
 A third nested property (`relationships` array for custom relationships) is being addressed separately as part of the Custom Relationships on Canvas Trees feature:
 
-- **Planning doc:** `docs/planning/relationships-array-family-graph.md`
+- **Planning doc:** `docs/planning/archive/relationships-array-family-graph.md`
 - **Flat format:** Individual properties per type (e.g., `godparent: ["[[John]]"]`, `godparent_id: ["john_123"]`)
 - **Implementation:** Already done in `RelationshipService` and `AddRelationshipModal`
 - **Migration:** Will need a wizard step (Step 14?) to convert legacy `relationships` arrays
