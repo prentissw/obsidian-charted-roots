@@ -71,6 +71,9 @@
 |---------|-------------|
 | **Interactive Map View** | Leaflet.js-powered map with markers, clustering, migration paths, heat maps, and time slider animation |
 | **Custom Image Maps** | Load your own map images for fictional worlds with pixel or geographic coordinate systems |
+| **Map Creation Wizard** | 4-step wizard to create custom maps: select image, configure settings, place markers interactively, review and create |
+| **Draggable Place Markers** | Reposition markers by dragging on custom maps; changes saved automatically |
+| **Place Marker Context Menu** | Right-click markers to open place notes, edit properties, or remove from map |
 | **Place Notes** | Hierarchical places (city → state → country) with six categories |
 | **Place Categories** | Real, historical, disputed, legendary, mythological, fictional |
 | **Place Statistics** | Category breakdown, common locations, migration patterns |

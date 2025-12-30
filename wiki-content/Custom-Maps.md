@@ -8,9 +8,13 @@ Canvas Roots allows you to create custom map images for fictional worlds, histor
 
 - [Overview](#overview)
 - [Creating a Custom Map](#creating-a-custom-map)
+  - [Map Creation Wizard](#map-creation-wizard)
+  - [From the Control Center](#from-the-control-center)
+  - [From JSON Import](#from-json-import)
 - [Editing Map Properties](#editing-map-properties)
 - [Aligning a Map Image](#aligning-a-map-image)
 - [Using Your Custom Map](#using-your-custom-map)
+- [Working with Place Markers](#working-with-place-markers)
 - [Map Actions](#map-actions)
 - [Coordinate Systems](#coordinate-systems)
   - [Adding Places to Pixel-Based Maps](#adding-places-to-pixel-based-maps)
@@ -33,10 +37,47 @@ Each custom map is stored as a note with `cr_type: map` frontmatter, containing 
 
 ## Creating a Custom Map
 
-### From the Control Center
+### Map Creation Wizard
+
+The Map Creation Wizard provides a guided 4-step workflow for creating custom maps with interactive place marker placement.
 
 1. Open **Control Center** → **Maps** tab
-2. In the **Custom Maps** card, click **Create map**
+2. Click **Create Custom Map** button
+3. Follow the wizard steps:
+
+**Step 1: Select Image**
+- Browse your vault for a map image (PNG, JPG, WebP, etc.)
+- A preview of the selected image is shown
+
+**Step 2: Configure Map**
+- Enter a map name
+- Select or create a universe (optional, for grouping related maps)
+- Choose coordinate system (Geographic or Pixel)
+- Set bounds/dimensions for the coordinate space
+
+**Step 3: Place Markers**
+- Click on the map image to add place markers
+- Each click opens the Create Place modal to define the place
+- Markers appear with the place name; drag to reposition
+- Right-click markers to edit or remove them
+- This step is optional — you can add places later
+
+**Step 4: Review & Create**
+- Review your configuration summary
+- See a list of places that will be created
+- Click **Create Map** to finalize
+
+The wizard creates the map note and any place notes you added, then optionally opens the map in Map View.
+
+**Resuming a Wizard Session:**
+If you close the wizard before completing, your progress is saved. When you reopen the wizard, you'll be prompted to resume where you left off or start fresh.
+
+### From the Control Center
+
+For a simpler creation flow without the wizard:
+
+1. Open **Control Center** → **Maps** tab
+2. In the **Custom Maps** card, click the overflow menu (⋮) → **Create map (simple)**
 3. Fill in the map details:
 
 | Field | Required | Description |
@@ -189,6 +230,46 @@ Places automatically appear on maps when:
 2. The place's `universe` property matches the map's `universe`
 
 This lets you create separate coordinate spaces for each fictional world without conflicts.
+
+---
+
+## Working with Place Markers
+
+Once your custom map is open in Map View, you can interact with place markers directly.
+
+### Dragging Markers
+
+Reposition any place marker by dragging:
+
+1. Click and hold on a place marker
+2. Drag to the new position
+3. Release to drop — coordinates are saved automatically to the place note
+
+This works with both geographic (lat/lng) and pixel coordinate systems. The place note's frontmatter is updated immediately.
+
+### Right-Click Context Menu
+
+Right-click any place marker to access quick actions:
+
+| Action | Description |
+|--------|-------------|
+| **Open place note** | Navigate to the place's markdown note in the editor |
+| **Edit place** | Open the Edit Place modal to modify name, category, parent, etc. |
+| **Remove from map** | Clear the coordinates from the place note (marker disappears) |
+
+### Adding New Places
+
+To add a new place to an existing custom map:
+
+**Option 1: Right-click on the map**
+1. Right-click anywhere on the map image
+2. Select **Create place here**
+3. Fill in the Create Place modal — coordinates are pre-filled
+
+**Option 2: Create from Control Center**
+1. Open Control Center → Places → Create place note
+2. Set the universe to match your map
+3. Add coordinates manually (see [Adding Places to Pixel-Based Maps](#adding-places-to-pixel-based-maps))
 
 ---
 

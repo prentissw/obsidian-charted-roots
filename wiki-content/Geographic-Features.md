@@ -58,16 +58,33 @@ The Map View provides a Leaflet.js-powered interactive map for visualizing where
 
 ### Toolbar Controls
 
-| Button | Function |
-|--------|----------|
-| **Filters** | Filter by collection, year range |
+The Map View toolbar uses compact icon-only buttons with tooltips. Hover over any button to see its function.
+
+| Icon | Function |
+|------|----------|
 | **Layers** | Toggle marker types, paths, heat map, journey paths |
-| **Time** | Open time slider for "who was alive when?" animation |
+| **Filter** | Filter by collection, year range |
+| **Clock** | Open time slider for "who was alive when?" animation |
 | **Map** | Switch between OpenStreetMap and custom image maps |
-| **Split** | Open side-by-side map comparison |
-| **Export** | Export as GeoJSON or SVG overlay |
-| **Edit** | Enter edit mode for custom map alignment (custom maps only) |
+| **Columns** | Open side-by-side map comparison (split view) |
+| **Download** | Export as GeoJSON or SVG overlay |
+| **Pencil** | Enter edit mode for custom map alignment (custom maps only) |
 | **Refresh** | Reload data from vault |
+
+### Place Marker Interactions
+
+Place markers on custom maps support direct manipulation:
+
+**Dragging Markers:**
+- Click and hold any place marker to drag it to a new position
+- Release to drop the marker; the new coordinates are saved automatically to the place note
+- Works with both geographic and pixel coordinate systems
+
+**Right-Click Context Menu:**
+- Right-click any place marker to access quick actions:
+  - **Open place note**: Navigate to the place's markdown note
+  - **Edit place**: Open the Edit Place modal to modify properties
+  - **Remove from map**: Remove the marker (clears coordinates from the place note)
 
 ### Filtering
 
