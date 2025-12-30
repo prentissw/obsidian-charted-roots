@@ -9,15 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+---
 
-- **Flat relationship properties** - Relationships now use Obsidian-compatible flat properties instead of nested arrays (#41):
-  - **New format**: `godparent: ["[[John Smith]]"]`, `godparent_id: ["john_123"]`
-  - **Pattern**: Each relationship type uses its ID as the property name (e.g., `mentor`, `witness`, `godparent`)
+## [0.18.9] - 2025-12-30
+
+### Added
+
+- **Nested Properties Redesign** - Flat property format for evidence tracking and life events, fixing Obsidian Properties panel compatibility ([#52](https://github.com/banisterious/obsidian-canvas-roots/issues/52)):
+
+  **Evidence Tracking Migration (sourced_facts → sourced_*)**
+  - Old nested `sourced_facts` object replaced with individual flat properties
+  - 10 supported fact types: `sourced_birth_date`, `sourced_death_date`, `sourced_birth_place`, `sourced_death_place`, `sourced_name`, `sourced_sex`, `sourced_occupation`, `sourced_parents`, `sourced_spouse`, `sourced_children`
+  - Each property is a simple list of wikilinks to source notes
+  - Evidence Service reads both old and new formats for backward compatibility
+  - Cleanup Wizard Step 12 migrates existing `sourced_facts` to flat format
+
+  **Life Events Migration (events → event notes)**
+  - Old inline `events` arrays replaced with links to separate event note files
+  - New `life_events` property contains wikilinks to event notes
+  - Event notes are first-class Obsidian notes with full metadata, tags, and attachments
+  - Cleanup Wizard Step 13 creates event notes and updates person notes
+  - Event notes created in configurable Events folder with proper frontmatter
+
+  **Cleanup Wizard Enhancements**
+  - Expanded from 11 to 13 steps
+  - Step 12: Migrate Sourced Facts (sourced_facts → sourced_* properties)
+  - Step 13: Migrate Life Events (events arrays → event note files)
+  - Migration completion tracking prevents redundant migrations
+  - Preview shows exactly what will be created/modified
+
+  **Migration Notice**
+  - One-time notice view shows what changed and recommended actions
+  - Visual comparison of old vs new formats
+  - Checkmarks indicate completed migrations
+  - Direct link to Cleanup Wizard
+
+- **Custom Relationships on Canvas Trees** - Custom relationship types with flat properties and family tree integration:
+  - **Flat format**: `godparent: ["[[John Smith]]"]`, `godparent_id: ["john_123"]`
+  - **Pattern**: Each relationship type uses its ID as the property name
   - **Parallel arrays**: Optional `_id`, `_from`, `_to` suffix properties for metadata
   - **Properties UI compatible**: All properties are simple lists or text values
   - **Backward compatible**: Legacy `relationships` array still read for existing data
-  - **Family tree integration**: New `includeOnFamilyTree` and `familyGraphMapping` properties on relationship type definitions
+  - **Family tree integration**: New `includeOnFamilyTree` and `familyGraphMapping` properties
   - **Custom types**: Can opt-in to family tree display via relationship type editor UI
 
 ---
