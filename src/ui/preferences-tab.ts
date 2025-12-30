@@ -1338,7 +1338,7 @@ function renderInclusiveParentsCard(
 	// Info text
 	content.createEl('p', {
 		cls: 'crc-text-muted',
-		text: 'Add a gender-neutral "Parents" field to Create/Edit Person modals for users with nonbinary parents or who prefer inclusive terminology. This setting is optional and coexists with existing father/mother fields.'
+		text: 'Add a gender-neutral "Parents" property to Create/Edit Person modals for users with nonbinary parents or who prefer inclusive terminology. This setting is optional and coexists with existing father/mother properties.'
 	});
 
 	// Parent field label container (conditionally shown)
@@ -1349,8 +1349,8 @@ function renderInclusiveParentsCard(
 		labelContainer.empty();
 		if (show) {
 			new Setting(labelContainer)
-				.setName('Parent field label')
-				.setDesc('Customize the UI label for the gender-neutral parent field')
+				.setName('Parent property label')
+				.setDesc('Customize the UI label for the gender-neutral parent property')
 				.addText(text => text
 					.setPlaceholder('Parents')
 					.setValue(plugin.settings.parentFieldLabel)
@@ -1370,8 +1370,8 @@ function renderInclusiveParentsCard(
 
 	// Enable toggle
 	new Setting(content)
-		.setName('Enable gender-neutral parent field')
-		.setDesc('Show a "Parents" field in person modals (uses parents/parents_id properties)')
+		.setName('Enable gender-neutral parent property')
+		.setDesc('Show a "Parents" property in person modals (uses parents/parents_id properties)')
 		.addToggle(toggle => toggle
 			.setValue(plugin.settings.enableInclusiveParents)
 			.onChange(async (value) => {
