@@ -86,7 +86,7 @@ erDiagram
         string date
         string date_end
         string date_precision
-        string person FK
+        array persons FK
         string place FK
         string confidence
     }
