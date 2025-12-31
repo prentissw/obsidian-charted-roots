@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.18.x](#v018x)
+  - [Property Naming Normalization](#property-naming-normalization-v01811)
   - [Custom Map Authoring](#custom-map-authoring-v01810)
   - [Nested Properties Redesign](#nested-properties-redesign-v0189)
   - [Inclusive Parent Relationships](#inclusive-parent-relationships-v0187)
@@ -78,6 +79,41 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.18.x
+
+### Property Naming Normalization (v0.18.11)
+
+Standardized property naming for consistency and Obsidian compatibility, completing the `child` → `children` migration.
+
+**Problem Solved:**
+
+The codebase had inconsistent naming for the children wikilink property:
+- `child` (singular) - legacy, used by older code paths
+- `children` (plural) - preferred, matches `children_id`
+
+This caused duplicate properties to appear in YAML when both systems wrote to the same note.
+
+**Solution:**
+
+| Component | Change |
+|-----------|--------|
+| Cleanup Wizard Step 14 | Batch migrate `child` → `children` across vault with preview |
+| Documentation | `children` marked as canonical in Frontmatter-Reference.md |
+| Deprecation Notice | Clear deprecation note with migration instructions |
+| Wizard Extensibility | Fixed hardcoded step count to use `WIZARD_STEPS.length` |
+
+**Migration Logic:**
+- Detects person notes with legacy `child` property
+- Merges with existing `children` if both exist (deduplicates)
+- Removes legacy `child` property after migration
+
+**Backward Compatibility:**
+- Plugin reads both `child` and `children` during transition
+- Future breaking change to remove `child` read support planned
+
+**Documentation:**
+- See [Deprecate Child Property Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/deprecate-child-property.md) for detailed specifications
+
+---
 
 ### Custom Map Authoring (v0.18.10)
 
