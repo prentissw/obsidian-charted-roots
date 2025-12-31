@@ -1002,7 +1002,8 @@ ${p('title')}: "<% tp.file.title %>"
 ${p('event_type')}: <% tp.system.suggester(["Birth", "Death", "Marriage", "Divorce", "Residence", "Occupation", "Military", "Immigration", "Education", "Burial", "Baptism", "Custom"], ["birth", "death", "marriage", "divorce", "residence", "occupation", "military", "immigration", "education", "burial", "baptism", "custom"]) %>
 ${p('date')}:
 ${p('date_precision')}: <% tp.system.suggester(["Exact date", "Month only", "Year only", "Decade", "Estimated", "Date range", "Unknown"], ["exact", "month", "year", "decade", "estimated", "range", "unknown"]) %>
-${p('person')}:
+${p('persons')}:
+  -
 ${p('place')}:
 ${p('sources')}:
 ${p('confidence')}: <% tp.system.suggester(["High", "Medium", "Low", "Unknown"], ["high", "medium", "low", "unknown"]) %>
@@ -1022,7 +1023,8 @@ ${p('title')}: "Birth of <% tp.system.prompt("Person name?", "", false) %>"
 ${p('event_type')}: birth
 ${p('date')}: <% tp.system.prompt("Birth date (YYYY-MM-DD)?", "", false) %>
 ${p('date_precision')}: exact
-${p('person')}: "[[<% tp.system.prompt("Person note name?", "", false) %>]]"
+${p('persons')}:
+  - "[[<% tp.system.prompt("Person note name?", "", false) %>]]"
 ${p('place')}: "[[<% tp.system.prompt("Birth place?", "", false) %>]]"
 ${p('sources')}:
 ${p('confidence')}: <% tp.system.suggester(["High", "Medium", "Low", "Unknown"], ["high", "medium", "low", "unknown"]) %>
@@ -1064,7 +1066,8 @@ ${p('title')}: "Death of <% tp.system.prompt("Person name?", "", false) %>"
 ${p('event_type')}: death
 ${p('date')}: <% tp.system.prompt("Death date (YYYY-MM-DD)?", "", false) %>
 ${p('date_precision')}: exact
-${p('person')}: "[[<% tp.system.prompt("Person note name?", "", false) %>]]"
+${p('persons')}:
+  - "[[<% tp.system.prompt("Person note name?", "", false) %>]]"
 ${p('place')}: "[[<% tp.system.prompt("Death place?", "", false) %>]]"
 ${p('sources')}:
 ${p('confidence')}: <% tp.system.suggester(["High", "Medium", "Low", "Unknown"], ["high", "medium", "low", "unknown"]) %>
@@ -1084,7 +1087,8 @@ ${p('title')}: "<% tp.file.title %>"
 ${p('event_type')}: <% tp.system.suggester(["Anecdote", "Lore event", "Plot point", "Flashback", "Foreshadowing", "Backstory", "Climax", "Resolution"], ["anecdote", "lore_event", "plot_point", "flashback", "foreshadowing", "backstory", "climax", "resolution"]) %>
 ${p('date')}:
 ${p('date_precision')}: <% tp.system.suggester(["Exact date", "Year only", "Estimated", "Unknown"], ["exact", "year", "estimated", "unknown"]) %>
-${p('person')}:
+${p('persons')}:
+  -
 ${p('place')}:
 ${p('is_canonical')}: <% tp.system.suggester(["Yes", "No"], [true, false]) %>
 ${p('universe')}: "<% tp.system.prompt("Universe/World name?", "", false) %>"
@@ -1104,7 +1108,8 @@ ${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
 ${p('title')}: "<% tp.file.title %>"
 ${p('event_type')}: <% tp.system.suggester(["Anecdote", "Lore event", "Plot point", "Custom"], ["anecdote", "lore_event", "plot_point", "custom"]) %>
 ${p('date_precision')}: unknown
-${p('person')}:
+${p('persons')}:
+  -
 ${p('place')}:
 # Relative ordering - link to other event notes
 ${p('before')}:
@@ -1141,8 +1146,8 @@ ${p('date_precision')}: <% tp.system.suggester(["Exact date", "Month only", "Yea
 ${p('date_system')}:
 
 # People involved
-${p('person')}:
 ${p('persons')}:
+  -
 
 # Location
 ${p('place')}:
