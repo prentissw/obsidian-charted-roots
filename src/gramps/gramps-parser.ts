@@ -633,6 +633,14 @@ export class GrampsParser {
 			}
 		});
 
+		// Parse note references
+		el.querySelectorAll('noteref').forEach(refEl => {
+			const hlink = refEl.getAttribute('hlink');
+			if (hlink) {
+				person.noteRefs.push(hlink);
+			}
+		});
+
 		return person;
 	}
 
@@ -690,6 +698,15 @@ export class GrampsParser {
 			}
 		});
 
+		// Parse note references
+		const noteRefs: string[] = [];
+		el.querySelectorAll('noteref').forEach(refEl => {
+			const hlink = refEl.getAttribute('hlink');
+			if (hlink) {
+				noteRefs.push(hlink);
+			}
+		});
+
 		const event: GrampsEvent = {
 			handle,
 			id: el.getAttribute('id') || undefined,
@@ -699,7 +716,7 @@ export class GrampsParser {
 			description: el.querySelector('description')?.textContent || undefined,
 			citationRefs,
 			mediaRefs,
-			noteRefs: []
+			noteRefs
 		};
 
 		return event;
@@ -785,6 +802,15 @@ export class GrampsParser {
 			ptitle = ptitle.replace(/^\[\[/, '').replace(/\]\]$/, '');
 		}
 
+		// Parse note references
+		const noteRefs: string[] = [];
+		el.querySelectorAll('noteref').forEach(refEl => {
+			const hlink = refEl.getAttribute('hlink');
+			if (hlink) {
+				noteRefs.push(hlink);
+			}
+		});
+
 		const place: GrampsPlace = {
 			handle,
 			id: el.getAttribute('id') || undefined,
@@ -793,7 +819,7 @@ export class GrampsParser {
 			parentRef,
 			hasPtitle: !!ptitle,
 			mediaRefs,
-			noteRefs: []
+			noteRefs
 		};
 
 		return place;
