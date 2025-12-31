@@ -978,97 +978,108 @@ export class ImportWizardModal extends Modal {
 					throw new Error('No file content available');
 				}
 
-				// Build import options
-				const settings = this.plugin.settings;
-				const options: GrampsImportOptions = {
-					peopleFolder: this.formData.targetFolder || settings.peopleFolder,
-					overwriteExisting: this.formData.conflictHandling === 'overwrite',
-					fileName: this.formData.fileName,
-					createSourceNotes: this.formData.importSources,
-					sourcesFolder: settings.sourcesFolder,
-					createPlaceNotes: this.formData.importPlaces,
-					placesFolder: settings.placesFolder,
-					createEventNotes: this.formData.importEvents,
-					eventsFolder: settings.eventsFolder,
-					propertyAliases: settings.propertyAliases,
-					includeDynamicBlocks: this.formData.includeDynamicBlocks,
-					dynamicBlockTypes: ['media', 'timeline', 'relationships'],
-					// Pass media files from .gpkg extraction if available
-					mediaFiles: this.formData.gpkgExtractionResult?.mediaFiles,
-					mediaFolder: this.formData.mediaFolder,
-					preserveMediaFolderStructure: this.formData.preserveMediaFolderStructure,
-					extractMedia: this.formData.importMedia && this.formData.gpkgExtractionResult !== null,
-					importNotes: this.formData.importNotes,
-					onProgress: (progress) => {
-						// Update UI based on progress
-						const percent = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
-						progressFill.setCssProps({ width: `${percent}%` });
-						statusEl.textContent = progress.message || `${progress.phase}: ${progress.current}/${progress.total}`;
+				// Disable bidirectional sync during import to prevent duplicate relationships
+				// The file watcher would otherwise trigger syncRelationships before Phase 2 replaces Gramps handles with cr_ids
+				this.plugin.disableBidirectionalSync();
+				this.plugin.bidirectionalLinker?.suspend();
 
-						if (progress.message) {
-							addLogEntry(progress.message);
+				try {
+					// Build import options
+					const settings = this.plugin.settings;
+					const options: GrampsImportOptions = {
+						peopleFolder: this.formData.targetFolder || settings.peopleFolder,
+						overwriteExisting: this.formData.conflictHandling === 'overwrite',
+						fileName: this.formData.fileName,
+						createSourceNotes: this.formData.importSources,
+						sourcesFolder: settings.sourcesFolder,
+						createPlaceNotes: this.formData.importPlaces,
+						placesFolder: settings.placesFolder,
+						createEventNotes: this.formData.importEvents,
+						eventsFolder: settings.eventsFolder,
+						propertyAliases: settings.propertyAliases,
+						includeDynamicBlocks: this.formData.includeDynamicBlocks,
+						dynamicBlockTypes: ['media', 'timeline', 'relationships'],
+						// Pass media files from .gpkg extraction if available
+						mediaFiles: this.formData.gpkgExtractionResult?.mediaFiles,
+						mediaFolder: this.formData.mediaFolder,
+						preserveMediaFolderStructure: this.formData.preserveMediaFolderStructure,
+						extractMedia: this.formData.importMedia && this.formData.gpkgExtractionResult !== null,
+						importNotes: this.formData.importNotes,
+						onProgress: (progress) => {
+							// Update UI based on progress
+							const percent = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
+							progressFill.setCssProps({ width: `${percent}%` });
+							statusEl.textContent = progress.message || `${progress.phase}: ${progress.current}/${progress.total}`;
+
+							if (progress.message) {
+								addLogEntry(progress.message);
+							}
 						}
-					}
-				};
+					};
 
-				// Run import
-				const grampsImporter = new GrampsImporter(this.app);
-				const result = await grampsImporter.importFile(
-					this.formData.fileContent,
-					options
-				);
+					// Run import
+					const grampsImporter = new GrampsImporter(this.app);
+					const result = await grampsImporter.importFile(
+						this.formData.fileContent,
+						options
+					);
 
-				this.formData.importResult = result;
-				this.formData.importedCount = result.individualsImported;
+					this.formData.importResult = result;
+					this.formData.importedCount = result.individualsImported;
 
-				// Calculate total notes created
-				const grampsTotal = result.individualsImported +
-					(result.placeNotesCreated || 0) +
-					(result.sourceNotesCreated || 0) +
-					(result.eventNotesCreated || 0);
+					// Calculate total notes created
+					const grampsTotal = result.individualsImported +
+						(result.placeNotesCreated || 0) +
+						(result.sourceNotesCreated || 0) +
+						(result.eventNotesCreated || 0);
 
-				if (result.success) {
-					progressFill.setCssProps({ width: '100%' });
-					addLogEntry(`Import complete! ${result.individualsImported} people imported.`, 'success');
+					if (result.success) {
+						progressFill.setCssProps({ width: '100%' });
+						addLogEntry(`Import complete! ${result.individualsImported} people imported.`, 'success');
 
-					if (result.mediaFilesExtracted && result.mediaFilesExtracted > 0) {
-						addLogEntry(`Extracted ${result.mediaFilesExtracted} media files.`, 'success');
-					}
-					if (result.placeNotesCreated && result.placeNotesCreated > 0) {
-						addLogEntry(`Created ${result.placeNotesCreated} place notes.`, 'success');
-					}
-					if (result.sourceNotesCreated && result.sourceNotesCreated > 0) {
-						addLogEntry(`Created ${result.sourceNotesCreated} source notes.`, 'success');
-					}
-					if (result.eventNotesCreated && result.eventNotesCreated > 0) {
-						addLogEntry(`Created ${result.eventNotesCreated} event notes.`, 'success');
-					}
-					if (result.duplicateEventsSkipped && result.duplicateEventsSkipped > 0) {
-						addLogEntry(`Skipped ${result.duplicateEventsSkipped} duplicate event(s) in source file.`, 'warning');
-					}
+						if (result.mediaFilesExtracted && result.mediaFilesExtracted > 0) {
+							addLogEntry(`Extracted ${result.mediaFilesExtracted} media files.`, 'success');
+						}
+						if (result.placeNotesCreated && result.placeNotesCreated > 0) {
+							addLogEntry(`Created ${result.placeNotesCreated} place notes.`, 'success');
+						}
+						if (result.sourceNotesCreated && result.sourceNotesCreated > 0) {
+							addLogEntry(`Created ${result.sourceNotesCreated} source notes.`, 'success');
+						}
+						if (result.eventNotesCreated && result.eventNotesCreated > 0) {
+							addLogEntry(`Created ${result.eventNotesCreated} event notes.`, 'success');
+						}
+						if (result.duplicateEventsSkipped && result.duplicateEventsSkipped > 0) {
+							addLogEntry(`Skipped ${result.duplicateEventsSkipped} duplicate event(s) in source file.`, 'warning');
+						}
 
-					// Show any errors as warnings
-					for (const error of result.errors.slice(0, 5)) {
-						addLogEntry(error, 'warning');
-					}
+						// Show any errors as warnings
+						for (const error of result.errors.slice(0, 5)) {
+							addLogEntry(error, 'warning');
+						}
 
-					// Auto-advance to numbering step after a short delay
-					setTimeout(() => {
-						this.currentStep = 5; // Numbering step
+						// Auto-advance to numbering step after a short delay
+						setTimeout(() => {
+							this.currentStep = 5; // Numbering step
+							this.isImporting = false;
+							this.renderCurrentStep();
+						}, 1500);
+					} else {
+						addLogEntry('Import failed!', 'error');
+						for (const error of result.errors) {
+							addLogEntry(error, 'error');
+						}
 						this.isImporting = false;
-						this.renderCurrentStep();
-					}, 1500);
-				} else {
-					addLogEntry('Import failed!', 'error');
-					for (const error of result.errors) {
-						addLogEntry(error, 'error');
 					}
-					this.isImporting = false;
-				}
 
-				// Auto-create bases for imported note types (even if some errors occurred)
-				if (grampsTotal > 0) {
-					void this.plugin.createAllBases({ silent: true });
+					// Auto-create bases for imported note types (even if some errors occurred)
+					if (grampsTotal > 0) {
+						void this.plugin.createAllBases({ silent: true });
+					}
+				} finally {
+					// Re-enable bidirectional sync after import completes (success or failure)
+					this.plugin.enableBidirectionalSync();
+					this.plugin.bidirectionalLinker?.resume();
 				}
 			} else {
 				// Other formats not yet implemented
