@@ -2,11 +2,11 @@
 
 Planning document for Gramps notes import/export and potentially introducing a Family entity type.
 
-- **Status:** In Progress (Phase 1 complete, Phase 2 in progress)
+- **Status:** In Progress (Phase 1 & 2 complete)
 - **GitHub Issue:** [#36](https://github.com/banisterious/obsidian-canvas-roots/issues/36)
 - **Sub-issues:**
   - [#76](https://github.com/banisterious/obsidian-canvas-roots/issues/76) Phase 1: Embedded Notes ✅
-  - [#77](https://github.com/banisterious/obsidian-canvas-roots/issues/77) Phase 2: Other Entity Notes (in progress)
+  - [#77](https://github.com/banisterious/obsidian-canvas-roots/issues/77) Phase 2: Other Entity Notes ✅
   - [#79](https://github.com/banisterious/obsidian-canvas-roots/issues/79) Phase 3: Family Entity (Optional)
   - [#80](https://github.com/banisterious/obsidian-canvas-roots/issues/80) Phase 4: Separate Note Files (Optional)
   - [#81](https://github.com/banisterious/obsidian-canvas-roots/issues/81) Phase 5: Gramps Export & Sync Support
@@ -380,12 +380,17 @@ The `priv` attribute on Gramps notes indicates private/sensitive content.
 - Family notes fallback: attached to marriage/family events instead of separate entity
 - Import wizard toggle to enable/disable notes import
 
-#### Phase 2: Other Entity Notes (In Progress)
+#### Phase 2: Other Entity Notes ✅ (Completed 2025-12-31)
 
-**Files to Modify:**
-- `src/gramps/gramps-importer.ts` - Resolve notes for events and places
-- `src/core/event-note-writer.ts` - Add notes content support
-- `src/core/place-note-writer.ts` - Add notes content support
+**Files Modified:**
+- `src/gramps/gramps-parser.ts` - Add `noteRefs` to `ParsedGrampsPlace` interface
+- `src/gramps/gramps-importer.ts` - Resolve notes for events and places (events were already done in Phase 1)
+- `src/core/place-note-writer.ts` - Add `notesContent` and `private` fields to `PlaceData`
+
+**Key Features:**
+- Event notes: already implemented in Phase 1 (resolved and appended to event body)
+- Place notes: resolve noteRefs and append as "## Notes" section
+- Privacy flag propagation for places (same pattern as persons/events)
 
 #### Phase 3 (Family Entity - Future):
 - `src/models/family.ts` - New Family model
