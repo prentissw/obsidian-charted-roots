@@ -3,6 +3,7 @@
 **Status:** In Progress
 **Issue:** #65
 **Priority:** Medium
+**Target Release:** v0.18.11
 
 ## Problem
 
@@ -32,11 +33,39 @@ This causes duplicate properties to appear in YAML when both systems write to th
    - Mark `child` as deprecated in any schema definitions
    - Update wiki documentation
 
-3. **Audit Other Code Paths**
-   - Check GEDCOM import/export
-   - Check Gramps import/export
-   - Check CSV import/export
-   - Check any other places that might read/write children
+## Import/Export Audit (2024-12-30)
+
+All import/export code paths were audited. **No changes needed.**
+
+### GEDCOM (gedcom-parser.ts, gedcom-importer-v2.ts, gedcom-exporter.ts)
+- Uses `child` only as a **variable name** (e.g., `const child = ...`)
+- Works with internal `GedcomIndividual` data structures
+- Writes to frontmatter via `person-note-writer` which uses `children`
+
+### Gramps (gramps-parser.ts, gramps-importer.ts, gramps-exporter.ts)
+- Uses `child` only as a **variable name**
+- Works with internal `GrampsPerson` data structures
+- Writes to frontmatter via `person-note-writer` which uses `children`
+
+### GedcomX (gedcomx-parser.ts, gedcomx-importer.ts, gedcomx-exporter.ts)
+- Uses `child` only as a **variable name**
+- Works with internal data structures
+- Writes to frontmatter via `person-note-writer` which uses `children`
+
+### CSV (csv-parser.ts, csv-importer.ts, csv-exporter.ts)
+- No `child` usage at all
+
+### Files Still Reading `child` Property (for backward compatibility)
+These read BOTH `child` and `children` to support legacy data:
+- `main.ts:5161-5162` - Reads `fm.child` for backward compatibility
+- `control-center.ts` - Dedup operations check both properties
+- `bidirectional-linker.ts:283` - Reads `frontmatter.children || frontmatter.child`
+- `family-graph.ts:1386` - Reads `child` field for backward compatibility
+- `base-template.ts:71` - Obsidian Bases template supports `child` property
+
+### Files That Map/Reference `child` Property
+- `merge-service.ts:317` - Maps `'child': 'children_id'` for merge operations
+- `property-alias-service.ts:51, 202, 485` - Lists `child` as an aliasable property
 
 ## Implementation Notes
 
@@ -98,8 +127,8 @@ await app.fileManager.processFrontMatter(file, (fm) => {
 ## Timeline
 
 - v0.18.9: Core fix implemented (BidirectionalLinker, person-note-writer)
-- v0.19.x: Add Cleanup Wizard step for batch migration
-- v0.20.x: Consider removing `child` read support (breaking change)
+- v0.18.11: Add Cleanup Wizard step for batch migration + wiki documentation
+- Future: Consider removing `child` read support (breaking change)
 
 ## Files Changed
 
@@ -108,6 +137,6 @@ await app.fileManager.processFrontMatter(file, (fm) => {
 - `src/core/person-note-writer.ts` - Write to `children`, delete `child`
 - `src/ui/control-center.ts` - Dedup migrates `child` → `children`
 
-### Future
+### v0.18.11 (planned)
 - `src/ui/cleanup-wizard-modal.ts` - Add Step 14
-- Wiki documentation updates
+- Wiki documentation updates (Frontmatter-Reference.md, Data-Entry.md)
