@@ -13,6 +13,8 @@ import {
 	GrampsSource,
 	GrampsCitation,
 	GrampsNote,
+	GrampsNoteFormat,
+	GrampsStyleRange,
 	GrampsRepository,
 	GrampsRepoRef,
 	GrampsMedia,
@@ -899,14 +901,87 @@ export class GrampsParser {
 		const handle = el.getAttribute('handle');
 		if (!handle) return null;
 
+		// Parse format attribute: 0 = FLOWED, 1 = FORMATTED
+		const formatAttr = el.getAttribute('format');
+		const format: GrampsNoteFormat | undefined = formatAttr === '1' ? 'formatted' :
+			formatAttr === '0' ? 'flowed' : undefined;
+
+		// Parse privacy attribute
+		const priv = el.getAttribute('priv') === '1';
+
+		// Parse style elements
+		const styles: GrampsStyleRange[] = [];
+		el.querySelectorAll('style').forEach(styleEl => {
+			const styleRange = this.parseStyle(styleEl);
+			if (styleRange) {
+				styles.push(styleRange);
+			}
+		});
+
 		const note: GrampsNote = {
 			handle,
 			id: el.getAttribute('id') || undefined,
 			type: el.getAttribute('type') || undefined,
-			text: el.querySelector('text')?.textContent || undefined
+			text: el.querySelector('text')?.textContent || undefined,
+			format,
+			private: priv || undefined,
+			styles: styles.length > 0 ? styles : undefined
 		};
 
 		return note;
+	}
+
+	/**
+	 * Parse a style element from a note
+	 */
+	private static parseStyle(el: Element): GrampsStyleRange | null {
+		const name = el.getAttribute('name')?.toLowerCase();
+		const value = el.getAttribute('value');
+
+		// Map Gramps style names to our types
+		let type: GrampsStyleRange['type'] | undefined;
+		switch (name) {
+			case 'bold':
+				type = 'bold';
+				break;
+			case 'italic':
+				type = 'italic';
+				break;
+			case 'underline':
+				type = 'underline';
+				break;
+			case 'strikethrough':
+				type = 'strikethrough';
+				break;
+			case 'superscript':
+				type = 'superscript';
+				break;
+			case 'subscript':
+				type = 'subscript';
+				break;
+			case 'link':
+				type = 'link';
+				break;
+			default:
+				// Skip unsupported styles (fontface, fontsize, fontcolor, highlight)
+				return null;
+		}
+
+		// Parse range element to get start/end positions
+		const rangeEl = el.querySelector('range');
+		if (!rangeEl) return null;
+
+		const start = parseInt(rangeEl.getAttribute('start') || '0', 10);
+		const end = parseInt(rangeEl.getAttribute('end') || '0', 10);
+
+		if (isNaN(start) || isNaN(end) || start >= end) return null;
+
+		return {
+			type,
+			start,
+			end,
+			value: type === 'link' ? (value || undefined) : undefined
+		};
 	}
 
 	/**

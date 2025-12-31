@@ -158,13 +158,33 @@ export interface GrampsCitation {
 }
 
 /**
+ * Note format types
+ * - FLOWED (0): Normal text, whitespace is not significant
+ * - FORMATTED (1): Preformatted text, preserve whitespace
+ */
+export type GrampsNoteFormat = 'flowed' | 'formatted';
+
+/**
+ * Style range within note text
+ */
+export interface GrampsStyleRange {
+	type: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'superscript' | 'subscript' | 'link';
+	start: number;  // Start offset in text
+	end: number;    // End offset in text
+	value?: string; // For links, the URL
+}
+
+/**
  * Note record
  */
 export interface GrampsNote {
 	handle: string;
 	id?: string;
-	type?: string;       // e.g., "Source text"
+	type?: string;       // e.g., "Source text", "Research", "Person Note"
 	text?: string;
+	format?: GrampsNoteFormat;  // 'flowed' or 'formatted'
+	private?: boolean;   // Privacy flag (priv="1")
+	styles?: GrampsStyleRange[]; // Style ranges for formatted text
 }
 
 /**
