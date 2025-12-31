@@ -97,7 +97,7 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Priority:** 📋 Medium — Preserve research notes and family structure from Gramps imports
 
-**Status:** Planning
+**Status:** ✅ Phase 1 complete | ✅ Phase 2 complete | Phases 3-5 planned
 
 **Summary:** Import notes attached to Gramps entities and potentially introduce a Family entity type. Gramps treats notes and families as first-class entities with rich metadata. This feature ensures that data is preserved when importing into Canvas Roots, with optional advanced features for users who need them.
 
@@ -109,13 +109,13 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Phased Implementation:**
 
-| Phase | Feature | Default |
-|-------|---------|---------|
-| 1 | Embedded person notes | Enabled |
-| 2 | Other entity notes (events, places) | Enabled |
-| 3 | Family entity type | Opt-in |
-| 4 | Separate note files | Opt-in |
-| 5 | Export & sync back to Gramps | Future |
+| Phase | Feature | Default | Status |
+|-------|---------|---------|--------|
+| 1 | Embedded person notes | Enabled | ✅ Complete |
+| 2 | Other entity notes (events, places) | Enabled | ✅ Complete |
+| 3 | Family entity type | Opt-in | Planned |
+| 4 | Separate note files | Opt-in | Planned |
+| 5 | Export & sync back to Gramps | Future | Planned |
 
 **Privacy Handling:**
 - Gramps notes can be marked private (`priv="1"`)
