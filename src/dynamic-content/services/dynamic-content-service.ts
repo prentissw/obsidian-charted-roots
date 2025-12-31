@@ -130,12 +130,17 @@ export class DynamicContentService {
 			throw new Error(`Could not find file: ${ctx.sourcePath}`);
 		}
 
-		// Create family graph service
+		// Create family graph service - force reload to get fresh data
+		// This ensures newly created persons are included
 		const familyGraph = this.plugin.createFamilyGraphService();
+		familyGraph.clearCache();
 		familyGraph.ensureCacheLoaded();
 
-		// Get event service
+		// Get event service and invalidate its cache to pick up new events
 		const eventService = this.plugin.getEventService();
+		if (eventService) {
+			eventService.invalidateCache();
+		}
 
 		// Try to get cr_id from the note's frontmatter
 		const cache = app.metadataCache.getFileCache(file);

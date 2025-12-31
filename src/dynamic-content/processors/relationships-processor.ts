@@ -43,22 +43,39 @@ export class RelationshipsProcessor {
 			const config = this.service.parseConfig(source);
 
 			// Build context (resolves file, cr_id, person)
-			const context = this.service.buildContext(ctx);
-
-			// Check if this is a person note
-			if (!context.crId) {
-				this.renderError(el, 'This note does not have a cr_id. Relationships can only be rendered in person notes.');
-				return;
-			}
-
-			if (!context.person) {
-				this.renderError(el, 'Could not find person data for this note.');
-				return;
-			}
+			let context = this.service.buildContext(ctx);
 
 			// Create a MarkdownRenderChild for proper cleanup of rendered markdown
 			const component = new MarkdownRenderChild(el);
 			ctx.addChild(component);
+
+			// If cr_id not found, the metadata cache may not be ready yet
+			// Show loading state and wait for the 'changed' event to re-render
+			if (!context.crId || !context.person) {
+				this.renderLoading(el, 'Waiting for metadata...');
+
+				// Register for metadata changes - will re-render when cache is ready
+				const metadataHandler = async (changedFile: TFile) => {
+					if (changedFile.path === context.file.path) {
+						// Re-build context to get fresh data
+						const freshContext = this.service.buildContext(ctx);
+						// Clear and re-render
+						el.empty();
+						if (freshContext.crId && freshContext.person) {
+							await this.renderer.render(el, freshContext, config, component);
+						} else if (!freshContext.crId) {
+							this.renderError(el, 'This note does not have a cr_id. Relationships can only be rendered in person notes.');
+						} else {
+							this.renderError(el, 'Could not find person data for this note.');
+						}
+					}
+				};
+
+				component.registerEvent(
+					this.plugin.app.metadataCache.on('changed', metadataHandler)
+				);
+				return;
+			}
 
 			// Initial render
 			await this.renderer.render(el, context, config, component);
@@ -91,5 +108,13 @@ export class RelationshipsProcessor {
 	private renderError(el: HTMLElement, message: string): void {
 		const container = el.createDiv({ cls: 'cr-dynamic-block cr-dynamic-block--error' });
 		container.createDiv({ cls: 'cr-dynamic-block__error-message', text: message });
+	}
+
+	/**
+	 * Render a loading state
+	 */
+	private renderLoading(el: HTMLElement, message: string): void {
+		const container = el.createDiv({ cls: 'cr-dynamic-block cr-dynamic-block--loading' });
+		container.createDiv({ cls: 'cr-dynamic-block__loading-message', text: message });
 	}
 }
