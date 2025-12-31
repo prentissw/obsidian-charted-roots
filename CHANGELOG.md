@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Settings label clarity** - Renamed "Maps folder" setting to "Map notes folder" to clarify it controls where map notes are created, not map images ([#71](https://github.com/banisterious/obsidian-canvas-roots/issues/71))
+- **ESLint compliance** - Fixed 36 non-sentence-case ESLint errors across 15 files (unused imports, promise handling, style assignments, async/await issues)
 
 ---
 
