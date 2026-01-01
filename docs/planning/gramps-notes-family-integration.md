@@ -391,7 +391,11 @@ Users need a good experience for creating notes manually (not just via import).
 - Note type dropdown: Research, Person Note, Transcript, Source text, General, Custom
 - Title field (required)
 - Privacy toggle (default: off)
-- Optional: Entity picker to link note to person/event/place/source
+- Linked entities field with typed entity pickers:
+  - "+ Add entity" button opens dropdown menu (Person, Event, Place, Source)
+  - Each option opens the corresponding picker modal (PersonPickerModal, EventPickerModal, PlacePickerModal, SourcePickerModal)
+  - Selected entities appear as removable chips with wikilinks
+  - Styling matches Sources field pattern for visual consistency
 - Creates note in `notesFolder` with proper frontmatter
 
 **Entry points:**
@@ -725,7 +729,7 @@ The `priv` attribute on Gramps notes indicates private/sensitive content.
 9. [x] Filter out source-only notes (already embedded in source notes)
 
 *Manual creation:*
-10. [x] Create `create-note-modal.ts` with type dropdown, title, privacy, entity picker
+10. [x] Create `create-note-modal.ts` with type dropdown, title, privacy, typed entity pickers (dropdown → picker modals)
 11. [x] Add Note base template (`notes-base-template.ts`) for Obsidian Bases
 12. [x] Register "Create note" command in command palette
 13. [x] Register file-menu context action for Notes folder ("New Canvas Roots note")
