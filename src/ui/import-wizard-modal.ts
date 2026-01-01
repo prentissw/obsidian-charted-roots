@@ -56,6 +56,7 @@ interface ImportWizardFormData {
 	importEvents: boolean;
 	importMedia: boolean;
 	importNotes: boolean;  // Import notes attached to entities (Gramps only)
+	createSeparateNoteFiles: boolean;  // Create separate note files instead of embedding (Gramps only)
 	mediaFolder: string;
 	preserveMediaFolderStructure: boolean;
 	includeDynamicBlocks: boolean;
@@ -187,6 +188,7 @@ export class ImportWizardModal extends Modal {
 			importEvents: true,
 			importMedia: true,
 			importNotes: true,  // Default: import notes (Gramps only)
+			createSeparateNoteFiles: false,  // Default: embed notes (Gramps only)
 			mediaFolder: this.plugin?.settings?.mediaFolders?.[0] || 'Canvas Roots/Media',
 			preserveMediaFolderStructure: false,
 			includeDynamicBlocks: true,
@@ -505,7 +507,16 @@ export class ImportWizardModal extends Modal {
 
 			this.renderToggleOption(entityOptions, 'Notes', 'Append Gramps notes to entity content', this.formData.importNotes, (val) => {
 				this.formData.importNotes = val;
+				// Refresh to show/hide dependent option
+				this.renderCurrentStep();
 			});
+
+			// Show separate note files option only when Notes is enabled
+			if (this.formData.importNotes) {
+				this.renderToggleOption(entityOptions, 'Create separate note files', 'Create individual note files instead of embedding content', this.formData.createSeparateNoteFiles, (val) => {
+					this.formData.createSeparateNoteFiles = val;
+				});
+			}
 		}
 
 		this.renderToggleOption(entityOptions, 'Dynamic blocks', 'Timeline, relationships, and media renderers in notes', this.formData.includeDynamicBlocks, (val) => {
@@ -1005,6 +1016,8 @@ export class ImportWizardModal extends Modal {
 						preserveMediaFolderStructure: this.formData.preserveMediaFolderStructure,
 						extractMedia: this.formData.importMedia && this.formData.gpkgExtractionResult !== null,
 						importNotes: this.formData.importNotes,
+						createSeparateNoteFiles: this.formData.createSeparateNoteFiles,
+						notesFolder: settings.notesFolder,
 						onProgress: (progress) => {
 							// Update UI based on progress
 							const percent = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
