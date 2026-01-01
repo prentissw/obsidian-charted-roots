@@ -3190,8 +3190,47 @@ export class FamilyChartView extends ItemView {
 	};
 
 	/**
-	 * Show style/theme menu
+	 * Show card style selection menu
 	 */
+	private showCardStyleMenu(e: MouseEvent): void {
+		const menu = new Menu();
+
+		// Header
+		menu.addItem((item) => {
+			item.setTitle('Card style')
+				.setIcon('layout-template')
+				.setDisabled(true);
+		});
+
+		menu.addSeparator();
+
+		// Rectangle (default)
+		menu.addItem((item) => {
+			item.setTitle(`${this.cardStyle === 'rectangle' ? '✓ ' : '  '}Rectangle`)
+				.onClick(() => this.setCardStyle('rectangle'));
+		});
+
+		// Circle (HTML with circular avatars)
+		menu.addItem((item) => {
+			item.setTitle(`${this.cardStyle === 'circle' ? '✓ ' : '  '}Circle`)
+				.onClick(() => this.setCardStyle('circle'));
+		});
+
+		// Compact (text-only, no avatars)
+		menu.addItem((item) => {
+			item.setTitle(`${this.cardStyle === 'compact' ? '✓ ' : '  '}Compact`)
+				.onClick(() => this.setCardStyle('compact'));
+		});
+
+		// Mini (smaller cards)
+		menu.addItem((item) => {
+			item.setTitle(`${this.cardStyle === 'mini' ? '✓ ' : '  '}Mini`)
+				.onClick(() => this.setCardStyle('mini'));
+		});
+
+		menu.showAtMouseEvent(e);
+	}
+
 	private showStyleMenu(e: MouseEvent): void {
 		const menu = new Menu();
 		const currentColors = this.plugin.settings.familyChartColors;
