@@ -1135,6 +1135,23 @@
  * Used when cardStyle = 'circle'
  * ------------------------------------------------------------ */
 
+/* Remove rectangle wrapper styling for circle cards */
+.cr-fcv-chart-container.card-style-circle .card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove rectangular outline from circle card main/hover states */
+.cr-fcv-chart-container.card-style-circle div.card-main .card-inner.card-image-circle {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(220, 220, 220, 0.8);
+}
+
+.cr-fcv-chart-container.card-style-circle div.card:hover .card-inner.card-image-circle {
+  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.8);
+}
+
 /* Make the circular card container fully round */
 .cr-fcv-chart-container.f3 div.card-image-circle {
   display: flex;
@@ -1149,17 +1166,16 @@
 
 /* Image styling for circular cards */
 .cr-fcv-chart-container.f3 div.card-image-circle img {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
 /* Person icon placeholder for circular cards without avatar */
 .cr-fcv-chart-container.f3 div.card-image-circle .person-icon {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1172,19 +1188,24 @@
   opacity: 0.7;
 }
 
-/* Label below circular cards */
+/* Label below circular cards - white text for readability */
 .cr-fcv-chart-container.f3 div.card-image-circle .card-label {
   position: absolute;
-  bottom: -20px;
+  bottom: -10px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, 50%);
+  max-width: 150%;
+  min-height: 22px;
   text-align: center;
-  font-size: 11px;
-  line-height: 1.2;
-  white-space: nowrap;
   background-color: rgba(0, 0, 0, 0.6);
-  padding: 2px 6px;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   border-radius: 3px;
+  padding: 0 5px;
+  font-size: 12px;
+  line-height: 22px;
 }
 
 /* Rectangular fallback styling (matches existing rect cards) */
