@@ -21,6 +21,7 @@ import { generatePlacesBaseTemplate } from './src/constants/places-base-template
 import { ORGANIZATIONS_BASE_TEMPLATE } from './src/constants/organizations-base-template';
 import { SOURCES_BASE_TEMPLATE } from './src/constants/sources-base-template';
 import { UNIVERSES_BASE_TEMPLATE } from './src/constants/universes-base-template';
+import { NOTES_BASE_TEMPLATE } from './src/constants/notes-base-template';
 import { generateEventsBaseTemplate } from './src/constants/events-base-template';
 import { ExcalidrawExporter } from './src/excalidraw/excalidraw-exporter';
 import { BidirectionalLinker } from './src/core/bidirectional-linker';
@@ -510,6 +511,15 @@ export default class CanvasRootsPlugin extends Plugin {
 			name: 'Create universes base template',
 			callback: () => {
 				void this.createUniversesBaseTemplate();
+			}
+		});
+
+		// Add command: Create Notes Base Template
+		this.addCommand({
+			id: 'create-notes-base-template',
+			name: 'Create notes base template',
+			callback: () => {
+				void this.createNotesBaseTemplate();
 			}
 		});
 
@@ -7391,6 +7401,72 @@ export default class CanvasRootsPlugin extends Plugin {
 				new Notice('Disk full. Free up space and try again.');
 			} else {
 				new Notice(`Failed to create Universes base template: ${errorMsg}`);
+			}
+		}
+	}
+
+	/**
+	 * Create a notes base template file in the specified folder
+	 * Part of Phase 4 Gramps Notes integration
+	 */
+	public async createNotesBaseTemplate(folder?: TFolder) {
+		try {
+			// Validate: Check if Bases feature is available
+			const baseFiles = this.app.vault.getFiles().filter(f => f.extension === 'base');
+			// @ts-expect-error - accessing internal plugins
+			const basesInternalPlugin = this.app.internalPlugins?.plugins?.['bases'];
+			const isBasesAvailable = baseFiles.length > 0 ||
+				(basesInternalPlugin?.enabled === true);
+
+			if (!isBasesAvailable) {
+				const proceed = await this.confirmBaseCreation();
+				if (!proceed) return;
+			}
+
+			// Determine the target path - use basesFolder if configured, otherwise use context folder
+			const targetFolder = this.settings.basesFolder || (folder ? folder.path : '');
+			const folderPath = targetFolder ? targetFolder + '/' : '';
+			const defaultPath = folderPath + 'notes.base';
+
+			// Create the bases folder if it doesn't exist
+			if (this.settings.basesFolder && !this.app.vault.getAbstractFileByPath(this.settings.basesFolder)) {
+				await this.app.vault.createFolder(this.settings.basesFolder);
+			}
+
+			// Check if file already exists
+			const existingFile = this.app.vault.getAbstractFileByPath(defaultPath);
+			if (existingFile) {
+				new Notice(`Notes base template already exists at ${defaultPath}`);
+				// Open the existing file
+				if (existingFile instanceof TFile) {
+					const leaf = this.app.workspace.getLeaf(false);
+					await leaf.openFile(existingFile);
+				}
+				return;
+			}
+
+			// Create the file with template content
+			const file = await this.app.vault.create(defaultPath, NOTES_BASE_TEMPLATE);
+
+			new Notice('Notes base template created with 11 pre-configured views!');
+			logger.info('notes-base-template', `Created notes base template at ${defaultPath}`);
+
+			// Open the newly created file
+			const leaf = this.app.workspace.getLeaf(false);
+			await leaf.openFile(file);
+		} catch (error: unknown) {
+			const errorMsg = getErrorMessage(error);
+			logger.error('notes-base-template', 'Failed to create notes base template', error);
+
+			// Provide specific error messages
+			if (errorMsg.includes('already exists')) {
+				new Notice('A file with this name already exists.');
+			} else if (errorMsg.includes('permission') || errorMsg.includes('EACCES')) {
+				new Notice('Permission denied. Check file system permissions.');
+			} else if (errorMsg.includes('ENOSPC')) {
+				new Notice('Disk full. Free up space and try again.');
+			} else {
+				new Notice(`Failed to create Notes base template: ${errorMsg}`);
 			}
 		}
 	}
