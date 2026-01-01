@@ -301,6 +301,14 @@ export class FamilyChartView extends ItemView {
 		setIcon(displayBtn, 'eye');
 		displayBtn.addEventListener('click', (e) => this.showDisplayMenu(e));
 
+		// Card style button (rectangle, circle, compact, mini)
+		const cardStyleBtn = rightControls.createEl('button', {
+			cls: 'cr-fcv-btn clickable-icon',
+			attr: { 'aria-label': 'Card style' }
+		});
+		setIcon(cardStyleBtn, 'layout-template');
+		cardStyleBtn.addEventListener('click', (e) => this.showCardStyleMenu(e));
+
 		// Style settings button (colors, themes)
 		const styleBtn = rightControls.createEl('button', {
 			cls: 'cr-fcv-btn clickable-icon',
