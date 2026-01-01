@@ -907,12 +907,17 @@ export class FamilyChartView extends ItemView {
 			// Each inner array is a line, with fields joined by space
 			const displayFields: string[][] = [['first name', 'last name']];
 			if (this.showBirthDates && this.showDeathDates) {
-				displayFields.push(['birthday', 'deathday']);
+				// Put each date on its own line for better readability
+				displayFields.push(['birthday']);
+				displayFields.push(['deathday']);
 			} else if (this.showBirthDates) {
 				displayFields.push(['birthday']);
 			} else if (this.showDeathDates) {
 				displayFields.push(['deathday']);
 			}
+
+			// Calculate if we need taller cards (3 lines when both dates shown)
+			const needsTallerCards = this.showBirthDates && this.showDeathDates;
 
 			// Apply container style class for CSS targeting
 			this.updateContainerStyleClass();
@@ -928,9 +933,10 @@ export class FamilyChartView extends ItemView {
 
 				case 'compact':
 					// Text-only cards, no avatars
+					// Height: 50px for 2 lines, 65px for 3 lines
 					this.f3Card = this.f3Chart.setCardSvg()
 						.setCardDisplay(displayFields)
-						.setCardDim({ w: 180, h: 50, text_x: 10, text_y: 12, img_w: 0, img_h: 0, img_x: 0, img_y: 0 })
+						.setCardDim({ w: 180, h: needsTallerCards ? 65 : 50, text_x: 10, text_y: 12, img_w: 0, img_h: 0, img_x: 0, img_y: 0 })
 						.setOnCardClick((e, d) => this.handleCardClick(e, d))
 						.setOnCardUpdate(this.createOpenNoteButtonCallback());
 					break;
@@ -947,9 +953,20 @@ export class FamilyChartView extends ItemView {
 				case 'rectangle':
 				default:
 					// Default: SVG cards with square avatars (current implementation)
+					// Height: 70px for 2 lines, 90px for 3 lines (both dates)
+					// Avatar scales with card height; text_x shifts to avoid overlap
 					this.f3Card = this.f3Chart.setCardSvg()
 						.setCardDisplay(displayFields)
-						.setCardDim({ w: 200, h: 70, text_x: 75, text_y: 15, img_w: 60, img_h: 60, img_x: 5, img_y: 5 })
+						.setCardDim({
+							w: needsTallerCards ? 220 : 200,
+							h: needsTallerCards ? 90 : 70,
+							text_x: needsTallerCards ? 90 : 75,
+							text_y: needsTallerCards ? 12 : 15,
+							img_w: needsTallerCards ? 80 : 60,
+							img_h: needsTallerCards ? 80 : 60,
+							img_x: 5,
+							img_y: 5
+						})
 						.setOnCardClick((e, d) => this.handleCardClick(e, d))
 						.setOnCardUpdate(this.createOpenNoteButtonCallback());
 					break;
@@ -1263,8 +1280,9 @@ export class FamilyChartView extends ItemView {
 			if (d3.select(cardEl).select('.cr-open-note-btn').size() > 0) return;
 
 			// Get button position based on card style
-			// Card dimensions vary: rectangle=200x70, compact=180x50, mini=120x35
+			// Card dimensions vary by style and whether both dates are shown (taller cards)
 			// Button radius=9, position near right edge
+			const needsTallerCards = view.showBirthDates && view.showDeathDates;
 			let btnX: number;
 			let btnY: number;
 			let btnRadius: number;
@@ -1280,7 +1298,8 @@ export class FamilyChartView extends ItemView {
 					btnRadius = 7;
 					break;
 				default: // rectangle
-					btnX = 185; // 200 width, position near right edge
+					// Width is 220 when both dates shown, 200 otherwise
+					btnX = needsTallerCards ? 205 : 185;
 					btnY = 12;
 					btnRadius = 9;
 			}
@@ -3987,14 +4006,46 @@ export class FamilyChartView extends ItemView {
 		const displayFields: string[][] = [['first name', 'last name']];
 
 		if (this.showBirthDates && this.showDeathDates) {
-			displayFields.push(['birthday', 'deathday']);
+			// Put each date on its own line for better readability
+			displayFields.push(['birthday']);
+			displayFields.push(['deathday']);
 		} else if (this.showBirthDates) {
 			displayFields.push(['birthday']);
 		} else if (this.showDeathDates) {
 			displayFields.push(['deathday']);
 		}
 
+		// Calculate if we need taller cards (3 lines when both dates shown)
+		const needsTallerCards = this.showBirthDates && this.showDeathDates;
+
+		// Update card display and dimensions based on card style
 		this.f3Card.setCardDisplay(displayFields);
+
+		// Update card dimensions for styles that support dates
+		if (this.cardStyle === 'rectangle') {
+			this.f3Card.setCardDim({
+				w: needsTallerCards ? 220 : 200,
+				h: needsTallerCards ? 90 : 70,
+				text_x: needsTallerCards ? 90 : 75,
+				text_y: needsTallerCards ? 12 : 15,
+				img_w: needsTallerCards ? 80 : 60,
+				img_h: needsTallerCards ? 80 : 60,
+				img_x: 5,
+				img_y: 5
+			});
+		} else if (this.cardStyle === 'compact') {
+			this.f3Card.setCardDim({
+				w: 180,
+				h: needsTallerCards ? 65 : 50,
+				text_x: 10,
+				text_y: 12,
+				img_w: 0,
+				img_h: 0,
+				img_x: 0,
+				img_y: 0
+			});
+		}
+
 		this.f3Chart.updateTree({});
 
 		// Re-render kinship labels after tree update
