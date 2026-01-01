@@ -3236,6 +3236,7 @@ export class ControlCenterModal extends Modal {
 				settings: this.plugin.settings,
 				propertyAliases: this.plugin.settings.propertyAliases,
 				existingUniverses: allUniverses,
+				plugin: this.plugin,
 				onUpdated: () => {
 					// Refresh the People tab
 					this.showTab('people');
