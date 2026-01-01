@@ -16,6 +16,7 @@ import type CanvasRootsPlugin from '../../main';
 import { ModalStatePersistence, renderResumePromptBanner } from './modal-state-persistence';
 import { ResearchLevel, RESEARCH_LEVELS } from '../types/frontmatter';
 import { SourcePickerModal } from '../sources/ui/source-picker-modal';
+import { CreateSourceModal } from '../sources/ui/create-source-modal';
 import { SourceService } from '../sources/services/source-service';
 import { EventService } from '../events/services/event-service';
 import type { EventNote } from '../events/types/event-types';
@@ -1205,16 +1206,26 @@ export class CreatePersonModal extends Modal {
 	private createSourcesField(container: HTMLElement): void {
 		const sourcesContainer = container.createDiv({ cls: 'crc-sources-field' });
 
-		// Header with label and add button
+		// Header with label and buttons
 		const header = sourcesContainer.createDiv({ cls: 'crc-sources-field__header' });
 		header.createSpan({ cls: 'crc-sources-field__label', text: 'Sources' });
 
-		const addBtn = header.createEl('button', {
+		// Button container for multiple buttons (matching Events pattern)
+		const buttonContainer = header.createDiv({ cls: 'crc-sources-field__buttons' });
+
+		const linkBtn = buttonContainer.createEl('button', {
 			cls: 'crc-btn crc-btn--secondary crc-btn--small'
 		});
-		const addIcon = createLucideIcon('plus', 14);
-		addBtn.appendChild(addIcon);
-		addBtn.appendText(' Add source');
+		const linkIcon = createLucideIcon('link', 14);
+		linkBtn.appendChild(linkIcon);
+		linkBtn.appendText(' Link');
+
+		const createBtn = buttonContainer.createEl('button', {
+			cls: 'crc-btn crc-btn--secondary crc-btn--small'
+		});
+		const createIcon = createLucideIcon('plus', 14);
+		createBtn.appendChild(createIcon);
+		createBtn.appendText(' Create');
 
 		// List of current sources
 		const sourceList = sourcesContainer.createDiv({ cls: 'crc-sources-field__list' });
@@ -1259,8 +1270,8 @@ export class CreatePersonModal extends Modal {
 		// Initial render
 		renderSourceList();
 
-		// Add button handler
-		addBtn.addEventListener('click', () => {
+		// Link button handler - open source picker
+		linkBtn.addEventListener('click', () => {
 			if (!this.plugin) {
 				new Notice('Plugin not available');
 				return;
@@ -1280,7 +1291,33 @@ export class CreatePersonModal extends Modal {
 					renderSourceList();
 				},
 				excludeSources: this.sourcesField.crIds,
-				allowCreate: true
+				allowCreate: false  // Don't show create button in picker since we have separate Create button
+			}).open();
+		});
+
+		// Create button handler - open create source modal
+		createBtn.addEventListener('click', () => {
+			if (!this.plugin) {
+				new Notice('Plugin not available');
+				return;
+			}
+
+			new CreateSourceModal(this.app, this.plugin, {
+				onSuccess: (file) => {
+					// After creating, get the source and add it to the list
+					if (file) {
+						const sourceService = new SourceService(this.app, this.plugin!.settings);
+						const source = sourceService.getSourceByPath(file.path);
+						if (source) {
+							// Check if already added (shouldn't happen but safety check)
+							if (!this.sourcesField.crIds.includes(source.crId)) {
+								this.sourcesField.crIds.push(source.crId);
+								this.sourcesField.names.push(source.title);
+								renderSourceList();
+							}
+						}
+					}
+				}
 			}).open();
 		});
 	}
