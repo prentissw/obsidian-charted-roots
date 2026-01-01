@@ -411,6 +411,58 @@
 }
 
 /* ==========================================================================
+   Sources Multi-Select Field (similar to spouses field)
+   ========================================================================== */
+
+.crc-sources-field {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+}
+
+.crc-sources-field__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.crc-sources-field__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+.crc-sources-field__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crc-sources-field__empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.crc-sources-field__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--background-primary);
+  border-radius: var(--radius-s);
+}
+
+.crc-sources-field__name {
+  font-size: 14px;
+  color: var(--text-normal);
+}
+
+/* ==========================================================================
    Post-Create Actions Panel (Add Another Flow)
    ========================================================================== */
 

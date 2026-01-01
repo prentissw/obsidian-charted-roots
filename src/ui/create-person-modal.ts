@@ -1196,11 +1196,9 @@ export class CreatePersonModal extends Modal {
 	private createSourcesField(container: HTMLElement): void {
 		const sourcesContainer = container.createDiv({ cls: 'crc-sources-field' });
 
-		// Section header
-		sourcesContainer.createEl('h4', { text: 'Sources', cls: 'crc-section-header' });
-
-		// Header with add button
+		// Header with label and add button
 		const header = sourcesContainer.createDiv({ cls: 'crc-sources-field__header' });
+		header.createSpan({ cls: 'crc-sources-field__label', text: 'Sources' });
 
 		const addBtn = header.createEl('button', {
 			cls: 'crc-btn crc-btn--secondary crc-btn--small'
