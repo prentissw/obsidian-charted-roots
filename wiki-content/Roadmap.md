@@ -276,10 +276,25 @@ This pattern is already documented as a [recommended naming convention](Evidence
 
 ### Accessibility
 
-- Screen reader support with ARIA labels
-- High contrast mode
-- Keyboard navigation
-- WCAG AA compliance
+**Summary:** Improve usability for users with visual, motor, or cognitive disabilities.
+
+**Already Implemented:**
+- **ARIA labels** — Interactive buttons, tiles, and controls include `aria-label` attributes for screen readers
+- **Keyboard navigation** — Cleanup Wizard supports arrow keys, Enter/Space activation, and Escape to close (v0.18.11)
+- **Focus indicators** — Standard Obsidian focus styles on interactive elements
+
+**Planned Improvements:**
+- **Systematic ARIA coverage** — Audit all modals and UI components for missing labels
+- **Focus management** — Trap focus in modals, restore focus on close
+- **Skip-to-content links** — Allow keyboard users to bypass navigation in Control Center
+- **Reduced motion** — Respect `prefers-reduced-motion` for animations
+- **Color-independent indicators** — Add icons/patterns alongside color for status (not just red/green)
+- **High contrast mode** — Test and adjust colors for high contrast themes
+
+**Testing Approach:**
+- Screen reader testing with NVDA (Windows) and VoiceOver (macOS)
+- Keyboard-only navigation testing
+- Automated accessibility linting where feasible
 
 ---
 
