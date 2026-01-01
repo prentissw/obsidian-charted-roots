@@ -546,28 +546,35 @@ When `createSeparateNoteFiles` is enabled:
 - Parent entities get wikilinks instead of embedded content
 - All note metadata (type, privacy, tags, handle) preserved in frontmatter
 
-### Phase 5: Export & Sync (Future)
+### Phase 5: Export & Sync (Deferred Indefinitely)
 
 Support for exporting notes back to Gramps and potentially bi-directional sync.
 
-**User feedback suggests:**
+**Status:** Deferred indefinitely pending user demand.
+
+**Rationale (2026-01-01):**
+- Only one known user has expressed interest in this feature
+- That user plans to write custom Python scripts for their sync workflow
+- True bi-directional sync is complex (conflict resolution, change detection, handle mapping for new entities)
+- "Export to Gramps XML" would be the tractable first step if demand emerges
+- Not justified without broader demand from multiple users
+
+**If revisited, user feedback suggests:**
 - `sync-status: draft | synced | ignore` frontmatter field to control what gets pushed back
 - Dedicated folder structure makes change detection easier
 - Obsidian note files could be linked as media objects in Gramps
 
-**Requirements for round-trip support:**
+**Requirements for round-trip support (captured for future reference):**
 - Preserve Gramps handles (`gramps_handle` in frontmatter) - already done for some entities
 - Avoid lossy transformations during import
 - Track which notes were created in Obsidian vs. imported from Gramps
 - Handle conflicts (same note edited in both places)
 
 **Implementation considerations:**
-- Requires Phase 4 (separate note files) for accurate note-level sync
+- Requires Phase 4 (separate note files) for accurate note-level sync ✅
 - May require Phase 3 (Family entity) to preserve family-level notes
 - Export would extend existing Gramps XML export functionality
 - True "sync" is complex; "export changes" is more tractable
-
-**Status:** Deferred. Capture requirements now, implement after Phases 1-4 are stable and user feedback confirms demand.
 
 ---
 
