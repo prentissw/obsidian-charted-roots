@@ -3231,6 +3231,37 @@ export class FamilyChartView extends ItemView {
 		menu.showAtMouseEvent(e);
 	}
 
+	/**
+	 * Set the card style and refresh the chart
+	 */
+	private setCardStyle(style: CardStyle): void {
+		if (this.cardStyle === style) return;
+		this.cardStyle = style;
+		this.updateContainerStyleClass();
+		void this.refreshChart();
+	}
+
+	/**
+	 * Update the container's CSS class based on current card style
+	 */
+	private updateContainerStyleClass(): void {
+		if (!this.chartContainerEl) return;
+
+		// Remove existing style classes
+		this.chartContainerEl.removeClass(
+			'card-style-rectangle',
+			'card-style-circle',
+			'card-style-compact',
+			'card-style-mini'
+		);
+
+		// Add current style class
+		this.chartContainerEl.addClass(`card-style-${this.cardStyle}`);
+	}
+
+	/**
+	 * Show style/theme menu
+	 */
 	private showStyleMenu(e: MouseEvent): void {
 		const menu = new Menu();
 		const currentColors = this.plugin.settings.familyChartColors;
