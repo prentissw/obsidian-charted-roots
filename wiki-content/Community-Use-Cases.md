@@ -9,6 +9,7 @@ Real-world examples of how people use Canvas Roots for genealogy, worldbuilding,
 **Genealogists**
 - [Importing from Genealogy Software](#importing-from-genealogy-software)
 - [Building a Family Tree from Scratch](#building-a-family-tree-from-scratch)
+- [Adding a New Family Member](#adding-a-new-family-member)
 - [Generating a Family Reunion Report](#generating-a-family-reunion-report)
 - [Visualizing Migration Patterns](#visualizing-migration-patterns)
 - [Tracking DNA Matches](#tracking-dna-matches)
@@ -107,6 +108,84 @@ A user new to Canvas Roots wants to build their family tree from scratch without
 
 - **Relationships first, details later:** This workflow lets you quickly sketch out your family structure. You can add events, places, sources, and other details to each person later.
 - **Bidirectional linking:** When you set Person 2's father as Person 1, Canvas Roots automatically adds Person 2 to Person 1's children list.
+
+---
+
+### Adding a New Family Member
+
+**User type:** Genealogist
+**Features used:** Create Person, Create Event, Create Place, Link Media, Relationship Linking
+**Complexity:** Beginner
+
+**The Challenge**
+
+A new baby has arrived in the family. You want to add the child to your tree along with their birth event, birthplace, birth certificate, and a baby photo. There are multiple ways to accomplish this—which is most efficient?
+
+**Recommended Approach: Create Person First**
+
+This workflow is the most efficient, requiring approximately **34 interactions**.
+
+1. Open **Control Center** → **Dashboard** → **Create New Person Note**
+2. Enter name and sex (e.g., "Boy Smith", Male)
+3. Link **Father** → Select existing father
+4. Link **Mother** → Select existing mother
+5. Click **Create Person** → **Done**
+
+*Add the birth event:*
+
+6. Open **Control Center** → **Dashboard** → **Create New Event Note**
+7. Enter title (e.g., "Birth of Boy Smith"), select **Birth** as event type
+8. **Primary Person** → **Link** → Select the child you just created
+9. **Place** → **Link** → Create or select the birth location
+10. Click **Create Event**
+
+*Add media:*
+
+11. Right-click the event note → **Canvas Roots** → **Media** → **Link Media** → Upload birth certificate
+12. Right-click the person note → **Canvas Roots** → **Media** → **Link Media** → Upload baby photo
+
+**Alternative: Create Event First**
+
+Starting with the birth event works well when you want to document the event details immediately. This requires approximately **39 interactions**.
+
+1. Open **Control Center** → **Dashboard** → **Create New Event Note**
+2. Enter title and select **Birth** as event type
+3. **Primary Person** → **Link** → **Create New Person** → Enter name, sex → **Create and Link**
+4. **Place** → **Link** → **Create New Place** → Enter name, lookup coordinates → **Create Place**
+5. Click **Create Event**
+
+*Link parents (requires navigating to the person note):*
+
+6. In the file explorer, find the new person note
+7. Right-click → **Canvas Roots** → **Add Relationship** → **Add Father** → Select father
+8. Right-click again → **Canvas Roots** → **Add Relationship** → **Add Mother** → Select mother
+
+*Add media as above.*
+
+**Alternative: Add via Child Relationship**
+
+Adding a child through the parent's relationship menu is intuitive but less efficient, requiring approximately **45 interactions**. The main drawback: adding a child via one parent doesn't automatically link to the other parent.
+
+1. Find the father's note in the file explorer
+2. Right-click → **Canvas Roots** → **Add Relationship** → **Add Child** → **Create New Child**
+3. Enter name and sex → **Create and Link**
+4. Find the mother's note, right-click → **Canvas Roots** → **Add Relationship** → **Add Child** → Select the child
+5. Continue with adding birthplace, event, and media as above
+
+**Workflow Comparison**
+
+| Approach | Interactions | Best When |
+|----------|-------------|-----------|
+| **Create Person First** | ~34 | You know the parents and want efficiency |
+| **Create Event First** | ~39 | The event details are your starting point |
+| **Add via Child Relationship** | ~45 | You're already viewing a parent's note |
+
+**Tips**
+
+- **Person-first is fastest:** Creating the person with both parents linked in one step saves navigation time.
+- **Bidirectional linking:** Canvas Roots automatically creates the reverse relationship, so you don't need to manually add the child to both parents.
+- **Batch media uploads:** If you have multiple documents (birth certificate, hospital record, photos), you can upload them all at once via the media picker.
+- **Reuse places:** If the birth location already exists as a place note, linking is faster than creating a new one.
 
 ---
 
