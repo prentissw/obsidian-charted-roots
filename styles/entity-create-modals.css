@@ -463,6 +463,85 @@
 }
 
 /* ==========================================================================
+   Events Display Field (read-only, shows events referencing person)
+   ========================================================================== */
+
+.crc-events-field {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+}
+
+.crc-events-field__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.crc-events-field__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+.crc-events-field__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crc-events-field__empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.crc-events-field__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--background-primary);
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.crc-events-field__item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.crc-events-field__info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.crc-events-field__title {
+  font-size: 14px;
+  color: var(--text-normal);
+  font-weight: 500;
+}
+
+.crc-events-field__type {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: var(--radius-s);
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+.crc-events-field__date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
    Post-Create Actions Panel (Add Another Flow)
    ========================================================================== */
 

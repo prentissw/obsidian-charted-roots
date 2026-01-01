@@ -17,6 +17,8 @@ import { ModalStatePersistence, renderResumePromptBanner } from './modal-state-p
 import { ResearchLevel, RESEARCH_LEVELS } from '../types/frontmatter';
 import { SourcePickerModal } from '../sources/ui/source-picker-modal';
 import { SourceService } from '../sources/services/source-service';
+import { EventService } from '../events/services/event-service';
+import type { EventNote } from '../events/types/event-types';
 
 /**
  * Relationship field data
@@ -460,6 +462,11 @@ export class CreatePersonModal extends Modal {
 							this.personData.researchLevel = value ? parseInt(value) as ResearchLevel : undefined;
 						});
 				});
+		}
+
+		// Events section (only in edit mode - events link TO persons, not FROM them)
+		if (this.editMode) {
+			this.createEventsField(form);
 		}
 
 		// Sources section
@@ -1274,6 +1281,119 @@ export class CreatePersonModal extends Modal {
 				allowCreate: true
 			}).open();
 		});
+	}
+
+	/**
+	 * Create the events display field (read-only in Phase 2.1)
+	 * Shows events that reference this person via their person/persons property
+	 */
+	private createEventsField(container: HTMLElement): void {
+		const eventsContainer = container.createDiv({ cls: 'crc-events-field' });
+
+		// Header with label
+		const header = eventsContainer.createDiv({ cls: 'crc-events-field__header' });
+		header.createSpan({ cls: 'crc-events-field__label', text: 'Events' });
+
+		// List of events referencing this person
+		const eventList = eventsContainer.createDiv({ cls: 'crc-events-field__list' });
+
+		// Get events for this person
+		const personEvents = this.getEventsForPerson();
+
+		if (personEvents.length === 0) {
+			const emptyState = eventList.createDiv({ cls: 'crc-events-field__empty' });
+			emptyState.setText('No events reference this person');
+			return;
+		}
+
+		// Render each event
+		for (const event of personEvents) {
+			const eventItem = eventList.createDiv({ cls: 'crc-events-field__item' });
+
+			// Event info container
+			const infoContainer = eventItem.createDiv({ cls: 'crc-events-field__info' });
+
+			// Event title
+			const titleSpan = infoContainer.createSpan({ cls: 'crc-events-field__title' });
+			titleSpan.setText(event.title);
+
+			// Event type badge
+			if (event.eventType) {
+				const typeBadge = infoContainer.createSpan({ cls: 'crc-events-field__type' });
+				typeBadge.setText(event.eventType);
+			}
+
+			// Event date
+			if (event.date) {
+				const dateSpan = infoContainer.createSpan({ cls: 'crc-events-field__date' });
+				dateSpan.setText(event.date);
+			}
+
+			// Click to open event note
+			eventItem.addEventListener('click', () => {
+				void this.app.workspace.openLinkText(event.filePath, '', false);
+			});
+		}
+	}
+
+	/**
+	 * Get events that reference this person
+	 * Checks both singular person and plural persons properties
+	 */
+	private getEventsForPerson(): EventNote[] {
+		if (!this.plugin) return [];
+
+		const eventService = this.plugin.getEventService();
+		if (!eventService) return [];
+
+		// Get the person's name and cr_id for matching
+		const personName = this.personData.name;
+		const personCrId = this.personData.crId;
+
+		if (!personName && !personCrId) return [];
+
+		// Get all events and filter to those referencing this person
+		const allEvents = eventService.getAllEvents();
+
+		return allEvents.filter(event => {
+			// Check singular person property
+			if (event.person) {
+				const personMatch = this.matchesPersonReference(event.person, personName, personCrId);
+				if (personMatch) return true;
+			}
+
+			// Check plural persons property
+			if (event.persons && event.persons.length > 0) {
+				for (const p of event.persons) {
+					if (this.matchesPersonReference(p, personName, personCrId)) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		});
+	}
+
+	/**
+	 * Check if a person reference (wikilink) matches the current person
+	 */
+	private matchesPersonReference(reference: string, personName: string | undefined, personCrId: string | undefined): boolean {
+		// Extract name from wikilink: [[Name]] or "[[Name]]"
+		const match = reference.match(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/);
+		const refName = match ? match[1] : reference;
+
+		// Match by name
+		if (personName && refName.toLowerCase() === personName.toLowerCase()) {
+			return true;
+		}
+
+		// Match by cr_id if present in reference (less common but possible)
+		if (personCrId && reference.includes(personCrId)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
