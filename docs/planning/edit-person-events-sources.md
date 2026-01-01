@@ -4,9 +4,9 @@
 
 Add events and sources fields to the Edit Person modal, allowing users to manage all person-related data from a single interface instead of editing multiple notes separately.
 
-**Status:** Planning
+**Status:** Phase 1 Complete | Phase 2 Planned
 **Issue:** [#33](https://github.com/banisterious/obsidian-canvas-roots/issues/33)
-**Target Version:** TBD
+**Target Version:** v0.18.14
 
 ## Problem Statement
 
@@ -55,6 +55,51 @@ sources_id:
   - "1860-census-smith"
   - "birth-cert-john-smith"
 ```
+
+## Codebase Investigation Findings
+
+Investigation completed December 2024 to verify existing infrastructure and property patterns.
+
+### Existing Infrastructure
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| `CreatePersonModal` | ✅ Exists | Used for both create and edit modes; `isEditing` flag controls behavior |
+| `SourcePickerModal` | ✅ Exists | Needs `allowCreate` option added to constructor |
+| `MultiRelationshipField` | ✅ Exists | Pattern already used for spouses, children; can be reused for sources |
+| `SourceMigrationService` | ✅ Exists | Already handles `sources` array via migration from legacy `source`, `source_2`, etc. |
+
+### Property Status
+
+| Property | Status | Notes |
+|----------|--------|-------|
+| `sources` | ✅ Already exists | Migrated from legacy indexed properties by `SourceMigrationService` |
+| `sources_id` | 🆕 New | Companion cr_id array to add (follows `children`/`children_id` pattern) |
+| `source`, `source_2`, `source_3` | ⚠️ Legacy | Still in use by some vaults; migrated to `sources` array on load |
+
+### Property Naming Rationale
+
+The `sources_id` naming follows the established convention for dual-storage relationship properties:
+
+| Wikilink Property | ID Property | Pattern |
+|-------------------|-------------|---------|
+| `children` | `children_id` | plural → plural_id |
+| `parents` | `parents_id` | plural → plural_id |
+| `spouses` | `spouses_id` | plural → plural_id |
+| `sources` | `sources_id` | plural → plural_id ✅ |
+
+Alternative `source_ids` was considered but rejected for consistency with existing patterns.
+
+### Sources vs Sourced Properties
+
+**Important distinction:**
+
+| Property Type | Purpose | Example |
+|---------------|---------|---------|
+| `sources` / `sources_id` | **General person-level sources** | Census records, family bibles, photographs documenting the person |
+| `sourced_*` properties | **Fact-level GPS tracking** | `sourced_birth_date`, `sourced_birth_place` for specific claims |
+
+The `sourced_*` properties support evidence tracking at the individual fact level (Genealogical Proof Standard compliance), while `sources` provides a simpler list of general sources associated with the person. Both can coexist.
 
 ## Technical Design
 
@@ -283,15 +328,22 @@ class EventPickerModal extends FuzzySuggestModal<EventNote> {
 | File | Changes |
 |------|---------|
 | `src/ui/create-person-modal.ts` | Add events and sources sections, state management |
-| `src/core/person-note-writer.ts` | Handle `sources` and `sources_id` properties |
-| `src/types/frontmatter.ts` | Add `sources` and `sources_id` to PersonFrontmatter |
+| `src/core/person-note-writer.ts` | Handle `sources_id` property (sources already handled) |
+| `src/types/frontmatter.ts` | Add `sources_id` to PersonFrontmatter (`sources` may already exist) |
 | `src/events/ui/create-event-modal.ts` | Add `prefillPerson` option |
+| `src/sources/ui/source-picker-modal.ts` | Add `allowCreate` option to constructor |
 
 ## Files to Create
 
 | File | Purpose |
 |------|---------|
 | `src/events/ui/event-picker-modal.ts` | Event selection modal (optional - could use FuzzySuggestModal inline) |
+
+## No Changes Required
+
+| File | Reason |
+|------|--------|
+| `src/sources/services/source-migration-service.ts` | Already handles `sources` array migration from legacy properties |
 
 ## Out of Scope
 
@@ -301,12 +353,22 @@ class EventPickerModal extends FuzzySuggestModal<EventNote> {
 
 ## Implementation Phases
 
-### Phase 1: Sources Section
-1. Add `sources` / `sources_id` to frontmatter types
-2. Add sources section UI to Create Person modal
-3. Integrate with `SourcePickerModal`
-4. Update `PersonNoteWriter` to save sources
-5. Load existing sources when editing
+### Phase 1: Sources Section ✅ Complete
+
+| Step | Task | Status |
+|------|------|--------|
+| 1 | Add `sources_id` to frontmatter types | ✅ Done |
+| 2 | Add `allowCreate` option to `SourcePickerModal` | ✅ Done |
+| 3 | Add sources section UI to CreatePersonModal | ✅ Done |
+| 4 | Update `PersonNoteWriter` to save `sources_id` alongside `sources` | ✅ Done |
+| 5 | Load existing sources when editing | ✅ Done |
+| 6 | Add CSS styling matching spouses field pattern | ✅ Done |
+
+**Commits:**
+- `6b559bb` - Add sources_id property and refactor SourcePickerModal to options pattern
+- `9be4fe3` - Add sources section UI to CreatePersonModal
+- `5a9d54d` - Load existing sources when editing a person
+- `0e0f48d` - Match sources field styling to spouses field pattern
 
 ### Phase 2: Events Section
 1. Add events section UI (read-only display first)

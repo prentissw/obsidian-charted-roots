@@ -64,29 +64,32 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Priority:** 📋 Medium — Expand person editing with related entity linking
 
-**Status:** Planning | [#33](https://github.com/banisterious/obsidian-canvas-roots/issues/33)
+**Status:** ✅ Phase 1 complete | Phase 2 planned | [#33](https://github.com/banisterious/obsidian-canvas-roots/issues/33)
 
 **Summary:** Add events and sources fields to the Edit Person modal, allowing users to manage all person-related data from a single interface instead of editing multiple notes separately.
 
-**Planned Features:**
+**Features:**
 
-| Feature | Description |
-|---------|-------------|
-| Events section | Display events referencing this person; link existing or create new events |
-| Sources section | Multi-value picker to link source notes with create-new support |
-| Event linking | Updates event note's `persons` array to include this person |
-| Source storage | Stores as `sources` array in person frontmatter |
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Sources section | Multi-value picker to link source notes with create-new support | ✅ Complete |
+| Source storage | Stores as `sources`/`sources_id` arrays in person frontmatter | ✅ Complete |
+| Events section | Display events referencing this person; link existing or create new events | Planned |
+| Event linking | Updates event note's `persons` array to include this person | Planned |
 
 **Technical Notes:**
 - Events use inverse relationships: event notes contain `persons: ["[[Person]]"]`
 - Linking an event from the person modal modifies the event note, not the person note
 - Sources follow the existing multi-value picker pattern (like spouses/children)
-- Uses existing `SourcePickerModal` and `CreateEventModal`
+- Uses dual-storage pattern: `sources` (wikilinks) + `sources_id` (cr_ids) for reliable linking
 
 **Implementation Phases:**
-1. Sources section (straightforward multi-value picker)
-2. Events section (read-only display, then link/create/unlink)
-3. Polish (form persistence, duplicate detection, display formatting)
+
+| Phase | Feature | Status |
+|-------|---------|--------|
+| 1 | Sources section (multi-value picker) | ✅ Complete |
+| 2 | Events section (read-only display, then link/create/unlink) | Planned |
+| 3 | Polish (form persistence, duplicate detection, display formatting) | Planned |
 
 **Documentation:**
 - See [Edit Person Events & Sources Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/edit-person-events-sources.md) for detailed specifications
