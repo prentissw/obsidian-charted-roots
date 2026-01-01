@@ -6,7 +6,7 @@
 import { App, Modal, Notice } from 'obsidian';
 import { createLucideIcon } from './lucide-icons';
 
-export type TemplateType = 'person' | 'event' | 'place' | 'source' | 'organization' | 'universe' | 'proof' | 'reference';
+export type TemplateType = 'person' | 'event' | 'place' | 'source' | 'organization' | 'universe' | 'note' | 'proof' | 'reference';
 
 /**
  * Property aliases mapping type
@@ -82,6 +82,7 @@ export class TemplateSnippetsModal extends Modal {
 			{ type: 'source', label: 'Sources', icon: 'archive' },
 			{ type: 'organization', label: 'Organizations', icon: 'building' },
 			{ type: 'universe', label: 'Universes', icon: 'globe' },
+			{ type: 'note', label: 'Notes', icon: 'file-text' },
 			{ type: 'proof', label: 'Proof summaries', icon: 'scale' },
 			{ type: 'reference', label: 'Reference', icon: 'book-open' }
 		];
@@ -161,6 +162,9 @@ export class TemplateSnippetsModal extends Modal {
 				break;
 			case 'universe':
 				templates = this.getUniverseTemplates();
+				break;
+			case 'note':
+				templates = this.getNoteTemplates();
 				break;
 			case 'proof':
 				templates = this.getProofTemplates();
@@ -850,6 +854,75 @@ This universe uses a custom date system. Define your calendar in the Date System
 ## Major locations
 
 ## Notable figures
+
+`
+			}
+		];
+	}
+
+	/**
+	 * Get note entity templates (Phase 4 Gramps Notes)
+	 */
+	private getNoteTemplates(): TemplateSnippet[] {
+		const p = (canonical: string) => getPropertyName(canonical, this.propertyAliases);
+
+		return [
+			{
+				name: 'Basic note',
+				description: 'Minimal template for research notes',
+				template: `---
+${p('cr_type')}: note
+${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+cr_note_type: <% tp.system.suggester(["Research", "Person Note", "Transcript", "Source text", "General"], ["Research", "Person Note", "Transcript", "Source text", "General"]) %>
+private: false
+---
+
+# <% tp.file.title %>
+
+<% tp.file.cursor() %>`
+			},
+			{
+				name: 'Research note',
+				description: 'Template for documenting research findings',
+				template: `---
+${p('cr_type')}: note
+${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+cr_note_type: Research
+private: false
+linked_entities:
+  - "[[<% tp.system.prompt("Related person/event/source?", "", false) %>]]"
+---
+
+# <% tp.file.title %>
+
+## Summary
+
+<% tp.file.cursor() %>
+
+## Sources consulted
+
+## Next steps
+
+`
+			},
+			{
+				name: 'Transcript note',
+				description: 'For document transcriptions',
+				template: `---
+${p('cr_type')}: note
+${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+cr_note_type: Transcript
+private: false
+source: "[[<% tp.system.prompt("Source document?", "", false) %>]]"
+---
+
+# Transcript: <% tp.file.title %>
+
+## Original text
+
+<% tp.file.cursor() %>
+
+## Transcription notes
 
 `
 			}
