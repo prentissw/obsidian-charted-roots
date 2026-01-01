@@ -1,4 +1,4 @@
-# Circular Avatar Card Style
+# Card Style Options for Family Chart
 
 **Status:** Planning
 **Priority:** Medium
@@ -8,9 +8,7 @@
 
 ## Summary
 
-Add an optional "Circle" card style to the Family Chart view that displays person nodes with circular avatar images. When a person has no media attached, the card falls back to a rectangular text card showing name and dates.
-
-This enhancement provides a more polished, photo-centric visualization for users who have attached portrait images to their person notes.
+Add multiple card style options to the Family Chart view, allowing users to choose the visualization that best fits their needs. Options include circular avatars for photo-centric display, compact text-only cards for large trees, and mini cards for overview navigation.
 
 ---
 
@@ -24,6 +22,8 @@ A new toolbar button (icon: `layout-template` or similar) opens a dropdown menu:
 |--------|-------------|
 | Rectangle (default) | Current SVG cards with square avatars |
 | Circle | HTML cards with circular avatars, rectangular fallback |
+| Compact | Text-only cards, no avatars (for large trees or structure focus) |
+| Mini | Smaller cards fitting more generations on screen |
 
 ### Visual Behavior
 
@@ -41,6 +41,18 @@ A new toolbar button (icon: `layout-template` or similar) opens a dropdown menu:
 
 This hybrid approach (`imageCircleRect` in family-chart library) ensures no information loss for persons without photos.
 
+**Compact style:**
+- Text-only cards, no avatar images
+- Name + birth/death dates
+- Gender-based background color
+- Useful for large trees (100+ nodes) or when focusing on structure over photos
+
+**Mini style:**
+- Smaller card dimensions
+- Abbreviated display (name only, or name + years)
+- Fits more generations on screen
+- Ideal for overview/navigation before zooming in
+
 ---
 
 ## Technical Design
@@ -49,7 +61,7 @@ This hybrid approach (`imageCircleRect` in family-chart library) ensures no info
 
 New view state property:
 ```typescript
-private cardStyle: 'rectangle' | 'circle' = 'rectangle';
+private cardStyle: 'rectangle' | 'circle' | 'compact' | 'mini' = 'rectangle';
 ```
 
 ### Toolbar Addition
@@ -87,6 +99,16 @@ private showCardStyleMenu(e: MouseEvent): void {
             .onClick(() => this.setCardStyle('circle'));
     });
 
+    menu.addItem((item) => {
+        item.setTitle(`${this.cardStyle === 'compact' ? '✓ ' : '  '}Compact`)
+            .onClick(() => this.setCardStyle('compact'));
+    });
+
+    menu.addItem((item) => {
+        item.setTitle(`${this.cardStyle === 'mini' ? '✓ ' : '  '}Mini`)
+            .onClick(() => this.setCardStyle('mini'));
+    });
+
     menu.showAtMouseEvent(e);
 }
 ```
@@ -96,22 +118,45 @@ private showCardStyleMenu(e: MouseEvent): void {
 Modify chart initialization (~line 895) to select renderer based on style:
 
 ```typescript
-if (this.cardStyle === 'circle') {
-    // HTML cards with circular avatar / rectangle fallback
-    this.f3Card = this.f3Chart.setCardHtml()
-        .setStyle('imageCircleRect')
-        .setCardDisplay(displayFields)
-        .setCardImageField('avatar')
-        .setCardDim({ w: 200, h: 70, img_w: 60, img_h: 60, img_x: 5, img_y: 5 })
-        .setOnCardClick((e, d) => this.handleCardClick(e, d))
-        .setOnCardUpdate(this.createOpenNoteButtonCallback());
-} else {
-    // Default: SVG cards (current implementation)
-    this.f3Card = this.f3Chart.setCardSvg()
-        .setCardDisplay(displayFields)
-        .setCardDim({ w: 200, h: 70, text_x: 75, text_y: 15, img_w: 60, img_h: 60, img_x: 5, img_y: 5 })
-        .setOnCardClick((e, d) => this.handleCardClick(e, d))
-        .setOnCardUpdate(this.createOpenNoteButtonCallback());
+switch (this.cardStyle) {
+    case 'circle':
+        // HTML cards with circular avatar / rectangle fallback
+        this.f3Card = this.f3Chart.setCardHtml()
+            .setStyle('imageCircleRect')
+            .setCardDisplay(displayFields)
+            .setCardImageField('avatar')
+            .setCardDim({ w: 200, h: 70, img_w: 60, img_h: 60, img_x: 5, img_y: 5 })
+            .setOnCardClick((e, d) => this.handleCardClick(e, d))
+            .setOnCardUpdate(this.createOpenNoteButtonCallback());
+        break;
+
+    case 'compact':
+        // Text-only cards, no avatars
+        this.f3Card = this.f3Chart.setCardSvg()
+            .setCardDisplay(displayFields)
+            .setCardDim({ w: 180, h: 50, text_x: 10, text_y: 12, img_w: 0, img_h: 0 })
+            .setOnCardClick((e, d) => this.handleCardClick(e, d))
+            .setOnCardUpdate(this.createOpenNoteButtonCallback());
+        break;
+
+    case 'mini':
+        // Smaller cards for overview
+        this.f3Card = this.f3Chart.setCardSvg()
+            .setCardDisplay([['name']]) // Name only for mini
+            .setCardDim({ w: 120, h: 35, text_x: 5, text_y: 10, img_w: 0, img_h: 0 })
+            .setOnCardClick((e, d) => this.handleCardClick(e, d))
+            .setOnCardUpdate(this.createOpenNoteButtonCallback());
+        break;
+
+    case 'rectangle':
+    default:
+        // Default: SVG cards with square avatars (current implementation)
+        this.f3Card = this.f3Chart.setCardSvg()
+            .setCardDisplay(displayFields)
+            .setCardDim({ w: 200, h: 70, text_x: 75, text_y: 15, img_w: 60, img_h: 60, img_x: 5, img_y: 5 })
+            .setOnCardClick((e, d) => this.handleCardClick(e, d))
+            .setOnCardUpdate(this.createOpenNoteButtonCallback());
+        break;
 }
 ```
 
@@ -127,7 +172,7 @@ private f3Card: ReturnType<ReturnType<typeof f3.createChart>['setCardSvg']>
 ### Style Change Handler
 
 ```typescript
-private setCardStyle(style: 'rectangle' | 'circle'): void {
+private setCardStyle(style: 'rectangle' | 'circle' | 'compact' | 'mini'): void {
     if (this.cardStyle === style) return;
     this.cardStyle = style;
     void this.refreshChart();
@@ -194,6 +239,36 @@ Add to `styles/family-chart-view.css`:
     padding: 10px 15px;
     border-radius: 5px;
 }
+
+/* ============================================================
+ * Compact Card Styles (text-only, no avatars)
+ * ============================================================ */
+
+.cr-fcv-chart-container.f3.card-style-compact rect.card-bg {
+    width: 180px;
+    height: 50px;
+}
+
+.cr-fcv-chart-container.f3.card-style-compact text {
+    font-size: 11px;
+}
+
+/* ============================================================
+ * Mini Card Styles (smaller for overview)
+ * ============================================================ */
+
+.cr-fcv-chart-container.f3.card-style-mini rect.card-bg {
+    width: 120px;
+    height: 35px;
+}
+
+.cr-fcv-chart-container.f3.card-style-mini text {
+    font-size: 10px;
+}
+
+.cr-fcv-chart-container.f3.card-style-mini .open-note-btn {
+    display: none; /* Hide button on mini cards - too small */
+}
 ```
 
 ---
@@ -252,13 +327,16 @@ HTML cards use DOM elements instead of SVG. For large trees (100+ nodes), benchm
 - [ ] Rectangle style works as before (no regression)
 - [ ] Circle style displays circular avatars correctly
 - [ ] Circle style falls back to rectangle for no-avatar persons
-- [ ] Gender colors apply correctly in both styles
-- [ ] Card click navigation works
-- [ ] Open note button appears and works
+- [ ] Compact style displays text-only cards without avatars
+- [ ] Mini style displays smaller cards with name only
+- [ ] Gender colors apply correctly in all styles
+- [ ] Card click navigation works in all styles
+- [ ] Open note button appears and works (except Mini where hidden)
 - [ ] Switching styles refreshes chart correctly
-- [ ] Style persists across view reopening
-- [ ] Export produces expected output
-- [ ] Works with horizontal and vertical orientations
+- [ ] Style persists across view reopening (per-view state)
+- [ ] Export produces expected output for each style
+- [ ] All styles work with horizontal and vertical orientations
+- [ ] Mini style renders correctly with large trees (100+ nodes)
 
 ---
 

@@ -8,7 +8,7 @@ This document outlines planned features for Canvas Roots. For completed features
 
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
-  - [Circular Avatar Card Style](#circular-avatar-card-style) 📋 Medium
+  - [Card Style Options](#card-style-options) 📋 Medium
   - [Gramps Notes & Family Integration](#gramps-notes--family-integration) 📋 Medium
   - [Calendarium Integration](#calendarium-integration) 💡 Low
   - [Staging Management](#staging-management) 💡 Low
@@ -61,22 +61,22 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 ---
 
-### Circular Avatar Card Style
+### Card Style Options
 
-**Priority:** 📋 Medium — Photo-centric visualization for Family Chart
+**Priority:** 📋 Medium — Flexible visualization options for Family Chart
 
 **Status:** Planning
 
-**Summary:** Add an optional "Circle" card style to the Family Chart view that displays person nodes with circular avatar images. When a person has no media attached, the card falls back to a rectangular text card showing name and dates.
+**Summary:** Add multiple card style options to the Family Chart view, allowing users to choose the visualization that best fits their needs.
 
-**Features:**
-- New toolbar dropdown to select card style (Rectangle or Circle)
-- Circular photos with gender-based background colors
-- Automatic fallback to rectangular cards when no avatar exists
-- No information loss for persons without photos
+**Card Styles:**
+- **Rectangle** (default) — Current SVG cards with square avatars
+- **Circle** — HTML cards with circular avatars, rectangular fallback for persons without photos
+- **Compact** — Text-only cards without avatars, ideal for large trees or structure focus
+- **Mini** — Smaller cards fitting more generations on screen
 
 **Documentation:**
-- See [Circular Avatar Card Style Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/circular-avatar-card-style.md) for detailed specifications
+- See [Card Style Options Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/card-style-options.md) for detailed specifications
 
 ---
 
