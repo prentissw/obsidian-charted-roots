@@ -46,6 +46,11 @@ interface FamilyChartPerson {
 }
 
 /**
+ * Card style options for Family Chart
+ */
+type CardStyle = 'rectangle' | 'circle' | 'compact' | 'mini';
+
+/**
  * View state that gets persisted
  */
 interface FamilyChartViewState {
@@ -67,6 +72,8 @@ interface FamilyChartViewState {
 	showSingleParentEmptyCard?: boolean;
 	sortChildrenByBirthDate?: boolean;
 	hidePrivateLiving?: boolean;
+	// Card style
+	cardStyle?: CardStyle;
 	[key: string]: unknown;  // Index signature for Record<string, unknown> compatibility
 }
 
@@ -95,10 +102,14 @@ export class FamilyChartView extends ItemView {
 	private showSingleParentEmptyCard: boolean = false;
 	private sortChildrenByBirthDate: boolean = false;
 	private hidePrivateLiving: boolean = false;
+	// Card style: rectangle (default SVG), circle (HTML circular), compact (text-only), mini (smaller)
+	private cardStyle: CardStyle = 'rectangle';
 
 	// family-chart instances
 	private f3Chart: ReturnType<typeof f3.createChart> | null = null;
-	private f3Card: ReturnType<ReturnType<typeof f3.createChart>['setCardSvg']> | null = null;
+	private f3Card: ReturnType<ReturnType<typeof f3.createChart>['setCardSvg']>
+		| ReturnType<ReturnType<typeof f3.createChart>['setCardHtml']>
+		| null = null;
 	private f3EditTree: ReturnType<ReturnType<typeof f3.createChart>['editTree']> | null = null;
 
 	// UI elements
@@ -160,6 +171,8 @@ export class FamilyChartView extends ItemView {
 
 	// eslint-disable-next-line @typescript-eslint/require-await -- Base class requires Promise<void> return type
 	async onOpen(): Promise<void> {
+		logger.debug('on-open', 'Opening view', { cardStyle: this.cardStyle, rootPersonId: this.rootPersonId });
+
 		// Build UI structure
 		this.buildUI();
 
@@ -291,6 +304,14 @@ export class FamilyChartView extends ItemView {
 		});
 		setIcon(displayBtn, 'eye');
 		displayBtn.addEventListener('click', (e) => this.showDisplayMenu(e));
+
+		// Card style button (rectangle, circle, compact, mini)
+		const cardStyleBtn = rightControls.createEl('button', {
+			cls: 'cr-fcv-btn clickable-icon',
+			attr: { 'aria-label': 'Card style' }
+		});
+		setIcon(cardStyleBtn, 'layout-template');
+		cardStyleBtn.addEventListener('click', (e) => this.showCardStyleMenu(e));
 
 		// Style settings button (colors, themes)
 		const styleBtn = rightControls.createEl('button', {
@@ -786,7 +807,7 @@ export class FamilyChartView extends ItemView {
 	private initializeChart(): void {
 		if (!this.chartContainerEl) return;
 
-		logger.debug('chart-init', 'Initializing chart', { rootPersonId: this.rootPersonId });
+		logger.debug('chart-init', 'Initializing chart', { rootPersonId: this.rootPersonId, cardStyle: this.cardStyle });
 
 		// Close info panel when switching to a new chart
 		this.closeInfoPanel();
@@ -882,7 +903,8 @@ export class FamilyChartView extends ItemView {
 				});
 			}
 
-			// Configure SVG cards with current display options
+			// Configure cards based on current card style
+			// Each inner array is a line, with fields joined by space
 			const displayFields: string[][] = [['first name', 'last name']];
 			if (this.showBirthDates && this.showDeathDates) {
 				displayFields.push(['birthday', 'deathday']);
@@ -892,11 +914,46 @@ export class FamilyChartView extends ItemView {
 				displayFields.push(['deathday']);
 			}
 
-			this.f3Card = this.f3Chart.setCardSvg()
-				.setCardDisplay(displayFields)
-				.setCardDim({ w: 200, h: 70, text_x: 75, text_y: 15, img_w: 60, img_h: 60, img_x: 5, img_y: 5 })
-				.setOnCardClick((e, d) => this.handleCardClick(e, d))
-				.setOnCardUpdate(this.createOpenNoteButtonCallback());
+			// Apply container style class for CSS targeting
+			this.updateContainerStyleClass();
+
+			// Initialize card renderer based on card style
+			switch (this.cardStyle) {
+				case 'circle':
+					// HTML cards with circular avatar - use setOnCardUpdate to replace entire card HTML
+					// Based on family-chart v2 example: external/family-chart/examples/htmls/v2/11-card-styling.html
+					this.f3Card = this.f3Chart.setCardHtml()
+						.setOnCardUpdate(this.createCircleCardCallback());
+					break;
+
+				case 'compact':
+					// Text-only cards, no avatars
+					this.f3Card = this.f3Chart.setCardSvg()
+						.setCardDisplay(displayFields)
+						.setCardDim({ w: 180, h: 50, text_x: 10, text_y: 12, img_w: 0, img_h: 0, img_x: 0, img_y: 0 })
+						.setOnCardClick((e, d) => this.handleCardClick(e, d))
+						.setOnCardUpdate(this.createOpenNoteButtonCallback());
+					break;
+
+				case 'mini':
+					// Smaller cards for overview (name only)
+					this.f3Card = this.f3Chart.setCardSvg()
+						.setCardDisplay([['first name', 'last name']])
+						.setCardDim({ w: 120, h: 35, text_x: 5, text_y: 10, img_w: 0, img_h: 0, img_x: 0, img_y: 0 })
+						.setOnCardClick((e, d) => this.handleCardClick(e, d))
+						.setOnCardUpdate(this.createOpenNoteButtonCallback());
+					break;
+
+				case 'rectangle':
+				default:
+					// Default: SVG cards with square avatars (current implementation)
+					this.f3Card = this.f3Chart.setCardSvg()
+						.setCardDisplay(displayFields)
+						.setCardDim({ w: 200, h: 70, text_x: 75, text_y: 15, img_w: 60, img_h: 60, img_x: 5, img_y: 5 })
+						.setOnCardClick((e, d) => this.handleCardClick(e, d))
+						.setOnCardUpdate(this.createOpenNoteButtonCallback());
+					break;
+			}
 
 			// Initialize EditTree for editing capabilities
 			this.initializeEditTree();
@@ -1205,25 +1262,51 @@ export class FamilyChartView extends ItemView {
 			// Check if button already exists (prevents duplicates on re-render)
 			if (d3.select(cardEl).select('.cr-open-note-btn').size() > 0) return;
 
+			// Get button position based on card style
+			// Card dimensions vary: rectangle=200x70, compact=180x50, mini=120x35
+			// Button radius=9, position near right edge
+			let btnX: number;
+			let btnY: number;
+			let btnRadius: number;
+			switch (view.cardStyle) {
+				case 'compact':
+					btnX = 162; // 180 width, position near right edge
+					btnY = 12;
+					btnRadius = 9;
+					break;
+				case 'mini':
+					btnX = 108; // 120 width, position near right edge
+					btnY = 10;
+					btnRadius = 7;
+					break;
+				default: // rectangle
+					btnX = 185; // 200 width, position near right edge
+					btnY = 12;
+					btnRadius = 9;
+			}
+
 			// Create button group positioned in top-right corner
-			// Card dimensions: w=200, h=70
-			// Position at (185, 12) to keep button visible within card bounds
+			// Append to .card group (not .card-inner which has clip-path that clips the button)
 			const btnGroup = d3.select(cardEl)
-				.select('.card-inner')
+				.select('.card')
 				.append('g')
 				.attr('class', 'cr-open-note-btn')
-				.attr('transform', 'translate(185, 12)')
+				.attr('transform', `translate(${btnX}, ${btnY})`)
 				.style('cursor', 'pointer');
 
 			// Add circle background
 			btnGroup.append('circle')
-				.attr('r', 9)
+				.attr('r', btnRadius)
 				.attr('fill', 'var(--background-primary)')
 				.attr('stroke', 'var(--text-muted)')
 				.attr('stroke-width', 1);
 
 			// Add file-text icon (simplified SVG path for a document)
-			btnGroup.append('path')
+			// Scale icon for mini cards
+			const iconScale = btnRadius < 9 ? 0.7 : 1;
+			const iconGroup = btnGroup.append('g')
+				.attr('transform', `scale(${iconScale})`);
+			iconGroup.append('path')
 				.attr('d', 'M-4,-5 L2,-5 L5,-2 L5,5 L-4,5 Z M2,-5 L2,-2 L5,-2')
 				.attr('fill', 'none')
 				.attr('stroke', 'var(--text-muted)')
@@ -1253,6 +1336,81 @@ export class FamilyChartView extends ItemView {
 				d3.select(this).select('path')
 					.attr('stroke', 'var(--text-muted)');
 			});
+		};
+	}
+
+	/**
+	 * Create callback for circle card style that replaces the entire card HTML.
+	 * Based on family-chart v2 example: external/family-chart/examples/htmls/v2/11-card-styling.html
+	 *
+	 * This approach uses setOnCardUpdate to replace the card's outerHTML with a custom
+	 * structure that properly centers the circle on the node position.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	private createCircleCardCallback(): (d: any) => void {
+		const view = this;
+
+		return function(this: HTMLElement, d: any) {
+			const card = this.querySelector('.card');
+			if (!card) return;
+
+			// Build class list for gender styling
+			const classList = [];
+			const gender = d.data.data.gender as string;
+			if (gender === 'M') classList.push('card-male');
+			else if (gender === 'F') classList.push('card-female');
+			else classList.push('card-genderless');
+			if (d.data.main) classList.push('card-main');
+
+			// Build name
+			const firstName = d.data.data['first name'] || '';
+			const lastName = d.data.data['last name'] || '';
+			const name = `${firstName} ${lastName}`.trim() || 'Unknown';
+
+			// Build label with optional dates
+			const parts = [name];
+			if (view.showBirthDates && d.data.data.birthday) {
+				parts.push(d.data.data.birthday);
+			}
+			if (view.showDeathDates && d.data.data.deathday) {
+				parts.push(d.data.data.deathday);
+			}
+			const label = parts.join('<br>');
+
+			const avatar = d.data.data.avatar as string | undefined;
+
+			// Build card inner HTML based on whether avatar exists
+			let cardInner: string;
+			if (avatar) {
+				cardInner = `
+				<div class="card-image ${classList.join(' ')}">
+					<img src="${avatar}">
+					<div class="card-label">${label}</div>
+				</div>
+				`;
+			} else {
+				cardInner = `
+				<div class="card-text ${classList.join(' ')}">
+					${label}
+				</div>
+				`;
+			}
+
+			// Replace entire card HTML with properly centered structure
+			// Note: transform and pointer-events are set via CSS in .card-style-circle .card
+			card.outerHTML = `
+			<div class="card">
+				${cardInner}
+			</div>
+			`;
+
+			// Re-attach click handler to the new card element
+			const newCard = this.querySelector('.card');
+			if (newCard) {
+				newCard.addEventListener('click', (e: Event) => {
+					view.handleCardClick(e as MouseEvent, d);
+				});
+			}
 		};
 	}
 
@@ -2618,6 +2776,30 @@ export class FamilyChartView extends ItemView {
 			}
 		}
 
+		// For circle style, calculate bounds from HTML cards since SVG cards_view is empty
+		if (this.cardStyle === 'circle') {
+			const htmlCardsView = this.chartContainerEl?.querySelector('#htmlSvg .cards_view');
+			if (htmlCardsView) {
+				const cardConts = htmlCardsView.querySelectorAll('.card_cont');
+				cardConts.forEach((cardCont: Element) => {
+					const style = cardCont.getAttribute('style') || '';
+					const transformMatch = style.match(/transform:\s*translate\(([^)]+)\)/);
+					if (transformMatch) {
+						const [xStr, yStr] = transformMatch[1].split(',').map((s: string) => s.trim());
+						const x = parseFloat(xStr);
+						const y = parseFloat(yStr);
+						if (!isNaN(x) && !isNaN(y)) {
+							// Circle cards are ~90px diameter + label below
+							minX = Math.min(minX, x - 60);
+							minY = Math.min(minY, y - 60);
+							maxX = Math.max(maxX, x + 60);
+							maxY = Math.max(maxY, y + 80); // Extra for label
+						}
+					}
+				});
+			}
+		}
+
 		// Fallback if bounds couldn't be calculated
 		if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
 			const rect = svg.getBoundingClientRect();
@@ -2746,6 +2928,11 @@ export class FamilyChartView extends ItemView {
 			}
 		});
 
+		// Embed HTML cards (circle style) as foreignObject elements for export
+		if (this.cardStyle === 'circle') {
+			this.embedHtmlCardsForExport(svgClone, isDark);
+		}
+
 		// Add background rect
 		const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
 		bgRect.setAttribute('x', String(minX));
@@ -2756,6 +2943,155 @@ export class FamilyChartView extends ItemView {
 		svgClone.insertBefore(bgRect, svgClone.firstChild);
 
 		return { svgClone, width, height };
+	}
+
+	/**
+	 * Embed HTML cards into SVG as native SVG elements for export
+	 * This is needed for circle card style which uses HTML rendering
+	 * We use native SVG (circle, image, text) instead of foreignObject to avoid
+	 * cross-origin/tainted canvas issues with app:// URLs
+	 */
+	private embedHtmlCardsForExport(svgClone: SVGSVGElement, _isDark: boolean): void {
+		const htmlSvg = this.chartContainerEl?.querySelector('#htmlSvg .cards_view');
+		if (!htmlSvg) return;
+
+		const cardConts = htmlSvg.querySelectorAll('.card_cont');
+		if (cardConts.length === 0) return;
+
+		// Find or create the view group to add SVG elements
+		const viewGroup = svgClone.querySelector('.view');
+		if (!viewGroup) return;
+
+		// Theme colors
+		const femaleColor = 'rgb(196, 138, 146)';
+		const maleColor = 'rgb(120, 159, 172)';
+		const genderlessColor = 'lightgray';
+		const labelBgColor = 'rgba(0, 0, 0, 0.6)';
+		const textColor = '#fff';
+
+		cardConts.forEach((cardCont: Element) => {
+			// Get the transform from the card container (e.g., "translate(100px, 200px)")
+			const style = cardCont.getAttribute('style') || '';
+			const transformMatch = style.match(/transform:\s*translate\(([^)]+)\)/);
+			if (!transformMatch) return;
+
+			// Parse the translate values
+			const translateStr = transformMatch[1];
+			const [xStr, yStr] = translateStr.split(',').map((s: string) => s.trim());
+			const x = parseFloat(xStr);
+			const y = parseFloat(yStr);
+
+			if (isNaN(x) || isNaN(y)) return;
+
+			// Get the card element and its classes
+			const card = cardCont.querySelector('.card');
+			if (!card) return;
+
+			const cardInner = card.querySelector('.card-image, .card-text');
+			if (!cardInner) return;
+
+			const isMale = cardInner.classList.contains('card-male');
+			const isFemale = cardInner.classList.contains('card-female');
+			const isImage = cardInner.classList.contains('card-image');
+
+			// Determine background color
+			const bgColor = isFemale ? femaleColor : isMale ? maleColor : genderlessColor;
+
+			// Create a group for this card
+			const cardGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+			cardGroup.setAttribute('transform', `translate(${x}, ${y})`);
+
+			if (isImage) {
+				// Circle card with image
+				const img = cardInner.querySelector('img');
+				const label = cardInner.querySelector('.card-label');
+				const imgSrc = img?.getAttribute('src') || '';
+				const labelText = label?.textContent || '';
+
+				const radius = 40; // Circle radius (90px diameter / 2 - padding)
+				const padding = 5;
+
+				// Background circle
+				const bgCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+				bgCircle.setAttribute('r', String(radius + padding));
+				bgCircle.setAttribute('fill', bgColor);
+				cardGroup.appendChild(bgCircle);
+
+				// Clip path for circular image
+				const clipId = `circle-clip-${x}-${y}`.replace(/[.-]/g, '_');
+				const defs = svgClone.querySelector('defs') || svgClone.insertBefore(
+					document.createElementNS('http://www.w3.org/2000/svg', 'defs'),
+					svgClone.firstChild
+				);
+				const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+				clipPath.setAttribute('id', clipId);
+				const clipCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+				clipCircle.setAttribute('r', String(radius));
+				clipPath.appendChild(clipCircle);
+				defs.appendChild(clipPath);
+
+				// Image element (will be converted to base64 by embedImagesAsBase64)
+				const imageEl = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+				imageEl.setAttribute('href', imgSrc);
+				imageEl.setAttribute('x', String(-radius));
+				imageEl.setAttribute('y', String(-radius));
+				imageEl.setAttribute('width', String(radius * 2));
+				imageEl.setAttribute('height', String(radius * 2));
+				imageEl.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+				imageEl.setAttribute('clip-path', `url(#${clipId})`);
+				cardGroup.appendChild(imageEl);
+
+				// Label background
+				const labelWidth = Math.max(labelText.length * 7, 60);
+				const labelRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+				labelRect.setAttribute('x', String(-labelWidth / 2));
+				labelRect.setAttribute('y', String(radius + padding + 5));
+				labelRect.setAttribute('width', String(labelWidth));
+				labelRect.setAttribute('height', '22');
+				labelRect.setAttribute('rx', '3');
+				labelRect.setAttribute('fill', labelBgColor);
+				cardGroup.appendChild(labelRect);
+
+				// Label text
+				const labelTextEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+				labelTextEl.setAttribute('x', '0');
+				labelTextEl.setAttribute('y', String(radius + padding + 18));
+				labelTextEl.setAttribute('text-anchor', 'middle');
+				labelTextEl.setAttribute('fill', textColor);
+				labelTextEl.setAttribute('font-size', '12');
+				labelTextEl.setAttribute('font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif');
+				labelTextEl.textContent = labelText;
+				cardGroup.appendChild(labelTextEl);
+			} else {
+				// Text-only card (fallback)
+				const labelText = cardInner.textContent || '';
+				const cardWidth = 120;
+				const cardHeight = 70;
+
+				// Background rect
+				const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+				bgRect.setAttribute('x', String(-cardWidth / 2));
+				bgRect.setAttribute('y', String(-cardHeight / 2));
+				bgRect.setAttribute('width', String(cardWidth));
+				bgRect.setAttribute('height', String(cardHeight));
+				bgRect.setAttribute('rx', '3');
+				bgRect.setAttribute('fill', bgColor);
+				cardGroup.appendChild(bgRect);
+
+				// Text
+				const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+				textEl.setAttribute('x', '0');
+				textEl.setAttribute('y', '5');
+				textEl.setAttribute('text-anchor', 'middle');
+				textEl.setAttribute('fill', textColor);
+				textEl.setAttribute('font-size', '14');
+				textEl.setAttribute('font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif');
+				textEl.textContent = labelText;
+				cardGroup.appendChild(textEl);
+			}
+
+			viewGroup.appendChild(cardGroup);
+		});
 	}
 
 	/**
@@ -3173,6 +3509,79 @@ export class FamilyChartView extends ItemView {
 	};
 
 	/**
+	 * Show card style selection menu
+	 */
+	private showCardStyleMenu(e: MouseEvent): void {
+		const menu = new Menu();
+
+		// Header
+		menu.addItem((item) => {
+			item.setTitle('Card style')
+				.setIcon('layout-template')
+				.setDisabled(true);
+		});
+
+		menu.addSeparator();
+
+		// Rectangle (default)
+		menu.addItem((item) => {
+			item.setTitle(`${this.cardStyle === 'rectangle' ? '✓ ' : '  '}Rectangle`)
+				.onClick(() => this.setCardStyle('rectangle'));
+		});
+
+		// Circle (HTML with circular avatars)
+		menu.addItem((item) => {
+			item.setTitle(`${this.cardStyle === 'circle' ? '✓ ' : '  '}Circle`)
+				.onClick(() => this.setCardStyle('circle'));
+		});
+
+		// Compact (text-only, no avatars)
+		menu.addItem((item) => {
+			item.setTitle(`${this.cardStyle === 'compact' ? '✓ ' : '  '}Compact`)
+				.onClick(() => this.setCardStyle('compact'));
+		});
+
+		// Mini (smaller cards)
+		menu.addItem((item) => {
+			item.setTitle(`${this.cardStyle === 'mini' ? '✓ ' : '  '}Mini`)
+				.onClick(() => this.setCardStyle('mini'));
+		});
+
+		menu.showAtMouseEvent(e);
+	}
+
+	/**
+	 * Set the card style and refresh the chart
+	 */
+	private setCardStyle(style: CardStyle): void {
+		if (this.cardStyle === style) return;
+		logger.debug('set-card-style', 'Changing card style', { from: this.cardStyle, to: style });
+		this.cardStyle = style;
+		this.updateContainerStyleClass();
+		void this.refreshChart();
+		// Trigger Obsidian to save view state
+		this.app.workspace.requestSaveLayout();
+	}
+
+	/**
+	 * Update the container's CSS class based on current card style
+	 */
+	private updateContainerStyleClass(): void {
+		if (!this.chartContainerEl) return;
+
+		// Remove existing style classes
+		this.chartContainerEl.removeClass(
+			'card-style-rectangle',
+			'card-style-circle',
+			'card-style-compact',
+			'card-style-mini'
+		);
+
+		// Add current style class
+		this.chartContainerEl.addClass(`card-style-${this.cardStyle}`);
+	}
+
+	/**
 	 * Show style/theme menu
 	 */
 	private showStyleMenu(e: MouseEvent): void {
@@ -3575,6 +3984,7 @@ export class FamilyChartView extends ItemView {
 		if (!this.f3Chart || !this.f3Card) return;
 
 		// Build card display array based on options
+		// Each inner array is a line, with fields joined by space
 		const displayFields: string[][] = [['first name', 'last name']];
 
 		if (this.showBirthDates && this.showDeathDates) {
@@ -4274,6 +4684,7 @@ export class FamilyChartView extends ItemView {
 	// ============ State Persistence ============
 
 	getState(): FamilyChartViewState {
+		logger.debug('get-state', 'Saving view state', { cardStyle: this.cardStyle });
 		return {
 			rootPersonId: this.rootPersonId,
 			colorScheme: this.colorScheme,
@@ -4291,12 +4702,14 @@ export class FamilyChartView extends ItemView {
 			showSingleParentEmptyCard: this.showSingleParentEmptyCard,
 			sortChildrenByBirthDate: this.sortChildrenByBirthDate,
 			hidePrivateLiving: this.hidePrivateLiving,
+			cardStyle: this.cardStyle,
 		};
 	}
 
 	// eslint-disable-next-line @typescript-eslint/require-await -- Base class requires Promise<void> return type
 	async setState(state: Partial<FamilyChartViewState>): Promise<void> {
 		logger.debug('set-state', 'Restoring view state', state);
+		logger.debug('set-state', 'Incoming cardStyle', { stateCardStyle: state.cardStyle, currentCardStyle: this.cardStyle });
 
 		if (state.rootPersonId !== undefined) {
 			this.rootPersonId = state.rootPersonId;
@@ -4345,6 +4758,10 @@ export class FamilyChartView extends ItemView {
 		}
 		if (state.hidePrivateLiving !== undefined) {
 			this.hidePrivateLiving = state.hidePrivateLiving;
+		}
+		if (state.cardStyle !== undefined) {
+			this.cardStyle = state.cardStyle;
+			logger.debug('set-state', 'cardStyle set to', { cardStyle: this.cardStyle });
 		}
 
 		// Re-initialize chart if the view is already open (chartContainerEl exists)
