@@ -485,6 +485,82 @@
 }
 
 /* ==========================================================================
+   Linked Entities Field (for Create Note modal, same pattern as Sources)
+   ========================================================================== */
+
+.crc-linked-entities-field {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary);
+}
+
+.crc-linked-entities-field__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.crc-linked-entities-field__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+.crc-linked-entities-field__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crc-linked-entities-field__empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.crc-linked-entities-field__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--background-primary);
+  border-radius: var(--radius-s);
+}
+
+.crc-linked-entities-field__name {
+  font-size: 14px;
+  color: var(--text-normal);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Create Note Modal - Initial Content Field
+   ========================================================================== */
+
+.cr-create-note-modal .setting-item:has(textarea) {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.cr-create-note-modal .setting-item:has(textarea) .setting-item-info {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.cr-create-note-modal .setting-item:has(textarea) .setting-item-control {
+  width: 100%;
+}
+
+.cr-create-note-modal .setting-item:has(textarea) textarea {
+  width: 100%;
+  min-height: 120px;
+}
+
+/* ==========================================================================
    Events Display Field (read-only, shows events referencing person)
    ========================================================================== */
 

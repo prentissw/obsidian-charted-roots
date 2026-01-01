@@ -5,10 +5,17 @@
  * Part of Phase 4 Gramps Notes integration.
  */
 
-import { App, Modal, Setting, Notice, TFile, normalizePath } from 'obsidian';
+import { App, Modal, Setting, Notice, TFile, normalizePath, Menu } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
 import { generateCrId } from '../core/uuid';
 import { ModalStatePersistence, renderResumePromptBanner } from './modal-state-persistence';
+import { createLucideIcon } from './lucide-icons';
+import { PersonPickerModal, type PersonInfo } from './person-picker';
+import { PlacePickerModal, type SelectedPlaceInfo } from './place-picker';
+import { SourcePickerModal } from '../sources/ui/source-picker-modal';
+import { EventPickerModal } from '../events/ui/event-picker-modal';
+import type { SourceNote } from '../sources/types/source-types';
+import type { EventNote } from '../events/types/event-types';
 
 /**
  * Standard note types from Gramps
@@ -161,21 +168,24 @@ export class CreateNoteModal extends Modal {
 				.setValue(this.isPrivate)
 				.onChange(value => this.isPrivate = value));
 
-		// Linked entities section
-		const linkedSection = contentEl.createDiv({ cls: 'cr-linked-entities-section' });
-		linkedSection.createEl('h4', { text: 'Linked entities' });
-		linkedSection.createEl('p', {
-			text: 'Link this note to people, events, places, or sources',
-			cls: 'setting-item-description'
-		});
+		// Linked entities section (styled like Sources field)
+		const linkedSection = contentEl.createDiv({ cls: 'crc-linked-entities-field' });
+
+		// Header with label and button
+		const header = linkedSection.createDiv({ cls: 'crc-linked-entities-field__header' });
+		header.createSpan({ cls: 'crc-linked-entities-field__label', text: 'Linked entities' });
 
 		// Add entity button
-		const addEntityRow = linkedSection.createDiv({ cls: 'cr-add-entity-row' });
-		const addBtn = addEntityRow.createEl('button', { text: 'Add entity link' });
-		addBtn.addEventListener('click', () => this.showEntityPicker());
+		const addBtn = header.createEl('button', {
+			cls: 'crc-btn crc-btn--secondary crc-btn--small'
+		});
+		const addIcon = createLucideIcon('plus', 14);
+		addBtn.appendChild(addIcon);
+		addBtn.appendText(' Add entity');
+		addBtn.addEventListener('click', (e) => this.showEntityPicker(e));
 
 		// Linked entities list
-		this.linkedEntitiesContainer = linkedSection.createDiv({ cls: 'cr-linked-entities-list' });
+		this.linkedEntitiesContainer = linkedSection.createDiv({ cls: 'crc-linked-entities-field__list' });
 		this.renderLinkedEntities();
 
 		// Content (optional initial content)
@@ -232,44 +242,123 @@ export class CreateNoteModal extends Modal {
 	}
 
 	/**
-	 * Show entity picker for linking
+	 * Show entity type dropdown menu
 	 */
-	private showEntityPicker(): void {
-		// Simple text input for now - could be enhanced with fuzzy search modal
-		const input = document.createElement('input');
-		input.type = 'text';
-		input.placeholder = 'Enter entity name (e.g., John Smith)';
-		input.className = 'cr-entity-input';
+	private showEntityPicker(event: MouseEvent): void {
+		const menu = new Menu();
 
-		const dialog = document.createElement('div');
-		dialog.className = 'cr-entity-picker-dialog';
-		dialog.appendChild(input);
+		// Person option
+		menu.addItem(item => {
+			item
+				.setTitle('Person')
+				.setIcon('user')
+				.onClick(() => this.openPersonPicker());
+		});
 
-		const addBtn = document.createElement('button');
-		addBtn.textContent = 'Add';
-		addBtn.addEventListener('click', () => {
-			const value = input.value.trim();
-			if (value) {
-				const wikilink = value.startsWith('[[') ? value : `[[${value}]]`;
-				if (!this.linkedEntities.includes(wikilink)) {
-					this.linkedEntities.push(wikilink);
-					this.renderLinkedEntities();
+		// Event option
+		menu.addItem(item => {
+			item
+				.setTitle('Event')
+				.setIcon('calendar')
+				.onClick(() => this.openEventPicker());
+		});
+
+		// Place option
+		menu.addItem(item => {
+			item
+				.setTitle('Place')
+				.setIcon('map-pin')
+				.onClick(() => this.openPlacePicker());
+		});
+
+		// Source option
+		menu.addItem(item => {
+			item
+				.setTitle('Source')
+				.setIcon('book-open')
+				.onClick(() => this.openSourcePicker());
+		});
+
+		menu.showAtMouseEvent(event);
+	}
+
+	/**
+	 * Open person picker modal
+	 */
+	private openPersonPicker(): void {
+		const picker = new PersonPickerModal(
+			this.app,
+			(person: PersonInfo) => {
+				this.addLinkedEntity(person.name, person.file.basename);
+			},
+			{
+				title: 'Link person to note',
+				plugin: this.plugin
+			}
+		);
+		picker.open();
+	}
+
+	/**
+	 * Open event picker modal
+	 */
+	private openEventPicker(): void {
+		const picker = new EventPickerModal(
+			this.app,
+			this.plugin,
+			{
+				onSelect: (event: EventNote) => {
+					const displayName = event.title || event.file.basename;
+					this.addLinkedEntity(displayName, event.file.basename);
 				}
 			}
-			dialog.remove();
-		});
-		dialog.appendChild(addBtn);
+		);
+		picker.open();
+	}
 
-		const cancelBtn = document.createElement('button');
-		cancelBtn.textContent = 'Cancel';
-		cancelBtn.addEventListener('click', () => dialog.remove());
-		dialog.appendChild(cancelBtn);
+	/**
+	 * Open place picker modal
+	 */
+	private openPlacePicker(): void {
+		const picker = new PlacePickerModal(
+			this.app,
+			(place: SelectedPlaceInfo) => {
+				this.addLinkedEntity(place.name, place.file.basename);
+			},
+			{
+				settings: this.plugin.settings,
+				plugin: this.plugin
+			}
+		);
+		picker.open();
+	}
 
-		// Insert after the add button
-		const addEntityRow = this.contentEl.querySelector('.cr-add-entity-row');
-		if (addEntityRow) {
-			addEntityRow.after(dialog);
-			input.focus();
+	/**
+	 * Open source picker modal
+	 */
+	private openSourcePicker(): void {
+		const picker = new SourcePickerModal(
+			this.app,
+			this.plugin,
+			{
+				onSelect: (source: SourceNote) => {
+					// Extract filename from filePath (SourceNote doesn't have file property)
+					const filename = source.filePath.split('/').pop()?.replace(/\.md$/, '') || source.title;
+					this.addLinkedEntity(source.title, filename);
+				}
+			}
+		);
+		picker.open();
+	}
+
+	/**
+	 * Add a linked entity to the list
+	 */
+	private addLinkedEntity(displayName: string, filename: string): void {
+		const wikilink = `[[${filename}]]`;
+		if (!this.linkedEntities.includes(wikilink)) {
+			this.linkedEntities.push(wikilink);
+			this.renderLinkedEntities();
 		}
 	}
 
@@ -282,29 +371,28 @@ export class CreateNoteModal extends Modal {
 		this.linkedEntitiesContainer.empty();
 
 		if (this.linkedEntities.length === 0) {
-			this.linkedEntitiesContainer.createSpan({
-				text: 'No linked entities',
-				cls: 'crc-text-muted'
-			});
+			const emptyState = this.linkedEntitiesContainer.createDiv({ cls: 'crc-linked-entities-field__empty' });
+			emptyState.setText('No entities linked');
 			return;
 		}
 
 		for (let i = 0; i < this.linkedEntities.length; i++) {
 			const entity = this.linkedEntities[i];
-			const item = this.linkedEntitiesContainer.createDiv({ cls: 'cr-linked-entity-item' });
+			const item = this.linkedEntitiesContainer.createDiv({ cls: 'crc-linked-entities-field__item' });
 
 			// Extract name from wikilink
 			const match = entity.match(/\[\[(.+?)(?:\|.+?)?\]\]/);
 			const displayName = match ? match[1] : entity;
 
-			item.createSpan({ text: displayName, cls: 'cr-linked-entity-name' });
+			item.createSpan({ text: displayName, cls: 'crc-linked-entities-field__name' });
 
-			// Remove button
+			// Remove button (styled like Sources field)
 			const removeBtn = item.createEl('button', {
-				cls: 'cr-linked-entity-remove clickable-icon',
-				attr: { 'aria-label': 'Remove' }
+				cls: 'crc-btn crc-btn--icon crc-btn--danger',
+				attr: { 'aria-label': `Remove ${displayName}` }
 			});
-			removeBtn.textContent = '×';
+			const removeIcon = createLucideIcon('x', 14);
+			removeBtn.appendChild(removeIcon);
 			removeBtn.addEventListener('click', () => {
 				this.linkedEntities.splice(i, 1);
 				this.renderLinkedEntities();
