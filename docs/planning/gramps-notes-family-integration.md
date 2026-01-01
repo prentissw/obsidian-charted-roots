@@ -276,6 +276,191 @@ For users who need notes as independent, linkable entities.
 
 **Should be opt-in:** Import wizard checkbox "Create separate note files" (default: off)
 
+#### Implementation Details
+
+**1. New entity type: `cr_type: note`**
+
+Notes become first-class Canvas Roots entities with their own frontmatter schema:
+
+```yaml
+---
+cr_type: note
+cr_id: note_N0001
+gramps_id: N0001
+gramps_handle: _abc123def
+cr_note_type: Research
+private: true
+gramps_tags:
+  - todo
+  - verified
+---
+
+Census records show John living with his parents in 1860.
+Further research needed to confirm birth location.
+```
+
+**2. Folder structure**
+
+Notes are created in the configured notes folder (default: `Canvas Roots/Notes`):
+```
+vault/
+├── Canvas Roots/
+│   ├── People/
+│   │   └── John Smith.md       # Contains [[Research on John Smith]]
+│   ├── Events/
+│   │   └── Birth of John Smith.md
+│   ├── Notes/
+│   │   ├── Research on John Smith.md
+│   │   └── Smith Family History.md
+│   └── ...
+```
+
+**Settings integration:**
+- Add `notesFolder: string` to `CanvasRootsSettings`
+- Default: `'Canvas Roots/Notes'`
+- Follows existing pattern for `peopleFolder`, `eventsFolder`, `sourcesFolder`, etc.
+
+**3. Note naming convention**
+
+Since Gramps notes don't have names, generate from:
+1. Note type + first linked entity: `Research on John Smith`
+2. If no linked entity: `Research Note N0001`
+3. If no type: `Note N0001`
+
+Handle duplicates with suffix: `Research on John Smith (2)`
+
+**4. Entity linking**
+
+Instead of embedding note content, parent entities link to note files:
+
+```markdown
+## Notes
+
+- [[Research on John Smith]]
+- [[Smith Family Origins]]
+```
+
+**5. Import wizard option**
+
+Add checkbox to Gramps import options:
+- Label: "Create separate note files"
+- Default: off (embedded notes remain the default)
+- When enabled: creates `Notes/` folder and note files instead of embedding
+
+**6. Files to modify**
+
+| File | Changes |
+|------|---------|
+| `src/settings.ts` | Add `notesFolder: string` with default `'Canvas Roots/Notes'` |
+| `src/gramps/gramps-types.ts` | No changes (GrampsNote already complete) |
+| `src/gramps/gramps-importer.ts` | Add `createSeparateNoteFiles` option; create note files; link instead of embed |
+| `src/core/note-writer.ts` | **New file**: Write note entity files |
+| `src/ui/import-wizard-modal.ts` | Add "Create separate note files" checkbox |
+| `src/gramps/gramps-note-converter.ts` | May need adjustment for standalone notes |
+| `src/ui/control-center.ts` | Add conditional Notes card to Dashboard tab |
+| `src/core/vault-stats.ts` | Add notes stats (count, by type) |
+| `src/ui/create-note-modal.ts` | **New file**: Modal for creating notes manually |
+| `Canvas Roots/Bases/Note.md` | **New file**: Base template for note creation |
+
+**11. Control Center integration**
+
+Add a Notes card to the Dashboard tab (conditional - only shows if notes exist):
+
+```typescript
+// Only render if notes exist
+if (stats.notes.totalNotes > 0) {
+    const notesCard = this.createCard({
+        title: 'Notes',
+        icon: 'file-text'
+    });
+    // Show total count and breakdown by cr_note_type
+}
+```
+
+Card displays:
+- Total notes count
+- Breakdown by `cr_note_type` (Research, Person Note, etc.)
+- Link to browse Notes folder
+
+**12. Manual note creation**
+
+Users need a good experience for creating notes manually (not just via import).
+
+**Create Note Modal** (`src/ui/create-note-modal.ts`):
+- Note type dropdown: Research, Person Note, Transcript, Source text, General, Custom
+- Title field (required)
+- Privacy toggle (default: off)
+- Optional: Entity picker to link note to person/event/place/source
+- Creates note in `notesFolder` with proper frontmatter
+
+**Entry points:**
+- Command palette: "Canvas Roots: Create note"
+- File menu: Right-click in Notes folder → "New Canvas Roots note"
+- Control Center: Notes card "Create note" button (if notes exist)
+- Context menu on entities: "Create linked note" (pre-fills entity link)
+
+**File explorer context menu:**
+
+Register a context menu item for the Notes folder:
+```typescript
+this.registerEvent(
+    this.app.workspace.on('file-menu', (menu, file) => {
+        // Only show in Notes folder
+        if (file.path.startsWith(this.settings.notesFolder)) {
+            menu.addItem((item) => {
+                item.setTitle('New Canvas Roots note')
+                    .setIcon('file-plus')
+                    .onClick(() => this.openCreateNoteModal());
+            });
+        }
+    })
+);
+```
+
+**Note Base Template** (`Canvas Roots/Bases/Note.md`):
+```markdown
+---
+cr_type: note
+cr_id: "{{cr_id}}"
+cr_note_type: Research
+private: false
+---
+
+{{content}}
+```
+
+**7. Shared notes handling**
+
+Gramps allows the same note to be referenced by multiple entities. With separate files:
+- Note is created once in `Notes/` folder
+- Each referencing entity gets a wikilink to the same note
+- This enables true note sharing in Obsidian
+
+**8. Backlinks**
+
+Consider adding backlinks in note frontmatter:
+```yaml
+referenced_by:
+  - "[[John Smith]]"
+  - "[[Jane Doe]]"
+```
+
+Or rely on Obsidian's native backlink pane (simpler).
+
+**9. Migration path**
+
+Users who initially import with embedded notes and later want separate files:
+- Could add a "Convert embedded notes to files" command
+- Or simply re-import with the new option enabled
+
+**10. Interaction with Phase 1-2**
+
+When `createSeparateNoteFiles` is enabled:
+- Phase 1-2 note embedding is skipped
+- Note files are created in `Notes/` folder
+- Parent entities get wikilinks instead of embedded content
+- All note metadata (type, privacy, tags, handle) preserved in frontmatter
+
 ### Phase 5: Export & Sync (Future)
 
 Support for exporting notes back to Gramps and potentially bi-directional sync.
@@ -426,6 +611,45 @@ The `priv` attribute on Gramps notes indicates private/sensitive content.
 - `src/bases/family-base-template.ts` - Bases integration
 - Settings and UI updates
 
+#### Phase 4: Separate Note Files (In Progress)
+
+**Status:** Planning complete, implementation starting
+
+**Files to Create:**
+- `src/core/note-writer.ts` - Write note entity files with frontmatter
+
+**Files to Modify:**
+- `src/gramps/gramps-importer.ts` - Add `createSeparateNoteFiles` option; conditionally create note files or embed
+- `src/ui/import-wizard-modal.ts` - Add "Create separate note files" checkbox (Gramps only)
+
+**Implementation Steps:**
+
+*Core infrastructure:*
+1. [ ] Add `notesFolder: string` setting with default `'Canvas Roots/Notes'`
+2. [ ] Add `createSeparateNoteFiles: boolean` to `GrampsImportOptions`
+3. [ ] Create `note-writer.ts` with `writeNoteFile()` function
+
+*Import integration:*
+4. [ ] Build note-to-entity reference map during parsing
+5. [ ] Generate note names from type + first referencing entity
+6. [ ] Create note files in configured notes folder during import
+7. [ ] Modify entity note sections to use wikilinks instead of embedded content
+8. [ ] Add import wizard checkbox
+
+*Manual creation:*
+9. [ ] Create `create-note-modal.ts` with type dropdown, title, privacy, entity picker
+10. [ ] Add Note base template to `Canvas Roots/Bases/`
+11. [ ] Register "Create note" command in command palette
+12. [ ] Register file-menu context action for Notes folder ("New Canvas Roots note")
+
+*Control Center:*
+13. [ ] Add notes stats to `VaultStatsService` (count, by type)
+14. [ ] Add conditional Notes card to Dashboard tab
+
+*Testing:*
+15. [ ] Test import with sample Gramps file containing shared notes
+16. [ ] Test manual note creation via modal and template
+
 ### Example Output (Phase 1)
 
 ```markdown
@@ -445,6 +669,53 @@ Further research needed to confirm birth location.
 ### Person Note
 Biographical information from family bible.
 ```
+
+### Example Output (Phase 4 - Separate Note Files)
+
+**Note file (`Notes/Research on John Smith.md`):**
+```markdown
+---
+cr_type: note
+cr_id: note_N0042
+gramps_id: N0042
+gramps_handle: _abc123def456
+cr_note_type: Research
+private: false
+---
+
+Census records show John living with his parents in 1860.
+Further research needed to confirm birth location.
+```
+
+**Person file (`People/John Smith.md`) with linked notes:**
+```markdown
+---
+name: John Smith
+birth_date: 1850-03-15
+# ... other frontmatter
+---
+
+## Notes
+
+- [[Research on John Smith]]
+- [[Person Note for John Smith]]
+```
+
+**Shared note example** - same note linked by multiple entities:
+```markdown
+# Notes/Smith Family Origins.md
+---
+cr_type: note
+cr_id: note_N0099
+gramps_id: N0099
+gramps_handle: _xyz789
+cr_note_type: Research
+---
+
+The Smith family emigrated from County Cork, Ireland during the 1847 famine.
+```
+
+Both `[[John Smith]]` and `[[Jane Smith]]` can link to `[[Smith Family Origins]]`.
 
 ### Example Output (Phase 3 - Family Entity)
 
