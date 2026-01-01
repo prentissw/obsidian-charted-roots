@@ -228,42 +228,38 @@ Extend the embedded approach to other entities.
 - Source notes → already implemented
 - Family notes → see Phase 3
 
-### Phase 3: Family Entity (Advanced, Opt-in)
+### Phase 3: Family Entity (Deferred Indefinitely)
 
 Introduce Family as a new entity type in Canvas Roots.
 
-**Motivation:**
-- Natural home for family-level notes
-- Matches Gramps/GEDCOM mental model
-- Place for marriage events, shared research, household information
+**Status:** Deferred indefinitely pending user demand.
 
-**Implementation:**
-- Add `cr_type: family` entity type
-- Create `Families/` folder during import
-- Family note includes:
-  - Parents (wikilinks to Person notes)
-  - Children (wikilinks to Person notes)
-  - Marriage/partnership events
-  - Family notes section
-- Add to Bases templates
+**Rationale (2026-01-01):**
+- Only one known user has expressed interest in full Gramps data model fidelity
+- That user plans to write custom Python scripts for their workflow
+- Phase 1 already attaches family notes to marriage events, which satisfies most use cases
+- Adding a new entity type introduces significant complexity:
+  - New UI components (create/edit modals, context menus)
+  - New service layer
+  - Duplicated relationship data (parent/child on both Person and Family)
+  - Additional Bases templates and documentation
+- Not justified without broader demand from multiple users
 
-**Trade-offs:**
-- Adds complexity to the data model
-- Some information becomes duplicated (parent/child relationships exist on both Person and Family)
-- Requires new UI components, service layer, etc.
+**If revisited, the implementation would include:**
+- `cr_type: family` entity type
+- `Families/` folder during import
+- Family note with parents, children (wikilinks), marriage events, family notes
+- Bases templates
+- Import wizard checkbox "Create family notes" (default: off)
 
-**Should be opt-in:** Import wizard checkbox "Create family notes" (default: off)
+**Alternative Already Implemented: Attach to Marriage Event**
 
-**Alternative: Attach to Marriage Event**
-
-User feedback suggests a simpler approach: attach family notes to the marriage/partnership event instead of creating a separate Family entity. This avoids adding a new entity type while still preserving the notes.
+User feedback suggested this simpler approach: attach family notes to the marriage/partnership event instead of creating a separate Family entity. This is now the default behavior.
 
 | Approach | Pros | Cons |
 |----------|------|------|
 | Family entity | Matches Gramps model; dedicated place for family-level data | Adds complexity; duplicates relationship data |
-| Marriage event | Simpler; no new entity type; already have events | Family notes without marriage event have no home; less organized |
-
-**Recommendation:** Default to "attach to marriage event" approach. Offer Family entity as opt-in for power users who need full Gramps fidelity.
+| Marriage event (current) | Simpler; no new entity type; already have events | Family notes without marriage event have no home |
 
 ### Phase 4: Separate Note Files (Advanced, Opt-in)
 
