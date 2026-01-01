@@ -9,8 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.18.14] - 2025-12-31
+
+### Added
+
+- **Edit Person Events & Sources** - Manage events and sources directly from the Edit Person modal ([#33](https://github.com/banisterious/obsidian-canvas-roots/issues/33)):
+  - **Sources section**: Multi-value picker to link source notes with Link and Create buttons; stores as `sources` (wikilinks) and `sources_id` (cr_ids) arrays for reliable linking
+  - **Events section**: Display events referencing this person with type badges and dates; link/unlink existing events or create new events with person pre-filled
+  - **Type badges**: Color-coded type badges for both events and sources matching picker modal styles
+
 ### Fixed
 
+- **Context menu Edit Person** - Fixed missing plugin reference causing "Plugin not available" error when clicking Link/Create buttons in Edit Person modal opened via context menu ([#33](https://github.com/banisterious/obsidian-canvas-roots/issues/33))
+- **Children display in Edit Person** - Fixed children displaying as cr_ids instead of names in Edit Person modal; was reading from deprecated `child` property instead of `children` ([#86](https://github.com/banisterious/obsidian-canvas-roots/issues/86))
 - **Duplicate children_id during Gramps import** - Fixed duplicate values appearing in `children_id` arrays after importing Gramps .gpkg files; bidirectional sync now suspended during import to prevent file watcher from triggering relationship sync before Phase 2 handle replacement ([#84](https://github.com/banisterious/obsidian-canvas-roots/issues/84))
 - **Deprecated `child` property in imports** - New person notes now use `children` (plural) property instead of deprecated `child` (singular), matching v0.18.11 property naming normalization ([#85](https://github.com/banisterious/obsidian-canvas-roots/issues/85))
 - **Lint warnings from Obsidian bot** - Fixed various lint issues flagged during PR review: Object stringification, async/await usage, deprecated method calls, innerHTML usage, and type assertions
