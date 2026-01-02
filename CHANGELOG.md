@@ -11,11 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Canvas grouping for family units** - Visual groups to organize related nodes on canvases ([#105](https://github.com/banisterious/obsidian-canvas-roots/issues/105)):
+  - Four grouping strategies: None, By generation, By couples, By collection
+  - "By couples" groups parent pairs who share children (not including children)
+  - Groups rendered as JSON Canvas 1.0 `type: "group"` nodes
+  - Available in global settings (Preferences → Canvas styling) and per-tree in Tree Wizard
+  - Works for both Canvas and Excalidraw output
+
 - **Sensitive field redaction utilities** - Centralized utilities for filtering sensitive fields from exports ([#96](https://github.com/banisterious/obsidian-canvas-roots/issues/96)):
   - Added `SENSITIVE_FIELDS` constant with SSN and identity number fields
   - Added `isSensitiveField()` function to check if a field is sensitive
   - Added `filterSensitiveFields()` function to remove sensitive fields from frontmatter objects
   - Note: Current exporters already protect these fields implicitly by working with `PersonNode` interface, which excludes sensitive fields by design
+
+### Fixed
+
+- **Children display property not accumulating** - When adding multiple children via "Add child" button, the `children` display property now correctly shows all children instead of just the first ([#106](https://github.com/banisterious/obsidian-canvas-roots/issues/106)):
+  - Fixed reading from legacy `child` property instead of normalized `children` property
+  - Affected both Create Person modal and bidirectional linking
 
 ---
 
