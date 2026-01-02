@@ -64,21 +64,32 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Status:** Partial — Infrastructure exists, redaction not yet implemented
 
-**Summary:** Ensure sensitive personal information is properly handled during export and display operations.
+**GitHub Issue:** [#95](https://github.com/banisterious/obsidian-canvas-roots/issues/95)
+
+**Summary:** Comprehensive privacy protection for sensitive genealogical data during exports and display. Covers sensitive field redaction, user-defined private fields, deadname protection, and improved discoverability of existing privacy features.
 
 **Already Implemented:**
-- **Sensitive field identification** — `SENSITIVE_FIELDS` constant identifies `ssn` and `identityNumber` fields imported from GEDCOM
+- **Living person detection** — Automatic detection with configurable age threshold (default: 100 years)
+- **Privacy display formats** — Four formats: `living`, `private`, `initials`, `hidden`
+- **Export privacy protection** — Applied in GEDCOM, GEDCOM X, Gramps XML, and CSV exports
+- **Log export obfuscation** — Names, dates, and IDs obfuscated in exported logs (enabled by default)
 - **Gender identity model** — `sex`/`gender`/`gender_identity` data model (see [Specialized Features](../docs/developer/implementation/specialized-features.md#privacy-and-gender-identity-protection))
+- **Sensitive field identification** — `SENSITIVE_FIELDS` constant identifies `ssn` and `identityNumber` (defined but not yet wired to exports)
 
-**Planned:**
-- **Sensitive field redaction** — Automatically exclude SSN, identity numbers from exports regardless of living/deceased status
-- **Underscore-prefix privacy convention** — Treat fields prefixed with `_` (e.g., `_previous_names`, `_medical_notes`) as private:
-  - Exclude from person picker and search results
-  - Exclude from canvas labels
-  - Require confirmation before including in exports
-- **Deadname protection** — Automatic suppression of `_previous_names` in display contexts while preserving for historical research
-- **Export privacy warnings** — Show confirmation dialog when exporting data containing private fields
-- **Pronouns field** — Add `pronouns` property for respectful communication in reports and UI
+**Planned (8 Phases):**
+
+| Phase | Feature | Priority | Description |
+|-------|---------|----------|-------------|
+| 1 | Sensitive field redaction | P1 | Wire up `SENSITIVE_FIELDS` to always exclude SSN/identity numbers from exports |
+| 2 | `cr_living` override | P2 | Manual frontmatter property to override automatic living detection |
+| 3 | Underscore-prefix convention | P2 | Treat `_`-prefixed fields as private (exclude from display, warn on export) |
+| 4 | Deadname protection | P2 | Automatic suppression of `_previous_names` in display contexts |
+| 5 | Export warnings | P2 | Confirmation dialog when exporting private fields |
+| 6 | Discoverability | P2 | First-run notice, export dialog warnings when privacy disabled |
+| 7 | Pronouns field | P3 | Add `pronouns` property for respectful communication |
+| 8 | Canvas privacy | P3 | Privacy-aware canvas generation (at generation time, not runtime) |
+
+**Documentation:** See [Export Privacy Planning Document](../docs/planning/export-privacy-sensitive-data.md) for detailed implementation specifications.
 
 ---
 
@@ -306,7 +317,7 @@ See [known-limitations.md](known-limitations.md) for complete details.
 - Single vault only (no multi-vault merging)
 - No undo/redo for Bases edits (platform limitation)
 - No bulk operations from Bases multi-select (platform limitation)
-- Privacy obfuscation for canvas display not yet implemented
+- Privacy obfuscation for canvas display requires generation-time application (runtime toggle not feasible due to Obsidian Canvas API limitations) — see [#95](https://github.com/banisterious/obsidian-canvas-roots/issues/95)
 - Interactive Canvas features limited by Obsidian Canvas API
 
 ### Context Menu Submenu Behavior
