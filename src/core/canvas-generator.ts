@@ -6,7 +6,7 @@
  */
 
 import { FamilyTree, PersonNode } from './family-graph';
-import { LayoutEngine, LayoutOptions } from './layout-engine';
+import { LayoutEngine, LayoutOptions, NodePosition } from './layout-engine';
 import { FamilyChartLayoutEngine } from './family-chart-layout';
 import { TimelineLayoutEngine } from './timeline-layout';
 import { HourglassLayoutEngine } from './hourglass-layout';
@@ -22,13 +22,17 @@ import { getDefaultRelationshipType } from '../relationships/constants/default-r
 const logger = getLogger('CanvasGenerator');
 
 /**
- * Obsidian Canvas node
+ * Obsidian Canvas node (JSON Canvas 1.0 spec)
+ * Includes file, text, link, and group types
  */
 interface CanvasNode {
 	id: string;
-	type: 'file' | 'text';
+	type: 'file' | 'text' | 'link' | 'group';
 	file?: string;
 	text?: string;
+	url?: string;
+	/** Group label (for group type nodes) */
+	label?: string;
 	x: number;
 	y: number;
 	width: number;
@@ -177,6 +181,9 @@ export interface CanvasGenerationOptions extends LayoutOptions {
 
 	/** Show research coverage percentage in source indicators (requires fact-level tracking) */
 	showResearchCoverage?: boolean;
+
+	/** Canvas grouping strategy for visual organization */
+	canvasGroupingStrategy?: import('../settings').CanvasGroupingStrategy;
 }
 
 /**
@@ -248,7 +255,8 @@ export class CanvasGenerator {
 			showSpouseEdges: effectiveStyles.showSpouseEdges,
 			spouseEdgeLabelFormat: effectiveStyles.spouseEdgeLabelFormat,
 			showSourceIndicators: options.showSourceIndicators ?? false,
-			showResearchCoverage: options.showResearchCoverage ?? false
+			showResearchCoverage: options.showResearchCoverage ?? false,
+			canvasGroupingStrategy: options.canvasGroupingStrategy ?? 'none' as const
 		};
 
 		logger.debug('canvas-generation', 'Canvas generation options', {
@@ -516,8 +524,21 @@ export class CanvasGenerator {
 			this.addConflictIndicatorNodes(canvasNodes, familyTree, nodeMap, opts);
 		}
 
+		// Generate group nodes if grouping is enabled
+		// Groups are prepended to nodes array so they render below other nodes (z-order)
+		const groupNodes = this.generateGroupNodes(
+			canvasNodes,
+			familyTree,
+			nodeMap,
+			layoutResult.positions,
+			opts
+		);
+
+		// Combine groups (first, at bottom) with other nodes (on top)
+		const allNodes = [...groupNodes, ...canvasNodes];
+
 		return {
-			nodes: canvasNodes,
+			nodes: allNodes,
 			edges: canvasEdges,
 			metadata: {
 				version: '1.0-1.0',
@@ -629,6 +650,286 @@ export class CanvasGenerator {
 				color: '1' // Red - conflicts need attention
 			});
 		}
+	}
+
+	/**
+	 * Generates group nodes based on the grouping strategy
+	 * Groups are visual containers in the JSON Canvas spec that help organize related nodes.
+	 *
+	 * Strategies:
+	 * - 'none': No groups (returns empty array)
+	 * - 'generation': One group per generation level
+	 * - 'nuclear-family': Group each nuclear family (parents + their children)
+	 * - 'collection': Group by collection/family group name
+	 */
+	private generateGroupNodes(
+		_canvasNodes: CanvasNode[],
+		familyTree: FamilyTree,
+		nodeMap: Map<string, { x: number; y: number }>,
+		positions: NodePosition[],
+		opts: {
+			nodeWidth: number;
+			nodeHeight: number;
+			nodeSpacingX: number;
+			nodeSpacingY: number;
+			canvasGroupingStrategy: import('../settings').CanvasGroupingStrategy;
+		}
+	): CanvasNode[] {
+		const strategy = opts.canvasGroupingStrategy;
+
+		if (strategy === 'none') {
+			return [];
+		}
+
+		logger.debug('canvas-groups', `Generating groups with strategy: ${strategy}`);
+
+		switch (strategy) {
+			case 'generation':
+				return this.generateGenerationGroups(positions, nodeMap, opts);
+			case 'nuclear-family':
+				return this.generateNuclearFamilyGroups(familyTree, nodeMap, opts);
+			case 'collection':
+				return this.generateCollectionGroups(familyTree, nodeMap, opts);
+			default:
+				return [];
+		}
+	}
+
+	/**
+	 * Generates groups for each generation level
+	 * Creates horizontal bands containing all nodes at the same generation
+	 */
+	private generateGenerationGroups(
+		positions: NodePosition[],
+		nodeMap: Map<string, { x: number; y: number }>,
+		opts: { nodeWidth: number; nodeHeight: number; nodeSpacingX: number; nodeSpacingY: number }
+	): CanvasNode[] {
+		const groups: CanvasNode[] = [];
+		const padding = 40; // Padding around nodes within group
+
+		// Group positions by generation
+		const byGeneration = new Map<number, NodePosition[]>();
+		for (const pos of positions) {
+			const gen = pos.generation ?? 0;
+			if (!byGeneration.has(gen)) {
+				byGeneration.set(gen, []);
+			}
+			byGeneration.get(gen)!.push(pos);
+		}
+
+		// Create a group for each generation
+		for (const [generation, genPositions] of byGeneration) {
+			if (genPositions.length === 0) continue;
+
+			// Calculate bounding box for all nodes in this generation
+			const bounds = this.calculateBoundingBox(
+				genPositions.map(p => p.crId),
+				nodeMap,
+				opts.nodeWidth,
+				opts.nodeHeight
+			);
+
+			if (!bounds) continue;
+
+			// Create group node
+			const label = generation === 0
+				? 'Root Generation'
+				: generation > 0
+					? `Generation +${generation}`
+					: `Generation ${generation}`;
+
+			groups.push({
+				id: this.generateId(),
+				type: 'group',
+				label,
+				x: bounds.x - padding,
+				y: bounds.y - padding,
+				width: bounds.width + padding * 2,
+				height: bounds.height + padding * 2,
+				color: this.getGenerationColor(generation)
+			});
+		}
+
+		return groups;
+	}
+
+	/**
+	 * Generates groups for nuclear families (parent pair + their children)
+	 * Each family unit (2 parents + children) gets its own group
+	 */
+	private generateNuclearFamilyGroups(
+		familyTree: FamilyTree,
+		nodeMap: Map<string, { x: number; y: number }>,
+		opts: { nodeWidth: number; nodeHeight: number; nodeSpacingX: number; nodeSpacingY: number }
+	): CanvasNode[] {
+		const groups: CanvasNode[] = [];
+		const padding = 30;
+		const processedFamilies = new Set<string>();
+
+		// Find all parent pairs and their children
+		for (const [crId, person] of familyTree.nodes) {
+			// Look for people who have both parents
+			const fatherId = person.fatherCrId;
+			const motherId = person.motherCrId;
+
+			if (!fatherId && !motherId) continue;
+
+			// Create a family key from parent IDs (sorted for consistency)
+			const familyKey = [fatherId || '', motherId || ''].sort().join('|');
+			if (processedFamilies.has(familyKey)) continue;
+			processedFamilies.add(familyKey);
+
+			// Collect all family members: parents + children with same parents
+			const familyMembers: string[] = [];
+
+			// Add parents if they're in the tree
+			if (fatherId && nodeMap.has(fatherId)) {
+				familyMembers.push(fatherId);
+			}
+			if (motherId && nodeMap.has(motherId)) {
+				familyMembers.push(motherId);
+			}
+
+			// Find all children with these parents
+			for (const [childId, childPerson] of familyTree.nodes) {
+				if (childPerson.fatherCrId === fatherId && childPerson.motherCrId === motherId) {
+					if (nodeMap.has(childId)) {
+						familyMembers.push(childId);
+					}
+				}
+			}
+
+			// Need at least one parent and one child for a family group
+			const hasParent = (fatherId && nodeMap.has(fatherId)) || (motherId && nodeMap.has(motherId));
+			const hasChildren = familyMembers.length > (hasParent ? 1 : 0);
+
+			if (!hasParent || !hasChildren || familyMembers.length < 2) continue;
+
+			// Calculate bounding box
+			const bounds = this.calculateBoundingBox(
+				familyMembers,
+				nodeMap,
+				opts.nodeWidth,
+				opts.nodeHeight
+			);
+
+			if (!bounds) continue;
+
+			// Get family name from parents
+			const father = fatherId ? familyTree.nodes.get(fatherId) : undefined;
+			const mother = motherId ? familyTree.nodes.get(motherId) : undefined;
+			const fatherName = father?.name?.split(' ').pop() || '';
+			const motherName = mother?.name?.split(' ').pop() || '';
+			const label = fatherName && motherName
+				? `${fatherName} & ${motherName} Family`
+				: fatherName || motherName
+					? `${fatherName || motherName} Family`
+					: 'Family';
+
+			groups.push({
+				id: this.generateId(),
+				type: 'group',
+				label,
+				x: bounds.x - padding,
+				y: bounds.y - padding,
+				width: bounds.width + padding * 2,
+				height: bounds.height + padding * 2
+			});
+		}
+
+		return groups;
+	}
+
+	/**
+	 * Generates groups by collection/family group name
+	 * People with the same collection value are grouped together
+	 */
+	private generateCollectionGroups(
+		familyTree: FamilyTree,
+		nodeMap: Map<string, { x: number; y: number }>,
+		opts: { nodeWidth: number; nodeHeight: number; nodeSpacingX: number; nodeSpacingY: number }
+	): CanvasNode[] {
+		const groups: CanvasNode[] = [];
+		const padding = 40;
+
+		// Group nodes by collection
+		const byCollection = new Map<string, string[]>();
+
+		for (const [crId, person] of familyTree.nodes) {
+			if (!nodeMap.has(crId)) continue;
+
+			const collection = person.collection || 'Uncategorized';
+			if (!byCollection.has(collection)) {
+				byCollection.set(collection, []);
+			}
+			byCollection.get(collection)!.push(crId);
+		}
+
+		// Create a group for each collection
+		for (const [collection, memberIds] of byCollection) {
+			if (memberIds.length < 2) continue; // Skip single-member "groups"
+
+			const bounds = this.calculateBoundingBox(
+				memberIds,
+				nodeMap,
+				opts.nodeWidth,
+				opts.nodeHeight
+			);
+
+			if (!bounds) continue;
+
+			groups.push({
+				id: this.generateId(),
+				type: 'group',
+				label: collection,
+				x: bounds.x - padding,
+				y: bounds.y - padding,
+				width: bounds.width + padding * 2,
+				height: bounds.height + padding * 2,
+				color: this.getCollectionColorFromName(collection)
+			});
+		}
+
+		return groups;
+	}
+
+	/**
+	 * Calculates the bounding box for a set of nodes
+	 * Returns the rectangle that contains all specified nodes
+	 */
+	private calculateBoundingBox(
+		crIds: string[],
+		nodeMap: Map<string, { x: number; y: number }>,
+		nodeWidth: number,
+		nodeHeight: number
+	): { x: number; y: number; width: number; height: number } | null {
+		if (crIds.length === 0) return null;
+
+		let minX = Infinity;
+		let minY = Infinity;
+		let maxX = -Infinity;
+		let maxY = -Infinity;
+
+		let validCount = 0;
+		for (const crId of crIds) {
+			const pos = nodeMap.get(crId);
+			if (!pos) continue;
+
+			validCount++;
+			minX = Math.min(minX, pos.x);
+			minY = Math.min(minY, pos.y);
+			maxX = Math.max(maxX, pos.x + nodeWidth);
+			maxY = Math.max(maxY, pos.y + nodeHeight);
+		}
+
+		if (validCount === 0) return null;
+
+		return {
+			x: minX,
+			y: minY,
+			width: maxX - minX,
+			height: maxY - minY
+		};
 	}
 
 	/**

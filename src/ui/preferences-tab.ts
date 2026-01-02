@@ -60,7 +60,7 @@ class FolderSuggest extends AbstractInputSuggest<TFolder> {
 }
 import type CanvasRootsPlugin from '../../main';
 import type { LucideIconName } from './lucide-icons';
-import type { ArrowStyle, ColorScheme, SpouseEdgeLabelFormat, SexNormalizationMode } from '../settings';
+import type { ArrowStyle, ColorScheme, CanvasGroupingStrategy, SpouseEdgeLabelFormat, SexNormalizationMode } from '../settings';
 import {
 	PropertyAliasService,
 	type PropertyMetadata,
@@ -1117,6 +1117,22 @@ export function renderCanvasStylingCard(
 				plugin.settings.nodeColorScheme = value as ColorScheme;
 				await plugin.saveSettings();
 				new Notice('Node color scheme updated');
+			}));
+
+	// Canvas Grouping Strategy
+	new Setting(content)
+		.setName('Canvas grouping')
+		.setDesc('Visual groups to organize related nodes on the canvas')
+		.addDropdown(dropdown => dropdown
+			.addOption('none', 'None - no grouping (default)')
+			.addOption('generation', 'By generation - group nodes by generation level')
+			.addOption('nuclear-family', 'By nuclear family - group parents with their children')
+			.addOption('collection', 'By collection - group by family collection')
+			.setValue(plugin.settings.canvasGroupingStrategy)
+			.onChange(async (value) => {
+				plugin.settings.canvasGroupingStrategy = value as CanvasGroupingStrategy;
+				await plugin.saveSettings();
+				new Notice('Canvas grouping strategy updated');
 			}));
 
 	// Section: Arrow Styling

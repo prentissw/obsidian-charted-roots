@@ -146,6 +146,15 @@ export type SpouseEdgeLabelFormat = 'none' | 'date-only' | 'date-location' | 'fu
 export type LayoutType = 'standard' | 'compact' | 'timeline' | 'hourglass';
 
 /**
+ * Canvas grouping strategy options
+ * - 'none': No groups (default - current behavior)
+ * - 'generation': Group nodes by generation level
+ * - 'nuclear-family': Group nuclear families (parents + children)
+ * - 'collection': Group by collection/family group name
+ */
+export type CanvasGroupingStrategy = 'none' | 'generation' | 'nuclear-family' | 'collection';
+
+/**
  * Folder filter mode options
  * - 'disabled': Scan all folders (default - current behavior)
  * - 'exclude': Scan all folders except those in the exclusion list
@@ -189,6 +198,8 @@ export interface CanvasRootsSettings {
 	spouseArrowStyle: ArrowStyle;
 	// Node coloring
 	nodeColorScheme: ColorScheme;
+	// Canvas grouping
+	canvasGroupingStrategy: CanvasGroupingStrategy;
 	// Edge coloring
 	parentChildEdgeColor: CanvasColor;
 	spouseEdgeColor: CanvasColor;
@@ -537,6 +548,8 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	spouseArrowStyle: 'undirected',     // Spouse — Spouse with no arrows (cleaner look)
 	// Node coloring default
 	nodeColorScheme: 'sex',             // Sex-based coloring (GEDCOM aligned)
+	// Canvas grouping default
+	canvasGroupingStrategy: 'none',     // No groups by default (current behavior)
 	// Edge coloring defaults (neutral/subtle)
 	parentChildEdgeColor: 'none',       // No color - use theme default (clean, subtle)
 	spouseEdgeColor: 'none',            // No color - use theme default (clean, subtle)
