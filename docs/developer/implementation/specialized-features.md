@@ -16,6 +16,7 @@ This document covers fictional date systems, privacy protection, and Obsidian Ba
   - [Sex vs Gender Data Model](#sex-vs-gender-data-model)
   - [Living Person Privacy](#living-person-privacy)
   - [Log Export Obfuscation](#log-export-obfuscation)
+  - [Pronouns Field](#pronouns-field)
   - [Planned Features](#planned-features-not-yet-implemented)
   - [Design Rationale](#design-rationale)
 - [Obsidian Bases Integration](#obsidian-bases-integration)
@@ -338,9 +339,14 @@ gender_identity: Non-binary     # Free-form gender identity field
 The `PrivacyService` (`src/core/privacy-service.ts`) protects living individuals in exports:
 
 **Detection logic:**
-- Person is "likely living" if: no death date AND birth year within age threshold
-- Default threshold: 100 years (configurable via `settings.livingPersonAgeThreshold`)
-- Supports approximate dates: "about 1920", "between 1920-1930", "before 1920"
+1. **Manual override** (`cr_living` frontmatter property):
+   - `cr_living: true` — Always treat as living (protected)
+   - `cr_living: false` — Always treat as deceased (not protected)
+   - When omitted, automatic detection is used
+2. **Automatic detection** (when `cr_living` not set):
+   - Person is "likely living" if: no death date AND birth year within age threshold
+   - Default threshold: 100 years (configurable via `settings.livingPersonAgeThreshold`)
+   - Supports approximate dates: "about 1920", "between 1920-1930", "before 1920"
 
 **Protection display options** (`settings.privacyDisplayFormat`):
 
@@ -404,12 +410,29 @@ const logsToExport = this.plugin.settings.obfuscateLogExports
 - Numbers and booleans pass through unchanged (safe technical data)
 - Component and category names are preserved (technical identifiers, not PII)
 
+### Pronouns Field
+
+The frontmatter supports a `pronouns` property for respectful communication:
+
+```yaml
+pronouns: she/her   # Free-form string
+```
+
+**Display behavior:**
+- Controlled by `settings.showPronouns` (default: enabled)
+- Shown in person pickers after name in parentheses: "Jane Smith (she/her)"
+- Included in reports (Markdown, ODT, PDF)
+- Editable via Edit Person modal
+
+**Implementation:**
+- Added to `PersonNode` interface in `src/core/family-graph.ts`
+- Extracted from frontmatter in `buildPersonNode()`
+- Passed to person picker modals and report generators
+
 ### Planned Features (Not Yet Implemented)
 
 The following are documented for future implementation:
 
-- **`cr_living` manual override** - Frontmatter property to explicitly mark someone as living (`cr_living: true`) or deceased (`cr_living: false`), overriding automatic detection
-- **Pronouns field** - `pronouns: she/her` for respectful communication
 - **Underscore-prefix privacy convention** - Fields like `_previous_names` excluded from search/display
 - **Deadname protection** - Automatic suppression of historical names
 - **Export warnings** - Confirmation when exporting private fields
