@@ -331,38 +331,30 @@ Help users discover privacy features before accidentally sharing sensitive data.
 
 ---
 
-### Phase 7: Pronouns Field (P3) — [#101](https://github.com/banisterious/obsidian-canvas-roots/issues/101)
+### Phase 7: Pronouns Field (P3) — [#101](https://github.com/banisterious/obsidian-canvas-roots/issues/101) ✅ COMPLETE
 
 Add `pronouns` property support for respectful communication.
 
-**Behavior:**
-- New frontmatter field: `pronouns: "they/them"` (free-form string)
-- Display in:
-  - Person picker (optional, after name)
-  - Family chart hover/tooltip
-  - Reports where name is displayed
-- Do not enforce format — users may use various conventions
+**Status:** ✅ Implemented
 
-**Implementation:**
+**What was implemented:**
+- `pronouns` frontmatter property support (free-form string)
+- `showPronouns` setting (default: true)
+- Display in person pickers (after name in parentheses)
+- Edit Person modal field for pronouns
+- Pronouns included in all report generators (10 generators updated)
+- PDF report rendering with pronouns (Individual Summary, Family Group Sheet)
+- Documentation updates (Frontmatter Reference)
 
-1. **Add to person schema** (documentation)
-
-2. **Update display components:**
-   - Person picker — Show pronouns in parentheses: "Jane Doe (she/her)"
-   - Edit Person modal — Add pronouns field
-   - Reports — Include where appropriate
-
-3. **Add setting** (optional):
-   ```typescript
-   showPronouns: boolean;  // Default: true
-   ```
-
-**Files to modify:**
+**Files modified:**
+- `src/settings.ts` — Added `showPronouns` setting
+- `src/core/family-graph.ts` — Extract pronouns from frontmatter
+- `src/reports/types/report-types.ts` — Added `pronouns` to `ReportPerson` interface
+- `src/reports/services/*-generator.ts` — All 10 generators updated with `pronouns` in `nodeToReportPerson()`
+- `src/reports/services/pdf-report-renderer.ts` — Added pronouns to PDF vital statistics
 - `src/ui/person-picker-modal.ts` — Display pronouns
-- `src/ui/edit-person-modal.ts` — Add field
-- `src/reports/` — Include in relevant reports
-- `src/settings.ts` — Add `showPronouns` setting
-- Documentation updates
+- `src/ui/edit-person-modal.ts` — Added pronouns field
+- `wiki-content/Frontmatter-Reference.md` — Documented `pronouns` property
 
 ---
 
@@ -539,12 +531,12 @@ Independent (can start anytime):
 - [ ] Add privacy disabled notice to export dialogs
 - [ ] Improve settings descriptions
 
-### Phase 7: Pronouns Field
-- [ ] Add `showPronouns` setting
-- [ ] Display pronouns in PersonPickerModal
-- [ ] Add pronouns field to Edit Person modal
-- [ ] Include pronouns in relevant reports
-- [ ] Document pronouns property
+### Phase 7: Pronouns Field ✅
+- [x] Add `showPronouns` setting
+- [x] Display pronouns in PersonPickerModal
+- [x] Add pronouns field to Edit Person modal
+- [x] Include pronouns in relevant reports
+- [x] Document pronouns property
 
 ### Phase 8: Canvas Privacy
 - [ ] Add privacy options to CanvasGenerationOptions
