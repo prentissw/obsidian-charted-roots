@@ -619,6 +619,7 @@ export class PdfReportRenderer {
 			content.push(this.buildSectionHeader('Husband'));
 			content.push(this.buildKeyValueTable([
 				{ label: 'Name', value: husband.name },
+				{ label: 'Pronouns', value: husband.pronouns || '' },
 				{ label: 'Birth date', value: husband.birthDate || '' },
 				{ label: 'Birth place', value: this.stripWikilinks(husband.birthPlace) },
 				{ label: 'Death date', value: husband.deathDate || '' },
@@ -633,6 +634,7 @@ export class PdfReportRenderer {
 			content.push(this.buildSectionHeader('Wife'));
 			content.push(this.buildKeyValueTable([
 				{ label: 'Name', value: wife.name },
+				{ label: 'Pronouns', value: wife.pronouns || '' },
 				{ label: 'Birth date', value: wife.birthDate || '' },
 				{ label: 'Birth place', value: this.stripWikilinks(wife.birthPlace) },
 				{ label: 'Death date', value: wife.deathDate || '' },
