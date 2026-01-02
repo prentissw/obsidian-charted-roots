@@ -206,10 +206,23 @@
   margin-bottom: 8px;
 }
 
+.crc-picker-item__name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .crc-picker-item__name {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-normal);
+}
+
+.crc-picker-item__pronouns {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 .crc-picker-item__meta {

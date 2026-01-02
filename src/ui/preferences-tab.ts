@@ -131,6 +131,9 @@ export function renderPreferencesTab(
 	// Inclusive Parent Relationships card
 	renderInclusiveParentsCard(container, plugin, createCard);
 
+	// Display Preferences card
+	renderDisplayPreferencesCard(container, plugin, createCard);
+
 	// Integrations card (only shows if Calendarium or other integrations are available)
 	createIntegrationsCard(container, plugin, createCard);
 }
@@ -1384,6 +1387,41 @@ function renderInclusiveParentsCard(
 
 	// Initial render of label setting
 	renderLabelSetting(plugin.settings.enableInclusiveParents);
+
+	container.appendChild(card);
+}
+
+/**
+ * Render the display preferences card
+ */
+function renderDisplayPreferencesCard(
+	container: HTMLElement,
+	plugin: CanvasRootsPlugin,
+	createCard: (options: { title: string; icon?: LucideIconName; subtitle?: string }) => HTMLElement
+): void {
+	const card = createCard({
+		title: 'Display preferences',
+		icon: 'eye',
+		subtitle: 'Configure how person information is displayed'
+	});
+	const content = card.querySelector('.crc-card__content') as HTMLElement;
+
+	// Info text
+	content.createEl('p', {
+		cls: 'crc-text-muted',
+		text: 'Control what information is shown in person pickers and other displays throughout the plugin.'
+	});
+
+	// Show pronouns toggle
+	new Setting(content)
+		.setName('Show pronouns')
+		.setDesc('Display pronouns (from the "pronouns" property) in person pickers and cards')
+		.addToggle(toggle => toggle
+			.setValue(plugin.settings.showPronouns)
+			.onChange(async (value) => {
+				plugin.settings.showPronouns = value;
+				await plugin.saveSettings();
+			}));
 
 	container.appendChild(card);
 }

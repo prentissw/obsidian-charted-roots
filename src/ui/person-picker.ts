@@ -55,6 +55,7 @@ export interface PersonInfo {
 	birthDate?: string;
 	deathDate?: string;
 	sex?: string;
+	pronouns?: string;
 	birthPlace?: PlaceInfo;
 	deathPlace?: PlaceInfo;
 	burialPlace?: PlaceInfo;
@@ -350,6 +351,7 @@ export class PersonPickerModal extends Modal {
 				birthDate,
 				deathDate,
 				sex: fm.sex || fm.gender,
+				pronouns: fm.pronouns,
 				birthPlace: extractPlaceInfo(fm.birth_place),
 				deathPlace: extractPlaceInfo(fm.death_place),
 				burialPlace: extractPlaceInfo(fm.burial_place),
@@ -672,7 +674,13 @@ export class PersonPickerModal extends Modal {
 
 		// Main info
 		const mainInfo = card.createDiv({ cls: 'crc-picker-item__main' });
-		mainInfo.createDiv({ cls: 'crc-picker-item__name', text: person.name });
+		const nameContainer = mainInfo.createDiv({ cls: 'crc-picker-item__name-row' });
+		nameContainer.createSpan({ cls: 'crc-picker-item__name', text: person.name });
+
+		// Show pronouns if enabled in settings and person has pronouns
+		if (this.plugin?.settings.showPronouns && person.pronouns) {
+			nameContainer.createSpan({ cls: 'crc-picker-item__pronouns', text: `(${person.pronouns})` });
+		}
 
 		// Meta info (dates if available, otherwise cr_id)
 		const metaInfo = card.createDiv({ cls: 'crc-picker-item__meta' });

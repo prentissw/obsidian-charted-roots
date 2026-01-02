@@ -205,6 +205,7 @@ export interface CanvasRootsSettings {
 	livingPersonAgeThreshold: number;
 	privacyDisplayFormat: 'living' | 'private' | 'initials' | 'hidden';
 	hideDetailsForLiving: boolean;
+	showPronouns: boolean;
 	// Relationship history settings
 	enableRelationshipHistory: boolean;
 	historyRetentionDays: number;
@@ -552,6 +553,7 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	livingPersonAgeThreshold: 100,      // Assume alive if born within last 100 years with no death date
 	privacyDisplayFormat: 'living',     // Show "Living" for protected persons
 	hideDetailsForLiving: true,         // Hide birth dates and places for living persons
+	showPronouns: true,                 // Show pronouns in person picker and displays
 	// Relationship history defaults
 	enableRelationshipHistory: true,    // Default: ON - track relationship changes
 	historyRetentionDays: 30,           // Keep history for 30 days by default
