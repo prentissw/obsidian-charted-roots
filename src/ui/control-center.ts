@@ -3210,6 +3210,7 @@ export class ControlCenterModal extends Modal {
 					name: person.name,
 					sex: fm.sex,
 					gender: fm.gender,
+					pronouns: fm.pronouns,
 					born: person.birthDate,
 					died: person.deathDate,
 					birthPlace: person.birthPlace?.placeName,

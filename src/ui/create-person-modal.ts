@@ -46,6 +46,7 @@ interface MultiRelationshipField {
 interface PersonFormData {
 	name: string;
 	sex?: string;
+	pronouns?: string;
 	birthDate?: string;
 	deathDate?: string;
 	occupation?: string;
@@ -156,6 +157,7 @@ export class CreatePersonModal extends Modal {
 				name: string;
 				sex?: string;
 				gender?: string; // Kept for backwards compatibility
+				pronouns?: string;
 				born?: string;
 				died?: string;
 				birthPlace?: string;
@@ -229,6 +231,7 @@ export class CreatePersonModal extends Modal {
 				name: ep.name,
 				crId: ep.crId,
 				sex: ep.sex || ep.gender, // sex preferred, gender for backwards compatibility
+				pronouns: ep.pronouns,
 				birthDate: ep.born,
 				deathDate: ep.died,
 				birthPlace: ep.birthPlace,
@@ -420,6 +423,17 @@ export class CreatePersonModal extends Modal {
 				.setValue(this.personData.sex || '')
 				.onChange(value => {
 					this.personData.sex = value || undefined;
+				}));
+
+		// Pronouns
+		new Setting(form)
+			.setName('Pronouns')
+			.setDesc('Pronouns for the person (optional)')
+			.addText(text => text
+				.setPlaceholder('e.g., she/her, they/them')
+				.setValue(this.personData.pronouns || '')
+				.onChange(value => {
+					this.personData.pronouns = value || undefined;
 				}));
 
 		// Birth date
@@ -709,6 +723,7 @@ export class CreatePersonModal extends Modal {
 		return {
 			name: this.personData.name,
 			sex: this.personData.sex,
+			pronouns: this.personData.pronouns,
 			birthDate: this.personData.birthDate,
 			deathDate: this.personData.deathDate,
 			occupation: this.personData.occupation,
@@ -757,6 +772,7 @@ export class CreatePersonModal extends Modal {
 		// Basic fields
 		this.personData.name = formData.name || '';
 		this.personData.sex = formData.sex;
+		this.personData.pronouns = formData.pronouns;
 		this.personData.birthDate = formData.birthDate;
 		this.personData.deathDate = formData.deathDate;
 		this.personData.occupation = formData.occupation;
@@ -2297,6 +2313,7 @@ export class CreatePersonModal extends Modal {
 				birthDate: this.personData.birthDate,
 				deathDate: this.personData.deathDate,
 				sex: this.personData.sex,
+				pronouns: this.personData.pronouns,
 				occupation: this.personData.occupation,
 				researchLevel: this.personData.researchLevel
 			};

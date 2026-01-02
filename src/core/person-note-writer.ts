@@ -70,6 +70,7 @@ export interface PersonData {
 	deathPlace?: string;
 	occupation?: string;
 	sex?: string;
+	pronouns?: string;      // Pronouns (e.g., "she/her", "they/them")
 	collection?: string;    // User-defined grouping
 	universe?: string;      // Fictional universe or world
 	father?: string;        // Legacy: name-based relationship (deprecated)
@@ -226,6 +227,10 @@ export async function createPersonNote(
 
 	if (person.sex) {
 		frontmatter[prop('sex')] = person.sex;
+	}
+
+	if (person.pronouns) {
+		frontmatter[prop('pronouns')] = person.pronouns;
 	}
 
 	if (person.collection) {
@@ -870,6 +875,13 @@ export async function updatePersonNote(
 				frontmatter.sex = person.sex;
 			} else {
 				delete frontmatter.sex;
+			}
+		}
+		if (person.pronouns !== undefined) {
+			if (person.pronouns) {
+				frontmatter.pronouns = person.pronouns;
+			} else {
+				delete frontmatter.pronouns;
 			}
 		}
 		if (person.nickname !== undefined) {

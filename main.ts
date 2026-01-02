@@ -5298,6 +5298,7 @@ export default class CanvasRootsPlugin extends Plugin {
 				crId: String(fm.cr_id),
 				name: String(fm.name || ''),
 				gender: fm.gender || fm.sex,
+				pronouns: fm.pronouns,
 				born: fm.born,
 				died: fm.died,
 				birthPlace: fm.birth_place,
