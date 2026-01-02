@@ -62,7 +62,7 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Priority:** 📋 Medium — Protect sensitive information in exports and UI display
 
-**Status:** Partial — Infrastructure exists, redaction not yet implemented
+**Status:** Partial — Core privacy features complete, advanced features planned
 
 **GitHub Issue:** [#95](https://github.com/banisterious/obsidian-canvas-roots/issues/95)
 
@@ -74,13 +74,15 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 - **Export privacy protection** — Applied in GEDCOM, GEDCOM X, Gramps XML, and CSV exports
 - **Log export obfuscation** — Names, dates, and IDs obfuscated in exported logs (enabled by default)
 - **Gender identity model** — `sex`/`gender`/`gender_identity` data model (see [Specialized Features](../docs/developer/implementation/specialized-features.md#privacy-and-gender-identity-protection))
-- **Sensitive field identification** — `SENSITIVE_FIELDS` constant identifies `ssn` and `identityNumber` (defined but not yet wired to exports)
+- **Sensitive field protection** — `SENSITIVE_FIELDS` constant and utilities in `privacy-service.ts`; exporters use `PersonNode` whitelist providing implicit protection
+- **Manual living override** — `cr_living` frontmatter property to override automatic detection
+- **Pronouns field** — `pronouns` property displayed in pickers and reports
 
 **Planned (8 Phases):**
 
 | Phase | Feature | Issue | Status | Description |
 |-------|---------|-------|--------|-------------|
-| 1 | Sensitive field redaction | [#96](https://github.com/banisterious/obsidian-canvas-roots/issues/96) | | Wire up `SENSITIVE_FIELDS` to exclude SSN/identity numbers |
+| 1 | Sensitive field redaction | [#96](https://github.com/banisterious/obsidian-canvas-roots/issues/96) | ✅ | Implicit via `PersonNode` whitelist + explicit utilities |
 | 2 | `cr_living` override | [#97](https://github.com/banisterious/obsidian-canvas-roots/issues/97) | ✅ | Manual frontmatter property to override living detection |
 | 3 | Underscore-prefix convention | [#98](https://github.com/banisterious/obsidian-canvas-roots/issues/98) | | Treat `_`-prefixed fields as private |
 | 4-5 | Deadname + Export warnings | [#99](https://github.com/banisterious/obsidian-canvas-roots/issues/99) | | Suppress `_previous_names`, warn on export |

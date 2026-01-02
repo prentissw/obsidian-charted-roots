@@ -55,23 +55,26 @@ This document covers:
 
 | Feature | Status |
 |---------|--------|
-| Sensitive field redaction (SSN, identity numbers) | Defined but **unused** |
+| Sensitive field redaction (SSN, identity numbers) | ✅ **Complete** — Implicit via `PersonNode` whitelist + explicit utilities |
 | Underscore-prefix privacy convention | Not implemented |
 | Deadname protection | Not implemented |
-| `cr_living` manual override | Not implemented |
-| Pronouns field | Not implemented |
+| `cr_living` manual override | ✅ **Complete** |
+| Pronouns field | ✅ **Complete** |
 | Canvas obfuscation mode | Not implemented |
 | Export warnings for private fields | Not implemented |
 | Privacy feature discoverability | Not implemented |
 
-### Key Gap: SENSITIVE_FIELDS Unused
+### ~~Key Gap: SENSITIVE_FIELDS Unused~~ ✅ RESOLVED
 
 ```typescript
-// src/gedcom/gedcom-types.ts line 119
-export const SENSITIVE_FIELDS = new Set(['ssn', 'identityNumber']);
+// src/core/privacy-service.ts (centralized location)
+export const SENSITIVE_FIELDS = new Set([
+    'ssn', 'identityNumber', 'identity_number',
+    'socialSecurityNumber', 'social_security_number'
+]);
 ```
 
-This constant is defined but has **zero references** in the codebase. SSN and identity numbers imported from GEDCOM are currently exported in full regardless of privacy settings.
+~~This constant is defined but has **zero references** in the codebase.~~ **Resolved:** Investigation revealed that exporters use the `PersonNode` interface which doesn't include sensitive fields—providing implicit protection by design. Utilities (`isSensitiveField()`, `filterSensitiveFields()`) were added for future use. The constant was moved to `privacy-service.ts` as the canonical location.
 
 ---
 
@@ -497,14 +500,16 @@ Independent (can start anytime):
 
 ## Implementation Checklist
 
-### Phase 1: Sensitive Field Redaction
-- [ ] Add `isSensitiveField()` and `redactSensitiveFields()` to privacy-service.ts
-- [ ] Apply redaction in gedcom-exporter.ts
-- [ ] Apply redaction in gedcomx-exporter.ts
-- [ ] Apply redaction in gramps-exporter.ts
-- [ ] Apply redaction in csv-exporter.ts
-- [ ] Add `additionalSensitiveFields` setting
-- [ ] Add tests for sensitive field redaction
+### Phase 1: Sensitive Field Redaction ✅
+- [x] Add `isSensitiveField()` and `filterSensitiveFields()` to privacy-service.ts
+- [x] ~~Apply redaction in gedcom-exporter.ts~~ Not needed — `PersonNode` whitelist provides implicit protection
+- [x] ~~Apply redaction in gedcomx-exporter.ts~~ Not needed — `PersonNode` whitelist provides implicit protection
+- [x] ~~Apply redaction in gramps-exporter.ts~~ Not needed — `PersonNode` whitelist provides implicit protection
+- [x] ~~Apply redaction in csv-exporter.ts~~ Not needed — `CsvColumn` enum provides implicit protection
+- [ ] ~~Add `additionalSensitiveFields` setting~~ Deferred — can be added if users request it
+- [ ] ~~Add tests for sensitive field redaction~~ Not needed — architectural protection via `PersonNode`
+
+**Note:** Investigation revealed that all exporters work with the `PersonNode` interface, which doesn't include `ssn` or `identityNumber` fields. This provides implicit protection by design. The utilities were added for future use if raw frontmatter access is needed.
 
 ### Phase 2: Manual Living Override ✅
 - [x] Update `PrivacyService.isLikelyLiving()` to check `cr_living` first
