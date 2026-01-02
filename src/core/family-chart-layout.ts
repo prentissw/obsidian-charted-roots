@@ -277,8 +277,9 @@ export class FamilyChartLayoutEngine {
 	 *
 	 * The algorithm:
 	 * 1. Group nodes by Y coordinate (generation level)
-	 * 2. Within each generation, identify parent pairs for each child
-	 * 3. Re-order so children sharing both parents are adjacent
+	 * 2. Within each generation, identify which nodes are "blood relatives" (parents in tree)
+	 *    vs "in-laws/spouses" (parents not in tree)
+	 * 3. Only group blood relatives by parent pair; leave in-laws in their original positions
 	 * 4. Re-assign X coordinates while maintaining spacing
 	 *
 	 * @param positions Positions after spacing enforcement
@@ -291,6 +292,9 @@ export class FamilyChartLayoutEngine {
 	): NodePosition[] {
 		// Calculate minimum spacing (same as enforceMinimumSpacing)
 		const minSpacing = options.nodeWidth + 200;
+
+		// Build a set of all person IDs in the tree for quick lookup
+		const personIdsInTree = new Set(positions.map(p => p.person.crId));
 
 		// Group nodes by Y coordinate (generation level)
 		const byGeneration = new Map<number, NodePosition[]>();
@@ -308,6 +312,16 @@ export class FamilyChartLayoutEngine {
 			// Sort by current X to establish initial order
 			const sorted = [...nodesAtLevel].sort((a, b) => a.x - b.x);
 
+			// Check if a node's parents are in the tree (making them a "blood relative")
+			// vs an "in-law" whose parents are outside the tree
+			const hasParentsInTree = (node: NodePosition): boolean => {
+				const fatherId = node.person.fatherCrId;
+				const motherId = node.person.motherCrId;
+				// At least one parent must be in the tree for this to be a blood relative
+				return (fatherId !== undefined && personIdsInTree.has(fatherId)) ||
+					   (motherId !== undefined && personIdsInTree.has(motherId));
+			};
+
 			// Create a parent pair key for each node
 			// Key format: "fatherId|motherId" (sorted to be consistent)
 			const getParentPairKey = (node: NodePosition): string => {
@@ -318,24 +332,31 @@ export class FamilyChartLayoutEngine {
 				return parents.join('|');
 			};
 
-			// Group nodes by their parent pair
+			// Separate nodes into:
+			// 1. Blood relatives (parents in tree) - will be grouped by parent pair
+			// 2. In-laws/spouses (parents not in tree) - keep original position
+			// 3. Ancestors (no parents at all) - keep original position
 			const parentPairGroups = new Map<string, NodePosition[]>();
-			const noParentNodes: NodePosition[] = []; // Nodes with no parents (ancestors)
+			const keepOriginalPosition: NodePosition[] = [];
 
 			for (const node of sorted) {
 				const key = getParentPairKey(node);
 				if (key === '|') {
 					// No parents - this is an ancestor, keep original position
-					noParentNodes.push(node);
-				} else {
+					keepOriginalPosition.push(node);
+				} else if (hasParentsInTree(node)) {
+					// Blood relative - group by parent pair
 					if (!parentPairGroups.has(key)) {
 						parentPairGroups.set(key, []);
 					}
 					parentPairGroups.get(key)!.push(node);
+				} else {
+					// In-law/spouse - parents not in tree, keep original position
+					keepOriginalPosition.push(node);
 				}
 			}
 
-			// If there are no parent-pair groups (all ancestors), keep original order
+			// If there are no parent-pair groups (all ancestors/in-laws), keep original order
 			if (parentPairGroups.size === 0) {
 				adjusted.push(...sorted);
 				continue;
@@ -351,14 +372,14 @@ export class FamilyChartLayoutEngine {
 				}))
 				.sort((a, b) => a.leftmostX - b.leftmostX);
 
-			// Also sort ancestor nodes by X
-			noParentNodes.sort((a, b) => a.x - b.x);
+			// Sort nodes that keep original position by X
+			keepOriginalPosition.sort((a, b) => a.x - b.x);
 
-			// Merge ancestor nodes and sibling groups by their X positions
-			// This keeps ancestors in their proper positions relative to their descendants
+			// Merge all groups by their X positions
+			// This keeps ancestors/in-laws in their proper positions relative to siblings
 			const allGroups: { nodes: NodePosition[]; leftmostX: number }[] = [
 				...groupOrder.map(g => ({ nodes: g.nodes, leftmostX: g.leftmostX })),
-				...noParentNodes.map(n => ({ nodes: [n], leftmostX: n.x }))
+				...keepOriginalPosition.map(n => ({ nodes: [n], leftmostX: n.x }))
 			].sort((a, b) => a.leftmostX - b.leftmostX);
 
 			// Re-assign X coordinates while maintaining spacing
