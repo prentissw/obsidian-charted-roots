@@ -6,7 +6,7 @@
 
 ## Demo
 
-[![Canvas Roots Demo](https://img.youtube.com/vi/KQhqfUtpp18/maxresdefault.jpg)](https://youtu.be/KQhqfUtpp18)
+[![Canvas Roots Demo](https://img.youtube.com/vi/elQfn1fk1VQ/maxresdefault.jpg)](https://youtu.be/elQfn1fk1VQ)
 
 **Watch:** Import GEDCOM → Generate family tree → Interactive family chart → Geolocate places → Map view
 
