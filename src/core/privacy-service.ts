@@ -3,11 +3,55 @@
  *
  * Provides privacy protection for living persons in genealogical data.
  * Determines if a person is likely living and applies obfuscation rules.
+ *
+ * Also provides utilities for filtering sensitive fields (SSN, identity numbers, etc.)
+ * that should never be included in exports regardless of living status.
  */
 
 import { getLogger } from './logging';
 
 const logger = getLogger('privacy');
+
+/**
+ * Fields that contain sensitive personal information and should be
+ * redacted from exports regardless of living status.
+ *
+ * These map to GEDCOM attributes:
+ * - ssn: Social Security Number (GEDCOM SSN)
+ * - identityNumber: National identity number (GEDCOM IDNO)
+ *
+ * Note: Current exporters work with PersonNode interface which doesn't
+ * include these fields, providing implicit protection. These utilities
+ * are for explicit filtering when working with raw frontmatter.
+ */
+export const SENSITIVE_FIELDS = new Set([
+	'ssn',
+	'identityNumber',
+	'identity_number',  // Alternate casing
+	'socialSecurityNumber',  // Alternate naming
+	'social_security_number',
+]);
+
+/**
+ * Check if a field name is sensitive and should be redacted
+ */
+export function isSensitiveField(fieldName: string): boolean {
+	return SENSITIVE_FIELDS.has(fieldName);
+}
+
+/**
+ * Filter sensitive fields from a frontmatter object.
+ * Returns a new object with sensitive fields removed.
+ */
+export function filterSensitiveFields<T extends Record<string, unknown>>(
+	frontmatter: T
+): Omit<T, 'ssn' | 'identityNumber' | 'identity_number' | 'socialSecurityNumber' | 'social_security_number'> {
+	const filtered = { ...frontmatter };
+	for (const field of SENSITIVE_FIELDS) {
+		delete filtered[field];
+	}
+	return filtered;
+}
 
 export interface PrivacySettings {
 	enablePrivacyProtection: boolean;

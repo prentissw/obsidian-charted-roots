@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Sensitive field redaction utilities** - Centralized utilities for filtering sensitive fields from exports ([#96](https://github.com/banisterious/obsidian-canvas-roots/issues/96)):
+  - Added `SENSITIVE_FIELDS` constant with SSN and identity number fields
+  - Added `isSensitiveField()` function to check if a field is sensitive
+  - Added `filterSensitiveFields()` function to remove sensitive fields from frontmatter objects
+  - Note: Current exporters already protect these fields implicitly by working with `PersonNode` interface, which excludes sensitive fields by design
+
+---
+
 ## [0.18.16] - 2026-01-02
 
 ### Added

@@ -115,8 +115,9 @@ export const GEDCOM_ATTRIBUTE_TAGS = new Set(Object.keys(GEDCOM_ATTRIBUTE_TAG_MA
 
 /**
  * Sensitive fields that should be redacted from exports
+ * @deprecated Import from '../core/privacy-service' instead for central definition
  */
-export const SENSITIVE_FIELDS = new Set(['ssn', 'identityNumber']);
+export { SENSITIVE_FIELDS, isSensitiveField, filterSensitiveFields } from '../core/privacy-service';
 
 // ============================================================================
 // Date Precision Mapping
