@@ -271,6 +271,7 @@ spouses:
 | Property | Type | Description | Example |
 |----------|------|-------------|---------|
 | `cr_root` | `boolean` | Designates this person as root of a tree | `true` |
+| `cr_living` | `boolean` | Manual override for living status detection. When `true`, person is treated as living (protected in exports). When `false`, person is treated as deceased (not protected). When omitted, automatic detection is used based on death date and age threshold. | `true`, `false` |
 | `collection` | `string` | User-defined grouping/collection name | `"Smith Family"` |
 | `private` | `boolean` | Marks note as containing private data (set automatically during Gramps import if any attached note has privacy flag) | `true` |
 

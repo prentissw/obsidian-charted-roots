@@ -140,9 +140,20 @@ Wire up the existing `SENSITIVE_FIELDS` constant to all exporters.
 
 ---
 
-### Phase 2: Manual Living Status Override (P2) — [#97](https://github.com/banisterious/obsidian-canvas-roots/issues/97)
+### Phase 2: Manual Living Status Override (P2) — [#97](https://github.com/banisterious/obsidian-canvas-roots/issues/97) ✅ COMPLETE
 
 Add `cr_living` frontmatter property to manually override automatic detection.
+
+**Status:** ✅ Implemented
+
+**What was implemented:**
+- `cr_living` frontmatter property support (boolean)
+- Added to `PersonPrivacyData` interface in `privacy-service.ts`
+- `isLikelyLiving()` checks `cr_living` first before automatic detection
+- Added to `PersonNode` interface in `family-graph.ts`
+- Extracted from frontmatter in `buildPersonNode()`
+- Passed to `applyPrivacy()` in all 4 exporters (GEDCOM, GEDCOM X, Gramps XML, CSV)
+- Documentation updates (Frontmatter Reference)
 
 **Behavior:**
 - `cr_living: true` — Always treat as living, regardless of dates
@@ -154,28 +165,14 @@ Add `cr_living` frontmatter property to manually override automatic detection.
 - Person with death date not yet entered but known to be deceased
 - Override false positives from automatic detection
 
-**Implementation:**
-
-1. **Update `PrivacyService.isLiving()`**:
-   ```typescript
-   isLiving(person: PersonData): boolean {
-       // Manual override takes precedence
-       if (person.cr_living !== undefined) {
-           return person.cr_living;
-       }
-       // Existing automatic detection
-       return this.detectLivingStatus(person);
-   }
-   ```
-
-2. **Add to person schema documentation**
-
-3. **Add to Edit Person modal** (optional toggle)
-
-**Files to modify:**
-- `src/core/privacy-service.ts` — Check `cr_living` first
-- `src/ui/edit-person-modal.ts` — Add optional toggle
-- Documentation updates
+**Files modified:**
+- `src/core/privacy-service.ts` — Added `cr_living` to interface, updated `isLikelyLiving()`
+- `src/core/family-graph.ts` — Added `cr_living` to `PersonNode`, extraction from frontmatter
+- `src/gedcom/gedcom-exporter.ts` — Pass `cr_living` to `applyPrivacy()`
+- `src/gedcomx/gedcomx-exporter.ts` — Pass `cr_living` to `applyPrivacy()`
+- `src/gramps/gramps-exporter.ts` — Pass `cr_living` to `applyPrivacy()`
+- `src/csv/csv-exporter.ts` — Pass `cr_living` to `applyPrivacy()`
+- `wiki-content/Frontmatter-Reference.md` — Documented `cr_living` property
 
 ---
 
@@ -502,10 +499,13 @@ Independent (can start anytime):
 - [ ] Add `additionalSensitiveFields` setting
 - [ ] Add tests for sensitive field redaction
 
-### Phase 2: Manual Living Override
-- [ ] Update `PrivacyService.isLiving()` to check `cr_living` first
-- [ ] Add toggle to Edit Person modal (optional)
-- [ ] Document `cr_living` property
+### Phase 2: Manual Living Override ✅
+- [x] Update `PrivacyService.isLikelyLiving()` to check `cr_living` first
+- [x] Add `cr_living` to `PersonPrivacyData` and `PersonNode` interfaces
+- [x] Extract `cr_living` from frontmatter in `buildPersonNode()`
+- [x] Pass `cr_living` to `applyPrivacy()` in all 4 exporters
+- [x] Document `cr_living` property in Frontmatter Reference
+- [ ] Add toggle to Edit Person modal (optional - deferred)
 
 ### Phase 3: Underscore-Prefix Convention
 - [ ] Add `isPrivateField()` and `getPublicFields()` utilities

@@ -33,6 +33,7 @@ export interface PersonNode {
 	sex?: string;
 	pronouns?: string;
 	researchLevel?: number;  // Research level (0-6) based on Hoitink's Six Levels
+	cr_living?: boolean;  // Manual override for living status (bypasses automatic detection)
 	file: TFile;
 
 	// Biological parent relationships (as cr_ids)
@@ -1506,6 +1507,9 @@ export class FamilyGraphService {
 		const universe = this.resolveProperty<string>(fm, 'universe');
 		const researchLevel = this.resolveProperty<number>(fm, 'research_level');
 
+		// cr_living is a boolean for manual living status override (no aliasing needed)
+		const cr_living = typeof fm.cr_living === 'boolean' ? fm.cr_living : undefined;
+
 		// Parse media array
 		const media = this.parseMediaProperty(fm);
 
@@ -1520,6 +1524,7 @@ export class FamilyGraphService {
 			occupation,
 			sex,
 			pronouns,
+			cr_living,
 			file,
 			// Biological parents
 			fatherCrId: fatherCrId || undefined,

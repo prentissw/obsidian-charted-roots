@@ -238,7 +238,8 @@ export class GedcomExporter {
 					const privacyResult = privacyService.applyPrivacy({
 						name: person.name,
 						birthDate: person.birthDate,
-						deathDate: person.deathDate
+						deathDate: person.deathDate,
+						cr_living: person.cr_living
 					});
 					if (privacyResult.isProtected && !privacyResult.excludeFromOutput) {
 						result.privacyObfuscated = (result.privacyObfuscated || 0) + 1;
@@ -251,7 +252,8 @@ export class GedcomExporter {
 						const privacyResult = privacyService.applyPrivacy({
 							name: person.name,
 							birthDate: person.birthDate,
-							deathDate: person.deathDate
+							deathDate: person.deathDate,
+							cr_living: person.cr_living
 						});
 						return !privacyResult.excludeFromOutput;
 					});
@@ -580,7 +582,8 @@ export class GedcomExporter {
 		const privacyResult = privacyService?.applyPrivacy({
 			name: person.name,
 			birthDate: person.birthDate,
-			deathDate: person.deathDate
+			deathDate: person.deathDate,
+			cr_living: person.cr_living
 		});
 
 		lines.push(`0 @${gedcomId}@ INDI`);

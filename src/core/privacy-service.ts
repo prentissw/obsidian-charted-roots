@@ -20,6 +20,8 @@ export interface PersonPrivacyData {
 	name: string;
 	birthDate?: string;
 	deathDate?: string;
+	/** Manual override for living status. When set, bypasses automatic detection. */
+	cr_living?: boolean;
 }
 
 export interface PrivacyResult {
@@ -50,13 +52,21 @@ export class PrivacyService {
 	}
 
 	/**
-	 * Determine if a person is likely living based on available data
+	 * Determine if a person is likely living based on available data.
+	 * The cr_living frontmatter property takes precedence over automatic detection.
 	 */
 	isLikelyLiving(person: PersonPrivacyData): boolean {
 		// If privacy protection is disabled, no one is protected
 		if (!this.settings.enablePrivacyProtection) {
 			return false;
 		}
+
+		// Manual override takes precedence over automatic detection
+		if (person.cr_living !== undefined) {
+			return person.cr_living;
+		}
+
+		// Automatic detection follows...
 
 		// If they have a death date, they're not living
 		if (person.deathDate && person.deathDate.trim() !== '') {

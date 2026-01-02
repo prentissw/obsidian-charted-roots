@@ -81,7 +81,7 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 | Phase | Feature | Issue | Status | Description |
 |-------|---------|-------|--------|-------------|
 | 1 | Sensitive field redaction | [#96](https://github.com/banisterious/obsidian-canvas-roots/issues/96) | | Wire up `SENSITIVE_FIELDS` to exclude SSN/identity numbers |
-| 2 | `cr_living` override | [#97](https://github.com/banisterious/obsidian-canvas-roots/issues/97) | | Manual frontmatter property to override living detection |
+| 2 | `cr_living` override | [#97](https://github.com/banisterious/obsidian-canvas-roots/issues/97) | ✅ | Manual frontmatter property to override living detection |
 | 3 | Underscore-prefix convention | [#98](https://github.com/banisterious/obsidian-canvas-roots/issues/98) | | Treat `_`-prefixed fields as private |
 | 4-5 | Deadname + Export warnings | [#99](https://github.com/banisterious/obsidian-canvas-roots/issues/99) | | Suppress `_previous_names`, warn on export |
 | 6 | Discoverability | [#100](https://github.com/banisterious/obsidian-canvas-roots/issues/100) | | First-run notice, export dialog warnings |
