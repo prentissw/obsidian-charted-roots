@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Rename file when person name changes** - Option to rename the note file when editing a person's name ([#107](https://github.com/banisterious/obsidian-canvas-roots/issues/107)):
+  - When saving changes in Edit Person modal with a new name, prompts to rename the file
+  - Handles duplicate filenames by appending a number (e.g., "John Smith 1.md")
+  - Automatically updates relationship wikilinks in related notes (parents, spouses, children)
+  - Uses `cr_id` matching to ensure correct relationships are updated
+
 - **Canvas grouping for family units** - Visual groups to organize related nodes on canvases ([#105](https://github.com/banisterious/obsidian-canvas-roots/issues/105)):
   - Four grouping strategies: None, By generation, By couples, By collection
   - "By couples" groups parent pairs who share children (not including children)
