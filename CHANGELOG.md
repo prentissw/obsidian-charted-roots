@@ -12,8 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Relationship calculator asymmetry with unresolved Gramps handles** ([#109](https://github.com/banisterious/obsidian-canvas-roots/issues/109)):
-  - Root cause: When a referenced person doesn't exist in the Gramps data (e.g., ancestors not in database), the import left Gramps handles (e.g., `_PTHMF88SXO93W8QTDJ`) in `_id` fields instead of cr_ids
+  - Root cause 1: When a referenced person doesn't exist in the Gramps data (e.g., ancestors not in database), the import left Gramps handles (e.g., `_PTHMF88SXO93W8QTDJ`) in `_id` fields instead of cr_ids
+  - Root cause 2: When multiple people have the same name, the import's relationship update pass was reading the wrong file due to filename collisions
   - Added cleanup step in Gramps import to remove unresolved handles from `_id` fields after the cr_id replacement pass
+  - Changed file lookup to use `findPersonByCrId()` instead of name-derived filenames
   - Also added defensive filtering in family graph to handle existing data with unresolved handles
 
 ---
