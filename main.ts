@@ -5304,13 +5304,11 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 		}
 
-		// Get family graph for collection options
-		const familyGraph = new FamilyGraphService(this.app);
-		void familyGraph.reloadCache();
+		// Use factory methods to get properly configured graph services
+		const familyGraph = this.createFamilyGraphService();
+		const placeGraph = this.createPlaceGraphService();
 
 		// Merge universes from both places and people
-		const placeGraph = new PlaceGraphService(this.app);
-		placeGraph.setSettings(this.settings);
 		const placeUniverses = placeGraph.getAllUniverses();
 		const personUniverses = familyGraph.getAllUniverses();
 		const allUniverses = [...new Set([...placeUniverses, ...personUniverses])].sort();

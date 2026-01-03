@@ -129,6 +129,11 @@ export class ControlCenterModal extends Modal {
 	private spouseBtn?: HTMLButtonElement;
 	private spouseHelp?: HTMLElement;
 
+	// Cached data to avoid expensive recomputation
+	private cachedUniverses: string[] | null = null;
+	private cachedFamilyGraph: FamilyGraphService | null = null;
+	private cachedPlaceGraph: PlaceGraphService | null = null;
+
 	constructor(app: App, plugin: CanvasRootsPlugin, initialTab?: string) {
 		super(app);
 		this.plugin = plugin;
@@ -151,6 +156,58 @@ export class ControlCenterModal extends Modal {
 	onClose() {
 		const { contentEl } = this;
 		contentEl.empty();
+		// Clear caches on close
+		this.cachedUniverses = null;
+		this.cachedFamilyGraph = null;
+		this.cachedPlaceGraph = null;
+	}
+
+	/**
+	 * Get cached family graph service, creating it if needed.
+	 * This avoids expensive reloads on every row click.
+	 */
+	private getCachedFamilyGraph(): FamilyGraphService {
+		if (!this.cachedFamilyGraph) {
+			this.cachedFamilyGraph = this.plugin.createFamilyGraphService();
+		}
+		return this.cachedFamilyGraph;
+	}
+
+	/**
+	 * Get cached place graph service, creating it if needed.
+	 */
+	private getCachedPlaceGraph(): PlaceGraphService {
+		if (!this.cachedPlaceGraph) {
+			this.cachedPlaceGraph = this.plugin.createPlaceGraphService();
+		}
+		return this.cachedPlaceGraph;
+	}
+
+	/**
+	 * Get cached universe list, computing it once if needed.
+	 * This merges universes from both places and people.
+	 */
+	private getCachedUniverses(): string[] {
+		if (!this.cachedUniverses) {
+			const placeGraph = this.getCachedPlaceGraph();
+			const familyGraph = this.getCachedFamilyGraph();
+			const placeUniverses = placeGraph.getAllUniverses();
+			const personUniverses = familyGraph.getAllUniverses();
+			this.cachedUniverses = [...new Set([
+				...placeUniverses,
+				...personUniverses
+			])].sort();
+		}
+		return this.cachedUniverses;
+	}
+
+	/**
+	 * Invalidate cached data (call when data changes)
+	 */
+	private invalidateCaches(): void {
+		this.cachedUniverses = null;
+		this.cachedFamilyGraph = null;
+		this.cachedPlaceGraph = null;
 	}
 
 	/**
@@ -2174,15 +2231,10 @@ export class ControlCenterModal extends Modal {
 				.setButtonText('Create person')
 				.setCta()
 				.onClick(() => {
-					const placeGraph = this.plugin.createPlaceGraphService();
-					const familyGraph = this.plugin.createFamilyGraphService();
-					// Merge universes from both places and people
-					const placeUniverses = placeGraph.getAllUniverses();
-					const personUniverses = familyGraph.getAllUniverses();
-					const allUniverses = [...new Set([
-						...placeUniverses,
-						...personUniverses
-					])].sort();
+					// Use cached graph services and universes
+					const familyGraph = this.getCachedFamilyGraph();
+					const allUniverses = this.getCachedUniverses();
+
 					new CreatePersonModal(this.app, {
 						directory: this.plugin.settings.peopleFolder || '',
 						familyGraph,
@@ -2192,7 +2244,8 @@ export class ControlCenterModal extends Modal {
 						existingUniverses: allUniverses,
 						plugin: this.plugin,
 						onCreated: () => {
-							// Refresh the People tab
+							// Refresh the People tab and invalidate caches since data changed
+							this.invalidateCaches();
 							this.showTab('people');
 						}
 					}).open();
@@ -3202,15 +3255,11 @@ export class ControlCenterModal extends Modal {
 				parentNames = parents.map(p => extractName(String(p))).filter((n): n is string => !!n);
 			}
 
-			const placeGraph = this.plugin.createPlaceGraphService();
-			const familyGraph = this.plugin.createFamilyGraphService();
-			// Merge universes from both places and people
-			const placeUniverses = placeGraph.getAllUniverses();
-			const personUniverses = familyGraph.getAllUniverses();
-			const allUniverses = [...new Set([
-				...placeUniverses,
-				...personUniverses
-			])].sort();
+			// Use cached graph services and universes to avoid expensive recomputation on every click
+			const familyGraph = this.getCachedFamilyGraph();
+			const placeGraph = this.getCachedPlaceGraph();
+			const allUniverses = this.getCachedUniverses();
+
 			const modal = new CreatePersonModal(this.app, {
 				editFile: person.file,
 				editPersonData: {
@@ -3248,7 +3297,8 @@ export class ControlCenterModal extends Modal {
 				existingUniverses: allUniverses,
 				plugin: this.plugin,
 				onUpdated: () => {
-					// Refresh the People tab
+					// Refresh the People tab and invalidate caches since data changed
+					this.invalidateCaches();
 					this.showTab('people');
 				}
 			});
