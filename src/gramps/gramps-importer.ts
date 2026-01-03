@@ -8,7 +8,7 @@ import { App, Notice, TFile, normalizePath } from 'obsidian';
 import { GrampsParser, ParsedGrampsData, ParsedGrampsPerson, ParsedGrampsPlace, ParsedGrampsEvent, ParsedGrampsSource } from './gramps-parser';
 import { GrampsNote, GrampsValidationResult } from './gramps-types';
 import { formatNotesSection, hasPrivateNote } from './gramps-note-converter';
-import { createPersonNote, PersonData } from '../core/person-note-writer';
+import { createPersonNote, PersonData, findPersonByCrId } from '../core/person-note-writer';
 import { createPlaceNote, PlaceData } from '../core/place-note-writer';
 import { writeNoteFile, buildNoteReferenceMap } from '../core/note-writer';
 import { generateCrId } from '../core/uuid';
@@ -850,20 +850,21 @@ export class GrampsImporter {
 		options: GrampsImportOptions
 	): Promise<void> {
 		const crId = grampsToCrId.get(person.handle);
-		if (!crId) return;
-
-		// Generate the expected file name
-		const fileName = this.generateFileName(person.name || 'Unknown');
-		const filePath = options.peopleFolder
-			? `${options.peopleFolder}/${fileName}`
-			: fileName;
-
-		const normalizedPath = normalizePath(filePath);
-		const file = this.app.vault.getAbstractFileByPath(normalizedPath);
-
-		if (!file || !(file instanceof TFile)) {
+		if (!crId) {
+			logger.warn('updateRelationships', `No crId for ${person.name}`, { handle: person.handle });
 			return;
 		}
+
+		// Find file by cr_id to handle duplicate names correctly
+		// When multiple people have the same name, filenames get suffixed (e.g., "Samuel Edison 1.md")
+		const file = findPersonByCrId(this.app, crId, options.peopleFolder);
+
+		if (!file) {
+			logger.warn('updateRelationships', `File not found for ${person.name}`, { crId });
+			return;
+		}
+
+		logger.debug('updateRelationships', `Processing ${person.name}`, { path: file.path });
 
 		// Read the file
 		const content = await this.app.vault.read(file);
@@ -1059,7 +1060,13 @@ export class GrampsImporter {
 		// Clean up any remaining unresolved Gramps handles in _id fields
 		// These occur when a referenced person doesn't exist in the imported data
 		// Pattern matches: property_id: _HANDLE (Gramps handles start with _ followed by alphanumeric)
+		const beforeCleanup = updatedContent;
 		updatedContent = this.cleanupUnresolvedGrampsHandles(updatedContent);
+
+		// Log if cleanup removed unresolved handles
+		if (beforeCleanup !== updatedContent) {
+			logger.info('updateRelationships', 'Cleaned unresolved Gramps handles', { path: file.path });
+		}
 
 		// Write updated content if changed
 		if (updatedContent !== content) {
@@ -1091,10 +1098,8 @@ export class GrampsImporter {
 
 		// Clean single-value _id fields: "property_id: _HANDLE" -> "property_id: "
 		// This preserves the property but clears the invalid value
-		content = content.replace(
-			new RegExp(`^(\\w+_id):\\s+${grampsHandlePattern.source}\\s*$`, 'gm'),
-			'$1: '
-		);
+		const singleValueRegex = new RegExp(`^(\\w+_id):\\s+${grampsHandlePattern.source}\\s*$`, 'gm');
+		content = content.replace(singleValueRegex, '$1: ');
 
 		// Clean array items that are unresolved handles: "  - _HANDLE" -> remove line
 		content = content.replace(
