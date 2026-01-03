@@ -68,7 +68,7 @@ export function generatePeopleBaseTemplate(aliasesOrOptions: PropertyAliases | P
 	const father = getPropertyName('father', aliases);
 	const mother = getPropertyName('mother', aliases);
 	const spouse = getPropertyName('spouse', aliases);
-	const child = getPropertyName('child', aliases);
+	const children = getPropertyName('children', aliases);
 	const media = getPropertyName('media', aliases);
 	const research_level = getPropertyName('research_level', aliases);
 
@@ -78,7 +78,7 @@ export function generatePeopleBaseTemplate(aliasesOrOptions: PropertyAliases | P
   - note.${father}
   - note.${mother}
   - note.${spouse}
-  - note.${child}
+  - note.${children}
   - formula.birth_display
   - formula.death_display
   - note.${sex}
@@ -114,7 +114,7 @@ properties:
     displayName: Mother
   note.${spouse}:
     displayName: Spouse(s)
-  note.${child}:
+  note.${children}:
     displayName: Children
   formula.birth_display:
     displayName: Born
@@ -156,7 +156,7 @@ views:
       - ${father}
       - ${mother}
       - ${spouse}
-      - ${child}
+      - ${children}
     summaries:
       ${born}: Earliest
       ${died}: Latest
@@ -255,19 +255,19 @@ views:
     filters:
       and:
         - '!${cr_id}.isEmpty()'
-        - '!${child}.isEmpty()'
+        - '!${children}.isEmpty()'
         - '${spouse}.isEmpty()'
     order:
       - file.name
     summaries:
-      ${child}: Filled
+      ${children}: Filled
   - type: table
     name: Childless couples
     filters:
       and:
         - '!${cr_id}.isEmpty()'
         - '!${spouse}.isEmpty()'
-        - '${child}.isEmpty()'
+        - '${children}.isEmpty()'
     order:
       - file.name
   - type: table
@@ -302,7 +302,7 @@ views:
     order:
       - ${born}
     summaries:
-      ${child}: Filled
+      ${children}: Filled
   - type: table
     name: Marked root persons
     filters:
@@ -312,7 +312,7 @@ views:
     order:
       - ${born}
     summaries:
-      ${child}: Filled
+      ${children}: Filled
   - type: table
     name: By lineage
     filters:
