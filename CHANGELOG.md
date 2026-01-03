@@ -15,38 +15,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Changed place text from separate text node to leading space in span content
   - Fixes "Residencein" appearing instead of "Residence in"
 
-- **Dashboard "data issues" count links to wrong destination** - Dashboard now shows the same issue count as Statistics Dashboard ([#115](https://github.com/banisterious/obsidian-canvas-roots/issues/115)):
+- **Dashboard "data issues" count links to wrong destination** ([#115](https://github.com/banisterious/obsidian-canvas-roots/issues/115), part of [#114](https://github.com/banisterious/obsidian-canvas-roots/issues/114)):
+  - Dashboard now shows the same issue count as Statistics Dashboard
   - Changed dashboard to calculate total issues as: missing birth dates + orphaned people + unsourced events
   - Added `unsourcedEvents` to VaultStatsService for efficient counting
-  - Previously dashboard showed only orphaned people (34) while Statistics Dashboard showed full total (7,223)
 
-- **Statistics Dashboard total doesn't match visible category sums** - Clarified what the "Issues" total represents ([#116](https://github.com/banisterious/obsidian-canvas-roots/issues/116)):
+- **Statistics Dashboard total doesn't match visible category sums** ([#116](https://github.com/banisterious/obsidian-canvas-roots/issues/116), part of [#114](https://github.com/banisterious/obsidian-canvas-roots/issues/114)):
+  - Clarified what the "Issues" total represents
   - Changed subtitle from "Items needing attention" to "Missing births + orphans + unsourced events"
-  - The total intentionally includes only core actionable issues, not all quality metrics
 
-- **Data Quality checker flags `male`/`female` as non-standard sex format** - Now accepts common synonyms ([#117](https://github.com/banisterious/obsidian-canvas-roots/issues/117)):
-  - Sex validation now accepts both canonical GEDCOM codes (M/F/X/U) and common synonyms (male/female)
+- **Data Quality checker flags `male`/`female` as non-standard sex format** ([#117](https://github.com/banisterious/obsidian-canvas-roots/issues/117), part of [#114](https://github.com/banisterious/obsidian-canvas-roots/issues/114)):
+  - Now accepts common synonyms (male/female) in addition to GEDCOM codes (M/F/X/U)
   - Uses existing value alias system for consistent synonym handling
-  - Updated error message to mention accepted synonyms
 
-- **"Living people" calculation is inaccurate for historical genealogy data** - Now uses age threshold ([#118](https://github.com/banisterious/obsidian-canvas-roots/issues/118)):
+- **"Living people" calculation is inaccurate for historical genealogy data** ([#118](https://github.com/banisterious/obsidian-canvas-roots/issues/118), part of [#114](https://github.com/banisterious/obsidian-canvas-roots/issues/114)):
   - Living person count now uses `livingPersonAgeThreshold` setting (default 100 years)
   - Only counts people as "potentially living" if birth year is within threshold and no death date
-  - Previously counted anyone without a death date as "living", which was misleading for historical data
 
-- **Gramps import creates invalid cr_id formats** - Relationship references now use proper cr_ids ([#119](https://github.com/banisterious/obsidian-canvas-roots/issues/119)):
+- **Gramps import creates invalid cr_id formats** ([#119](https://github.com/banisterious/obsidian-canvas-roots/issues/119), part of [#114](https://github.com/banisterious/obsidian-canvas-roots/issues/114)):
   - Fixed cr_id replacement in second pass to respect property aliases
-  - Previously, if user had property aliases configured, the Gramps handles were never replaced with cr_ids
   - Now `father_id`, `mother_id`, `spouse_id`, `children_id`, and other relationship fields are correctly updated
 
 ### Added
 
-- **Distinguish actionable errors from informational data gaps** - Data quality section now groups issues by severity ([#120](https://github.com/banisterious/obsidian-canvas-roots/issues/120)):
+- **Distinguish actionable errors from informational data gaps** ([#120](https://github.com/banisterious/obsidian-canvas-roots/issues/120), part of [#114](https://github.com/banisterious/obsidian-canvas-roots/issues/114)):
+  - Data quality section now groups issues by severity
   - **Errors** (red): Date inconsistencies and other fixable problems
   - **Data Gaps** (yellow/orange): Missing data that may be unavailable for historical records
   - **Informational** (blue): Neutral metrics like places without coordinates
   - Each group has a header explaining its meaning
-  - Moved "unsourced events" from info to data gaps category
 
 ---
 
