@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added reverse child inference from `parentCrIds` in family graph cache so parents using gender-neutral fields have `childrenCrIds` populated
   - Added debug logging to help diagnose asymmetric relationship calculation issues
 
+- **New child notes created with obsolete `child` property** - Fixed legacy property name usage ([#110](https://github.com/banisterious/obsidian-canvas-roots/issues/110)):
+  - Removed automatic addition of empty `child` property when creating new person notes
+  - Updated relationship-history, data-quality, and base-template to use normalized `children` property
+  - Read operations still support legacy `child` property for backward compatibility
+
 ---
 
 ## [0.18.18] - 2026-01-02
