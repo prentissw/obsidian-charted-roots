@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Family Tree view now shows all parents when mixing `father`/`mother` with `parents` property (up to 2 total)
   - Children are now correctly recognized as belonging to a parent using `parentCrIds` even when biological parents exist
 
+- **Person picker search may not work on macOS** - Improved search input focus and event handling ([#113](https://github.com/banisterious/obsidian-canvas-roots/issues/113)):
+  - Added multiple focus attempts with staggered delays for reliable focus after context menu dismissal
+  - Added `keyup` event listener as fallback for `input` events
+
 ---
 
 ## [0.18.18] - 2026-01-02

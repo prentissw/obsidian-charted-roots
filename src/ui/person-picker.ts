@@ -415,8 +415,27 @@ export class PersonPickerModal extends Modal {
 			this.filterPeople();
 		});
 
+		// Also listen for keyup as a fallback for input events
+		// This helps on macOS where input events may not fire reliably from context menu invocation
+		this.searchInput.addEventListener('keyup', () => {
+			const newQuery = this.searchInput.value.toLowerCase();
+			if (newQuery !== this.searchQuery) {
+				this.searchQuery = newQuery;
+				this.filterPeople();
+			}
+		});
+
 		// Auto-focus search input
-		setTimeout(() => this.searchInput.focus(), 50);
+		// Use multiple attempts with increasing delays for reliable focus,
+		// especially on macOS where context menu dismissal can delay focus readiness
+		const focusInput = () => {
+			if (this.searchInput && document.body.contains(this.searchInput)) {
+				this.searchInput.focus();
+			}
+		};
+		setTimeout(focusInput, 50);
+		setTimeout(focusInput, 150);
+		setTimeout(focusInput, 300);
 
 		// Sort dropdown
 		const sortContainer = contentEl.createDiv({ cls: 'crc-picker-sort' });
