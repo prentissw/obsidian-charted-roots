@@ -224,7 +224,6 @@ export class TemplateSnippetsModal extends Modal {
 	 */
 	private renderVariableReference(container: HTMLElement): void {
 		const variables = [
-			{ syntax: '<% tp.date.now("YYYYMMDDHHmmss") %>', description: 'Timestamp-based unique ID (for cr_id)' },
 			{ syntax: '<% tp.file.title %>', description: 'Current file name (for name field)' },
 			{ syntax: '<% tp.date.now("YYYY-MM-DD") %>', description: 'Today\'s date (for born/died fields)' },
 			{ syntax: '<% tp.file.cursor() %>', description: 'Place cursor here after template insertion' },
@@ -295,7 +294,7 @@ export class TemplateSnippetsModal extends Modal {
 				description: 'Minimal template with essential fields',
 				template: `---
 ${p('cr_type')}: person
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 ${p('sex')}: <% tp.system.suggester(["Male", "Female", "Unknown"], ["M", "F", "U"]) %>
 ${p('born')}:
@@ -311,7 +310,7 @@ ${p('died')}:
 				description: 'Complete template with family relationships, dynamic blocks, and place fields',
 				template: `---
 ${p('cr_type')}: person
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 ${p('sex')}: <% tp.system.suggester(["Male", "Female", "Unknown"], ["M", "F", "U"]) %>
 
@@ -375,7 +374,7 @@ editable: true
 				description: 'Interactive template that prompts for key information',
 				template: `---
 ${p('cr_type')}: person
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 ${p('sex')}: <% tp.system.suggester(["Male", "Female", "Unknown"], ["M", "F", "U"]) %>
 ${p('born')}: <% tp.system.prompt("Birth date (YYYY-MM-DD)?", "", false) %>
@@ -402,7 +401,7 @@ ${p('birth_place')}: "<% tp.system.prompt("Birth place?", "", false) %>"
 				description: 'Minimal template for real-world locations',
 				template: `---
 ${p('cr_type')}: place
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 ${p('place_type')}: <% tp.system.suggester(["City", "Town", "Village", "Country", "State/Province", "Region", "County"], ["city", "town", "village", "country", "state", "region", "county"]) %>
 ${p('parent_place')}:
@@ -417,7 +416,7 @@ ${p('parent_place')}:
 				description: 'For real-world locations with geographic coordinates',
 				template: `---
 ${p('cr_type')}: place
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 place_category: real
 ${p('place_type')}: <% tp.system.suggester(["City", "Town", "Village", "Country", "State/Province", "Region", "County"], ["city", "town", "village", "country", "state", "region", "county"]) %>
@@ -436,7 +435,7 @@ ${p('coordinates')}:
 				description: 'For places that no longer exist or have changed significantly',
 				template: `---
 ${p('cr_type')}: place
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 place_category: historical
 ${p('place_type')}: <% tp.system.suggester(["City", "Town", "Village", "Country", "State/Province", "Region", "Kingdom", "Empire"], ["city", "town", "village", "country", "state", "region", "kingdom", "empire"]) %>
@@ -457,7 +456,7 @@ historical_names:
 				description: 'For world-building and fictional locations',
 				template: `---
 ${p('cr_type')}: place
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 place_category: fictional
 ${p('universe')}: "<% tp.system.prompt("Universe/World name?", "", false) %>"
@@ -484,7 +483,7 @@ custom_coordinates:
 				description: 'Complete template with all available fields',
 				template: `---
 ${p('cr_type')}: place
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 aliases:
   -
@@ -524,7 +523,7 @@ ${p('collection')}:
 				description: 'Minimal template for documenting a source',
 				template: `---
 ${p('cr_type')}: source
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "<% tp.file.title %>"
 source_type: <% tp.system.suggester(["Census", "Vital record", "Church record", "Newspaper", "Photo", "Correspondence", "Military", "Court record", "Land deed", "Probate", "Immigration", "Obituary", "Oral history"], ["census", "vital_record", "church_record", "newspaper", "photo", "correspondence", "military", "court_record", "land_deed", "probate", "immigration", "obituary", "oral_history"]) %>
 source_date:
@@ -540,7 +539,7 @@ ${p('confidence')}: <% tp.system.suggester(["High", "Medium", "Low", "Unknown"],
 				description: 'Template for census records',
 				template: `---
 ${p('cr_type')}: source
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "<% tp.file.title %>"
 source_type: census
 source_date: <% tp.system.prompt("Census date (YYYY-MM-DD)?", "", false) %>
@@ -585,7 +584,7 @@ media:
 				description: 'Template for birth, death, or marriage certificates',
 				template: `---
 ${p('cr_type')}: source
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "<% tp.file.title %>"
 source_type: vital_record
 source_date: <% tp.system.prompt("Event date (YYYY-MM-DD)?", "", false) %>
@@ -620,7 +619,7 @@ media:
 				description: 'Complete template with all source fields',
 				template: `---
 ${p('cr_type')}: source
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "<% tp.file.title %>"
 source_type: <% tp.system.suggester(["Census", "Vital record", "Church record", "Newspaper", "Photo", "Correspondence", "Military", "Court record", "Land deed", "Probate", "Immigration", "Obituary", "Oral history", "Custom"], ["census", "vital_record", "church_record", "newspaper", "photo", "correspondence", "military", "court_record", "land_deed", "probate", "immigration", "obituary", "oral_history", "custom"]) %>
 source_date:
@@ -663,7 +662,7 @@ citation_override:
 				description: 'Minimal template for any organization type',
 				template: `---
 ${p('cr_type')}: organization
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 org_type: <% tp.system.suggester(["Noble house", "Guild", "Corporation", "Military", "Religious", "Political", "Educational", "Custom"], ["noble_house", "guild", "corporation", "military", "religious", "political", "educational", "custom"]) %>
 ---
@@ -677,7 +676,7 @@ org_type: <% tp.system.suggester(["Noble house", "Guild", "Corporation", "Milita
 				description: 'Template for feudal houses and dynasties',
 				template: `---
 ${p('cr_type')}: organization
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 org_type: noble_house
 parent_org:
@@ -705,7 +704,7 @@ ${p('universe')}: "<% tp.system.prompt("Universe/World name?", "", false) %>"
 				description: 'Template for armies, regiments, and military organizations',
 				template: `---
 ${p('cr_type')}: organization
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 org_type: military
 parent_org:
@@ -734,7 +733,7 @@ ${p('universe')}:
 				description: 'Complete template with all organization fields',
 				template: `---
 ${p('cr_type')}: organization
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 org_type: <% tp.system.suggester(["Noble house", "Guild", "Corporation", "Military", "Religious", "Political", "Educational", "Custom"], ["noble_house", "guild", "corporation", "military", "religious", "political", "educational", "custom"]) %>
 parent_org:
@@ -775,7 +774,7 @@ ${p('collection')}:
 				description: 'Minimal template for fictional worlds and settings',
 				template: `---
 ${p('cr_type')}: universe
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 description:
 status: active
@@ -790,7 +789,7 @@ status: active
 				description: 'Complete template with all universe fields',
 				template: `---
 ${p('cr_type')}: universe
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 description: "<% tp.system.prompt("Brief description of this universe?", "", false) %>"
 author: "<% tp.system.prompt("Creator/author of this world?", "", false) %>"
@@ -823,7 +822,7 @@ default_map:
 				description: 'Template including custom date system setup',
 				template: `---
 ${p('cr_type')}: universe
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('name')}: "<% tp.file.title %>"
 description:
 author:
@@ -872,7 +871,7 @@ This universe uses a custom date system. Define your calendar in the Date System
 				description: 'Minimal template for research notes',
 				template: `---
 ${p('cr_type')}: note
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 cr_note_type: <% tp.system.suggester(["Research", "Person Note", "Transcript", "Source text", "General"], ["Research", "Person Note", "Transcript", "Source text", "General"]) %>
 private: false
 ---
@@ -886,7 +885,7 @@ private: false
 				description: 'Template for documenting research findings',
 				template: `---
 ${p('cr_type')}: note
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 cr_note_type: Research
 private: false
 linked_entities:
@@ -910,7 +909,7 @@ linked_entities:
 				description: 'For document transcriptions',
 				template: `---
 ${p('cr_type')}: note
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 cr_note_type: Transcript
 private: false
 source: "[[<% tp.system.prompt("Source document?", "", false) %>]]"
@@ -941,7 +940,7 @@ source: "[[<% tp.system.prompt("Source document?", "", false) %>]]"
 				description: 'Minimal template for documenting a genealogical conclusion',
 				template: `---
 ${p('cr_type')}: proof_summary
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "<% tp.file.title %>"
 subject_person:
 fact_type: <% tp.system.suggester(["Birth date", "Birth place", "Death date", "Death place", "Parents", "Marriage date", "Marriage place", "Spouse", "Occupation", "Residence"], ["birth_date", "birth_place", "death_date", "death_place", "parents", "marriage_date", "marriage_place", "spouse", "occupation", "residence"]) %>
@@ -968,7 +967,7 @@ evidence: []
 				description: 'Template with pre-structured evidence entries',
 				template: `---
 ${p('cr_type')}: proof_summary
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "<% tp.file.title %>"
 subject_person: "[[<% tp.system.prompt("Subject person note name?", "", false) %>]]"
 fact_type: <% tp.system.suggester(["Birth date", "Birth place", "Death date", "Death place", "Parents", "Marriage date", "Marriage place", "Spouse", "Occupation", "Residence"], ["birth_date", "birth_place", "death_date", "death_place", "parents", "marriage_date", "marriage_place", "spouse", "occupation", "residence"]) %>
@@ -1014,7 +1013,7 @@ evidence:
 				description: 'Template for documenting how conflicting evidence was resolved',
 				template: `---
 ${p('cr_type')}: proof_summary
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "<% tp.file.title %>"
 subject_person:
 fact_type: <% tp.system.suggester(["Birth date", "Birth place", "Death date", "Death place", "Parents", "Marriage date", "Marriage place", "Spouse"], ["birth_date", "birth_place", "death_date", "death_place", "parents", "marriage_date", "marriage_place", "spouse"]) %>
@@ -1070,7 +1069,7 @@ Explain how you resolved the conflict and why you chose one conclusion over anot
 				description: 'Minimal template for recording life events',
 				template: `---
 ${p('cr_type')}: event
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "<% tp.file.title %>"
 ${p('event_type')}: <% tp.system.suggester(["Birth", "Death", "Marriage", "Divorce", "Residence", "Occupation", "Military", "Immigration", "Education", "Burial", "Baptism", "Custom"], ["birth", "death", "marriage", "divorce", "residence", "occupation", "military", "immigration", "education", "burial", "baptism", "custom"]) %>
 ${p('date')}:
@@ -1091,7 +1090,7 @@ ${p('confidence')}: <% tp.system.suggester(["High", "Medium", "Low", "Unknown"],
 				description: 'Template for recording a birth event',
 				template: `---
 ${p('cr_type')}: event
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "Birth of <% tp.system.prompt("Person name?", "", false) %>"
 ${p('event_type')}: birth
 ${p('date')}: <% tp.system.prompt("Birth date (YYYY-MM-DD)?", "", false) %>
@@ -1112,7 +1111,7 @@ ${p('confidence')}: <% tp.system.suggester(["High", "Medium", "Low", "Unknown"],
 				description: 'Template for recording a marriage event',
 				template: `---
 ${p('cr_type')}: event
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "Marriage of <% tp.system.prompt("Names (e.g., John Smith and Jane Doe)?", "", false) %>"
 ${p('event_type')}: marriage
 ${p('date')}: <% tp.system.prompt("Marriage date (YYYY-MM-DD)?", "", false) %>
@@ -1134,7 +1133,7 @@ ${p('confidence')}: <% tp.system.suggester(["High", "Medium", "Low", "Unknown"],
 				description: 'Template for recording a death event',
 				template: `---
 ${p('cr_type')}: event
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "Death of <% tp.system.prompt("Person name?", "", false) %>"
 ${p('event_type')}: death
 ${p('date')}: <% tp.system.prompt("Death date (YYYY-MM-DD)?", "", false) %>
@@ -1155,7 +1154,7 @@ ${p('confidence')}: <% tp.system.suggester(["High", "Medium", "Low", "Unknown"],
 				description: 'Template for worldbuilders and storytellers',
 				template: `---
 ${p('cr_type')}: event
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "<% tp.file.title %>"
 ${p('event_type')}: <% tp.system.suggester(["Anecdote", "Lore event", "Plot point", "Flashback", "Foreshadowing", "Backstory", "Climax", "Resolution"], ["anecdote", "lore_event", "plot_point", "flashback", "foreshadowing", "backstory", "climax", "resolution"]) %>
 ${p('date')}:
@@ -1177,7 +1176,7 @@ ${p('confidence')}: medium
 				description: 'Event without exact date, using relative ordering',
 				template: `---
 ${p('cr_type')}: event
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "<% tp.file.title %>"
 ${p('event_type')}: <% tp.system.suggester(["Anecdote", "Lore event", "Plot point", "Custom"], ["anecdote", "lore_event", "plot_point", "custom"]) %>
 ${p('date_precision')}: unknown
@@ -1208,7 +1207,7 @@ This event's position is determined by its relationships to other events, not by
 				description: 'Complete template with all event fields',
 				template: `---
 ${p('cr_type')}: event
-${p('cr_id')}: <% tp.date.now("YYYYMMDDHHmmss") %>
+${p('cr_id')}:
 ${p('title')}: "<% tp.file.title %>"
 ${p('event_type')}: <% tp.system.suggester(["Birth", "Death", "Marriage", "Divorce", "Residence", "Occupation", "Military", "Immigration", "Education", "Burial", "Baptism", "Confirmation", "Ordination", "Anecdote", "Lore event", "Plot point", "Custom"], ["birth", "death", "marriage", "divorce", "residence", "occupation", "military", "immigration", "education", "burial", "baptism", "confirmation", "ordination", "anecdote", "lore_event", "plot_point", "custom"]) %>
 
