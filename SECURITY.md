@@ -6,8 +6,8 @@ Currently, security updates are provided for the latest release version only.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.11.x  | :white_check_mark: |
-| < 0.11  | :x:                |
+| 0.18.x  | :white_check_mark: |
+| < 0.18  | :x:                |
 
 ## Data Privacy and Personally Identifiable Information (PII)
 
@@ -220,7 +220,16 @@ Canvas Roots includes privacy protection capabilities designed to protect PII:
 - **Automatic detection**: Persons without death dates born within a configurable threshold (default: 100 years) are considered living
 - **Display formats**: Choose how protected persons appear: "Living", "Private", initials, or hidden
 - **Export protection**: Living persons can be automatically protected in GEDCOM, GEDCOM X, Gramps XML, and CSV exports
-- **Per-person override** (planned): Mark individuals as living/deceased with the `cr_living` frontmatter property
+- **Manual override**: Use the `cr_living` frontmatter property to explicitly mark individuals as living (`true`) or deceased (`false`), overriding automatic detection
+
+### Sensitive Field Redaction
+
+Certain fields containing highly sensitive personal information are **always excluded** from exports, regardless of privacy settings:
+
+- **SSN/Social Security Number**: `ssn`, `socialSecurityNumber`, `social_security_number`
+- **National Identity Numbers**: `identityNumber`, `identity_number`
+
+These fields are automatically redacted from all export formats (GEDCOM, GEDCOM X, Gramps XML, CSV) to prevent accidental disclosure.
 
 ### Export Privacy
 
@@ -228,6 +237,7 @@ Canvas Roots includes privacy protection capabilities designed to protect PII:
 - **Configurable threshold**: Set the age threshold for automatic living person detection
 - **Structure preservation**: Family relationships maintained even when names are protected
 - **Multiple formats**: Privacy protection works across all export formats
+- **Sensitive field redaction**: SSN and identity numbers are always excluded from exports
 
 ### Log Export Privacy
 
@@ -258,8 +268,9 @@ When sharing logs for debugging or support, PII is automatically protected:
 
 Additional planned improvements:
 
-- `cr_living` frontmatter property for manual living/deceased override
-- Canvas obfuscation mode for screenshots/presentations
+- **Private fields list**: User-defined `private_fields` frontmatter property to mark specific fields as private, with export confirmation dialogs
+- **Deadname protection**: Protection for `previous_names` field when marked as private
+- **Canvas obfuscation mode**: Temporary display mode for screenshots/presentations
 - Optional encryption for cr_id values
 - Audit logging capabilities
 - Access control recommendations
