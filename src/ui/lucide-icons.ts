@@ -179,6 +179,8 @@ export type LucideIconName =
 	// Data enhancement
 	| 'sparkles' // Enhancement/magic
 	| 'plus-circle' // Add/create new
+	// Privacy
+	| 'lock' // Private/locked field
 	// Statistics
 	| 'briefcase' // Occupation/work
 	| 'chart-bar-decreasing' // Statistics dashboard

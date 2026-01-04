@@ -364,3 +364,41 @@ export function filterPrivateFields<T extends Record<string, unknown>>(
 		Object.entries(data).filter(([key]) => !privateFields.includes(key))
 	) as Partial<T>;
 }
+
+/**
+ * Summary of private fields found across people for export warnings.
+ */
+export interface PrivateFieldSummary {
+	/** The field name marked as private */
+	fieldName: string;
+	/** Number of people who have this field marked as private */
+	peopleCount: number;
+}
+
+/**
+ * Minimal interface for scanning private fields.
+ * Compatible with PersonNode from family-graph.ts.
+ */
+export interface PersonWithPrivateFields {
+	privateFields?: string[];
+}
+
+/**
+ * Scan a list of people for private fields that would be included in export.
+ * Returns a summary of which private fields exist and how many people have them.
+ * Used to show a warning dialog before export.
+ */
+export function scanForPrivateFields(people: PersonWithPrivateFields[]): PrivateFieldSummary[] {
+	const fieldCounts = new Map<string, number>();
+
+	for (const person of people) {
+		if (!person.privateFields?.length) continue;
+		for (const field of person.privateFields) {
+			fieldCounts.set(field, (fieldCounts.get(field) || 0) + 1);
+		}
+	}
+
+	return Array.from(fieldCounts.entries())
+		.map(([fieldName, peopleCount]) => ({ fieldName, peopleCount }))
+		.sort((a, b) => b.peopleCount - a.peopleCount);
+}

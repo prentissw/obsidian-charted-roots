@@ -1776,3 +1776,120 @@
   color: var(--text-muted);
   font-size: 13px;
 }
+
+/* ==========================================================================
+   PRIVATE FIELDS WARNING MODAL
+   ========================================================================== */
+
+.cr-private-fields-warning-modal {
+  padding: 20px;
+}
+
+.cr-private-fields-warning__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cr-private-fields-warning__icon {
+  flex-shrink: 0;
+}
+
+.cr-private-fields-warning__icon .cr-icon--warning {
+  color: var(--text-warning);
+}
+
+.cr-private-fields-warning__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.cr-private-fields-warning__description {
+  margin: 0 0 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.cr-private-fields-warning__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+}
+
+.cr-private-fields-warning__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cr-private-fields-warning__item svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+}
+
+.cr-private-fields-warning__field-name {
+  font-weight: 500;
+}
+
+.cr-private-fields-warning__count {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.cr-private-fields-warning__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 10px 12px;
+  background: var(--background-modifier-info);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.cr-private-fields-warning__note svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--text-accent);
+}
+
+.cr-private-fields-warning__buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cr-private-fields-warning__buttons button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cr-private-fields-warning__buttons button.mod-warning {
+  background: var(--background-modifier-error);
+  color: var(--text-on-accent);
+}
+
+.cr-private-fields-warning__buttons button.mod-warning:hover {
+  background: var(--background-modifier-error-hover);
+}
+
+.cr-private-fields-warning__buttons button.mod-cta {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.cr-private-fields-warning__buttons button.mod-cta:hover {
+  background: var(--interactive-accent-hover);
+}

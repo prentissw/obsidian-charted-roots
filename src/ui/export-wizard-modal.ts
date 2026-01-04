@@ -16,12 +16,14 @@ import type CanvasRootsPlugin from '../../main';
 import { GedcomExporter, type GedcomExportOptions, type GedcomExportResult } from '../gedcom/gedcom-exporter';
 import { GedcomXExporter, type GedcomXExportOptions, type GedcomXExportResult } from '../gedcomx/gedcomx-exporter';
 import { FolderFilterService } from '../core/folder-filter';
-import type { PrivacySettings } from '../core/privacy-service';
-import { FamilyGraphService } from '../core/family-graph';
+import type { PrivacySettings, PrivateFieldSummary } from '../core/privacy-service';
+import { scanForPrivateFields } from '../core/privacy-service';
+import { FamilyGraphService, type PersonNode } from '../core/family-graph';
 import { PlaceGraphService } from '../core/place-graph';
 import { SourceService } from '../sources/services/source-service';
 import { EventService } from '../events/services/event-service';
 import type { CanvasRootsSettings } from '../settings';
+import { PrivateFieldsWarningModal, type PrivateFieldsDecision } from './private-fields-warning-modal';
 
 /**
  * Folder picker modal
@@ -105,6 +107,12 @@ interface ExportWizardFormData {
 	};
 	livingCount: number;
 	previewScanned: boolean;
+	/** Summary of private fields found across people */
+	privateFieldsSummary: PrivateFieldSummary[];
+	/** User's decision about private fields (set by warning modal) */
+	privateFieldsDecision: PrivateFieldsDecision | null;
+	/** Cached people list for export (populated during preview) */
+	cachedPeople: PersonNode[];
 
 	// Step 5: Export (progress)
 	exportedCount: number;
@@ -221,6 +229,9 @@ export class ExportWizardModal extends Modal {
 			},
 			livingCount: 0,
 			previewScanned: false,
+			privateFieldsSummary: [],
+			privateFieldsDecision: null,
+			cachedPeople: [],
 
 			// Step 5
 			exportedCount: 0,
@@ -563,6 +574,16 @@ export class ExportWizardModal extends Modal {
 			this.renderSettingRow(settingsGrid, 'Privacy', privacyText, 'warning');
 		}
 
+		// Show private fields warning if any exist
+		if (this.formData.privateFieldsSummary.length > 0) {
+			const totalPeopleWithPrivateFields = this.formData.privateFieldsSummary.reduce(
+				(sum, item) => sum + item.peopleCount, 0
+			);
+			const fieldNames = this.formData.privateFieldsSummary.map(s => s.fieldName).join(', ');
+			const warningText = `${totalPeopleWithPrivateFields} people have private fields (${fieldNames})`;
+			this.renderSettingRow(settingsGrid, 'Private fields', warningText, 'warning');
+		}
+
 		// Entity counts
 		section.createEl('h4', { text: 'Entities to export', cls: 'crc-export-options-title crc-mt-3' });
 
@@ -643,6 +664,9 @@ export class ExportWizardModal extends Modal {
 				}
 			}
 
+			// Scan for private fields
+			const privateFieldsSummary = scanForPrivateFields(allPeople);
+
 			this.formData.previewCounts = {
 				people: allPeople.length,
 				places: allPlaces.length,
@@ -650,6 +674,8 @@ export class ExportWizardModal extends Modal {
 				events: allEvents.length
 			};
 			this.formData.livingCount = livingCount;
+			this.formData.privateFieldsSummary = privateFieldsSummary;
+			this.formData.cachedPeople = allPeople;
 			this.formData.previewScanned = true;
 
 			// Re-render to show results
@@ -662,6 +688,8 @@ export class ExportWizardModal extends Modal {
 				sources: 0,
 				events: 0
 			};
+			this.formData.privateFieldsSummary = [];
+			this.formData.cachedPeople = [];
 			this.formData.previewScanned = true;
 			this.renderCurrentStep();
 		}
@@ -736,6 +764,16 @@ export class ExportWizardModal extends Modal {
 				privacyDisplayFormat: this.formData.privacyHandling === 'exclude' ? 'hidden' : 'private',
 				hideDetailsForLiving: this.formData.privacyHandling === 'redact'
 			};
+
+			// Log private fields decision if applicable
+			if (this.formData.privateFieldsSummary.length > 0) {
+				const decision = this.formData.privateFieldsDecision;
+				if (decision === 'exclude') {
+					addLogEntry('Private fields will be excluded from export', 'info');
+				} else if (decision === 'include') {
+					addLogEntry('Private fields will be included in export (user confirmed)', 'warning');
+				}
+			}
 
 			if (this.formData.format === 'gedcom') {
 				addLogEntry('Starting GEDCOM export...');
@@ -1000,10 +1038,25 @@ export class ExportWizardModal extends Modal {
 				cls: 'crc-btn crc-btn--primary',
 				text: 'Export'
 			});
-			exportBtn.addEventListener('click', () => {
+			exportBtn.addEventListener('click', async () => {
+				// Check for private fields and show warning if any exist
+				if (this.formData.privateFieldsSummary.length > 0 &&
+					this.formData.privateFieldsDecision === null) {
+					const modal = new PrivateFieldsWarningModal(
+						this.app,
+						this.formData.privateFieldsSummary
+					);
+					const decision = await modal.waitForDecision();
+					this.formData.privateFieldsDecision = decision;
+
+					if (decision === 'cancel') {
+						return; // User cancelled, stay on preview step
+					}
+					// 'include' or 'exclude' - proceed with export
+				}
+
 				this.currentStep = 4;
 				this.renderCurrentStep();
-				// TODO: Start actual export
 			});
 		} else if (this.currentStep === 5) {
 			// Step 5 (Complete): Show Export Another and Done buttons

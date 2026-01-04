@@ -57,11 +57,11 @@ This document covers:
 |---------|--------|
 | Sensitive field redaction (SSN, identity numbers) | ✅ **Complete** — Implicit via `PersonNode` whitelist + explicit utilities |
 | Underscore-prefix privacy convention | Not implemented |
-| Deadname protection | Not implemented |
+| Deadname protection | ✅ **Complete** — `private_fields` + `previous_names` pattern documented |
 | `cr_living` manual override | ✅ **Complete** |
 | Pronouns field | ✅ **Complete** |
 | Canvas obfuscation mode | Not implemented |
-| Export warnings for private fields | Not implemented |
+| Export warnings for private fields | ✅ **Complete** — `PrivateFieldsWarningModal` in Export Wizard |
 | Privacy feature discoverability | Not implemented |
 
 ### ~~Key Gap: SENSITIVE_FIELDS Unused~~ ✅ RESOLVED
@@ -497,7 +497,7 @@ Add privacy options to canvas tree generation.
 | 1 | #96 Sensitive field redaction | ✅ Yes | — | Low-Medium |
 | 2 | #97 `cr_living` override | ✅ Yes | — | Low |
 | 3 | #98 Explicit private fields list | ✅ Yes | — | Medium |
-| 4-5 | #99 Deadname + Export warnings | ❌ No | Phase 3 | Medium-High |
+| 4-5 | #99 Deadname + Export warnings | ✅ Complete | Phase 3 | Medium-High |
 | 6 | #100 Discoverability | ✅ Yes | — | Medium |
 | 7 | #101 Pronouns field | ✅ Yes | — | Low |
 | 8 | #102 Canvas privacy | ✅ Yes | — | Medium-High |
@@ -507,9 +507,9 @@ Add privacy options to canvas tree generation.
 1. **#101 Pronouns field** — Lowest effort, completely isolated, immediate user value ✅ COMPLETE
 2. **#97 `cr_living` override** — Single function change, useful for edge cases ✅ COMPLETE
 3. **#96 Sensitive field redaction** — Infrastructure exists, wire to 4 exporters ✅ COMPLETE
-4. **#98 Explicit private fields list** — Add `private_fields` support, unlocks #99
-5. **#100 Discoverability** — New modals, import triggers
-6. **#99 Deadname + Export warnings** — Depends on #98
+4. **#98 Explicit private fields list** — Add `private_fields` support, unlocks #99 ✅ COMPLETE
+5. **#99 Deadname + Export warnings** — Depends on #98 ✅ COMPLETE
+6. **#100 Discoverability** — New modals, import triggers
 7. **#102 Canvas privacy** — Larger scope, lower priority
 
 ### Dependency Diagram
@@ -600,18 +600,18 @@ Independent (can start anytime):
   - [x] `filterPrivateFields(data, privateFields)`
 - [x] Document `private_fields` property in Frontmatter Reference
 
-### Phase 4: Deadname Protection
-- [ ] Document `previous_names` + `private_fields` pattern for deadname protection
-- [ ] Add example to Frontmatter Reference
-- [ ] Verify Phase 3 implementation handles this use case
+### Phase 4: Deadname Protection ✅
+- [x] Document `previous_names` + `private_fields` pattern for deadname protection
+- [x] Add example to Frontmatter Reference
+- [x] Verify Phase 3 implementation handles this use case
 
-### Phase 5: Export Warnings
-- [ ] Add `scanForPrivateFields()` utility to `privacy-service.ts`
-- [ ] Create `PrivateFieldsWarningModal`
-- [ ] Add private field check to GEDCOM export
-- [ ] Add private field check to GEDCOM X export
-- [ ] Add private field check to Gramps export
-- [ ] Add private field check to CSV export
+### Phase 5: Export Warnings ✅
+- [x] Add `scanForPrivateFields()` utility to `privacy-service.ts`
+- [x] Create `PrivateFieldsWarningModal`
+- [x] Add private field check to Export Wizard (covers all formats via single integration point)
+  - GEDCOM, GEDCOM X, Gramps, and CSV all use the Export Wizard modal
+  - Warning shown in Step 4 (Preview) before export runs
+  - User can choose: Include private fields, Exclude private fields, or Cancel
 
 ### Phase 6: Discoverability
 - [ ] Create privacy notice modal
