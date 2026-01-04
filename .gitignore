@@ -85,6 +85,7 @@ gedcom-testing/gedcom-sample-xlarge.ged
 gedcom-testing/gedcom-sample-large.ged
 gedcom-testing/gedcom-sample-medium.ged
 gedcom-testing/*.gpkg
+gedcom-testing/gramps-app-export-*
 
 # Release packages
 canvas-roots-v*.zip
