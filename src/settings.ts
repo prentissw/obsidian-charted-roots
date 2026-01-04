@@ -217,6 +217,8 @@ export interface CanvasRootsSettings {
 	privacyDisplayFormat: 'living' | 'private' | 'initials' | 'hidden';
 	hideDetailsForLiving: boolean;
 	showPronouns: boolean;
+	/** Whether the user has dismissed the privacy notice (shown after importing living persons) */
+	privacyNoticeDismissed: boolean;
 	// Relationship history settings
 	enableRelationshipHistory: boolean;
 	historyRetentionDays: number;
@@ -567,6 +569,7 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	privacyDisplayFormat: 'living',     // Show "Living" for protected persons
 	hideDetailsForLiving: true,         // Hide birth dates and places for living persons
 	showPronouns: true,                 // Show pronouns in person picker and displays
+	privacyNoticeDismissed: false,      // Show privacy notice after first import with living persons
 	// Relationship history defaults
 	enableRelationshipHistory: true,    // Default: ON - track relationship changes
 	historyRetentionDays: 30,           // Keep history for 30 days by default

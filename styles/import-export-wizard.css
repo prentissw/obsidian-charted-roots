@@ -1893,3 +1893,147 @@
 .cr-private-fields-warning__buttons button.mod-cta:hover {
   background: var(--interactive-accent-hover);
 }
+
+/* ==========================================================================
+   PRIVACY NOTICE MODAL (#100)
+   First-run notice shown after importing living persons
+   ========================================================================== */
+
+.cr-privacy-notice-modal {
+  padding: 20px;
+}
+
+.cr-privacy-notice__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cr-privacy-notice__icon {
+  flex-shrink: 0;
+}
+
+.cr-privacy-notice__icon .cr-icon--info {
+  color: var(--interactive-accent);
+}
+
+.cr-privacy-notice__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.cr-privacy-notice__description {
+  margin-bottom: 16px;
+}
+
+.cr-privacy-notice__description p {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.cr-privacy-notice__description p:last-child {
+  margin-bottom: 0;
+}
+
+.cr-privacy-notice__features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+}
+
+.cr-privacy-notice__feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.cr-privacy-notice__feature svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-accent);
+  flex-shrink: 0;
+}
+
+.cr-privacy-notice__buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cr-privacy-notice__buttons button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cr-privacy-notice__buttons button.mod-muted {
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.cr-privacy-notice__buttons button.mod-muted:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.cr-privacy-notice__buttons button.mod-cta {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.cr-privacy-notice__buttons button.mod-cta:hover {
+  background: var(--interactive-accent-hover);
+}
+
+/* ==========================================================================
+   EXPORT PREVIEW PRIVACY WARNING
+   Notice shown when privacy protection is disabled
+   ========================================================================== */
+
+.crc-export-privacy-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--background-modifier-info);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.crc-export-privacy-notice svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--text-accent);
+}
+
+.crc-export-privacy-notice__content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crc-export-privacy-notice__text {
+  color: var(--text-muted);
+}
+
+.crc-export-privacy-notice__link {
+  color: var(--text-accent);
+  cursor: pointer;
+}
+
+.crc-export-privacy-notice__link:hover {
+  text-decoration: underline;
+}
