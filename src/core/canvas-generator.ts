@@ -184,6 +184,12 @@ export interface CanvasGenerationOptions extends LayoutOptions {
 
 	/** Canvas grouping strategy for visual organization */
 	canvasGroupingStrategy?: import('../settings').CanvasGroupingStrategy;
+
+	/** Apply privacy protection to living persons in generated canvas */
+	applyCanvasPrivacy?: boolean;
+
+	/** Format for privacy-protected nodes: 'text' shows obfuscated text node, 'file' keeps clickable file node */
+	canvasPrivacyFormat?: 'text' | 'file';
 }
 
 /**
