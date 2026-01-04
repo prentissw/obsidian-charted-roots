@@ -62,7 +62,7 @@ This document covers:
 | Pronouns field | ✅ **Complete** |
 | Canvas obfuscation mode | Not implemented |
 | Export warnings for private fields | ✅ **Complete** — `PrivateFieldsWarningModal` in Export Wizard |
-| Privacy feature discoverability | Not implemented |
+| Privacy feature discoverability | ✅ **Complete** — `PrivacyNoticeModal` after import, export preview warning |
 
 ### ~~Key Gap: SENSITIVE_FIELDS Unused~~ ✅ RESOLVED
 
@@ -498,7 +498,7 @@ Add privacy options to canvas tree generation.
 | 2 | #97 `cr_living` override | ✅ Yes | — | Low |
 | 3 | #98 Explicit private fields list | ✅ Yes | — | Medium |
 | 4-5 | #99 Deadname + Export warnings | ✅ Complete | Phase 3 | Medium-High |
-| 6 | #100 Discoverability | ✅ Yes | — | Medium |
+| 6 | #100 Discoverability | ✅ Complete | — | Medium |
 | 7 | #101 Pronouns field | ✅ Yes | — | Low |
 | 8 | #102 Canvas privacy | ✅ Yes | — | Medium-High |
 
@@ -509,7 +509,7 @@ Add privacy options to canvas tree generation.
 3. **#96 Sensitive field redaction** — Infrastructure exists, wire to 4 exporters ✅ COMPLETE
 4. **#98 Explicit private fields list** — Add `private_fields` support, unlocks #99 ✅ COMPLETE
 5. **#99 Deadname + Export warnings** — Depends on #98 ✅ COMPLETE
-6. **#100 Discoverability** — New modals, import triggers
+6. **#100 Discoverability** — New modals, import triggers ✅ COMPLETE
 7. **#102 Canvas privacy** — Larger scope, lower priority
 
 ### Dependency Diagram
@@ -613,12 +613,12 @@ Independent (can start anytime):
   - Warning shown in Step 4 (Preview) before export runs
   - User can choose: Include private fields, Exclude private fields, or Cancel
 
-### Phase 6: Discoverability
-- [ ] Create privacy notice modal
-- [ ] Add `privacyNoticeDismissed` setting
-- [ ] Trigger notice on first import with living persons
-- [ ] Add privacy disabled notice to export dialogs
-- [ ] Improve settings descriptions
+### Phase 6: Discoverability ✅
+- [x] Create privacy notice modal (`PrivacyNoticeModal`)
+- [x] Add `privacyNoticeDismissed` setting
+- [x] Trigger notice on first import with living persons (in `renderStep7Complete`)
+- [x] Add privacy disabled notice to export dialogs (in `renderStep4Preview`)
+- [ ] Improve settings descriptions (deferred)
 
 ### Phase 7: Pronouns Field ✅
 - [x] Add `showPronouns` setting

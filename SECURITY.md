@@ -282,6 +282,14 @@ private_fields:
   - previous_names
 ```
 
+### Privacy Feature Discoverability
+
+Canvas Roots helps users discover privacy features:
+
+- **Import notification**: After importing data with potential living persons, a notice offers to configure privacy settings
+- **Export warning**: When privacy protection is disabled, the export preview shows how many living persons will be exported with full details
+- **One-click settings access**: Both notices link directly to privacy configuration
+
 ## Future Security Enhancements
 
 Additional planned improvements:
