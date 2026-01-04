@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Private fields support** ([#98](https://github.com/banisterious/obsidian-canvas-roots/issues/98)):
+  - New `private_fields` frontmatter property to mark specific fields as private
+  - Fields listed in `private_fields` will be excluded from exports (with user confirmation)
+  - Common use cases: protecting deadnames (`previous_names`), medical notes, legal information
+  - Added utility functions for private field filtering in export contexts
+
 ### Fixed
 
 - **Control Center and person picker freezes on large vaults** ([#113](https://github.com/banisterious/obsidian-canvas-roots/issues/113)):
