@@ -11,10 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **GPKG import hangs during gzip decompression** ([#134](https://github.com/banisterious/obsidian-canvas-roots/issues/134)):
+- **Gramps import hangs during gzip decompression** ([#134](https://github.com/banisterious/obsidian-canvas-roots/issues/134)):
+  - Fixed .gpkg and .gramps file imports hanging indefinitely when decompressing gzip data
   - Added 30-second timeout to `DecompressionStream` operations to prevent indefinite hanging
+  - Changed .gramps file handling to use proper decompression utility instead of raw text read
   - Improved logging with progress details for decompression operations
-  - Added proper error handling with descriptive messages when decompression fails
 
 ---
 
