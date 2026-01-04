@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Adoptive relationships: duplicate nodes and missing children in family chart** ([#129](https://github.com/banisterious/obsidian-canvas-roots/issues/129)):
+  - Adopted children now appear when viewing family chart from adoptive parent's perspective
+  - Fixed duplicate parent nodes when both `adoptive_parent` and `adopted_child` are set
+  - Added bidirectional sync: `adopted_child` on parent now syncs to `adoptive_parent` on child
+  - Descendant tree views now include adopted children
+
 ---
 
 ## [0.18.21] - 2026-01-03
