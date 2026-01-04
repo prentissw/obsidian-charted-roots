@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Common use cases: protecting deadnames (`previous_names`), medical notes, legal information
   - Added utility functions for private field filtering in export contexts
 
+- **Export warnings for private fields** ([#99](https://github.com/banisterious/obsidian-canvas-roots/issues/99)):
+  - Warning modal shown before export when private fields are detected
+  - Displays which fields are marked private and how many people have them
+  - Users can choose to include, exclude, or cancel the export
+  - Supports deadname protection via `previous_names` + `private_fields` pattern
+
 ### Fixed
 
 - **Control Center and person picker freezes on large vaults** ([#113](https://github.com/banisterious/obsidian-canvas-roots/issues/113)):
