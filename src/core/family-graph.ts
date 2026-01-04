@@ -903,6 +903,21 @@ export class FamilyGraphService {
 				this.buildDescendantTree(child, nodes, edges, options, currentGeneration + 1, visited);
 			}
 		}
+
+		// Add adopted children
+		for (const adoptedChildCrId of node.adoptedChildCrIds) {
+			const adoptedChild = this.personCache.get(adoptedChildCrId);
+			if (adoptedChild && this.shouldIncludePerson(adoptedChild, options) && !nodes.has(adoptedChildCrId)) {
+				edges.push({
+					from: node.crId,
+					to: adoptedChild.crId,
+					type: 'relationship',
+					relationshipTypeId: 'adoptive_parent',
+					relationshipLabel: 'Adopted child'
+				});
+				// Don't recurse descendants for adopted children (they have their own family line)
+			}
+		}
 	}
 
 	/**
