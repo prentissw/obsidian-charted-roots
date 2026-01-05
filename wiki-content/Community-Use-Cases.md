@@ -59,9 +59,9 @@ Academic researchers and history enthusiasts documenting historical figures and 
 
 ### Getting Started from Ancestry or FamilySearch
 
-**User type:** Genealogist
-**Features used:** GEDCOM Export (from cloud service), GEDCOM Import, Cleanup Wizard, Family Chart
-**Complexity:** Beginner
+- **User type:** Genealogist
+- **Features used:** GEDCOM Export (from cloud service), GEDCOM Import, Cleanup Wizard, Family Chart
+- **Complexity:** Beginner
 
 **The Challenge**
 
