@@ -36,6 +36,10 @@ No. Canvas Roots uses YAML frontmatter in your markdown notes, which is a simple
 
 Yes! Canvas Roots works equally well for real genealogy and fictional world-building. Use the `universe` property on place notes to organize fictional worlds, and the geographic features support custom image maps for fantasy worlds.
 
+### I'm currently using Ancestry or FamilySearch. Can I try Canvas Roots?
+
+Absolutely! You can export your tree to GEDCOM format and import it into Canvas Roots. See the [Getting Started from Ancestry or FamilySearch](Community-Use-Cases#getting-started-from-ancestry-or-familysearch) use case for step-by-step instructions. You can keep using both systems—exporting doesn't delete your cloud tree.
+
 ## Data Entry
 
 ### What's the minimum information needed for a person?

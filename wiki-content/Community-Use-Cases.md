@@ -7,6 +7,7 @@ Real-world examples of how people use Canvas Roots for genealogy, worldbuilding,
 ## Table of Contents
 
 **Genealogists**
+- [Getting Started from Ancestry or FamilySearch](#getting-started-from-ancestry-or-familysearch)
 - [Importing from Genealogy Software](#importing-from-genealogy-software)
 - [Building a Family Tree from Scratch](#building-a-family-tree-from-scratch)
 - [Adding a New Family Member](#adding-a-new-family-member)
@@ -55,6 +56,72 @@ Academic researchers and history enthusiasts documenting historical figures and 
 ---
 
 ## Community Examples
+
+### Getting Started from Ancestry or FamilySearch
+
+**User type:** Genealogist
+**Features used:** GEDCOM Export (from cloud service), GEDCOM Import, Cleanup Wizard, Family Chart
+**Complexity:** Beginner
+
+**The Challenge**
+
+You've been building your family tree on Ancestry.com or FamilySearch, but you're curious about using Obsidian and Canvas Roots. You're not very technical, and you want to try Canvas Roots without abandoning your existing work or losing data.
+
+**The Approach**
+
+1. **Export your tree from your cloud service:**
+
+   **From Ancestry.com:**
+   - Sign in to Ancestry.com
+   - Navigate to your family tree
+   - Click the **Trees** tab at the top
+   - Select your tree from the dropdown
+   - Click **Settings** (gear icon)
+   - Select **Export tree**
+   - Choose GEDCOM format
+   - Click **Download** and save the `.ged` file
+
+   **From FamilySearch:**
+   - Sign in to FamilySearch.org
+   - Click your name in the top right → **Tree**
+   - Find the person you want as the starting point
+   - Click **Person** → **Print**
+   - Select **Download** (not Print)
+   - Choose **GEDCOM** format
+   - Set number of generations to include (4-5 is a good starting point)
+   - Click **Download** and save the `.ged` file
+
+2. **Import into Canvas Roots:**
+   - In Obsidian, open the **Control Center**
+   - Click **Import/Export** in the left sidebar
+   - Click **Import GEDCOM**
+   - Select the `.ged` file you downloaded
+   - Review import options (defaults are usually fine for first-time import)
+   - Click **Import**
+
+3. **Clean up your data:**
+   - After import completes, run the **Cleanup Wizard** (available in Control Center)
+   - This helps identify data quality issues like:
+     - Missing birth/death dates
+     - Inconsistent place names
+     - Incomplete relationships
+   - Work through suggested fixes at your own pace
+
+4. **Explore your tree:**
+   - Open **Family Chart** view to see visual family trees
+   - Browse the **People** list to see all imported individuals
+   - Click any person to view/edit their details
+   - Try the **Timeline** view to see life events chronologically
+
+**Tips**
+
+- **You can use both:** Exporting to GEDCOM doesn't delete your Ancestry/FamilySearch tree. You can keep using both systems while you explore Canvas Roots.
+- **Start with one branch:** If your tree is very large, consider exporting just one branch first (e.g., your direct ancestors for 4 generations). You can always import more later.
+- **Canvas Roots works offline:** Once imported, your data is stored locally in your Obsidian vault. No internet required.
+- **Going back is possible:** If you decide Canvas Roots isn't for you, you can export to GEDCOM anytime and re-import to other genealogy software.
+- **Don't stress about perfection:** The Cleanup Wizard will help you find and fix data issues over time. You don't need to fix everything at once.
+
+---
 
 ### Importing from Genealogy Software
 
