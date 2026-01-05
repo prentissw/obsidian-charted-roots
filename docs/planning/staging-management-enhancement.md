@@ -2,7 +2,7 @@
 
 Planning document for adding staging management functionality to Import/Export wizards.
 
-- **Status:** Planning
+- **Status:** In Progress
 - **GitHub Issue:** [#137](https://github.com/banisterious/obsidian-canvas-roots/issues/137)
 - **Created:** 2025-12-28
 - **Updated:** 2025-01-04
@@ -285,17 +285,17 @@ The following CSS classes were used in the deprecated tab and should be reused o
 
 ### Phase 1: Staging Management Modal
 
-- [ ] Create `src/ui/staging-management-modal.ts`
-- [ ] Implement staging overview with stats
-- [ ] Render subfolder list with per-folder actions
-- [ ] Integrate CrossImportDetectionService for duplicate checks
-- [ ] Implement promote operations with shouldSkip logic
-- [ ] Implement delete operations with confirmation
-- [ ] Add CSS styles (reuse from deprecated tab)
+- [x] Create `src/ui/staging-management-modal.ts`
+- [x] Implement staging overview with stats
+- [x] Render subfolder list with per-folder actions
+- [x] Integrate CrossImportDetectionService for duplicate checks
+- [x] Implement promote operations with shouldSkip logic
+- [x] Implement delete operations with confirmation
+- [x] Add CSS styles (`styles/staging-manager.css`)
 
 ### Phase 2: Entry Points
 
-- [ ] Add command: "Canvas Roots: Manage staging area"
+- [x] Add command: "Canvas Roots: Manage staging area"
 - [ ] Add "Manage Staging" button to Import Wizard success screen
 - [ ] Add "Staging" tile to Dashboard (when staging has data)
 - [ ] Add "Staging" entry to TOOL_CONFIGS
