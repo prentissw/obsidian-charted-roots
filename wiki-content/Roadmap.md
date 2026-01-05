@@ -59,7 +59,7 @@ Features are prioritized to complete the data lifecycle: **import â†’ enhance â†
 
 **Status:** Planning
 
-**GitHub Issue:** TBD
+**GitHub Issue:** [#141](https://github.com/banisterious/obsidian-canvas-roots/issues/141)
 
 **Summary:** Rename the plugin from "Canvas Roots" to "Charted Roots" based on community feedback. The current name suggests the plugin only works with Obsidian Canvas, limiting perceived scope for traditional family tree and genealogical chart users.
 

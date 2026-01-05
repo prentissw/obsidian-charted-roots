@@ -3,7 +3,7 @@
 Planning document for renaming the plugin from "Canvas Roots" to "Charted Roots".
 
 - **Status:** Planning
-- **GitHub Issue:** TBD (to be created)
+- **GitHub Issue:** [#141](https://github.com/banisterious/obsidian-canvas-roots/issues/141)
 - **Created:** 2026-01-05
 - **Community Discussion:** [#58](https://github.com/banisterious/obsidian-canvas-roots/discussions/58)
 
