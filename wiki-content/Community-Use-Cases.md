@@ -83,11 +83,8 @@ You've been building your family tree on Ancestry.com or FamilySearch, but you'r
 
    **From FamilySearch:**
    - Sign in to FamilySearch.org
-   - Click your name in the top right → **Tree**
-   - Find the person you want as the starting point
-   - Click **Person** → **Print**
-   - Select **Download** (not Print)
-   - Choose **GEDCOM** format
+   - Navigate to the export tool: https://www.familysearch.org/innovate/export
+   - Find the person you want as the starting point (search by name)
    - Set number of generations to include (4-5 is a good starting point)
    - Click **Download** and save the `.ged` file
 
