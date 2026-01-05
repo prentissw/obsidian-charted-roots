@@ -360,6 +360,16 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 		});
 
+		// Add command: Manage Staging Area
+		this.addCommand({
+			id: 'manage-staging-area',
+			name: 'Manage staging area',
+			callback: async () => {
+				const { StagingManagementModal } = await import('./src/ui/staging-management-modal');
+				new StagingManagementModal(this.app, this).open();
+			}
+		});
+
 		// Add command: Open Statistics Dashboard
 		this.addCommand({
 			id: 'open-statistics-dashboard',
