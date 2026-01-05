@@ -12,7 +12,6 @@ This document outlines planned features for Canvas Roots. For completed features
   - [DMS Coordinate Conversion](#dms-coordinate-conversion) 💡 Low
   - [DNA Match Tracking](#dna-match-tracking) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
-  - [Staging Management](#staging-management) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
 - [Future Considerations](#future-considerations)
   - [Research Tracking](#research-tracking)
@@ -31,21 +30,13 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.18.24 | [Staging Management](Release-History#staging-management-v01824) | Dedicated UI for managing staged imports: view stats, check duplicates, promote to main tree, expandable file lists |
 | v0.18.22 | [Export Privacy & Sensitive Data](Release-History#export-privacy--sensitive-data-v01822) | Complete privacy feature set: canvas privacy, sensitive field redaction, private fields, deadname protection, discoverability |
-| v0.18.15 | [Gramps Notes Phase 4](Release-History#gramps-notes-integration-v01813) | Separate note files (opt-in) with Create Note modal and Notes folder |
 | v0.18.15 | [Card Style Options](Release-History#card-style-options-v01815) | 4 card styles (Rectangle, Circle, Compact, Mini) for Family Chart with state persistence and export support |
-| v0.18.13 | [Gramps Notes Phases 1-2](Release-History#gramps-notes-integration-v01813) | Import notes from Gramps entities with style conversion and privacy handling |
+| v0.18.15 | [Gramps Notes Phase 4](Release-History#gramps-notes-integration-v01813) | Separate note files (opt-in) with Create Note modal and Notes folder |
 | v0.18.14 | [Edit Person Events & Sources](Release-History#edit-person-events--sources-v01814) | Sources and Events sections in Edit Person modal with link/create/unlink, type badges with colors |
-| v0.18.11 | [Cleanup Wizard Phase 4](Release-History#cleanup-wizard-phase-4-v01811) | Batch progress indicators, keyboard navigation for accessibility |
-| v0.18.11 | [Property Naming Normalization](Release-History#property-naming-normalization-v01811) | `child` → `children` migration, Cleanup Wizard Step 14, documentation updates |
-| v0.18.10 | [Custom Map Authoring](Release-History#custom-map-authoring-v01810) | 4-step Map Creation Wizard, right-click to create places, draggable place markers with undo, icon-only Map View toolbar |
-| v0.18.9 | [Nested Properties Redesign](Release-History#nested-properties-redesign-v0189) | Flat property format for evidence tracking (`sourced_*`) and life events (`life_events` → event notes), 13-step Cleanup Wizard |
-| v0.18.9 | [Custom Relationships on Canvas Trees](Release-History#custom-relationships-on-canvas-trees-v0189) | Custom relationship types with flat properties, family tree integration via `includeOnFamilyTree` and `familyGraphMapping` |
-| v0.18.7 | [Inclusive Parent Relationships](Release-History#inclusive-parent-relationships-v0187) | Gender-neutral parent support with customizable labels, bidirectional linking, and full family graph integration |
-| v0.18.6 | [Media Upload and Management Enhancement](Release-History#media-upload-and-management-enhancement-v0186) | Direct file upload with drag-and-drop, 6-tile Media Manager dashboard, inline upload in media picker, entity picker with filters |
-| v0.18.2 | [Timeline Export Consolidation](Release-History#timeline-export-consolidation-v0182) | Unified timeline exports in Reports wizard with all 8 formats, consolidated filters, deprecation notice on Events tab |
 
-**Earlier releases:** Create Person enhancements, Event Person consolidation, Research Level property, Post-Import Cleanup Wizard, Import/Export Hub, and more. See [Release History](Release-History) for details.
+**Earlier releases:** Gramps Notes, Cleanup Wizard, Custom Map Authoring, Nested Properties Redesign, and more. See [Release History](Release-History) for details.
 
 ---
 
@@ -227,57 +218,6 @@ See [Fictional Date Systems - Calendarium Integration](Fictional-Date-Systems#ca
 **Future Consideration:** Per-calendar frontmatter fields (e.g., `mycalendar-date` instead of `fc-calendar` + `fc-date`) to allow one note to have dates across multiple calendars.
 
 See [Calendarium Integration Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/archive/calendarium-integration.md) for implementation details.
-
----
-
-### Staging Management
-
-**Priority:** 💡 Low — Review and manage imported data before promoting to main tree
-
-**Status:** Planning
-
-**Summary:** Add a dedicated interface for managing data in the staging folder. The Import Wizard supports importing to staging folders, but there's currently no UI to review, check for duplicates, promote, or delete staged imports after they're created.
-
-**The Problem:** After importing data to staging:
-1. No way to see what's in staging from the UI
-2. No way to check for duplicates against the main tree
-3. No way to promote reviewed imports to the main folder
-4. No way to delete rejected imports
-5. Users must manually move/delete files
-
-**Staging Workflow:**
-
-| Step | Action | Description |
-|------|--------|-------------|
-| 1 | Import to Staging | Import wizard creates notes in staging subfolder |
-| 2 | Review | View imported people, check for duplicates |
-| 3 | Resolve | Mark duplicates as "same person" (skip) or "different" (promote) |
-| 4 | Promote | Move reviewed files to main people folder |
-| 5 | Cleanup | Delete rejected staging data |
-
-**Planned Features:**
-
-| Feature | Description |
-|---------|-------------|
-| Staging overview | Display staging folder stats, subfolder list with counts |
-| Duplicate detection | Compare staging people against main tree by name/ID/dates |
-| Duplicate review modal | Side-by-side comparison with resolution options |
-| Promote operations | Move files to main tree, skip "same person" duplicates |
-| Delete operations | Remove staging files with confirmation |
-| Per-subfolder actions | Check/promote/delete individual import batches |
-
-**Entry Points (Proposed):**
-- Command palette: "Canvas Roots: Manage staging area"
-- Import Wizard success screen: "View in Staging Manager"
-- Dashboard tile (when staging has data)
-
-**Services Available:**
-- `StagingService` — File operations, stats, promote/delete
-- `CrossImportDetectionService` — Duplicate detection and resolution tracking
-- `CrossImportReviewModal` — Existing duplicate review UI
-
-**Documentation:**
-- See [Staging Management Enhancement Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/staging-management-enhancement.md) for detailed specifications
 
 ---
 

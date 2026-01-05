@@ -8,6 +8,7 @@ This document covers data import/export and source image management.
 - [Two-Pass Import Architecture](#two-pass-import-architecture)
 - [Export Pipeline](#export-pipeline)
 - [Data Transformations](#data-transformations)
+- [Staging Management](#staging-management)
 - [Source Image Management](#source-image-management)
   - [Image Filename Parser](#image-filename-parser)
   - [Source Image Import Wizard](#source-image-import-wizard)
@@ -143,9 +144,58 @@ ABT 15 MAR 1950       → 1950-03-15 (precision: estimated)
 
 **Staging area workflow:**
 1. Import to staging folder first
-2. Review imported data
+2. Review imported data via Staging Manager
 3. Cross-import duplicate detection
 4. Promote to main tree or delete
+
+---
+
+## Staging Management
+
+The staging system allows users to import data to a separate folder for review before promoting to the main tree.
+
+**Key services:**
+
+| Service | File | Purpose |
+|---------|------|---------|
+| `StagingService` | `src/core/staging-service.ts` | Folder operations, stats, promote/delete |
+| `CrossImportDetectionService` | `src/core/cross-import-detection.ts` | Duplicate detection across staging/main |
+| `StagingManagementModal` | `src/ui/staging-management-modal.ts` | User interface for managing batches |
+
+**StagingService methods:**
+
+```typescript
+// Get staging folder statistics
+getStagingStats(): { totalEntities: number; subfolders: StagingSubfolderInfo[] }
+
+// Get files in a subfolder with entity types
+getSubfolderFiles(path: string): Array<{ file: TFile; entityType: NoteType | null }>
+
+// Promote files from staging to main tree
+promoteSubfolder(subfolderPath: string): Promise<{ success: boolean; filesPromoted: number }>
+
+// Delete a staging subfolder
+deleteSubfolder(subfolderPath: string): Promise<{ success: boolean; filesDeleted: number }>
+```
+
+**Duplicate detection algorithm:**
+
+```typescript
+// CrossImportDetectionService.calculateConfidence()
+// Weights: name=60%, dates=30%, gender=5% bonus
+const nameScore = levenshteinSimilarity(name1, name2) * 0.6;
+const dateScore = calculateDateProximity(birth1, birth2, death1, death2) * 0.3;
+const genderBonus = (gender1 === gender2) ? 5 : 0;
+const confidence = nameScore + dateScore + genderBonus;
+```
+
+**Entry points:**
+
+| Entry Point | Location | Trigger |
+|-------------|----------|---------|
+| Dashboard | Yellow staging section | When staging has data |
+| Command | `Canvas Roots: Manage staging area` | Always available |
+| Import Wizard | Success screen button | After importing to staging |
 
 ---
 

@@ -7,9 +7,15 @@ This page covers tools for managing imported data quality: staging workflows, du
 ## Table of Contents
 
 - [Smart Duplicate Detection](#smart-duplicate-detection)
-- [Merge Wizard](#merge-wizard)
-- [Staging Workflow](#staging-workflow)
-- [Data Quality Tools](#data-quality-tools)
+- [Staging & Import Cleanup](#staging--import-cleanup)
+  - [Setting Up Staging](#setting-up-staging)
+  - [Importing to Staging](#importing-to-staging)
+  - [Staging Manager](#staging-manager)
+  - [Batch Cards](#batch-cards)
+  - [Batch Actions](#batch-actions)
+  - [Cross-Import Detection](#cross-import-detection)
+  - [Staging Isolation](#staging-isolation)
+- [Merging Duplicate Records](#merging-duplicate-records)
 
 ---
 
@@ -104,51 +110,94 @@ The staging workflow provides a safe way to process imported data before incorpo
 
 ### Setting Up Staging
 
-**From Control Center (Recommended):**
-1. Open Control Center → **Import/Export** tab
-2. Expand the **Configure folders** section at the top
-3. Set your **People folder** (where main tree notes live)
-4. Set a **Staging folder** path (e.g., `People-Staging`)
-5. Enable **Staging isolation** to exclude staging from normal operations
-
 **From Plugin Settings:**
 1. Go to **Settings → Canvas Roots → Data**
-2. Set a **Staging folder** path
-3. Enable **Staging isolation**
+2. Set a **Staging folder** path (e.g., `People-Staging`)
+
+**From Preferences:**
+1. Go to **Settings → Canvas Roots → Preferences**
+2. Enable **Staging isolation** to exclude staging from normal operations
 
 When staging is configured, imported data is kept separate from your main tree until you're ready to promote it.
 
 ### Importing to Staging
 
-1. Open Control Center → **Import/Export** tab
-2. Select **Format** (GEDCOM or CSV) and **Direction** (Import)
+1. Open the Import Wizard (Command palette: `Canvas Roots: Import wizard`)
+2. Select your format (GEDCOM, Gramps, CSV)
 3. Select **Import destination**: choose "Staging" instead of "Main tree"
 4. Optionally specify a **Subfolder name** for this import batch (e.g., `smith-gedcom-2024`)
-5. Import your GEDCOM or CSV file
+5. Import your file
 6. Data is created in the staging folder, isolated from your main tree
+7. After import completes, click **Manage Staging** to open the Staging Manager
 
-### Managing Staged Imports
+### Staging Manager
 
-The **Import/Export** tab in Control Center includes a staging area section when staging is configured:
+The Staging Manager is a dedicated modal for managing staged imports. It provides batch organization, duplicate detection, and promotion workflow.
 
-**Subfolder Management:**
-- View all import batches with person counts and dates
-- Expand subfolders to see individual files
-- Delete subfolders you no longer need
+**Opening the Staging Manager:**
 
-**Cross-Import Detection:**
-- Click "Review matches with main tree" to find potential duplicates
-- Compare staging records against your main tree
+| Method | Description |
+|--------|-------------|
+| Dashboard | Click **Staging Manager** button (appears when staging has data) |
+| Command palette | `Canvas Roots: Manage staging area` |
+| Import Wizard | Click **Manage Staging** on the success screen after importing to staging |
+
+**Stats Summary:**
+- Total files across all batches
+- Number of import batches
+- Potential duplicates detected
+
+### Batch Cards
+
+Each import batch appears as a collapsible card showing:
+
+| Element | Description |
+|---------|-------------|
+| Folder name | Timestamp-based name (e.g., `2024-12-15_14-30-00`) |
+| Entity counts | Breakdown by type: people, places, sources, events, organizations |
+| Last modified | When the batch was last updated |
+
+**Expanding Batches:**
+- Click a batch header to expand and see individual files
+- Each file shows an icon for its entity type and a type badge
+- Click any file row to open it in a new tab for review
+
+### Batch Actions
+
+Each batch card has action buttons:
+
+| Button | Description |
+|--------|-------------|
+| **Check duplicates** | Run cross-import detection against the main tree |
+| **Promote** | Move all files from this batch to the main tree folder |
+| **Delete** | Delete the entire batch (with confirmation) |
+
+**Bulk Actions:**
+- **Promote all**: Move all staged files to main tree
+- **Delete all**: Remove all staging data
+
+### Cross-Import Detection
+
+Click **Check duplicates** on a batch to find potential duplicates against your main tree.
+
+**How Matching Works:**
+
+| Factor | Weight | Description |
+|--------|--------|-------------|
+| Name similarity | 60% | Levenshtein distance comparison |
+| Date proximity | 30% | Birth/death year within threshold |
+| Gender match | 5% bonus | Additional confidence when genders match |
+
+Default thresholds: minConfidence=60, minNameSimilarity=70, maxYearDifference=5
+
+**Reviewing Matches:**
 - Mark matches as "Same person" or "Different people"
-
-**Promote Actions:**
-- **Promote subfolder**: Move all files from a subfolder to your main people folder
-- **Promote all**: Move all staging files to main
-- Files marked as "same person" (duplicates) are skipped during promote—use merge instead
+- "Same person" matches are skipped during promote—use merge instead
+- "Different people" dismissals are remembered across sessions
 
 ### Staging Isolation
 
-When staging is enabled, staged files are automatically excluded from:
+When staging isolation is enabled (Settings → Preferences), staged files are automatically excluded from:
 - Tree generation (your trees only show main tree data)
 - Normal duplicate detection
 - Relationship sync operations
@@ -159,12 +208,15 @@ This ensures your production data stays clean while you work on imports.
 
 ### Workflow Example
 
-1. Import `smith-family.ged` to staging subfolder `smith-2024`
-2. Import `jones-tree.ged` to staging subfolder `jones-2024`
-3. In Import/Export tab, click "Review matches with main tree"
-4. For each match, decide: Same person → Merge, or Different people → will be promoted
-5. Click "Promote subfolder" for each batch
-6. New unique people are moved to main; duplicates were merged earlier
+1. Import `smith-family.ged` to staging (Import Wizard → Staging destination)
+2. Import `jones-tree.ged` to staging
+3. Open Staging Manager (Dashboard button or command palette)
+4. Expand each batch to preview files
+5. Click "Check duplicates" to find matches with main tree
+6. For each match, decide: Same person → Merge, or Different people → dismiss
+7. Click "Promote" for each batch
+8. New unique people are moved to main; duplicates were merged earlier
+9. Delete empty batches or click "Delete all" to clean up
 
 ## Merging Duplicate Records
 

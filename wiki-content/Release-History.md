@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.18.x](#v018x)
+  - [Staging Management](#staging-management-v01824)
   - [Export Privacy & Sensitive Data](#export-privacy--sensitive-data-v01822)
   - [Card Style Options](#card-style-options-v01815)
   - [Gramps Notes Integration](#gramps-notes-integration-v01813)
@@ -84,6 +85,65 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.18.x
+
+### Staging Management (v0.18.24)
+
+Dedicated UI for managing staged imports with batch organization, duplicate detection, and promotion workflow.
+
+**GitHub Issue:** [#137](https://github.com/banisterious/obsidian-canvas-roots/issues/137)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| Staging Manager modal | Accessible via Control Center → Staging Manager button |
+| Batch organization | Imports grouped by timestamped subfolder (YYYY-MM-DD_HH-mm-ss) |
+| Entity breakdown | Count of people, places, sources, events, organizations per batch |
+| Duplicate detection | Cross-import detection identifies potential duplicates across batches |
+| Expandable file lists | Click batch headers to preview individual entities before promoting |
+| Promote to main tree | Move staged entities from staging folder to main tree folder |
+| Batch cleanup | Delete batches after promotion or when no longer needed |
+| File preview | Click any file row to open in new tab for review |
+
+**Staging Workflow:**
+
+```
+Import → Review in Staging Manager → Resolve duplicates → Promote → Cleanup
+```
+
+**Duplicate Detection:**
+
+| Factor | Weight | Description |
+|--------|--------|-------------|
+| Name similarity | 60% | Levenshtein distance comparison |
+| Date proximity | 30% | Birth/death year within threshold |
+| Gender match | 5% bonus | Additional confidence when genders match |
+
+Default thresholds: minConfidence=60, minNameSimilarity=70, maxYearDifference=5
+
+**UI Components:**
+
+| Component | Description |
+|-----------|-------------|
+| Stats summary | Total files, batches, and potential duplicates |
+| Batch cards | Collapsible cards showing batch info and entity counts |
+| Entity type badges | Color-coded badges (person, place, source, event, org) |
+| Chevron toggle | Visual indicator for expand/collapse state |
+| Action buttons | Promote All, Delete Batch per batch card |
+
+**Files Modified:**
+
+- `src/ui/staging-management-modal.ts` — Main modal with batch listing and file preview
+- `src/core/staging-service.ts` — Staging folder operations and file retrieval
+- `src/core/cross-import-detection.ts` — Duplicate detection algorithms
+- `styles/staging-manager.css` — Modal and file list styling
+
+**Documentation:**
+
+- [Import Workflow](Import-Workflow#staging-folder) — Staging folder configuration
+- [Staging Management Planning](../docs/planning/staging-management.md) — Implementation details
+
+---
 
 ### Export Privacy & Sensitive Data (v0.18.22)
 
