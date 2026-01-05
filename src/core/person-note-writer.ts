@@ -1078,9 +1078,9 @@ export async function updatePersonNote(
  * @returns Formatted filename with .md extension
  */
 function formatFilename(name: string, format: FilenameFormat): string {
-	// First sanitize illegal filesystem characters
+	// First sanitize illegal filesystem characters and problematic wikilink characters
 	const sanitized = name
-		.replace(/[\\/:*?"<>|]/g, '')
+		.replace(/[\\/:*?"<>|()\[\]{}]/g, '')
 		.trim();
 
 	switch (format) {

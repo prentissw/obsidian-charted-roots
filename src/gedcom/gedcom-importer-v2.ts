@@ -1230,9 +1230,9 @@ export class GedcomImporterV2 {
 	 * Format a filename based on the selected format option
 	 */
 	private formatFilename(name: string, format: 'original' | 'kebab-case' | 'snake_case' = 'original'): string {
-		// First sanitize illegal filesystem characters
+		// First sanitize illegal filesystem characters and problematic wikilink characters
 		const sanitized = name
-			.replace(/[\\/:*?"<>|]/g, '')
+			.replace(/[\\/:*?"<>|()\[\]{}]/g, '')
 			.trim();
 
 		switch (format) {
