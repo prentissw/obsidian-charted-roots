@@ -9,6 +9,7 @@ This document outlines planned features for Canvas Roots. For completed features
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [Plugin Rename: Charted Roots](#plugin-rename-charted-roots) 📋 Medium
+  - [Optional Person Names](#optional-person-names) 📋 Medium
   - [Web Clipper Integration](#web-clipper-integration) 📋 Medium
   - [DMS Coordinate Conversion](#dms-coordinate-conversion) 💡 Low
   - [DNA Match Tracking](#dna-match-tracking) 💡 Low
