@@ -84,9 +84,8 @@ You've been building your family tree on Ancestry.com or FamilySearch, but you'r
    **From FamilySearch:**
    - Sign in to FamilySearch.org
    - Navigate to the export tool: https://www.familysearch.org/innovate/export
-   - Find the person you want as the starting point (search by name)
-   - Set number of generations to include (4-5 is a good starting point)
-   - Click **Download** and save the `.ged` file
+   - Click **Export** to download your family tree (exports 8 generations of ancestors)
+   - Save the `.ged` file
 
 2. **Import into Canvas Roots:**
    - In Obsidian, open the **Control Center**
