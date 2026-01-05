@@ -8,6 +8,7 @@ This document outlines planned features for Canvas Roots. For completed features
 
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
+  - [Plugin Rename: Charted Roots](#plugin-rename-charted-roots) 📋 Medium
   - [Web Clipper Integration](#web-clipper-integration) 📋 Medium
   - [DMS Coordinate Conversion](#dms-coordinate-conversion) 💡 Low
   - [DNA Match Tracking](#dna-match-tracking) 💡 Low
@@ -49,6 +50,45 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 | ⚡ High | Core workflow | Completes essential data portability |
 | 📋 Medium | User value | Highly requested sharing/output features |
 | 💡 Low | Specialized | Advanced use cases, niche workflows |
+
+---
+
+### Plugin Rename: Charted Roots
+
+**Priority:** 📋 Medium — Improves discoverability and clarifies plugin scope
+
+**Status:** Planning
+
+**GitHub Issue:** TBD
+
+**Summary:** Rename the plugin from "Canvas Roots" to "Charted Roots" based on community feedback. The current name suggests the plugin only works with Obsidian Canvas, limiting perceived scope for traditional family tree and genealogical chart users.
+
+**The Problem:** Community feedback indicates "Canvas" creates confusion about whether the plugin supports non-canvas visualizations (family charts, trees, graphs). Users searching for genealogy plugins may not discover the plugin due to the canvas-centric name.
+
+**The Solution:** "Charted Roots" because:
+- **Broader scope:** Encompasses charts, trees, graphs, networks, and canvas
+- **Preserves identity:** Keeps "Roots" and 'C' initial, maintaining `cr-` prefixes
+- **Better searchability:** "Charted" relates to genealogical charts and family trees
+- **No conflicts:** No existing tools use this name
+
+**Implementation:**
+
+| Component | Change Required |
+|-----------|----------------|
+| Plugin metadata | Update `manifest.json`, `package.json` |
+| Documentation | Update README, wiki, developer docs |
+| Repository | Rename GitHub repo (auto-redirects old URLs) |
+| Community | Update Obsidian Community Plugins listing |
+
+**User Impact:** Non-breaking change
+- Plugin name updates after normal update
+- All data remains fully compatible
+- No vault modifications required
+- CSS classes (`cr-*`) and properties (`cr_*`) preserved
+
+**Documentation:**
+- See [Plugin Rename Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/plugin-rename.md) for detailed specifications
+- Community discussion: [#58](https://github.com/banisterious/obsidian-canvas-roots/discussions/58)
 
 ---
 
