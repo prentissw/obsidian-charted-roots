@@ -199,8 +199,8 @@ More sophisticated extraction capabilities.
 
 ### Wiki Pages to Create/Update
 
-- [ ] Create: `wiki-content/Web-Clipper-Integration.md` — Dedicated setup and usage guide
-- [ ] Update: `wiki-content/Data-Entry.md` — Add "Clipping from Web Sources" section with overview and link to full guide
+- [x] Create: `wiki-content/Web-Clipper-Integration.md` — Dedicated setup and usage guide
+- [x] Update: `wiki-content/Data-Entry.md` — Add "Clipping from Web Sources" section with overview and link to full guide
 - [x] Update: `Roadmap.md` — Reflect revised phasing
 - [x] Update: Planning doc — Reflect revised phasing
 
