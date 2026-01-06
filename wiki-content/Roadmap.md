@@ -146,28 +146,28 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Priority:** 📋 Medium — Streamlines research capture for all genealogists
 
-**Status:** Ready for implementation
+**Status:** Phase 1 complete (v0.18.25+), Phase 2 pending community feedback
 
 **GitHub Issue:** [#128](https://github.com/banisterious/obsidian-canvas-roots/issues/128)
 
-**Summary:** Integration with Obsidian Web Clipper to streamline capturing genealogical data from web sources. Users can already use Web Clipper with Staging Manager (v0.18.24); this feature adds convenience and standardization.
+**Summary:** Integration with Obsidian Web Clipper to streamline capturing genealogical data from web sources. Phase 1 adds detection, Dashboard integration, and filtering for clipped notes.
 
-**The Problem:** Genealogists frequently clip data from web sources (obituaries, Find A Grave, FamilySearch, Wikipedia) during research. Users can create their own Web Clipper templates and output to staging, but lack guided integration and standardized templates.
+**The Problem:** Genealogists frequently clip data from web sources (obituaries, Find A Grave, FamilySearch, Wikipedia) during research. Users can create their own Web Clipper templates and output to staging, but lacked guided integration and convenient filtering.
 
 **Phased Approach:**
 
 | Phase | Feature | Status |
 |-------|---------|--------|
-| 1 | File Watcher & Dashboard Integration | Ready for implementation |
+| 1 | File Watcher & Dashboard Integration | ✅ Complete (v0.18.25+) |
 | 2 | Official Template Distribution | After community feedback |
 | 3 | Enhanced Extraction | Conceptual |
 
-**Phase 1 — File Watcher & Dashboard Integration:**
-- Detect clipped notes in staging folder (files with `clip_source_type`, `clipped_from`, or `clipped_date` properties)
-- Show Dashboard indicator: "3 new clipped notes"
-- Click to open Staging Manager filtered to clipped notes
+**Phase 1 — File Watcher & Dashboard Integration:** ✅ Complete
+- Detects clipped notes in staging folder (files with `clip_source_type`, `clipped_from`, or `clipped_date` properties)
+- Unified Dashboard "Staging" card shows breakdown: "3 clips (1 new), 1 other"
+- Toggle buttons in Staging Manager: [All] [Clipped] [Other]
+- Multi-level filtering (stats, batches, files)
 - Works with any user-created Web Clipper templates
-- All clipper properties recommended but optional
 
 **Phase 2 — Official Template Distribution (Future):**
 - Curated JSON template files in `docs/clipper-templates/`

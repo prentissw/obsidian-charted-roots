@@ -32,7 +32,7 @@ Obsidian Web Clipper is an official browser extension that captures web content 
 
 ## Phase 1: File Watcher & Dashboard Integration
 
-**Status:** Ready to implement (enabled by #137)
+**Status:** ✅ Implemented (v0.18.25+)
 
 Detect clipped notes and provide convenience features for the existing workflow.
 
@@ -52,69 +52,66 @@ Canvas Roots will monitor staging folder for files containing these properties.
 2. Configure Web Clipper to output to staging folder (e.g., `Family/Staging/clips`)
 3. Include `clip_source_type` or `clipped_from` in template frontmatter
 4. Clip genealogical content from web
-5. Canvas Roots detects new clips and shows Dashboard indicator: "3 new clipped notes"
-6. Click indicator to open Staging Manager filtered to clipped notes
-7. Review and promote to main tree
+5. Canvas Roots detects new clips and shows Dashboard "Staging" card with breakdown: "3 clips (1 new), 1 other"
+6. Click "Review" to open Staging Manager
+7. Use toggle buttons (All/Clipped/Other) to filter staging content
+8. Review and promote to main tree
 
-### Implementation Steps
+### Implementation (Completed)
 
-1. **File watching:**
-   - Use `vault.on('create', ...)` to detect new files in staging folder
-   - Parse frontmatter for clipper metadata properties
-   - Track count of unreviewed clipped notes
+1. **File watching:** ✅
+   - `WebClipperService` uses `vault.on('create', ...)` to detect new files in staging folder
+   - Parses frontmatter for clipper metadata properties
+   - Tracks count of unreviewed clipped notes
 
-2. **Dashboard integration:**
-   - Add "Clipped Notes" indicator (similar to existing staging indicator)
-   - Show count: "3 new"
-   - Click opens Staging Manager with filter: `clip_source_type:*` or `clipped_from:*`
+2. **Dashboard integration:** ✅
+   - Unified "Staging" card shows breakdown: "3 clips (1 new), 1 other"
+   - "Review" button opens Staging Manager
+   - Card appears only when staging folder contains files
 
-3. **Staging Manager filter:**
-   - Add filter option: "Clipped notes only"
-   - Shows files with clipper metadata
-   - Optionally persist filter selection
+3. **Staging Manager filter:** ✅
+   - Toggle buttons: [All] [Clipped] [Other]
+   - Filters applied at three levels: stats, batches, and files
+   - No persistence (simple approach for Phase 1)
 
 ### Implementation Details & Decisions
 
-**Dashboard indicator approach:**
-- Dashboard indicator only for Phase 1 (simpler, less intrusive)
+**Dashboard card approach:** ✅
+- Unified "Staging" card (not separate cards for imports vs clips)
+- Shows breakdown when clipped notes exist: "3 clips (1 new), 1 other"
+- Rationale: Single entry point to Staging Manager avoids misleading UX; users toggle filters inside Staging Manager
 - No notices/notifications for clip detection
-- Rationale: Less intrusive, user checks when ready; simpler MVP implementation
 
-**Filter persistence:**
-- No persistence initially
-- Staging currently contains imports and clippings; simple approach should suffice
-- Can add persistence later if users accumulate large backlogs over extended periods
+**Filter toggle UI:** ✅
+- Three mutually exclusive buttons: [All] [Clipped] [Other]
+- Active button highlighted with accent color
+- Filter state resets to "All" on each open (no persistence)
+- Can add persistence later if users accumulate large backlogs
 
-**Unreviewed tracking:**
-- Count resets when Staging Manager opens (simple approach)
-- Anything in staging is inherently unprocessed
+**Unreviewed tracking:** ✅
+- Count resets when Staging Manager opens
 - Count indicates "new clips since you last checked staging"
+- Simple approach leverages existing staging workflow
 - Can enhance with per-file tracking if users request it
 
-**Detection scope:**
+**Detection scope:** ✅
 - Only monitor staging folder (as configured in settings)
 - Prevents performance issues from scanning entire vault
 - User must configure Web Clipper to output to staging folder
 - Clips outside staging folder won't be detected
 
-**Property standardization:**
+**Property standardization:** ✅
 - All three properties recommended but optional: `clip_source_type`, `clipped_from`, `clipped_date`
+- Detection requires ANY ONE of the three properties
 - Minimal standardization makes implementation easier
-- Document benefits of including properties and what's lost without them
-- Gives users flexibility while enabling better integration
 - Properties are unprefixed for simplicity (low risk of conflict)
+- Benefits of including each property documented in wiki
 
-**Filter mechanism:**
-- Extend existing Staging Manager search/filter to support property matching
-- Simple text match on property names initially
-- Can enhance with property-specific UI later
-
-**Dashboard indicator placement:**
-- Hybrid approach: Dedicated card shown only when clipped notes exist
-- Card appears dynamically when clips detected, hidden when staging cleared
-- Rationale: Clean Dashboard for non-clippers, prominent when relevant, room for future features
-- Layout shift acts as visual feedback for clip detection
-- Can be smoothed with animation in implementation
+**Multi-level filtering:** ✅
+- Stats recalculated based on filter mode
+- Batches (subfolders) filtered to hide those with no matching files
+- Files within batches filtered based on clipper metadata presence
+- Consistent user experience across all three levels
 
 ### Benefits
 
@@ -280,8 +277,10 @@ This plan was created based on GitHub issue [#128](https://github.com/banisterio
 - Hallucination issue reinforces value of staging review workflow
 
 **Phase 1 design decisions (@wilbry feedback):**
-- Dashboard indicator only for simpler MVP
+- Unified staging card instead of separate cards (avoids misleading UX)
+- Toggle buttons in Staging Manager for in-place filtering
 - No filter persistence initially (staging volume expected to be manageable)
 - Reset unreviewed count when Staging Manager opens
 - Staging folder detection only (performance and simplicity)
 - All three clipper properties recommended but optional
+- "Other" label for non-clipped files (clearer than "Imports" or "Non-Clipped")
