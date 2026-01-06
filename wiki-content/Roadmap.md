@@ -11,6 +11,7 @@ This document outlines planned features for Canvas Roots. For completed features
   - [Plugin Rename: Charted Roots](#plugin-rename-charted-roots) 📋 Medium
   - [Optional Person Names](#optional-person-names) 📋 Medium
   - [Web Clipper Integration](#web-clipper-integration) 📋 Medium
+  - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
   - [DMS Coordinate Conversion](#dms-coordinate-conversion) 💡 Low
   - [DNA Match Tracking](#dna-match-tracking) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
@@ -182,6 +183,63 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Documentation:**
 - See [Web Clipper Integration Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/web-clipper-integration.md) for detailed specifications
+
+---
+
+### GPS Research Workflow Integration
+
+**Priority:** 📋 Medium — Supports GPS methodology for serious genealogists
+
+**Status:** Planning (Phase 1 ready for implementation)
+
+**GitHub Issue:** [#145](https://github.com/banisterious/obsidian-canvas-roots/issues/145) (consolidates #124, #125)
+
+**Summary:** Enable genealogists to manage research workflow using GPS (Genealogical Proof Standard) methodology with support for research projects, reports, individual research notes, and research journals.
+
+**The Problem:** Serious genealogists need to track research progress, document negative findings, maintain research logs, and synthesize analysis across sources. Current Canvas Roots focuses on person/event/source entities but lacks structures for research workflow.
+
+**The Solution:** Four GPS-aligned research entity types:
+- **Research Project** — Hub for complex, multi-phase research cases
+- **Research Report** — Living/working document analyzing specific questions
+- **Individual Research Note (IRN)** — Synthesis between reports and person notes
+- **Research Journal** — Optional daily/session tracking across projects
+
+**Phased Approach:**
+
+| Phase | Feature | Status |
+|-------|---------|--------|
+| 1 | Foundation: Entity Recognition & Schemas | Ready for implementation |
+| 2 | Workflow Integration: Tagging & Auto-generation | After Phase 1 feedback |
+| 3 | Advanced Features: Queries & Timeline Views | Future |
+
+**Phase 1 — Foundation:**
+- Entity type recognition for all four types
+- Schema validation with Data Quality integration
+- Research log parsing (YAML in `## Research Log` sections)
+- Properties: `status`, `private`, `up`, `related`, `reportTo`, `subject`
+- No UI changes required
+
+**Phase 2 — Workflow Integration (Future):**
+- `needs_research` tagging on person/event/place notes
+- IRN auto-generation with refresh capability
+- Breadcrumb navigation showing hierarchy
+- Research log entry form
+
+**Phase 3 — Advanced Features (Future):**
+- Negative findings surfacing across projects
+- Research timeline views
+- Cross-project queries
+- Templates/Bases for research entities
+
+**Key Features:**
+- **Research logs with negative findings** — Document "searched X, found nothing" scenarios per Mills' methodology
+- **Hierarchical organization** — Use `up`/`related` properties for flexible hierarchy (recognized but not enforced)
+- **IRNs separate from person notes** — Analysis/synthesis vs structured facts (GPS methodology)
+- **Integration with existing features** — Data Quality filtering, schema validation, export privacy
+
+**Documentation:**
+- See [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/research-workflow-integration.md) for detailed specifications
+- Community contributors: @ANYroots (IRN structure, GPS methodology, templates), @wilbry (lightweight approach, unified design)
 
 ---
 
