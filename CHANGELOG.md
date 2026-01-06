@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Web Clipper Integration - Phase 1** ([#128](https://github.com/banisterious/obsidian-canvas-roots/issues/128)):
+  - Auto-detect clipped notes in staging folder (files with `clip_source_type`, `clipped_from`, or `clipped_date` properties)
+  - Unified Dashboard "Staging" card shows breakdown: "3 clips (1 new), 1 other"
+  - Toggle buttons in Staging Manager: [All] [Clipped] [Other] for filtering staging content
+  - Multi-level filtering: stats, batches, and files filtered based on clipper metadata
+  - Unread clip count resets when Staging Manager opens
+  - Works with any user-created Web Clipper templates
+
 ### Fixed
 
 - Timeline event location spacing: fixed missing space between event links and location text (e.g., "Murder of Agrippina in Baiae")
