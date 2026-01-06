@@ -1,0 +1,57 @@
+{
+	"schemaVersion": "0.1.0",
+	"name": "FamilySearch - Person",
+	"behavior": "create",
+	"noteNameFormat": "FamilySearch - {{\"person's full name\"}}",
+	"path": "",
+	"noteContentFormat": "# {{\"person's full name\"}}\n\n## Record Information\n\n**Record Type:** {{\"record type\"}}\n**Collection:** {{\"collection name\"}}\n\n## Vital Information\n\n{{\"vital information summary\"}}\n\n{{\"family relationships\"}}\n\n## Source\n\nFamilySearch Record: {{url}}\nClipped: {{date}}",
+	"properties": [
+		{
+			"name": "clip_source_type",
+			"value": "familysearch",
+			"type": "text"
+		},
+		{
+			"name": "clipped_from",
+			"value": "{{url}}",
+			"type": "text"
+		},
+		{
+			"name": "clipped_date",
+			"value": "{{date}}",
+			"type": "text"
+		},
+		{
+			"name": "note_type",
+			"value": "person",
+			"type": "text"
+		},
+		{
+			"name": "name",
+			"value": "{{\"person's full name\"}}",
+			"type": "text"
+		},
+		{
+			"name": "birth_date",
+			"value": "{{\"birth date\"}}",
+			"type": "text"
+		},
+		{
+			"name": "birth_place",
+			"value": "{{\"birth place\"}}",
+			"type": "text"
+		},
+		{
+			"name": "death_date",
+			"value": "{{\"death date\"}}",
+			"type": "text"
+		},
+		{
+			"name": "death_place",
+			"value": "{{\"death place\"}}",
+			"type": "text"
+		}
+	],
+	"triggers": ["familysearch.org/ark:"],
+	"context": "Extract information from this FamilySearch record. Page URL: {{url}}. Page content: {{content}}.\n\nThis could be any type of genealogical record (birth, death, marriage, residence, census, etc.). Extract whatever information is available.\n\nReturn ONLY the requested data with NO explanatory text or prefixes. If a field is not found or not applicable to this record type, return an empty string.\n\nPerson's full name (without collection name or record type)\nRecord type (e.g., Birth, Death, Marriage, Residence, Census)\nCollection name (the database/collection this record is from)\nBirth date (in format DD MMM YYYY if possible, e.g., 15 Dec 1922)\nBirth place (full location with city, county, state/country)\nDeath date (in format DD MMM YYYY if possible)\nDeath place (full location)\nVital information summary (format as markdown list with bold labels like **Born:** date in place, **Died:** date in place, **Residence:** date in place, etc. - ONLY include lines for fields that have data, skip fields with no data. IMPORTANT: For residence records, extract ALL residence entries from the page - include Second, Third, Fourth, Fifth, Sixth, Seventh, Eighth, Ninth residence entries if they exist. List each residence with its date and place.)\nFamily relationships (format as markdown with headings like ## Parents, ## Spouses, ## Children - include names and relationships if available in the record, otherwise return empty string)"
+}

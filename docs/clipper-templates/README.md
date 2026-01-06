@@ -114,6 +114,38 @@ AI-powered template that extracts biographical information from obituaries acros
 
 **Note:** Because obituary websites vary widely, this template does not auto-trigger. Select it manually when clipping obituaries.
 
+---
+
+### FamilySearch - Person
+**File:** `familysearch-person.json`
+**URL Pattern:** `familysearch.org/ark:`
+**Auto-triggers:** Yes
+
+AI-powered template that extracts biographical information from any FamilySearch record type. Works with birth, death, marriage, residence, census, and other genealogical records.
+
+**Extracts:**
+- Full name (via AI, without collection name)
+- Record type and collection name
+- Vital information (birth, death, residence, marriage, etc.)
+- Multiple residence entries if available
+- Family relationships (parents, spouses, children when available)
+- Deceased status
+
+**Requirements:**
+- Interpreter must be enabled
+- Recommended model: Claude Sonnet 4.5 or equivalent
+
+**Canvas Roots Properties:**
+- `clip_source_type`: "familysearch"
+- `clipped_from`: FamilySearch record URL
+- `clipped_date`: Date clipped
+- `note_type`: "person"
+- `name`: Person's full name
+- `birth_date`, `birth_place`
+- `death_date`, `death_place`
+
+**Note:** This template adapts to different FamilySearch record types. Properties will only populate if the specific record contains that data (e.g., residence records won't have death information).
+
 ## Using Templates with Canvas Roots
 
 Once you've imported a template and clipped content:

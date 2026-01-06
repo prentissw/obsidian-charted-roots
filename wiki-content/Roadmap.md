@@ -175,11 +175,12 @@ See [Release History](Release-History#web-clipper-integration---phase-1-v01825) 
 - Multi-level filtering (stats, batches, files)
 - Works with any user-created Web Clipper templates
 
-**Phase 2 — Official Template Distribution (Future):**
+**Phase 2 — Official Template Distribution:** ✅ In Progress (v0.18.26+)
 - Curated JSON template files in `docs/clipper-templates/`
-- Templates for: Generic Obituary (LLM), Find A Grave (CSS selectors), FamilySearch Person (CSS selectors), Wikipedia Biography (Schema.org)
+- Templates released: Find A Grave (CSS selectors), Find A Grave (LLM), Generic Obituary (LLM), FamilySearch Person (LLM)
+- Templates planned: Wikipedia Biography (Schema.org), Ancestry Record
 - Use canonical Canvas Roots property names
-- Community testing phase before official release
+- Comprehensive README with setup instructions
 
 **Phase 3 — Enhanced Extraction (Future):**
 - Relationship extraction from obituary "survived by" sections
