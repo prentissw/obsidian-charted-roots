@@ -138,7 +138,7 @@ Initial templates created and tested:
 |----------|--------|-------------------|--------|
 | Find A Grave - Person | findagrave.com | CSS selectors only | ✅ Released |
 | Find A Grave - Person (LLM) | findagrave.com | CSS selectors + AI | ✅ Released |
-| Generic Obituary | Any obituary site | AI extraction | 📋 Planned |
+| Obituary - Generic | Any obituary site | AI extraction | ✅ Released |
 | FamilySearch Person | familysearch.org | CSS selectors | 📋 Planned |
 | Ancestry Record | ancestry.com | Schema.org/CSS | 📋 Planned |
 
