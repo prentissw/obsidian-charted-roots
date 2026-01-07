@@ -532,14 +532,14 @@ export class GedcomImporterV2 {
 			personData.fatherCrId = individual.fatherRef;
 			const father = gedcomData.individuals.get(individual.fatherRef);
 			if (father) {
-				personData.fatherName = father.name || 'Unknown';
+				personData.fatherName = this.sanitizeName(father.name || 'Unknown');
 			}
 		}
 		if (individual.motherRef) {
 			personData.motherCrId = individual.motherRef;
 			const mother = gedcomData.individuals.get(individual.motherRef);
 			if (mother) {
-				personData.motherName = mother.name || 'Unknown';
+				personData.motherName = this.sanitizeName(mother.name || 'Unknown');
 			}
 		}
 
@@ -566,7 +566,7 @@ export class GedcomImporterV2 {
 			personData.spouseCrId = individual.spouseRefs;
 			personData.spouseName = individual.spouseRefs.map(ref => {
 				const spouse = gedcomData.individuals.get(ref);
-				return spouse?.name || 'Unknown';
+				return this.sanitizeName(spouse?.name || 'Unknown');
 			});
 		}
 
@@ -579,7 +579,7 @@ export class GedcomImporterV2 {
 					if (!childRefs.includes(childRef)) {
 						childRefs.push(childRef);
 						const child = gedcomData.individuals.get(childRef);
-						childNames.push(child?.name || 'Unknown');
+						childNames.push(this.sanitizeName(child?.name || 'Unknown'));
 					}
 				}
 			}
@@ -1227,16 +1227,22 @@ export class GedcomImporterV2 {
 	}
 
 	/**
+	 * Sanitize a name by removing characters that break wikilinks or filesystems
+	 * This ensures consistency between filenames and wikilink references
+	 */
+	private sanitizeName(name: string): string {
+		const sanitized = name
+			.replace(/[\\/:*?"<>|()\[\]{}]/g, '')
+			.trim();
+		return sanitized || 'Unknown';
+	}
+
+	/**
 	 * Format a filename based on the selected format option
 	 */
 	private formatFilename(name: string, format: 'original' | 'kebab-case' | 'snake_case' = 'original'): string {
 		// First sanitize illegal filesystem characters and problematic wikilink characters
-		const sanitized = name
-			.replace(/[\\/:*?"<>|()\[\]{}]/g, '')
-			.trim();
-
-		// Fallback to 'Unknown' if sanitization results in empty string
-		const safeName = sanitized || 'Unknown';
+		const safeName = this.sanitizeName(name);
 
 		switch (format) {
 			case 'kebab-case':
@@ -1333,21 +1339,21 @@ export class GedcomImporterV2 {
 				// Exclude biological parents - only add true step-parents
 				if (husbandRef && !result.stepfatherRefs.includes(husbandRef) && husbandRef !== individual.fatherRef) {
 					result.stepfatherRefs.push(husbandRef);
-					result.stepfatherNames.push(husband?.name || 'Unknown');
+					result.stepfatherNames.push(this.sanitizeName(husband?.name || 'Unknown'));
 				}
 				if (wifeRef && !result.stepmotherRefs.includes(wifeRef) && wifeRef !== individual.motherRef) {
 					result.stepmotherRefs.push(wifeRef);
-					result.stepmotherNames.push(wife?.name || 'Unknown');
+					result.stepmotherNames.push(this.sanitizeName(wife?.name || 'Unknown'));
 				}
 			} else if (famcRef.pedigree === 'adop') {
 				// Adoptive parents (typically one set)
 				if (husbandRef && !result.adoptiveFatherRef) {
 					result.adoptiveFatherRef = husbandRef;
-					result.adoptiveFatherName = husband?.name || 'Unknown';
+					result.adoptiveFatherName = this.sanitizeName(husband?.name || 'Unknown');
 				}
 				if (wifeRef && !result.adoptiveMotherRef) {
 					result.adoptiveMotherRef = wifeRef;
-					result.adoptiveMotherName = wife?.name || 'Unknown';
+					result.adoptiveMotherName = this.sanitizeName(wife?.name || 'Unknown');
 				}
 			}
 			// Note: 'foster' pedigree is not yet supported in frontmatter fields
