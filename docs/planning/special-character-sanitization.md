@@ -2,7 +2,7 @@
 
 Planning document for consistent special character handling in name fields during import.
 
-- **Status:** Planning
+- **Status:** Implemented
 - **GitHub Issue:** [#139](https://github.com/banisterious/obsidian-canvas-roots/issues/139)
 - **Created:** 2026-01-07
 
@@ -342,7 +342,7 @@ Audit CSV and GedcomX importers for the same issue:
 
 | Phase | Status |
 |-------|--------|
-| Phase 1 | Planning |
-| Phase 2 | Planning |
-| Phase 3 | Planning |
-| Phase 4 | Planning |
+| Phase 1 | Implemented |
+| Phase 2 | Implemented |
+| Phase 3 | Implemented |
+| Phase 4 | Implemented |
