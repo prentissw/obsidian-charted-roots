@@ -11,6 +11,8 @@ import { getLogger } from '../core/logging';
 import { MapController } from './map-controller';
 import { MapDataService } from './map-data-service';
 import { CreatePlaceModal } from '../ui/create-place-modal';
+import { PlacePickerModal, SelectedPlaceInfo } from '../ui/place-picker';
+import { GeocodingService } from './services/geocoding-service';
 import type {
 	MapFilters,
 	LayerVisibility,
@@ -601,6 +603,14 @@ export class MapView extends ItemView {
 				});
 		});
 
+		menu.addItem((item) => {
+			item.setTitle('Link existing place here')
+				.setIcon('link')
+				.onClick(() => {
+					this.linkExistingPlaceToCoordinates(coords);
+				});
+		});
+
 		menu.showAtMouseEvent(e);
 	}
 
@@ -639,6 +649,61 @@ export class MapView extends ItemView {
 		});
 
 		modal.open();
+	}
+
+	/**
+	 * Open PlacePickerModal to select an existing place and update its coordinates
+	 */
+	private linkExistingPlaceToCoordinates(coords: { lat: number; lng: number; pixelX?: number; pixelY?: number }): void {
+		// Get services from plugin
+		const pluginWithServices = this.plugin as unknown as {
+			createPlaceGraphService: () => import('../core/place-graph').PlaceGraphService;
+			createFolderFilterService: () => import('../core/folder-filter').FolderFilterService;
+		};
+
+		const placeGraph = pluginWithServices.createPlaceGraphService();
+		const folderFilter = pluginWithServices.createFolderFilterService();
+		const isPixelMap = coords.pixelX !== undefined && coords.pixelY !== undefined;
+
+		const picker = new PlacePickerModal(
+			this.app,
+			async (selectedPlace: SelectedPlaceInfo) => {
+				// Update the place's coordinates
+				const geocodingService = new GeocodingService(this.app);
+
+				try {
+					if (isPixelMap) {
+						// For pixel maps, update custom_coordinates instead
+						await this.app.fileManager.processFrontMatter(selectedPlace.file, (frontmatter) => {
+							frontmatter.custom_coordinates_x = coords.pixelX;
+							frontmatter.custom_coordinates_y = coords.pixelY;
+						});
+					} else {
+						// For geographic maps, update lat/long
+						await geocodingService.updatePlaceCoordinates(selectedPlace.file, {
+							lat: coords.lat,
+							long: coords.lng
+						});
+					}
+
+					new Notice(`Updated coordinates for "${selectedPlace.name}"`);
+
+					// Refresh the map to show the updated marker
+					void this.refreshData(true);
+				} catch (error) {
+					logger.error('link-place-failed', `Failed to update coordinates: ${error}`);
+					new Notice(`Failed to update coordinates: ${error instanceof Error ? error.message : 'Unknown error'}`);
+				}
+			},
+			{
+				folderFilter,
+				placeGraph,
+				settings: this.plugin.settings,
+				plugin: this.plugin
+			}
+		);
+
+		picker.open();
 	}
 
 	/**
