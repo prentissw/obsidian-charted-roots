@@ -11,6 +11,7 @@ import { createPersonNote, PersonData } from '../core/person-note-writer';
 import { generateCrId } from '../core/uuid';
 import { getLogger } from '../core/logging';
 import { getErrorMessage } from '../core/error-utils';
+import { sanitizeName } from '../utils/name-sanitization';
 
 const logger = getLogger('CsvImporter');
 
@@ -581,24 +582,26 @@ export class CsvImporter {
 		};
 
 		// Add relationship hints (will be resolved in pass 2)
+		// Names are sanitized to match filename sanitization, preventing wikilink resolution failures
+		// when names contain special characters like quotes, parentheses, or brackets (#139)
 		const fatherName = this.getColumnValue(row, mapping.fatherName);
 		const fatherId = this.getColumnValue(row, mapping.fatherId);
 		if (fatherName || fatherId) {
-			personData.fatherName = fatherName;
+			personData.fatherName = fatherName ? sanitizeName(fatherName) : undefined;
 			personData.fatherCrId = fatherId; // Temporary, may be CSV ID
 		}
 
 		const motherName = this.getColumnValue(row, mapping.motherName);
 		const motherId = this.getColumnValue(row, mapping.motherId);
 		if (motherName || motherId) {
-			personData.motherName = motherName;
+			personData.motherName = motherName ? sanitizeName(motherName) : undefined;
 			personData.motherCrId = motherId; // Temporary, may be CSV ID
 		}
 
 		const spouseNames = this.getColumnValue(row, mapping.spouseNames);
 		const spouseIds = this.getColumnValue(row, mapping.spouseIds);
 		if (spouseNames || spouseIds) {
-			personData.spouseName = spouseNames?.split(';').map(s => s.trim()).filter(s => s);
+			personData.spouseName = spouseNames?.split(';').map(s => sanitizeName(s.trim())).filter(s => s);
 			personData.spouseCrId = spouseIds?.split(';').map(s => s.trim()).filter(s => s);
 		}
 
