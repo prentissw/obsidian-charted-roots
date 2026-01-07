@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **DMS coordinate format support** ([#121](https://github.com/banisterious/obsidian-canvas-roots/issues/121)): Opt-in DMS (degrees, minutes, seconds) parsing for coordinate input in the place creation modal. When enabled via Settings → Data & detection → "Accept DMS coordinate format", users can enter coordinates like `33°51'08"N` or `33 51 08 N` and they automatically convert to decimal degrees. Supports symbol notation, space-separated, hyphen-separated, and direction prefix formats.
 - **Create place context menu for folders** ([#152](https://github.com/banisterious/obsidian-canvas-roots/issues/152)): Added "Create place" option to right-click context menu when clicking on the Places folder or any subfolder within it. Opens the Create Place modal with the target folder pre-selected as destination.
+- **Link existing place to map location** ([#151](https://github.com/banisterious/obsidian-canvas-roots/issues/151)): Added "Link existing place here" option to map right-click context menu. Opens a place picker to select an existing place note and updates its coordinates to the clicked location, then refreshes the map to show the marker.
 
 ### Fixed
 
