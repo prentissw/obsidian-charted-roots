@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.18.27] - 2026-01-07
+
 ### Added
 
 - **DMS coordinate format support** ([#121](https://github.com/banisterious/obsidian-canvas-roots/issues/121)): Opt-in DMS (degrees, minutes, seconds) parsing for coordinate input in the place creation modal. When enabled via Settings → Data & detection → "Accept DMS coordinate format", users can enter coordinates like `33°51'08"N` or `33 51 08 N` and they automatically convert to decimal degrees. Supports symbol notation, space-separated, hyphen-separated, and direction prefix formats.
