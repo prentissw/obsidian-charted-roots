@@ -16,6 +16,8 @@ import {
 	GedcomImportOptionsV2,
 	GedcomImportResultV2
 } from './gedcom-types';
+import { preprocessGedcom, type GedcomCompatibilityMode, type PreprocessResult } from './gedcom-preprocessor';
+import { LoggerFactory } from '../core/logging';
 import { createPersonNote, PersonData } from '../core/person-note-writer';
 import { generateCrId } from '../core/uuid';
 import { getErrorMessage } from '../core/error-utils';
@@ -57,8 +59,13 @@ interface PlaceNoteInfo {
  * - Source notes (Phase 2)
  * - Place notes (Phase 3)
  */
+
+const logger = LoggerFactory.getLogger('GedcomImporter');
+
 export class GedcomImporterV2 {
 	private app: App;
+	/** Cached preprocess result from analyzeFile/parseContent for use in importFile */
+	private lastPreprocessResult?: PreprocessResult;
 
 	constructor(app: App) {
 		this.app = app;
@@ -68,15 +75,27 @@ export class GedcomImporterV2 {
 	 * Analyze GEDCOM file before import (v2)
 	 * Returns statistics including event and source counts
 	 */
-	analyzeFile(content: string): {
+	analyzeFile(content: string, compatibilityMode: GedcomCompatibilityMode = 'auto'): {
 		individualCount: number;
 		familyCount: number;
 		sourceCount: number;
 		eventCount: number;
 		uniquePlaces: number;
 		componentCount: number;
+		preprocessingApplied?: boolean;
 	} {
-		const gedcomData = GedcomParserV2.parse(content);
+		// Apply preprocessing if enabled
+		const preprocessResult = preprocessGedcom(content, compatibilityMode);
+		this.lastPreprocessResult = preprocessResult;
+
+		if (preprocessResult.wasPreprocessed) {
+			logger.info('analyzeFile', 'MyHeritage compatibility fixes applied', {
+				bomRemoved: preprocessResult.fixes.bomRemoved,
+				concFieldsFixed: preprocessResult.fixes.concFieldsNormalized
+			});
+		}
+
+		const gedcomData = GedcomParserV2.parse(preprocessResult.content);
 
 		// Count individuals and families
 		const individualCount = gedcomData.individuals.size;
@@ -177,7 +196,8 @@ export class GedcomImporterV2 {
 			sourceCount,
 			eventCount,
 			uniquePlaces: places.size,
-			componentCount
+			componentCount,
+			preprocessingApplied: preprocessResult.wasPreprocessed
 		};
 	}
 
@@ -185,31 +205,46 @@ export class GedcomImporterV2 {
 	 * Parse and validate GEDCOM content without importing
 	 * Used for quality analysis before import
 	 */
-	parseContent(content: string): {
+	parseContent(content: string, compatibilityMode: GedcomCompatibilityMode = 'auto'): {
 		valid: boolean;
 		data?: GedcomDataV2;
 		errors: string[];
 		warnings: string[];
+		preprocessingApplied?: boolean;
 	} {
+		// Apply preprocessing if enabled
+		const preprocessResult = preprocessGedcom(content, compatibilityMode);
+		this.lastPreprocessResult = preprocessResult;
+		const processedContent = preprocessResult.content;
+
+		if (preprocessResult.wasPreprocessed) {
+			logger.info('parseContent', 'MyHeritage compatibility fixes applied', {
+				bomRemoved: preprocessResult.fixes.bomRemoved,
+				concFieldsFixed: preprocessResult.fixes.concFieldsNormalized
+			});
+		}
+
 		// Validate first
-		const validation = GedcomParserV2.validate(content);
+		const validation = GedcomParserV2.validate(processedContent);
 
 		if (!validation.valid) {
 			return {
 				valid: false,
 				errors: validation.errors.map(e => e.message),
-				warnings: validation.warnings.map(w => w.message)
+				warnings: validation.warnings.map(w => w.message),
+				preprocessingApplied: preprocessResult.wasPreprocessed
 			};
 		}
 
-		// Parse
-		const data = GedcomParserV2.parse(content);
+		// Parse the preprocessed content
+		const data = GedcomParserV2.parse(processedContent);
 
 		return {
 			valid: true,
 			data,
 			errors: [],
-			warnings: validation.warnings.map(w => w.message)
+			warnings: validation.warnings.map(w => w.message),
+			preprocessingApplied: preprocessResult.wasPreprocessed
 		};
 	}
 
@@ -236,21 +271,40 @@ export class GedcomImporterV2 {
 		// Helper to report progress
 		const reportProgress = options.onProgress || (() => {});
 
+		// Get compatibility mode from options, default to 'auto'
+		const compatibilityMode = options.compatibilityMode || 'auto';
+
 		try {
 			let gedcomData: GedcomDataV2;
+			let preprocessResult: PreprocessResult | undefined;
 
 			// Use pre-parsed data if provided (from quality preview), otherwise parse now
 			if (preParsedData) {
 				gedcomData = preParsedData;
+				// Use cached preprocessing result from analyzeFile/parseContent if available
+				preprocessResult = this.lastPreprocessResult;
 				reportProgress({ phase: 'validating', current: 1, total: 1, message: 'Using pre-validated data' });
 				reportProgress({ phase: 'parsing', current: 1, total: 1, message: `Found ${gedcomData.individuals.size} individuals` });
 			} else {
+				// Apply preprocessing if enabled
+				preprocessResult = preprocessGedcom(content, compatibilityMode);
+				const processedContent = preprocessResult.content;
+
+				if (preprocessResult.wasPreprocessed) {
+					logger.info('importFile', 'MyHeritage compatibility fixes applied', {
+						bomRemoved: preprocessResult.fixes.bomRemoved,
+						concFieldsFixed: preprocessResult.fixes.concFieldsNormalized
+					});
+				}
+
 				// Validate GEDCOM first
 				reportProgress({ phase: 'validating', current: 0, total: 1, message: 'Validating GEDCOM file…' });
-				const validation = GedcomParserV2.validate(content);
+				const validation = GedcomParserV2.validate(processedContent);
 
 				if (!validation.valid) {
 					result.errors.push(...validation.errors.map(e => e.message));
+					result.preprocessingApplied = preprocessResult.wasPreprocessed;
+					result.preprocessingFixes = preprocessResult.fixes;
 					return result;
 				}
 
@@ -260,9 +314,15 @@ export class GedcomImporterV2 {
 
 				// Parse GEDCOM with v2 parser
 				reportProgress({ phase: 'parsing', current: 0, total: 1, message: 'Parsing GEDCOM file…' });
-				gedcomData = GedcomParserV2.parse(content);
+				gedcomData = GedcomParserV2.parse(processedContent);
 
 				reportProgress({ phase: 'parsing', current: 1, total: 1, message: `Found ${gedcomData.individuals.size} individuals` });
+			}
+
+			// Store preprocessing info in result
+			if (preprocessResult) {
+				result.preprocessingApplied = preprocessResult.wasPreprocessed;
+				result.preprocessingFixes = preprocessResult.fixes;
 			}
 
 			// Count events for progress

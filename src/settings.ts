@@ -9,6 +9,7 @@ import type { EventTypeDefinition, EventCategoryDefinition } from './events/type
 import type { OrganizationCategoryDefinition } from './organizations/types/organization-types';
 import type { RelationshipCategoryDefinition } from './relationships/types/relationship-types';
 import type { PlaceTypeDefinition, PlaceTypeCategoryDefinition } from './places/types/place-types';
+import type { GedcomCompatibilityMode } from './gedcom/gedcom-preprocessor';
 
 export interface RecentTreeInfo {
 	canvasPath: string;
@@ -225,6 +226,9 @@ export interface CanvasRootsSettings {
 	// Export settings
 	exportFilenamePattern: string;
 	preferredGedcomVersion: '5.5.1' | '7.0';
+	// GEDCOM import settings
+	/** Compatibility mode for GEDCOM imports (auto-detect and fix vendor-specific issues) */
+	gedcomCompatibilityMode: GedcomCompatibilityMode;
 	lastGedcomExport?: LastExportInfo;
 	lastGedcomXExport?: LastExportInfo;
 	lastGrampsExport?: LastExportInfo;
@@ -583,6 +587,8 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	// Export defaults
 	exportFilenamePattern: '{name}-family-chart-{date}',  // Pattern with {name} and {date} placeholders
 	preferredGedcomVersion: '5.5.1',  // Default to 5.5.1 for maximum compatibility
+	// GEDCOM import defaults
+	gedcomCompatibilityMode: 'auto',  // Auto-detect MyHeritage and apply fixes
 	// Folder filtering defaults
 	folderFilterMode: 'disabled',  // Default: scan all folders (preserves existing behavior)
 	excludedFolders: [],           // No folders excluded by default

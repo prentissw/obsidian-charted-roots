@@ -6,6 +6,7 @@
  */
 
 import type { DatePrecision } from '../events/types/event-types';
+import type { GedcomCompatibilityMode, PreprocessorDetection } from './gedcom-preprocessor';
 
 // ============================================================================
 // Event Types and Mappings
@@ -415,6 +416,9 @@ export interface GedcomImportOptionsV2 {
 
 	/** Progress callback for UI updates */
 	onProgress?: GedcomProgressCallback;
+
+	/** GEDCOM compatibility mode for vendor-specific fixes */
+	compatibilityMode?: GedcomCompatibilityMode;
 }
 
 /**
@@ -429,6 +433,14 @@ export interface GedcomImportResultV2 {
 	placesUpdated: number;
 	errors: string[];
 	warnings: string[];
+	/** Whether preprocessing was applied to the GEDCOM content */
+	preprocessingApplied?: boolean;
+	/** Details of preprocessing fixes if applied */
+	preprocessingFixes?: {
+		bomRemoved: boolean;
+		concFieldsNormalized: number;
+		detectionInfo: PreprocessorDetection;
+	};
 }
 
 // ============================================================================
