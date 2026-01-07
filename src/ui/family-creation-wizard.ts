@@ -391,7 +391,7 @@ export class FamilyCreationWizardModal extends Modal {
 
 				const personInfo = personCard.createDiv({ cls: 'crc-wizard-person-card-info' });
 				personInfo.createDiv({ cls: 'crc-wizard-person-card-name' }).setText(
-					this.state.existingCentralPerson.name
+					this.state.existingCentralPerson.name || 'Unnamed'
 				);
 				if (this.state.existingCentralPerson.birthDate) {
 					personInfo.createDiv({ cls: 'crc-wizard-person-card-meta' }).setText(
@@ -957,7 +957,7 @@ export class FamilyCreationWizardModal extends Modal {
 			setIcon(cardIcon, 'user');
 
 			const cardInfo = card.createDiv({ cls: 'crc-wizard-person-card-info' });
-			cardInfo.createDiv({ cls: 'crc-wizard-person-card-name' }).setText(person.name);
+			cardInfo.createDiv({ cls: 'crc-wizard-person-card-name' }).setText(person.name || 'Unnamed');
 			if (person.birthDate) {
 				cardInfo.createDiv({ cls: 'crc-wizard-person-card-meta' }).setText(
 					`Born: ${person.birthDate}`
