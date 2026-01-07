@@ -2,9 +2,10 @@
 
 Planning document for making person names optional in Canvas Roots.
 
-- **Status:** Planning
+- **Status:** Implemented
 - **GitHub Issue:** [#140](https://github.com/banisterious/obsidian-canvas-roots/issues/140)
 - **Created:** 2026-01-05
+- **Implemented:** 2026-01-07
 
 ---
 
@@ -62,7 +63,7 @@ The codebase already supports this pattern:
 
 ### Phase 1: Core Functionality
 
-**Status:** Ready to implement
+**Status:** Implemented
 
 **Features:**
 1. **Optional name fields**
