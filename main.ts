@@ -3362,6 +3362,11 @@ export default class CanvasRootsPlugin extends Plugin {
 						this.settings.peopleFolder &&
 						file.path.startsWith(this.settings.peopleFolder + '/');
 
+					// Check for subfolders within Places folder (for Create place action)
+					const isPlacesSubfolder = !isPlacesFolder &&
+						this.settings.placesFolder &&
+						file.path.startsWith(this.settings.placesFolder + '/');
+
 					// Helper to get files in folder
 					const getFilesInFolder = () => this.app.vault.getMarkdownFiles()
 						.filter(f => f.path.startsWith(file.path + '/'));
@@ -3514,8 +3519,44 @@ export default class CanvasRootsPlugin extends Plugin {
 								});
 							}
 
+							// === PLACES SUBFOLDER ===
+							// Show "Create place" for subfolders within Places folder
+							else if (isPlacesSubfolder) {
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Create place')
+										.setIcon('map-pin-plus')
+										.onClick(() => {
+											new CreatePlaceModal(this.app, {
+												directory: file.path,
+												familyGraph: this.createFamilyGraphService(),
+												placeGraph: this.createPlaceGraphService(),
+												settings: this.settings,
+												plugin: this
+											}).open();
+										});
+								});
+							}
+
 							// === PLACES FOLDER ===
 							else if (isPlacesFolder) {
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Create place')
+										.setIcon('map-pin-plus')
+										.onClick(() => {
+											new CreatePlaceModal(this.app, {
+												directory: file.path,
+												familyGraph: this.createFamilyGraphService(),
+												placeGraph: this.createPlaceGraphService(),
+												settings: this.settings,
+												plugin: this
+											}).open();
+										});
+								});
+
+								submenu.addSeparator();
+
 								submenu.addItem((subItem) => {
 									subItem
 										.setTitle('Add essential place properties')
