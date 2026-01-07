@@ -17,7 +17,7 @@ import {
 	GedcomImportResultV2
 } from './gedcom-types';
 import { preprocessGedcom, type GedcomCompatibilityMode, type PreprocessResult } from './gedcom-preprocessor';
-import { LoggerFactory } from '../core/logging';
+import { getLogger } from '../core/logging';
 import { createPersonNote, PersonData } from '../core/person-note-writer';
 import { generateCrId } from '../core/uuid';
 import { getErrorMessage } from '../core/error-utils';
@@ -60,7 +60,7 @@ interface PlaceNoteInfo {
  * - Place notes (Phase 3)
  */
 
-const logger = LoggerFactory.getLogger('GedcomImporter');
+const logger = getLogger('GedcomImporter');
 
 export class GedcomImporterV2 {
 	private app: App;

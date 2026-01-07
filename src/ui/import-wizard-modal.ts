@@ -1302,8 +1302,9 @@ export class ImportWizardModal extends Modal {
 			}
 		}
 
-		// Preprocessing info (MyHeritage compatibility fixes)
-		if (result?.preprocessingApplied && result.preprocessingFixes) {
+		// Preprocessing info (MyHeritage compatibility fixes) - only for GEDCOM imports
+		const gedcomResult = result as GedcomImportResultV2 | undefined;
+		if (gedcomResult?.preprocessingApplied && gedcomResult.preprocessingFixes) {
 			const preprocessingEl = section.createDiv({ cls: 'crc-import-preprocessing-info' });
 			const preprocessingTitle = preprocessingEl.createDiv({ cls: 'crc-import-preprocessing-title' });
 			const preprocessingIcon = preprocessingTitle.createSpan({ cls: 'crc-import-preprocessing-icon' });
@@ -1312,13 +1313,13 @@ export class ImportWizardModal extends Modal {
 
 			const fixesList = preprocessingEl.createEl('ul', { cls: 'crc-import-preprocessing-fixes' });
 
-			if (result.preprocessingFixes.bomRemoved) {
+			if (gedcomResult.preprocessingFixes.bomRemoved) {
 				fixesList.createEl('li', { text: 'Removed UTF-8 byte order mark (BOM)' });
 			}
 
-			if (result.preprocessingFixes.concFieldsNormalized > 0) {
+			if (gedcomResult.preprocessingFixes.concFieldsNormalized > 0) {
 				fixesList.createEl('li', {
-					text: `Fixed ${result.preprocessingFixes.concFieldsNormalized} fields with HTML encoding issues`
+					text: `Fixed ${gedcomResult.preprocessingFixes.concFieldsNormalized} fields with HTML encoding issues`
 				});
 			}
 

@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2026-01-07 22:43:42 UTC
+ * - Generated: 2026-01-07 23:27:57 UTC
  * - Components: 41 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -10003,7 +10003,7 @@ settings:
    COMPONENT: IMPORT-EXPORT-WIZARD.CSS
    ========================================================================== */
 
-/* Component Size: 2069 lines, 39.05 KB */
+/* Component Size: 2113 lines, 39.86 KB */
 
 /* ==========================================================================
    IMPORT/EXPORT WIZARD MODALS
@@ -11300,6 +11300,50 @@ settings:
   font-size: 0.85em;
   color: var(--text-muted);
   margin-top: 4px;
+}
+
+/* Complete step - preprocessing info (MyHeritage compatibility) */
+.crc-import-preprocessing-info {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(96, 165, 250, 0.1);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: 8px;
+  color: var(--text-normal);
+}
+
+.crc-import-preprocessing-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.crc-import-preprocessing-icon {
+  color: rgb(96, 165, 250);
+  flex-shrink: 0;
+}
+
+.crc-import-preprocessing-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.crc-import-preprocessing-fixes {
+  margin: 0 0 8px 0;
+  padding-left: 20px;
+  font-size: 13px;
+}
+
+.crc-import-preprocessing-fixes li {
+  margin: 4px 0;
+}
+
+.crc-import-preprocessing-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 /* Complete step - skipped duplicates */
@@ -35380,11 +35424,11 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2026-01-07 22:43:42 UTC
+ * Build completed: 2026-01-07 23:27:57 UTC
  * Components processed: 41
- * Total lines: 34988
- * Total size: 694.04 KB
- * Build duration: 0.04 seconds
+ * Total lines: 35032
+ * Total size: 694.85 KB
+ * Build duration: 0.03 seconds
  *
  * Component breakdown:
  * - variables.css: 56 lines, 1.61 KB
@@ -35396,7 +35440,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - entity-create-modals.css: 790 lines, 15.74 KB
  * - place-modals.css: 932 lines, 17.28 KB
  * - media-modals.css: 1928 lines, 36.72 KB
- * - import-export-wizard.css: 2069 lines, 39.05 KB
+ * - import-export-wizard.css: 2113 lines, 39.86 KB
  * - staging-manager.css: 555 lines, 11.21 KB
  * - cleanup-wizard.css: 2206 lines, 40.82 KB
  * - duplicate-detection.css: 163 lines, 2.82 KB

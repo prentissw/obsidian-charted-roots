@@ -11,9 +11,9 @@
  * @see https://github.com/banisterious/obsidian-canvas-roots/issues/144
  */
 
-import { LoggerFactory } from '../core/logging';
+import { getLogger } from '../core/logging';
 
-const logger = LoggerFactory.getLogger('GedcomPreprocessor');
+const logger = getLogger('GedcomPreprocessor');
 
 /**
  * Detection results from analyzing GEDCOM content
