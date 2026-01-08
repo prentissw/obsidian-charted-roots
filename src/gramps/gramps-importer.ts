@@ -1717,6 +1717,7 @@ export class GrampsImporter {
 		// Prefer the principal participant (role="Primary") for event naming
 		const personNames: string[] = [];
 		const personWikilinks: string[] = [];
+		const allPersonWikilinks: string[] = [];
 
 		// First, try to find the primary participant
 		let primaryPersonHandle: string | undefined;
@@ -1734,11 +1735,20 @@ export class GrampsImporter {
 			? [primaryPersonHandle]
 			: event.personHandles.slice(0, 1);
 
+		// Populate title names/links (primary participant only)
 		for (const personHandle of displayHandles) {
 			const person = grampsData.persons.get(personHandle);
 			if (person) {
 				personNames.push(person.name || 'Unknown');
 				personWikilinks.push(`[[${person.name || 'Unknown'}]]`);
+			}
+		}
+
+		// Populate all person wikilinks for frontmatter persons field
+		for (const personHandle of event.personHandles) {
+			const person = grampsData.persons.get(personHandle);
+			if (person) {
+				allPersonWikilinks.push(`[[${person.name || 'Unknown'}]]`);
 			}
 		}
 
@@ -1780,9 +1790,9 @@ export class GrampsImporter {
 		}
 
 		// Add person references - always use persons array for consistency
-		if (personWikilinks.length > 0) {
+		if (allPersonWikilinks.length > 0) {
 			frontmatterLines.push(`${prop('persons')}:`);
-			for (const p of personWikilinks) {
+			for (const p of allPersonWikilinks) {
 				frontmatterLines.push(`  - "${p}"`);
 			}
 		}
