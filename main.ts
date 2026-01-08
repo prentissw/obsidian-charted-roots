@@ -36,6 +36,7 @@ import { StatisticsView, VIEW_TYPE_STATISTICS } from './src/statistics';
 import { TreePreviewRenderer } from './src/ui/tree-preview';
 import { FolderFilterService } from './src/core/folder-filter';
 import { TemplateFilterService } from './src/core/template-filter';
+import { PersonIndexService } from './src/core/person-index-service';
 import { SplitWizardModal } from './src/ui/split-wizard-modal';
 import { CreatePlaceModal } from './src/ui/create-place-modal';
 import { CreatePersonModal } from './src/ui/create-person-modal';
@@ -69,6 +70,7 @@ export default class CanvasRootsPlugin extends Plugin {
 	private relationshipHistory: RelationshipHistoryService | null = null;
 	private folderFilter: FolderFilterService | null = null;
 	private templateFilter: TemplateFilterService | null = null;
+	private personIndex: PersonIndexService | null = null;
 	private eventService: EventService | null = null;
 	private recentFilesService: RecentFilesService | null = null;
 	private mediaService: MediaService | null = null;
@@ -273,6 +275,10 @@ export default class CanvasRootsPlugin extends Plugin {
 		// Initialize template filter service (connects to folder filter)
 		this.templateFilter = new TemplateFilterService(this.app, this.settings);
 		this.folderFilter.setTemplateFilter(this.templateFilter);
+
+		// Initialize person index service (for wikilink resolution)
+		this.personIndex = new PersonIndexService(this.app, this.settings);
+		this.personIndex.setFolderFilter(this.folderFilter);
 
 		// Initialize event service
 		this.eventService = new EventService(this.app, this.settings);
@@ -4659,6 +4665,11 @@ export default class CanvasRootsPlugin extends Plugin {
 		// Clean up event handlers
 		if (this.fileModifyEventRef) {
 			this.app.metadataCache.offref(this.fileModifyEventRef);
+		}
+
+		// Cleanup PersonIndexService
+		if (this.personIndex) {
+			this.personIndex.onunload();
 		}
 
 		// Stop Web Clipper file watching
