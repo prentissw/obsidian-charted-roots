@@ -140,7 +140,7 @@ export class PersonIndexService {
 	}
 
 	/**
-	 * Subscribe to metadata cache events for incremental updates
+	 * Subscribe to vault/metadata cache events for incremental updates
 	 */
 	private subscribeToEvents(): void {
 		// File changed (metadata updated)
@@ -148,17 +148,17 @@ export class PersonIndexService {
 			this.handleFileChanged(file);
 		});
 
-		// File deleted
-		this.deletedEventRef = this.app.metadataCache.on('deleted', (file: TFile) => {
+		// File deleted (use vault event)
+		this.deletedEventRef = this.app.vault.on('delete', (file: TFile) => {
 			this.handleFileDeleted(file);
 		});
 
-		// File renamed
-		this.renamedEventRef = this.app.metadataCache.on('renamed', (file: TFile, oldPath: string) => {
+		// File renamed (use vault event)
+		this.renamedEventRef = this.app.vault.on('rename', (file: TFile, oldPath: string) => {
 			this.handleFileRenamed(file, oldPath);
 		});
 
-		logger.debug('subscribeToEvents', 'Subscribed to metadata cache events');
+		logger.debug('subscribeToEvents', 'Subscribed to vault and metadata cache events');
 	}
 
 	/**
@@ -394,12 +394,12 @@ export class PersonIndexService {
 			this.app.metadataCache.offref(this.changedEventRef);
 		}
 		if (this.deletedEventRef) {
-			this.app.metadataCache.offref(this.deletedEventRef);
+			this.app.vault.offref(this.deletedEventRef);
 		}
 		if (this.renamedEventRef) {
-			this.app.metadataCache.offref(this.renamedEventRef);
+			this.app.vault.offref(this.renamedEventRef);
 		}
 
-		logger.debug('onunload', 'Unsubscribed from metadata cache events');
+		logger.debug('onunload', 'Unsubscribed from vault and metadata cache events');
 	}
 }
