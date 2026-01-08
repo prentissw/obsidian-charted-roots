@@ -14,8 +14,6 @@ Organization Notes allow you to track non-genealogical hierarchies such as noble
 - [Organizations Tab](#organizations-tab)
 - [Organizations Base Template](#organizations-base-template)
 - [Context Menu Actions](#context-menu-actions)
-- [Hierarchy Visualization](#hierarchy-visualization)
-- [Filtering by Organization](#filtering-by-organization)
 - [Related Documentation](#related-documentation)
 
 ---
