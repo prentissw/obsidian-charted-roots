@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **GEDCOM anonymization tool**: Added `tools/anonymize_gedcom.py` script to help users create shareable test files when reporting GEDCOM import issues without exposing sensitive genealogical data. The script anonymizes names, places, dates, notes, and contact information while preserving GEDCOM structure and relationships for debugging. Supports `--keep-dates` and `--keep-places` flags for targeted debugging scenarios.
+
 ### Fixed
 
 - **Find a Grave Web Clipper templates** ([#155](https://github.com/banisterious/obsidian-canvas-roots/issues/155)): Fixed URL trigger pattern to include HTTPS protocol for auto-selection. Fixed person name extraction to use `.bio-name` CSS selector instead of page title, removing unwanted "Grave - " prefix. Removed hardcoded path configuration to allow user customization.
