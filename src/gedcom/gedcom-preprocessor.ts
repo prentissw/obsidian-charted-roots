@@ -157,11 +157,14 @@ export function repairHtmlEntities(text: string): { content: string; fixed: bool
 		result = decodeHtmlEntities(result);
 	}
 
-	// Step 3: Convert <br> tags to newlines (per @wilbry's decision)
+	// Step 3: Convert <br> tags to spaces
+	// Note: We use spaces instead of newlines because newlines mid-line would
+	// create invalid GEDCOM (lines without level numbers). The data ends up in
+	// source citations where exact formatting isn't critical.
 	// Handles: <br>, <br/>, <br />, <BR />, etc.
 	if (/<br\s*\/?>/i.test(result)) {
 		fixed = true;
-		result = result.replace(/<br\s*\/?>/gi, '\n');
+		result = result.replace(/<br\s*\/?>/gi, ' ');
 	}
 
 	// Step 4: Strip decorative HTML tags that don't add meaning
