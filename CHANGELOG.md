@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Find a Grave Web Clipper templates** ([#155](https://github.com/banisterious/obsidian-canvas-roots/issues/155)): Fixed URL trigger pattern to include HTTPS protocol for auto-selection. Fixed person name extraction to use `.bio-name` CSS selector instead of page title, removing unwanted "Grave - " prefix. Removed hardcoded path configuration to allow user customization.
+
 ---
 
 ## [0.18.30] - 2026-01-08
