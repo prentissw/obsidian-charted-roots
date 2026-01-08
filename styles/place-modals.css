@@ -2,10 +2,6 @@
    CREATE PLACE MODAL
    ========================================================================== */
 
-.crc-create-place-modal .modal-content {
-  max-width: 500px;
-}
-
 /* Fix for setting items with multiple controls (dropdown + text input) */
 /* Prevent the info section from being truncated when controls take up space */
 .crc-create-place-modal .setting-item-info {
