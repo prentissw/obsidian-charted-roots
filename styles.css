@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-canvas-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2026-01-08 00:20:16 UTC
+ * - Generated: 2026-01-08 00:25:17 UTC
  * - Components: 41 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -7125,7 +7125,7 @@ settings:
    COMPONENT: PLACE-MODALS.CSS
    ========================================================================== */
 
-/* Component Size: 935 lines, 17.45 KB */
+/* Component Size: 940 lines, 17.59 KB */
 
 /* ==========================================================================
    CREATE PLACE MODAL
@@ -7136,6 +7136,11 @@ settings:
 .crc-create-place-modal .setting-item-info {
   flex-shrink: 0;
   min-width: 120px;
+}
+
+/* Constrain dropdown widths to prevent horizontal overflow */
+.crc-create-place-modal .setting-item-control select {
+  max-width: 220px;
 }
 
 /* Coordinate inputs section */
@@ -35427,11 +35432,11 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2026-01-08 00:20:16 UTC
+ * Build completed: 2026-01-08 00:25:17 UTC
  * Components processed: 41
- * Total lines: 35035
- * Total size: 695.02 KB
- * Build duration: 0.04 seconds
+ * Total lines: 35040
+ * Total size: 695.16 KB
+ * Build duration: 0.05 seconds
  *
  * Component breakdown:
  * - variables.css: 56 lines, 1.61 KB
@@ -35441,7 +35446,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - settings.css: 131 lines, 3.53 KB
  * - control-center.css: 5673 lines, 105.32 KB
  * - entity-create-modals.css: 790 lines, 15.74 KB
- * - place-modals.css: 935 lines, 17.45 KB
+ * - place-modals.css: 940 lines, 17.59 KB
  * - media-modals.css: 1928 lines, 36.72 KB
  * - import-export-wizard.css: 2113 lines, 39.86 KB
  * - staging-manager.css: 555 lines, 11.21 KB

@@ -11,7 +11,7 @@
 
 /* Constrain dropdown widths to prevent horizontal overflow */
 .crc-create-place-modal .setting-item-control select {
-  max-width: 220px;
+  max-width: 180px;
 }
 
 /* Coordinate inputs section */
