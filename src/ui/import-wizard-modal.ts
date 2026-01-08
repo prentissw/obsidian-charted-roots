@@ -152,6 +152,7 @@ export class ImportWizardModal extends Modal {
 	private progressContainer: HTMLElement | null = null;
 	private importer: GedcomImporterV2;
 	private isImporting: boolean = false;
+	private isParsing: boolean = false;
 
 	// Step definitions
 	private readonly steps = [
@@ -587,7 +588,8 @@ export class ImportWizardModal extends Modal {
 		// Check if file needs parsing (GEDCOM or Gramps format)
 		const needsParsing = (this.formData.format === 'gedcom' || this.formData.format === 'gramps')
 			&& this.formData.previewCounts.people === 0
-			&& this.formData.file;
+			&& this.formData.file
+			&& !this.isParsing;  // Don't parse if already parsing
 
 		if (needsParsing) {
 			// Show loading state
@@ -596,6 +598,13 @@ export class ImportWizardModal extends Modal {
 
 			// Parse the file asynchronously
 			void this.parseFileForPreview();
+			return;
+		}
+
+		// Show loading state if parsing is in progress
+		if (this.isParsing) {
+			const loadingEl = section.createDiv({ cls: 'crc-import-preview-loading' });
+			loadingEl.textContent = 'Parsing file...';
 			return;
 		}
 
@@ -784,6 +793,10 @@ export class ImportWizardModal extends Modal {
 	private async parseFileForPreview(): Promise<void> {
 		if (!this.formData.file) return;
 
+		// Guard against concurrent parsing
+		if (this.isParsing) return;
+		this.isParsing = true;
+
 		try {
 			// Parse based on format
 			if (this.formData.format === 'gedcom') {
@@ -855,6 +868,9 @@ export class ImportWizardModal extends Modal {
 		} catch (error) {
 			this.formData.parseErrors = [`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`];
 			this.renderCurrentStep();
+		} finally {
+			// Always clear the parsing flag
+			this.isParsing = false;
 		}
 	}
 
