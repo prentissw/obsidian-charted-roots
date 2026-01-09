@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.18.x](#v018x)
+  - [Automatic Wikilink Resolution](#automatic-wikilink-resolution-v01832)
   - [MyHeritage GEDCOM Import Compatibility](#myheritage-gedcom-import-compatibility-v01828)
   - [Optional Person Names](#optional-person-names-v01827)
   - [DMS Coordinate Conversion](#dms-coordinate-conversion-v01827)
@@ -90,6 +91,60 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.18.x
+
+### Automatic Wikilink Resolution (v0.18.32)
+
+Automatically resolve `[[Person Name]]` wikilinks in relationship fields to `cr_id` values, creating family graph relationships without requiring manual `_id` field population.
+
+**GitHub Issue:** [#104](https://github.com/banisterious/obsidian-canvas-roots/issues/104)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| PersonIndexService | Centralized service for cr_id ↔ file lookups with caching |
+| FamilyGraph integration | Wikilinks in relationship fields automatically resolve to cr_id values |
+| Data Quality warnings | Ambiguous wikilinks (multiple files with same basename) surface in Data Quality report |
+| Performance optimization | Index built on plugin load, updated incrementally via metadataCache events |
+| Service consolidation | RelationshipValidator and ProofSummaryService use centralized PersonIndexService |
+
+**Key Design Decisions:**
+
+| Decision | Rationale |
+|----------|-----------|
+| Precedence | Explicit `_id` fields always take precedence over wikilink resolution |
+| Read-only | Resolution does not modify user files |
+| Ambiguity handling | When multiple files share the same basename, resolution returns null and a warning is shown |
+
+**Example:**
+
+```yaml
+# Before: Required explicit _id field
+father: "[[John Smith]]"
+father_id: "abc-123-def-456"
+
+# After: Just the wikilink works
+father: "[[John Smith]]"
+# cr_id resolved automatically from John Smith.md
+```
+
+**Files Added:**
+
+- `src/core/person-index-service.ts` — Centralized person index with wikilink resolution
+
+**Files Modified:**
+
+- `src/core/family-graph.ts` — Integrated PersonIndexService for wikilink resolution
+- `src/core/relationship-validator.ts` — Uses PersonIndexService for cr_id lookups
+- `src/sources/services/proof-summary-service.ts` — Uses PersonIndexService for wikilink resolution
+- `src/core/data-quality.ts` — Added ambiguous wikilink detection
+- `main.ts` — Initializes and wires PersonIndexService to all consumers
+
+**Documentation:**
+
+- [Wikilink Resolution Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/wikilink-to-crid-resolution.md)
+
+---
 
 ### MyHeritage GEDCOM Import Compatibility (v0.18.28)
 

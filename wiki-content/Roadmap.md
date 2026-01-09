@@ -10,7 +10,6 @@ This document outlines planned features for Canvas Roots. For completed features
 - [Planned Features](#planned-features)
   - [Plugin Rename: Charted Roots](#plugin-rename-charted-roots) 📋 Medium
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
-  - [Automatic Wikilink Resolution](#automatic-wikilink-resolution) 📋 Medium
   - [DNA Match Tracking](#dna-match-tracking) 💡 Low
   - [Per-Map Marker Assignment](#per-map-marker-assignment) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
@@ -35,6 +34,7 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.18.32 | [Automatic Wikilink Resolution](Release-History#automatic-wikilink-resolution-v01832) | Resolve `[[Person Name]]` wikilinks to cr_id values in relationship fields |
 | v0.18.28 | [MyHeritage GEDCOM Import Compatibility](Release-History#myheritage-gedcom-import-compatibility-v01828) | Auto-detect and fix MyHeritage GEDCOM exports (BOM, double-encoded entities, `<br>` tags) |
 | v0.18.27 | [Optional Person Names](Release-History#optional-person-names-v01827) | Create placeholder persons without names; fill in later as research progresses |
 | v0.18.27 | [DMS Coordinate Conversion](Release-History#dms-coordinate-conversion-v01827) | Opt-in DMS format parsing for coordinate inputs (e.g., `33°51'08"N`) |
@@ -155,50 +155,6 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 **Documentation:**
 - See [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/research-workflow-integration.md) for detailed specifications
 - Community contributors: @ANYroots (IRN structure, GPS methodology, templates), @wilbry (lightweight approach, unified design)
-
----
-
-### Automatic Wikilink Resolution
-
-**Priority:** 📋 Medium — Streamlines relationship entry and reduces manual work
-
-**Status:** Planning
-
-**GitHub Issue:** [#104](https://github.com/banisterious/obsidian-canvas-roots/issues/104)
-
-**Summary:** Automatically resolve wikilinks in relationship fields to `cr_id` values, creating family graph relationships without requiring manual `_id` field population.
-
-**The Problem:** Currently, writing `father: "[[John Smith]]"` in frontmatter does not create a relationship in the family graph. Users must manually add `father_id: "abc-123-def-456"` with John Smith's `cr_id` for the relationship to be recognized. This is tedious and error-prone, especially for users accustomed to Obsidian's native wikilink behavior.
-
-**The Solution:** Create a `PersonIndexService` that maintains cached lookups between filenames and `cr_id` values, enabling automatic resolution at graph-building time:
-
-```yaml
-# This will "just work" after implementation
-father: "[[John Smith]]"
-# No father_id needed — resolved automatically
-```
-
-**Key Design Decisions:**
-- **Precedence**: Explicit `_id` fields always take precedence over wikilink resolution
-- **Ambiguity handling**: When multiple files share the same basename (e.g., two "John Smith" notes), resolution returns null and a Data Quality warning is shown
-- **Read-only**: Resolution does not modify user files
-- **Performance**: Index built on plugin load, updated incrementally via `metadataCache` events
-
-**Phased Approach:**
-
-| Phase | Feature | Effort | Status |
-|-------|---------|--------|--------|
-| 1 | PersonIndexService with core lookups | Medium | Planning |
-| 2 | Integration with FamilyGraph | Low | Planning |
-| 3 | Data Quality warnings for ambiguous wikilinks | Low | Planning |
-| 4 | Consolidate duplicate map-building code | Medium | Future |
-
-**User Impact:** Non-breaking change
-- Existing `_id` fields continue to work exactly as before
-- Wikilinks that previously did nothing will now create relationships
-- Ambiguous cases surface in Data Quality report
-
-See [Wikilink Resolution Planning Document](https://github.com/banisterious/obsidian-canvas-roots/blob/main/docs/planning/wikilink-to-crid-resolution.md) for detailed specifications.
 
 ---
 
