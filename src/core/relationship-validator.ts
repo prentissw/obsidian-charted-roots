@@ -1,5 +1,6 @@
 import { App, TFile } from 'obsidian';
 import { FolderFilterService } from './folder-filter';
+import { PersonIndexService } from './person-index-service';
 
 /**
  * Validation issue types
@@ -40,8 +41,16 @@ export interface ValidationResult {
  */
 export class RelationshipValidator {
 	private folderFilter: FolderFilterService | null = null;
+	private personIndex: PersonIndexService | null = null;
 
 	constructor(private app: App) {}
+
+	/**
+	 * Set the person index service for cr_id lookups
+	 */
+	setPersonIndex(personIndex: PersonIndexService): void {
+		this.personIndex = personIndex;
+	}
 
 	/**
 	 * Set the folder filter service for filtering person notes by folder
@@ -230,8 +239,23 @@ export class RelationshipValidator {
 
 	/**
 	 * Get all person cr_ids in the vault
+	 * Uses PersonIndexService if available (faster, cached), falls back to vault scan
 	 */
 	private getAllPersonCrIds(): Map<string, TFile> {
+		// Use PersonIndexService if available (Phase 4 of #104)
+		if (this.personIndex) {
+			const crIdMap = new Map<string, TFile>();
+			const allCrIds = this.personIndex.getAllCrIds();
+			for (const crId of allCrIds) {
+				const file = this.personIndex.getFileByCrId(crId);
+				if (file) {
+					crIdMap.set(crId, file);
+				}
+			}
+			return crIdMap;
+		}
+
+		// Fallback: scan vault (for backward compatibility)
 		const crIdMap = new Map<string, TFile>();
 		const files = this.app.vault.getMarkdownFiles();
 

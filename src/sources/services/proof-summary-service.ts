@@ -9,6 +9,7 @@
 
 import { App, TFile, TFolder, normalizePath } from 'obsidian';
 import type { CanvasRootsSettings } from '../../settings';
+import type { PersonIndexService } from '../../core/person-index-service';
 import type {
 	ProofSummaryNote,
 	ProofEvidence,
@@ -29,6 +30,7 @@ export class ProofSummaryService {
 	private app: App;
 	private settings: CanvasRootsSettings;
 	private sourceService: SourceService;
+	private personIndex: PersonIndexService | null = null;
 	private proofCache: Map<string, ProofSummaryNote> = new Map();
 	private cacheValid = false;
 
@@ -36,6 +38,13 @@ export class ProofSummaryService {
 		this.app = app;
 		this.settings = settings;
 		this.sourceService = new SourceService(app, settings);
+	}
+
+	/**
+	 * Set the person index service for wikilink resolution
+	 */
+	setPersonIndex(personIndex: PersonIndexService): void {
+		this.personIndex = personIndex;
 	}
 
 	/**
@@ -554,6 +563,7 @@ export class ProofSummaryService {
 
 	/**
 	 * Extract cr_id from a wikilink [[PersonName]] or from cr_id directly
+	 * Uses PersonIndexService if available (Phase 4 of #104)
 	 */
 	private extractCrIdFromWikilink(wikilink: string): string | null {
 		// If it's already a cr_id (no brackets), return as-is
@@ -567,7 +577,12 @@ export class ProofSummaryService {
 
 		const noteName = match[1];
 
-		// Find the file and get its cr_id
+		// Use PersonIndexService if available (faster, cached)
+		if (this.personIndex) {
+			return this.personIndex.getCrIdByWikilink(noteName);
+		}
+
+		// Fallback: scan vault (for backward compatibility)
 		const files = this.app.vault.getMarkdownFiles();
 		for (const file of files) {
 			const basename = file.basename;
