@@ -9,13 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.18.32] - 2026-01-09
+
 ### Added
+
+- **Automatic wikilink resolution** ([#104](https://github.com/banisterious/obsidian-canvas-roots/issues/104)): Wikilinks in relationship fields now automatically resolve to `cr_id` values. You can write `father: "[[John Smith]]"` without needing a separate `father_id` field — the plugin resolves the wikilink to the person's `cr_id` at graph-building time. Explicit `_id` fields still take precedence when present. If multiple person notes share the same basename (e.g., two "John Smith.md" files), resolution returns null and the ambiguity is surfaced in the Data Quality report.
 
 - **Wikidata Place Web Clipper template** ([#166](https://github.com/banisterious/obsidian-canvas-roots/issues/166)): Added AI-powered Web Clipper template for extracting place data from Wikidata. Auto-triggers on Wikidata Q-pages and extracts coordinates, place type, parent place, alternate names, administrative hierarchy, and Wikipedia links. Works seamlessly with enhanced staging promotion workflow.
 
 ### Enhanced
 
 - **Staging promotion workflow** ([#165](https://github.com/banisterious/obsidian-canvas-roots/issues/165)): Enhanced the promotion process to automatically assign `cr_id` to notes missing it, route notes to correct folders based on type (places to Places folder, events to Events folder, etc.), and remove clipper metadata on promotion. This ensures Web Clipper notes (like Wikidata places) are fully functional in Canvas Roots immediately after promotion.
+
+- **PersonIndexService integration** ([#104](https://github.com/banisterious/obsidian-canvas-roots/issues/104)): RelationshipValidator and ProofSummaryService now use the centralized PersonIndexService for cr_id lookups, eliminating duplicate vault scanning and improving performance.
 
 ---
 
