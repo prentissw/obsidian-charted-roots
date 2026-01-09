@@ -71,6 +71,9 @@ export class CreateProofModal extends Modal {
 		this.plugin = plugin;
 		this.options = options;
 		this.proofService = new ProofSummaryService(app, plugin.settings);
+		if (plugin.personIndex) {
+			this.proofService.setPersonIndex(plugin.personIndex);
+		}
 
 		// Check for edit mode
 		if (options.editProof && options.editFile) {

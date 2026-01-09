@@ -3944,6 +3944,9 @@ export class ControlCenterModal extends Modal {
 	 */
 	private renderProofSummariesSection(container: HTMLElement, coverage: PersonResearchCoverage): void {
 		const proofService = new ProofSummaryService(this.app, this.plugin.settings);
+		if (this.plugin.personIndex) {
+			proofService.setPersonIndex(this.plugin.personIndex);
+		}
 		const proofs = proofService.getProofsForPerson(coverage.personCrId);
 
 		// Section container
@@ -7843,6 +7846,9 @@ export class ControlCenterModal extends Modal {
 	 */
 	private renderSourceConflictsSection(container: HTMLElement): void {
 		const proofService = new ProofSummaryService(this.app, this.plugin.settings);
+		if (this.plugin.personIndex) {
+			proofService.setPersonIndex(this.plugin.personIndex);
+		}
 		const conflictedProofs = proofService.getProofsByStatus('conflicted');
 
 		// Create card for Source Conflicts

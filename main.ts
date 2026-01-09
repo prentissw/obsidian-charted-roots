@@ -227,6 +227,9 @@ export default class CanvasRootsPlugin extends Plugin {
 	 */
 	private populateConflictCounts(graphService: FamilyGraphService): void {
 		const proofService = new ProofSummaryService(this.app, this.settings);
+		if (this.personIndex) {
+			proofService.setPersonIndex(this.personIndex);
+		}
 		const people = graphService.getAllPeople();
 
 		for (const person of people) {
@@ -2069,6 +2072,9 @@ export default class CanvasRootsPlugin extends Plugin {
 												if (this.folderFilter) {
 													validator.setFolderFilter(this.folderFilter);
 												}
+												if (this.personIndex) {
+													validator.setPersonIndex(this.personIndex);
+												}
 												const result = await validator.validatePersonNote(file);
 												new ValidationResultsModal(this.app, result).open();
 											});
@@ -2550,6 +2556,9 @@ export default class CanvasRootsPlugin extends Plugin {
 										const validator = new RelationshipValidator(this.app);
 										if (this.folderFilter) {
 											validator.setFolderFilter(this.folderFilter);
+										}
+										if (this.personIndex) {
+											validator.setPersonIndex(this.personIndex);
 										}
 										const result = await validator.validatePersonNote(file);
 										new ValidationResultsModal(this.app, result).open();
@@ -3444,7 +3453,7 @@ export default class CanvasRootsPlugin extends Plugin {
 										.setTitle('Scan for relationship issues')
 										.setIcon('shield-alert')
 										.onClick(() => {
-											new FolderScanModal(this.app, file).open();
+											new FolderScanModal(this.app, file, this.personIndex ?? undefined).open();
 										});
 								});
 
@@ -4076,7 +4085,7 @@ export default class CanvasRootsPlugin extends Plugin {
 									.setTitle('Canvas Roots: Scan for relationship issues')
 									.setIcon('shield-alert')
 									.onClick(() => {
-										new FolderScanModal(this.app, file).open();
+										new FolderScanModal(this.app, file, this.personIndex ?? undefined).open();
 									});
 							});
 

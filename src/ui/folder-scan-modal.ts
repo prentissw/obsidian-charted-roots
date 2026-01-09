@@ -1,5 +1,6 @@
 import { App, Modal, TFolder, TFile } from 'obsidian';
 import { RelationshipValidator, ValidationResult } from '../core/relationship-validator';
+import type { PersonIndexService } from '../core/person-index-service';
 import { createLucideIcon } from './lucide-icons';
 
 /**
@@ -10,10 +11,13 @@ export class FolderScanModal extends Modal {
 	private validator: RelationshipValidator;
 	private results: ValidationResult[] = [];
 
-	constructor(app: App, folder: TFolder) {
+	constructor(app: App, folder: TFolder, personIndex?: PersonIndexService) {
 		super(app);
 		this.folder = folder;
 		this.validator = new RelationshipValidator(app);
+		if (personIndex) {
+			this.validator.setPersonIndex(personIndex);
+		}
 	}
 
 	async onOpen() {
