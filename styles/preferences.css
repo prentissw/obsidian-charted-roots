@@ -345,3 +345,86 @@
 .cr-media-folder-add-setting input[type="text"] {
   width: 100%;
 }
+
+/* ==========================================================================
+   Category Folder Rules (#163)
+   ========================================================================== */
+
+.cr-category-folder-rules {
+  margin-top: var(--cr-spacing-sm);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+
+.cr-category-folder-rule {
+  display: flex;
+  align-items: center;
+  gap: var(--cr-spacing-sm);
+  padding: var(--cr-spacing-sm) var(--cr-spacing-md);
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.cr-category-folder-rule:last-child {
+  border-bottom: none;
+}
+
+.cr-category-folder-rule--add {
+  background: var(--background-primary);
+  padding: var(--cr-spacing-xs) var(--cr-spacing-md);
+}
+
+.cr-category-folder-rule-category {
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.cr-category-folder-rule-arrow {
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+.cr-category-folder-rule-folder {
+  flex: 1;
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  padding: var(--cr-spacing-xs) var(--cr-spacing-sm);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+}
+
+.cr-category-folder-rule-folder:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+
+.cr-category-folder-rule-select {
+  min-width: 120px;
+  padding: var(--cr-spacing-xs) var(--cr-spacing-sm);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  cursor: pointer;
+}
+
+.cr-category-folder-rule-select:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+
+.cr-category-folder-rule-remove {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.cr-category-folder-rule-remove:hover {
+  color: var(--text-error);
+  background: var(--background-modifier-error);
+}

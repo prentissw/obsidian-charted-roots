@@ -60,7 +60,7 @@ class FolderSuggest extends AbstractInputSuggest<TFolder> {
 }
 import type CanvasRootsPlugin from '../../main';
 import type { LucideIconName } from './lucide-icons';
-import type { ArrowStyle, ColorScheme, CanvasGroupingStrategy, SpouseEdgeLabelFormat, SexNormalizationMode } from '../settings';
+import type { ArrowStyle, ColorScheme, CanvasGroupingStrategy, SpouseEdgeLabelFormat, SexNormalizationMode, PlaceCategory, PlaceCategoryFolderRule } from '../settings';
 import {
 	PropertyAliasService,
 	type PropertyMetadata,
@@ -121,6 +121,9 @@ export function renderPreferencesTab(
 
 	// Folder Locations card
 	renderFolderLocationsCard(container, plugin, createCard);
+
+	// Place Organization card
+	renderPlaceOrganizationCard(container, plugin, createCard);
 
 	// Date Validation card
 	renderDateValidationCard(container, plugin, createCard, showTab);
@@ -860,6 +863,231 @@ function renderFolderLocationsCard(
 	});
 
 	container.appendChild(card);
+}
+
+/**
+ * Place category options for dropdown
+ */
+const PLACE_CATEGORIES: { value: PlaceCategory; label: string }[] = [
+	{ value: 'real', label: 'Real' },
+	{ value: 'historical', label: 'Historical' },
+	{ value: 'disputed', label: 'Disputed' },
+	{ value: 'legendary', label: 'Legendary' },
+	{ value: 'mythological', label: 'Mythological' },
+	{ value: 'fictional', label: 'Fictional' }
+];
+
+/**
+ * Render the Place Organization card (#163)
+ * Configures category-based subfolder organization for places
+ */
+function renderPlaceOrganizationCard(
+	container: HTMLElement,
+	plugin: CanvasRootsPlugin,
+	createCard: (options: { title: string; icon?: LucideIconName; subtitle?: string }) => HTMLElement
+): void {
+	const card = createCard({
+		title: 'Place organization',
+		icon: 'map-pin',
+		subtitle: 'Organize places into subfolders by category'
+	});
+	const content = card.querySelector('.crc-card__content') as HTMLElement;
+
+	// Explanation
+	content.createEl('p', {
+		cls: 'crc-text-muted',
+		text: 'When enabled, new places are automatically stored in category-based subfolders (e.g., historical places go to Places/Historical/). You can also define custom folder mappings for specific categories.'
+	});
+
+	// Main toggle for category subfolders
+	new Setting(content)
+		.setName('Use category-based subfolders')
+		.setDesc('Automatically organize new places into subfolders based on their category')
+		.addToggle(toggle => toggle
+			.setValue(plugin.settings.useCategorySubfolders)
+			.onChange(async (value) => {
+				plugin.settings.useCategorySubfolders = value;
+				await plugin.saveSettings();
+				// Refresh the card to show/hide the rules section
+				renderPlaceOrganizationCard(container, plugin, createCard);
+			}));
+
+	// Show category folder rules section if enabled
+	if (plugin.settings.useCategorySubfolders) {
+		content.createEl('h4', {
+			text: 'Category folder overrides',
+			cls: 'cr-aliases-section-title'
+		});
+
+		content.createEl('p', {
+			cls: 'crc-text-muted',
+			text: 'Override the default subfolder name for specific categories. Leave empty to use the capitalized category name (e.g., "Historical").'
+		});
+
+		// Container for existing rules
+		const rulesContainer = content.createDiv({ cls: 'cr-category-folder-rules' });
+		renderCategoryFolderRules(rulesContainer, plugin, content);
+	}
+
+	// Info note about imports
+	const importNote = content.createDiv({ cls: 'cr-info-box cr-info-box--muted' });
+	const importIcon = importNote.createSpan({ cls: 'cr-info-box-icon' });
+	setIcon(importIcon, 'info');
+	importNote.createSpan({
+		text: 'Imports (GEDCOM, Gramps) always create places in the base folder. Use Data Quality → "Places not in category folders" to organize them afterward.'
+	});
+
+	// Replace any existing card with the same title
+	const existingCard = container.querySelector('.crc-card__title')?.parentElement?.parentElement;
+	if (existingCard && existingCard.querySelector('.crc-card__title')?.textContent?.includes('Place organization')) {
+		existingCard.remove();
+	}
+
+	container.appendChild(card);
+}
+
+/**
+ * Render the category folder rules list with add/remove functionality
+ */
+function renderCategoryFolderRules(
+	container: HTMLElement,
+	plugin: CanvasRootsPlugin,
+	cardContent: HTMLElement
+): void {
+	container.empty();
+
+	const rules = plugin.settings.placeCategoryFolderRules || [];
+
+	// Get categories that already have rules
+	const usedCategories = new Set(rules.map(r => r.category));
+
+	// Render existing rules
+	for (let i = 0; i < rules.length; i++) {
+		const rule = rules[i];
+		const ruleRow = container.createDiv({ cls: 'cr-category-folder-rule' });
+
+		// Category label
+		const categoryLabel = PLACE_CATEGORIES.find(c => c.value === rule.category)?.label || rule.category;
+		ruleRow.createSpan({ cls: 'cr-category-folder-rule-category', text: categoryLabel });
+
+		// Arrow
+		ruleRow.createSpan({ cls: 'cr-category-folder-rule-arrow', text: '→' });
+
+		// Folder path (editable)
+		const folderInput = ruleRow.createEl('input', {
+			cls: 'cr-category-folder-rule-folder',
+			attr: {
+				type: 'text',
+				value: rule.folder,
+				placeholder: categoryLabel
+			}
+		});
+
+		folderInput.addEventListener('change', () => {
+			void (async () => {
+				const newFolder = folderInput.value.trim();
+				if (newFolder) {
+					plugin.settings.placeCategoryFolderRules[i].folder = newFolder;
+				} else {
+					// Remove rule if folder is cleared
+					plugin.settings.placeCategoryFolderRules.splice(i, 1);
+				}
+				await plugin.saveSettings();
+				renderCategoryFolderRules(container, plugin, cardContent);
+			})();
+		});
+
+		// Remove button
+		const removeBtn = ruleRow.createSpan({ cls: 'cr-category-folder-rule-remove' });
+		setIcon(removeBtn, 'x');
+		removeBtn.setAttribute('aria-label', 'Remove override');
+
+		removeBtn.addEventListener('click', () => {
+			void (async () => {
+				plugin.settings.placeCategoryFolderRules.splice(i, 1);
+				await plugin.saveSettings();
+				renderCategoryFolderRules(container, plugin, cardContent);
+			})();
+		});
+	}
+
+	// Add new rule row (only show if there are unused categories)
+	const availableCategories = PLACE_CATEGORIES.filter(c => !usedCategories.has(c.value));
+
+	if (availableCategories.length > 0) {
+		const addRow = container.createDiv({ cls: 'cr-category-folder-rule cr-category-folder-rule--add' });
+
+		// Category dropdown
+		const categorySelect = addRow.createEl('select', { cls: 'cr-category-folder-rule-select' });
+		categorySelect.createEl('option', { value: '', text: 'Add override...' });
+		for (const cat of availableCategories) {
+			categorySelect.createEl('option', { value: cat.value, text: cat.label });
+		}
+
+		// Arrow (hidden initially)
+		const arrow = addRow.createSpan({ cls: 'cr-category-folder-rule-arrow crc-hidden', text: '→' });
+
+		// Folder input (hidden initially)
+		const folderInput = addRow.createEl('input', {
+			cls: 'cr-category-folder-rule-folder crc-hidden',
+			attr: {
+				type: 'text',
+				placeholder: 'Subfolder path'
+			}
+		});
+
+		// Show folder input when category is selected
+		categorySelect.addEventListener('change', () => {
+			const selectedCategory = categorySelect.value as PlaceCategory;
+			if (selectedCategory) {
+				arrow.removeClass('crc-hidden');
+				folderInput.removeClass('crc-hidden');
+				// Set placeholder to default folder name
+				const categoryLabel = PLACE_CATEGORIES.find(c => c.value === selectedCategory)?.label || selectedCategory;
+				folderInput.placeholder = categoryLabel;
+				folderInput.focus();
+			} else {
+				arrow.addClass('crc-hidden');
+				folderInput.addClass('crc-hidden');
+			}
+		});
+
+		// Add rule when folder is entered
+		folderInput.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				const selectedCategory = categorySelect.value as PlaceCategory;
+				const folder = folderInput.value.trim();
+				if (selectedCategory && folder) {
+					void (async () => {
+						const newRule: PlaceCategoryFolderRule = {
+							category: selectedCategory,
+							folder: folder
+						};
+						plugin.settings.placeCategoryFolderRules.push(newRule);
+						await plugin.saveSettings();
+						renderCategoryFolderRules(container, plugin, cardContent);
+					})();
+				}
+			}
+		});
+
+		// Also add on blur if there's a value
+		folderInput.addEventListener('blur', () => {
+			const selectedCategory = categorySelect.value as PlaceCategory;
+			const folder = folderInput.value.trim();
+			if (selectedCategory && folder) {
+				void (async () => {
+					const newRule: PlaceCategoryFolderRule = {
+						category: selectedCategory,
+						folder: folder
+					};
+					plugin.settings.placeCategoryFolderRules.push(newRule);
+					await plugin.saveSettings();
+					renderCategoryFolderRules(container, plugin, cardContent);
+				})();
+			}
+		});
+	}
 }
 
 /**
