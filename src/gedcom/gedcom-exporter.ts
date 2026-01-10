@@ -1137,14 +1137,37 @@ export class GedcomExporter {
 
 	/**
 	 * Format date for GEDCOM (DD MMM YYYY)
+	 * Handles qualifiers (ABT, BEF, AFT, CAL, EST) and ranges (BET X AND Y)
 	 */
-	private formatDateForGedcom(isoDate: string): string | undefined {
-		if (!isoDate) return undefined;
+	private formatDateForGedcom(dateStr: string): string | undefined {
+		if (!dateStr) return undefined;
+
+		const trimmed = dateStr.trim();
+
+		// Handle BET X AND Y ranges - pass through as-is
+		if (/^BET\s+\d{4}\s+AND\s+\d{4}$/i.test(trimmed)) {
+			return trimmed.toUpperCase();
+		}
+
+		// Check for and extract qualifier prefix
+		let qualifier = '';
+		let datePart = trimmed;
+		const qualifierMatch = trimmed.match(/^(ABT|BEF|AFT|CAL|EST)\s+(.+)$/i);
+		if (qualifierMatch) {
+			qualifier = qualifierMatch[1].toUpperCase() + ' ';
+			datePart = qualifierMatch[2];
+		}
 
 		// Parse ISO date (YYYY-MM-DD or variations)
-		const match = isoDate.match(/^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/);
+		const match = datePart.match(/^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/);
 		if (!match) {
-			logger.warn('date-format', `Invalid date format for GEDCOM: ${isoDate}`);
+			// Not an ISO format - might already be in GEDCOM format, pass through
+			if (/^\d{1,2}\s+[A-Z]{3}\s+\d{4}$/i.test(datePart) ||
+			    /^[A-Z]{3}\s+\d{4}$/i.test(datePart) ||
+			    /^\d{4}$/.test(datePart)) {
+				return qualifier + datePart.toUpperCase();
+			}
+			logger.warn('date-format', `Invalid date format for GEDCOM: ${dateStr}`);
 			return undefined;
 		}
 
@@ -1154,30 +1177,30 @@ export class GedcomExporter {
 
 		if (!month) {
 			// Year only
-			return year;
+			return qualifier + year;
 		}
 
 		const monthNum = parseInt(month);
 		if (monthNum < 1 || monthNum > 12) {
-			logger.warn('date-format', `Invalid month value: ${month} in date ${isoDate}`);
-			return year; // Fallback to year only
+			logger.warn('date-format', `Invalid month value: ${month} in date ${dateStr}`);
+			return qualifier + year; // Fallback to year only
 		}
 
 		const monthAbbr = this.getMonthAbbreviation(monthNum - 1);
 
 		if (!day) {
 			// Month and year
-			return `${monthAbbr} ${year}`;
+			return qualifier + `${monthAbbr} ${year}`;
 		}
 
 		const dayNum = parseInt(day);
 		if (dayNum < 1 || dayNum > 31) {
-			logger.warn('date-format', `Invalid day value: ${day} in date ${isoDate}`);
-			return `${monthAbbr} ${year}`; // Fallback to month and year
+			logger.warn('date-format', `Invalid day value: ${day} in date ${dateStr}`);
+			return qualifier + `${monthAbbr} ${year}`; // Fallback to month and year
 		}
 
 		// Full date
-		return `${dayNum} ${monthAbbr} ${year}`;
+		return qualifier + `${dayNum} ${monthAbbr} ${year}`;
 	}
 
 	/**

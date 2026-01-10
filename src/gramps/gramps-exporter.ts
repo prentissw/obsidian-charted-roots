@@ -1538,16 +1538,43 @@ ${families.xml}
 
 	/**
 	 * Format date for Gramps XML
+	 * Gramps uses ISO format (YYYY-MM-DD) for dateval
+	 * For partial dates, we pass through what we have
 	 */
 	private formatDateForGramps(dateString: string): string {
-		// Try to parse ISO format
-		const isoMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-		if (isoMatch) {
-			return dateString;
+		// Handle qualifiers - strip them for Gramps (it has its own quality attribute)
+		let datePart = dateString;
+		const qualifierMatch = dateString.match(/^(ABT|BEF|AFT|CAL|EST)\s+(.+)$/i);
+		if (qualifierMatch) {
+			datePart = qualifierMatch[2];
 		}
 
-		// Try to extract just year
-		const yearMatch = dateString.match(/\b(1[89][0-9]{2}|20[0-9]{2})\b/);
+		// Handle BET X AND Y - use first year
+		const betMatch = datePart.match(/^BET\s+(\d{4})\s+AND\s+\d{4}$/i);
+		if (betMatch) {
+			return betMatch[1];
+		}
+
+		// Full ISO format (YYYY-MM-DD)
+		const isoMatch = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+		if (isoMatch) {
+			return datePart;
+		}
+
+		// Partial ISO format (YYYY-MM)
+		const partialMatch = datePart.match(/^(\d{4})-(\d{2})$/);
+		if (partialMatch) {
+			return datePart;
+		}
+
+		// Year only
+		const yearOnlyMatch = datePart.match(/^(\d{4})$/);
+		if (yearOnlyMatch) {
+			return datePart;
+		}
+
+		// Try to extract just year from other formats
+		const yearMatch = datePart.match(/\b(1[89][0-9]{2}|20[0-9]{2})\b/);
 		if (yearMatch) {
 			return yearMatch[1];
 		}

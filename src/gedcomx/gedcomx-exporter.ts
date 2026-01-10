@@ -881,31 +881,49 @@ export class GedcomXExporter {
 
 	/**
 	 * Format a date string to GEDCOM X formal date format
-	 * Basic implementation - handles YYYY, YYYY-MM, YYYY-MM-DD
+	 * Handles YYYY, YYYY-MM, YYYY-MM-DD, qualifiers (ABT, BEF, AFT), and ranges
 	 */
 	private formatFormalDate(dateString: string): string | undefined {
 		if (!dateString) return undefined;
 
-		// Try to extract a 4-digit year
-		const yearMatch = dateString.match(/\b(1[89][0-9]{2}|20[0-9]{2})\b/);
-		if (!yearMatch) return undefined;
+		// Strip qualifier prefix if present
+		let datePart = dateString;
+		const qualifierMatch = dateString.match(/^(ABT|BEF|AFT|CAL|EST)\s+(.+)$/i);
+		if (qualifierMatch) {
+			datePart = qualifierMatch[2];
+		}
 
-		const year = yearMatch[1];
+		// Handle BET X AND Y - use first year
+		const betMatch = datePart.match(/^BET\s+(\d{4})\s+AND\s+\d{4}$/i);
+		if (betMatch) {
+			return `+${betMatch[1]}`;
+		}
 
 		// Check for ISO format YYYY-MM-DD
-		const isoMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+		const isoMatch = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
 		if (isoMatch) {
 			return `+${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
 		}
 
 		// Check for YYYY-MM format
-		const yearMonthMatch = dateString.match(/^(\d{4})-(\d{2})$/);
+		const yearMonthMatch = datePart.match(/^(\d{4})-(\d{2})$/);
 		if (yearMonthMatch) {
 			return `+${yearMonthMatch[1]}-${yearMonthMatch[2]}`;
 		}
 
-		// Return just the year
-		return `+${year}`;
+		// Check for year only
+		const yearOnlyMatch = datePart.match(/^(\d{4})$/);
+		if (yearOnlyMatch) {
+			return `+${yearOnlyMatch[1]}`;
+		}
+
+		// Try to extract a 4-digit year from other formats
+		const yearMatch = datePart.match(/\b(1[89][0-9]{2}|20[0-9]{2})\b/);
+		if (yearMatch) {
+			return `+${yearMatch[1]}`;
+		}
+
+		return undefined;
 	}
 
 	/**
