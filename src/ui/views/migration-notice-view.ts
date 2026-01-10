@@ -8,6 +8,7 @@
  * - v0.17.0: Source property format (source, source_2 → sources array)
  * - v0.18.0: Event person property (person → persons array)
  * - v0.18.9: Nested properties redesign (sourced_facts → sourced_*, events → event notes)
+ * - v0.19.0: Plugin rename (Canvas Roots → Charted Roots, folder settings reminder)
  */
 
 import { ItemView, WorkspaceLeaf, setIcon } from 'obsidian';
@@ -18,7 +19,7 @@ export const VIEW_TYPE_MIGRATION_NOTICE = 'canvas-roots-migration-notice';
 /**
  * Migration type for the notice
  */
-type MigrationType = 'sources' | 'event-persons' | 'nested-properties';
+type MigrationType = 'sources' | 'event-persons' | 'nested-properties' | 'folder-settings';
 
 export class MigrationNoticeView extends ItemView {
 	private plugin: CanvasRootsPlugin;
@@ -37,7 +38,11 @@ export class MigrationNoticeView extends ItemView {
 
 	getDisplayText(): string {
 		const version = this.plugin.manifest.version;
-		// Check for 0.18.9+ first (nested properties migration)
+		// Check for 0.19.x+ first (folder settings reminder)
+		if (this.migrationType === 'folder-settings') {
+			return 'Charted Roots v0.19.0';
+		}
+		// Check for 0.18.9+ (nested properties migration)
 		if (this.migrationType === 'nested-properties') {
 			return 'Charted Roots v0.18.9';
 		}
@@ -56,6 +61,10 @@ export class MigrationNoticeView extends ItemView {
 	 */
 	private determineMigrationType(): MigrationType {
 		const version = this.plugin.manifest.version;
+		// Check for 0.19.x+ (folder settings reminder after plugin rename)
+		if (this.isVersionAtLeast(version, '0.19.0')) {
+			return 'folder-settings';
+		}
 		// Check for 0.18.9+ (nested properties migration)
 		if (this.isVersionAtLeast(version, '0.18.9')) {
 			return 'nested-properties';
@@ -88,7 +97,9 @@ export class MigrationNoticeView extends ItemView {
 		container.empty();
 		container.addClass('cr-migration-notice');
 
-		if (this.migrationType === 'nested-properties') {
+		if (this.migrationType === 'folder-settings') {
+			this.renderFolderSettingsMigration(container);
+		} else if (this.migrationType === 'nested-properties') {
 			this.renderNestedPropertiesMigration(container);
 		} else if (this.migrationType === 'event-persons') {
 			this.renderEventPersonsMigration(container);
@@ -315,6 +326,95 @@ sourced_death_date:
 			text: 'Skip for now'
 		});
 		skipBtn.addEventListener('click', () => {
+			void this.markAsSeen();
+			this.leaf.detach();
+		});
+	}
+
+	/**
+	 * Render the v0.19.0 folder settings migration notice
+	 * This informs users upgrading from Canvas Roots that folder settings may need updating
+	 */
+	private renderFolderSettingsMigration(container: Element): void {
+		// Header
+		const header = container.createDiv({ cls: 'cr-migration-header' });
+		const iconEl = header.createSpan({ cls: 'cr-migration-icon' });
+		setIcon(iconEl, 'folder-cog');
+		header.createEl('h2', { text: 'Plugin Renamed to Charted Roots' });
+
+		// Content
+		const content = container.createDiv({ cls: 'cr-migration-content' });
+
+		// Introduction
+		const introSection = content.createDiv({ cls: 'cr-migration-section' });
+		introSection.createEl('p', {
+			text: 'Canvas Roots has been renamed to Charted Roots. Your canvas files and code blocks have been automatically migrated.'
+		});
+
+		// Folder settings warning
+		const warningSection = content.createDiv({ cls: 'cr-migration-section' });
+		warningSection.createEl('h3', { text: 'Check your folder settings' });
+
+		warningSection.createEl('p', {
+			text: 'The default folder paths have changed from "Canvas Roots/..." to "Charted Roots/...". If you were using the default folders, your settings may now point to a different location than your existing files.'
+		});
+
+		// Code comparison showing old vs new defaults
+		const codeBlock = warningSection.createDiv({ cls: 'cr-migration-code' });
+
+		const oldCode = codeBlock.createDiv({ cls: 'cr-code-example cr-code-old' });
+		oldCode.createEl('div', { cls: 'cr-code-label', text: 'Previous defaults' });
+		oldCode.createEl('pre', {
+			text: `People folder: Canvas Roots/People
+Places folder: Canvas Roots/Places
+Events folder: Canvas Roots/Events
+Sources folder: Canvas Roots/Sources`
+		});
+
+		const newCode = codeBlock.createDiv({ cls: 'cr-code-example cr-code-new' });
+		newCode.createEl('div', { cls: 'cr-code-label', text: 'New defaults' });
+		newCode.createEl('pre', {
+			text: `People folder: Charted Roots/People
+Places folder: Charted Roots/Places
+Events folder: Charted Roots/Events
+Sources folder: Charted Roots/Sources`
+		});
+
+		// Action section
+		const actionSection = content.createDiv({ cls: 'cr-migration-section' });
+		actionSection.createEl('h3', { text: 'Action recommended' });
+
+		const actionList = actionSection.createEl('ol');
+		actionList.createEl('li', { text: 'Go to Settings → Charted Roots' });
+		actionList.createEl('li', { text: 'Check that each folder path points to your existing data' });
+		actionList.createEl('li', { text: 'If you see a new empty "Charted Roots" folder, update settings to use your existing "Canvas Roots" folders instead' });
+
+		actionSection.createEl('p', {
+			text: 'If you\'re starting fresh or already use custom folder paths, no action is needed.'
+		});
+
+		// Buttons - simple dismiss since no automated migration is available
+		const buttons = content.createDiv({ cls: 'cr-migration-buttons' });
+
+		const settingsBtn = buttons.createEl('button', {
+			cls: 'mod-cta',
+			text: 'Open settings'
+		});
+		settingsBtn.addEventListener('click', () => {
+			void this.markAsSeen();
+			this.leaf.detach();
+			// Open plugin settings
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian internal API
+			(this.app as any).setting.open();
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian internal API
+			(this.app as any).setting.openTabById('charted-roots');
+		});
+
+		const dismissBtn = buttons.createEl('button', {
+			cls: 'cr-migration-dismiss',
+			text: 'Dismiss'
+		});
+		dismissBtn.addEventListener('click', () => {
 			void this.markAsSeen();
 			this.leaf.detach();
 		});

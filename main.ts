@@ -7918,6 +7918,7 @@ export default class CanvasRootsPlugin extends Plugin {
 	 * Shows when upgrading to versions with breaking changes:
 	 * - 0.17.x: Source array migration
 	 * - 0.18.x: Event person→persons migration
+	 * - 0.19.x: Plugin rename (folder settings reminder)
 	 */
 	private shouldShowMigrationNotice(lastSeen: string | undefined, current: string): boolean {
 		// Parse current version
@@ -7925,7 +7926,7 @@ export default class CanvasRootsPlugin extends Plugin {
 		const currentMinor = currentParts[1] || 0;
 
 		// Only show for specific versions with migrations
-		const hasMigration = currentMinor === 17 || currentMinor === 18;
+		const hasMigration = currentMinor === 17 || currentMinor === 18 || currentMinor === 19;
 		if (!hasMigration) {
 			return false;
 		}
