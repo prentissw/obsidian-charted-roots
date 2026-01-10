@@ -35,6 +35,7 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.19.2 | [Partial Date Support](Release-History#partial-date-support-v0192) | GEDCOM import preserves date precision (year-only, month+year, qualifiers, ranges) |
 | v0.19.0 | [Plugin Rename](Release-History#plugin-rename-canvas-roots--charted-roots-v0190) | Renamed from Canvas Roots to Charted Roots with automatic vault migration |
 | v0.18.32 | [Automatic Wikilink Resolution](Release-History#automatic-wikilink-resolution-v01832) | Resolve `[[Person Name]]` wikilinks to cr_id values in relationship fields |
 | v0.18.28 | [MyHeritage GEDCOM Import Compatibility](Release-History#myheritage-gedcom-import-compatibility-v01828) | Auto-detect and fix MyHeritage GEDCOM exports (BOM, double-encoded entities, `<br>` tags) |
@@ -118,53 +119,6 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 **Documentation:**
 - See [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/research-workflow-integration.md) for detailed specifications
 - Community contributors: @ANYroots (IRN structure, GPS methodology, templates), @wilbry (lightweight approach, unified design)
-
----
-
-### Partial Date Support
-
-**Priority:** 📋 Medium — Preserves data fidelity for GEDCOM round-trip
-
-**Status:** Planning
-
-**GitHub Issue:** [#172](https://github.com/banisterious/obsidian-charted-roots/issues/172)
-
-**Summary:** Preserve date precision instead of normalizing partial dates to full ISO format. Currently `1850` becomes `1850-01-01`, adding false precision that misrepresents the source data.
-
-**The Problem:** Genealogists frequently have incomplete date information. A year-only birth date (`1850`) is different from a known January 1st birth (`1850-01-01`), but the plugin currently treats them identically. The normalization happens in `gedcomDateToISO()` during GEDCOM import.
-
-**Note:** Codebase exploration confirmed UI modals already store raw user input without normalization—the fix is isolated to the GEDCOM import function.
-
-**GEDCOM Date Formats to Support:**
-
-| Format | Example | Current | Desired |
-|--------|---------|---------|---------|
-| Year only | `1850` | `1850-01-01` | `1850` |
-| Month + year | `MAR 1855` | `1855-03-01` | `1855-03` |
-| Approximate | `ABT 1878` | `1878-01-01` | `ABT 1878` |
-| Before/After | `BEF 1950` | `1950-01-01` | `BEF 1950` |
-| Range | `BET 1882 AND 1885` | varies | `BET 1882 AND 1885` |
-
-**The Solution:** Modify `gedcomDateToISO()` to preserve partial dates and qualifiers:
-- Year only → preserve as-is (`1850`)
-- Month + year → use ISO partial (`1855-03`)
-- Qualifiers → preserve prefix with normalized date (`ABT 1855-03`)
-- DateService already handles these formats downstream (age calculation, sorting)
-
-**Phased Approach:**
-
-| Phase | Feature | Status |
-|-------|---------|--------|
-| 1 | GEDCOM import preserves partial dates | Planning |
-| 2 | Display formatting (optional polish) | Future |
-| 3 | Export round-trip verification | Future |
-
-**User Impact:** Non-breaking change
-- Existing dates remain as stored
-- New imports preserve precision
-- Mixed formats in same vault work fine
-
-See [Partial Date Support Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/partial-date-support.md) for detailed specifications.
 
 ---
 

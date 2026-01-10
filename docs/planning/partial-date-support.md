@@ -1,6 +1,6 @@
 # Plan: Partial Date Support (Issue #172)
 
-- **Status:** Planning
+- **Status:** Complete (Phase 1)
 - **GitHub Issue:** [#172](https://github.com/banisterious/obsidian-charted-roots/issues/172)
 - **GitHub Discussion:** [#170](https://github.com/banisterious/obsidian-charted-roots/discussions/170)
 
