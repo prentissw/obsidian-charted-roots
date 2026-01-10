@@ -1,0 +1,117 @@
+0 HEAD
+1 SOUR Charted Roots Test
+2 VERS 1.0
+2 NAME Charted Roots Year-Only Date Test
+1 DEST ANY
+1 DATE 10 JAN 2026
+1 SUBM @SUBM1@
+1 FILE gedcom-sample-small-year-only.ged
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+0 @SUBM1@ SUBM
+1 NAME Charted Roots User
+0 @I1@ INDI
+1 NAME John /Smith/
+2 GIVN John
+2 SURN Smith
+1 SEX M
+1 BIRT
+2 DATE 1850
+2 PLAC Yorkshire, England
+1 DEAT
+2 DATE 1920
+2 PLAC New York, New York, USA
+1 FAMS @F1@
+0 @I2@ INDI
+1 NAME Mary /Jones/
+2 GIVN Mary
+2 SURN Jones
+1 SEX F
+1 BIRT
+2 DATE MAR 1855
+2 PLAC London, England
+1 DEAT
+2 DATE DEC 1925
+2 PLAC New York, New York, USA
+1 FAMS @F1@
+0 @I3@ INDI
+1 NAME William /Smith/
+2 GIVN William
+2 SURN Smith
+1 SEX M
+1 BIRT
+2 DATE ABT 1878
+2 PLAC New York, New York, USA
+1 DEAT
+2 DATE BEF 1950
+2 PLAC Unknown
+1 FAMC @F1@
+1 FAMS @F2@
+0 @I4@ INDI
+1 NAME Elizabeth /Smith/
+2 GIVN Elizabeth
+2 SURN Smith
+1 SEX F
+1 BIRT
+2 DATE AFT 1880
+2 PLAC New York, New York, USA
+1 FAMC @F1@
+0 @I5@ INDI
+1 NAME Thomas /Smith/
+2 GIVN Thomas
+2 SURN Smith
+1 SEX M
+1 BIRT
+2 DATE BET 1882 AND 1885
+2 PLAC New York, New York, USA
+1 DEAT
+2 DATE CAL 1945
+2 PLAC California, USA
+1 FAMC @F1@
+0 @I6@ INDI
+1 NAME Sarah /Brown/
+2 GIVN Sarah
+2 SURN Brown
+1 SEX F
+1 BIRT
+2 DATE EST 1880
+2 PLAC Boston, Massachusetts, USA
+1 FAMS @F2@
+0 @I7@ INDI
+1 NAME Robert /Smith/
+2 GIVN Robert
+2 SURN Smith
+1 SEX M
+1 BIRT
+2 DATE 15 JUN 1905
+2 PLAC New York, New York, USA
+1 FAMC @F2@
+0 @I8@ INDI
+1 NAME Margaret /Smith/
+2 GIVN Margaret
+2 SURN Smith
+1 SEX F
+1 BIRT
+2 DATE JUL 1908
+2 PLAC New York, New York, USA
+1 FAMC @F2@
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 DATE 1875
+2 PLAC New York, New York, USA
+1 CHIL @I3@
+1 CHIL @I4@
+1 CHIL @I5@
+0 @F2@ FAM
+1 HUSB @I3@
+1 WIFE @I6@
+1 MARR
+2 DATE ABT 1903
+2 PLAC New York, New York, USA
+1 CHIL @I7@
+1 CHIL @I8@
+0 TRLR
