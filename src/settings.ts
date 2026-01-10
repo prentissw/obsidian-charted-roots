@@ -251,6 +251,11 @@ export interface CanvasRootsSettings {
 	// Place category defaults
 	defaultPlaceCategory: PlaceCategory;
 	placeCategoryRules: PlaceCategoryRule[];
+	// Place category → folder mapping (#163)
+	/** Automatically organize places into subfolders based on their category */
+	useCategorySubfolders: boolean;
+	/** Custom category → folder mappings (overrides automatic subfolder naming) */
+	placeCategoryFolderRules: PlaceCategoryFolderRule[];
 	// Place type management
 	customPlaceTypes: PlaceTypeDefinition[];
 	showBuiltInPlaceTypes: boolean;
@@ -505,6 +510,15 @@ export interface PlaceCategoryRule {
 }
 
 /**
+ * Rule for mapping place category to a specific subfolder (category → folder)
+ * This is the reverse of PlaceCategoryRule (folder → category)
+ */
+export interface PlaceCategoryFolderRule {
+	category: PlaceCategory;
+	folder: string;  // Relative path from placesFolder (e.g., "Fantasy/Fictional")
+}
+
+/**
  * Place categories (duplicated from models/place.ts to avoid circular imports)
  */
 export type PlaceCategory = 'real' | 'historical' | 'disputed' | 'legendary' | 'mythological' | 'fictional';
@@ -542,6 +556,43 @@ export function getDefaultPlaceCategory(
 
 	// Fall back to global default
 	return settings.defaultPlaceCategory;
+}
+
+/**
+ * Get the folder path for a place based on its category (#163)
+ * Priority:
+ * 1. Check for explicit category → folder rule
+ * 2. If useCategorySubfolders enabled and not default category, use automatic subfolder
+ * 3. Fall back to base placesFolder
+ *
+ * @param settings - Plugin settings
+ * @param category - Place category
+ * @returns Full folder path (e.g., "Charted Roots/Places/Historical")
+ */
+export function getPlaceFolderForCategory(
+	settings: CanvasRootsSettings,
+	category: PlaceCategory
+): string {
+	const baseFolder = settings.placesFolder || 'Charted Roots/Places';
+	const defaultCategory = settings.defaultPlaceCategory || 'real';
+
+	// Check for explicit rule first
+	const rule = settings.placeCategoryFolderRules?.find(r => r.category === category);
+	if (rule) {
+		// Normalize path separators
+		const subfolder = rule.folder.replace(/\\/g, '/');
+		return `${baseFolder}/${subfolder}`.replace(/\/+/g, '/');
+	}
+
+	// Fall back to automatic subfolder if enabled and not default category
+	if (settings.useCategorySubfolders && category !== defaultCategory) {
+		// Capitalize first letter: historical → Historical
+		const subfolder = category.charAt(0).toUpperCase() + category.slice(1);
+		return `${baseFolder}/${subfolder}`;
+	}
+
+	// Fall back to base folder
+	return baseFolder;
 }
 
 export const DEFAULT_SETTINGS: CanvasRootsSettings = {
@@ -608,6 +659,9 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	// Place category defaults
 	defaultPlaceCategory: 'real',  // Default place category when creating new places
 	placeCategoryRules: [],        // Folder/collection-based category rules
+	// Place category → folder mapping (#163)
+	useCategorySubfolders: false,  // Default false for existing vaults (set true on new installs via migration check)
+	placeCategoryFolderRules: [],  // Custom category → folder mappings (empty = use automatic naming)
 	// Place type management
 	customPlaceTypes: [],                    // User-defined place types (built-ins are always available)
 	showBuiltInPlaceTypes: true,             // Whether to show built-in place types in UI
