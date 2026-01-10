@@ -17,6 +17,7 @@ This document outlines planned features for Charted Roots. For completed feature
   - [Romantic Relationship Label Preference](#romantic-relationship-label-preference) 💡 Low
   - [Timeline Event Description Display](#timeline-event-description-display) 💡 Low
   - [Place Category Folder Mapping](#place-category-folder-mapping) 💡 Low
+  - [Multiple Surname Support](#multiple-surname-support) 💡 Low
 - [Future Considerations](#future-considerations)
   - [Research Tracking](#research-tracking)
   - [Dynasty Management](#dynasty-management)
@@ -461,6 +462,46 @@ Places/
 - Optional bulk migration tool to reorganize existing places
 
 See [Place Category Folder Mapping Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/place-category-folder-mapping.md) for detailed specifications.
+
+---
+
+### Multiple Surname Support
+
+**Priority:** 💡 Low — Internationalization for non-Western naming conventions
+
+**Status:** Planning
+
+**GitHub Issue:** [#174](https://github.com/banisterious/obsidian-charted-roots/issues/174)
+
+**Summary:** Support explicit surname properties in frontmatter to handle naming conventions beyond Western "First Last" format. Enables accurate surname statistics for Hispanic, Portuguese, compound, and other multi-surname cultures.
+
+**The Problem:** The "Top Surnames" statistic extracts only the last word of a name as the surname. For "José García López" (Hispanic naming), only "López" is counted while "García" (paternal surname) is ignored.
+
+**The Solution:** Add explicit surname frontmatter properties:
+
+```yaml
+# Hispanic (two surnames)
+name: "José García López"
+surnames:
+  - García
+  - López
+
+# Compound surname
+name: "Maria da Silva"
+surname: "da Silva"
+```
+
+**Implementation:**
+- Add `surname` (string) and `surnames` (array) frontmatter properties
+- Populate from GEDCOM `SURN` tag on import
+- Statistics use explicit surname(s) when available; fall back to name parsing
+- Support in person creation/edit modals
+
+**User Impact:** Non-breaking change
+- Existing name parsing continues to work
+- Users can optionally add explicit surnames for accurate statistics
+
+See [Multiple Surname Support Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/multiple-surname-support.md) for detailed specifications.
 
 ---
 
