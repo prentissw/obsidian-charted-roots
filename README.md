@@ -2,7 +2,15 @@
 
 > **Formerly known as Canvas Roots** — renamed to better reflect the plugin's broader genealogical visualization capabilities beyond Obsidian Canvas.
 
-[![Version](https://img.shields.io/badge/version-0.18.32-blue.svg)](https://github.com/banisterious/obsidian-charted-roots/releases) [![Status](https://img.shields.io/badge/status-stable-green.svg)](docs/roadmap.md)
+> [!IMPORTANT]
+> **BRAT Users:** If you installed via BRAT using the old repository name, please update your BRAT configuration:
+> 1. Open Settings → BRAT → Beta Plugin List
+> 2. Remove `banisterious/obsidian-canvas-roots`
+> 3. Add `banisterious/obsidian-charted-roots`
+>
+> The plugin will automatically migrate your vault data (canvas metadata and code blocks) on first load.
+
+[![Version](https://img.shields.io/badge/version-0.19.0-blue.svg)](https://github.com/banisterious/obsidian-charted-roots/releases) [![Status](https://img.shields.io/badge/status-stable-green.svg)](docs/roadmap.md)
 
 **Charted Roots** brings professional genealogical tools to Obsidian—import, organize, visualize, and share family histories and fictional worlds without leaving your vault. From GEDCOM imports to PDF reports, interactive charts to map views, manage your research with the power of linked Markdown notes. Built for genealogists, historians, writers, and world-builders.
 
