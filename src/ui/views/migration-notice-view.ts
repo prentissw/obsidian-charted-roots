@@ -385,7 +385,7 @@ Sources folder: Charted Roots/Sources`
 		actionSection.createEl('h3', { text: 'Action recommended' });
 
 		const actionList = actionSection.createEl('ol');
-		actionList.createEl('li', { text: 'Go to Settings → Charted Roots' });
+		actionList.createEl('li', { text: 'Open Control Center → Preferences → Folder locations' });
 		actionList.createEl('li', { text: 'Check that each folder path points to your existing data' });
 		actionList.createEl('li', { text: 'If you see a new empty "Charted Roots" folder, update settings to use your existing "Canvas Roots" folders instead' });
 
@@ -398,16 +398,13 @@ Sources folder: Charted Roots/Sources`
 
 		const settingsBtn = buttons.createEl('button', {
 			cls: 'mod-cta',
-			text: 'Open settings'
+			text: 'Open folder settings'
 		});
 		settingsBtn.addEventListener('click', () => {
 			void this.markAsSeen();
 			this.leaf.detach();
-			// Open plugin settings
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian internal API
-			(this.app as any).setting.open();
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Obsidian internal API
-			(this.app as any).setting.openTabById('charted-roots');
+			// Open Control Center to Preferences tab
+			this.app.workspace.trigger('charted-roots:open-control-center', 'preferences');
 		});
 
 		const dismissBtn = buttons.createEl('button', {
