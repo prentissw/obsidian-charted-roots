@@ -96,6 +96,7 @@ tests/fixtures/gedcom/linking-test-images/
 
 # Release packages
 canvas-roots-v*.zip
+charted-roots-v*.zip
 
 # UI mockups (internal design reference)
 docs/mockups/
