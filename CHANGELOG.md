@@ -11,6 +11,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.19.0] - 2026-01-09
+
+### Changed
+
+- **Plugin renamed from Canvas Roots to Charted Roots** ([#141](https://github.com/banisterious/obsidian-charted-roots/issues/141)): The plugin has been renamed to better reflect its broader genealogical visualization capabilities beyond Obsidian Canvas. The new name encompasses the Interactive Family Chart, Map View, Statistics Dashboard, PDF exports, and canvas tree generation.
+
+### Added
+
+- **Automatic vault migration**: On first load, the plugin automatically migrates existing vault data:
+  - Canvas metadata: `plugin: 'canvas-roots'` → `plugin: 'charted-roots'`
+  - Code blocks: `canvas-roots-timeline`, `canvas-roots-relationships`, `canvas-roots-media` → `charted-roots-*`
+- **Backward compatibility**: Old protocol handlers (`canvas-roots-map`, `canvas-roots-timeline`) and command IDs continue to work via dual-registration
+
+### Migration
+
+- **BRAT users**: Update your BRAT configuration to use `banisterious/obsidian-charted-roots` instead of `banisterious/obsidian-canvas-roots`
+- **Manual install users**: The plugin folder can remain as `canvas-roots` or be renamed to `charted-roots`
+- **Settings**: All settings are preserved automatically
+
+---
+
 ## [0.18.32] - 2026-01-09
 
 ### Added
