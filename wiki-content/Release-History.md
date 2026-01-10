@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.19.x](#v019x)
+  - [Partial Date Support](#partial-date-support-v0192)
   - [Plugin Rename: Canvas Roots → Charted Roots](#plugin-rename-canvas-roots--charted-roots-v0190)
 - [v0.18.x](#v018x)
   - [Automatic Wikilink Resolution](#automatic-wikilink-resolution-v01832)
@@ -93,6 +94,47 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.19.x
+
+### Partial Date Support (v0.19.2)
+
+Enhanced date handling to preserve partial dates and GEDCOM qualifiers throughout the import/export round-trip, with user-friendly display formatting.
+
+**GitHub Issue:** [#172](https://github.com/banisterious/obsidian-charted-roots/issues/172)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| Partial date import | Month-only dates (`MAR 1950`) preserved as `1950-03` instead of normalizing to `1950-03-01` |
+| GEDCOM qualifier preservation | `ABT`, `BEF`, `AFT`, `CAL`, `EST` qualifiers stored as-is (e.g., `ABT 1878`) |
+| Date range preservation | `BET 1882 AND 1885` stored intact |
+| User-friendly display | Qualifiers formatted for readability: `ABT 1878` → "c. 1878", `BEF 1950` → "before 1950" |
+| Export round-trip | Partial dates and qualifiers exported back to GEDCOM, Gramps, and GedcomX formats correctly |
+
+**Display Formatting:**
+
+| Stored Format | Display Format |
+|---------------|----------------|
+| `ABT 1878` | c. 1878 |
+| `BEF 1950` | before 1950 |
+| `AFT 1880` | after 1880 |
+| `CAL 1945` | c. 1945 |
+| `EST 1880` | c. 1880 |
+| `BET 1882 AND 1885` | 1882–1885 |
+| `1855-03` | Mar 1855 |
+| `1855-03-15` | 15 Mar 1855 |
+
+**Files Modified:**
+
+- `src/import/gedcom-date-parser.ts` — Detect and preserve partial dates and qualifiers
+- `src/import/gedcom-to-obsidian.ts` — Updated to use partial date parsing
+- `src/dates/utils/date-display.ts` — New utility for user-friendly display formatting
+- `src/dates/services/date-service.ts` — Added `formatDisplayDate()` method
+- `src/export/gedcom-exporter.ts` — Export qualifiers in GEDCOM format
+- `src/export/gramps-exporter.ts` — Export qualifiers in Gramps XML format
+- `src/export/gedcomx-exporter.ts` — Export qualifiers in GedcomX JSON format
+
+---
 
 ### Plugin Rename: Canvas Roots → Charted Roots (v0.19.0)
 

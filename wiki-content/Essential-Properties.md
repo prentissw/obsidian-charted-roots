@@ -13,7 +13,7 @@ A quick-reference guide to the most important frontmatter properties for each en
 | `name` | Full name | Yes |
 | `father` / `mother` | Wikilinks to parents | No |
 | `spouse` | Array of spouse wikilinks | No |
-| `born` / `died` | Dates (YYYY-MM-DD) | No |
+| `born` / `died` | Dates (YYYY, YYYY-MM, YYYY-MM-DD, or with qualifiers) | No |
 | `sources` | Array of source wikilinks | No |
 
 ```yaml

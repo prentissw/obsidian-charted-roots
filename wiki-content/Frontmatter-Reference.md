@@ -159,8 +159,8 @@ erDiagram
 |----------|------|-------------|---------|
 | `name` | `string` | Display name of the person | `"John Robert Smith"` |
 | `nickname` | `string` | Informal name, pet name, or alternate identity | `"Jack"`, `"The Colonel"` |
-| `born` | `string` | Birth date (YYYY, YYYY-MM, or YYYY-MM-DD) | `"1888-05-15"` |
-| `died` | `string` | Death date (YYYY, YYYY-MM, or YYYY-MM-DD) | `"1952-08-20"` |
+| `born` | `string` | Birth date (YYYY, YYYY-MM, YYYY-MM-DD, or with GEDCOM qualifiers like `ABT`, `BEF`, `AFT`) | `"1888-05-15"`, `"ABT 1888"` |
+| `died` | `string` | Death date (YYYY, YYYY-MM, YYYY-MM-DD, or with GEDCOM qualifiers) | `"1952-08-20"`, `"BEF 1953"` |
 | `birth_place` | `string` | Location of birth | `"London, England"` |
 | `death_place` | `string` | Location of death | `"New York, USA"` |
 | `sex` | `string` | Biological sex (for GEDCOM, historical records) | `"male"`, `"female"`, `"nonbinary"`, `"unknown"` |

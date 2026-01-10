@@ -157,7 +157,7 @@ During import, a modal shows:
 - `INDI` - Individuals → person notes
 - `NAME` - Person names
 - `BIRT`/`DEAT` - Birth and death → event notes
-- `DATE` - Event dates (with precision: `ABT`, `BEF`, `AFT`, `BET`)
+- `DATE` - Event dates (qualifiers `ABT`, `BEF`, `AFT`, `CAL`, `EST`, and `BET...AND` ranges are preserved)
 - `PLAC` - Event locations → place wikilinks
 - `FAMC`/`FAMS` - Family relationships
 - `SEX` - Gender
