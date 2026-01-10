@@ -1,10 +1,17 @@
 # MyHeritage GEDCOM Import Compatibility
 
 **GitHub Issue:** [#144](https://github.com/banisterious/obsidian-charted-roots/issues/144)
-**Status:** Ready for Implementation
+**Status:** Phase 2 Implemented
 **Priority:** Medium
 **Labels:** `accepted`, `enhancement`, `gedcom`
-**Updated:** 2026-01-07 (open questions resolved with sample data from @wilbry)
+**Updated:** 2026-01-10 (Phase 2: whitespace-only line handling fix)
+
+## Implementation Status
+
+| Phase | Status | Version | Description |
+|-------|--------|---------|-------------|
+| Phase 1 | ✅ Complete | v0.18.28-29 | BOM removal, double-encoded entities, `<br>` → space |
+| Phase 2 | ✅ Complete | v0.19.1+ | Tab-prefixed and unprefixed continuation lines, whitespace-only line fix |
 
 ## Problem Summary
 
@@ -427,7 +434,214 @@ if (importResult.preprocessingApplied) {
 
 ---
 
-### Phase 2: Enhanced Reporting & Validation (Future)
+### Phase 2: Tab-Prefixed Continuation Lines (NEW)
+
+**Discovered:** 2026-01-09 via anonymized sample from @wilbry (800KB, 42,191 lines)
+
+#### 2.0 Problem Analysis
+
+MyHeritage exports contain **non-standard continuation lines** that don't follow GEDCOM format. Instead of proper `CONC` tags for each continuation, MyHeritage produces:
+
+**Observed (malformed):**
+```gedcom
+3 TEXT [some text]
+4 CONC [first continuation]
+	[second continuation - TAB PREFIX, NO LEVEL NUMBER]
+	[third continuation - TAB PREFIX, NO LEVEL NUMBER]
+4 CONC [fourth continuation]
+[fifth continuation - NO PREFIX AT ALL]
+```
+
+**Expected (per GEDCOM spec):**
+```gedcom
+3 TEXT [some text]
+4 CONC [first continuation]
+4 CONC [second continuation]
+4 CONC [third continuation]
+4 CONC [fourth continuation]
+4 CONC [fifth continuation]
+```
+
+**Impact on anonymized sample:**
+- **1,008 lines** start with a tab character instead of a level number
+- **~1,130 lines** start with plain text (no level number, no tab)
+- **Total: 2,138 malformed lines** out of 42,191 (5% of file)
+
+These lines cause the parser to throw "Invalid GEDCOM line format" because the regex `^(\d+)\s+(@[^@]+@\s+)?(\S+)(\s+(.*))?$` requires every line to start with a digit.
+
+#### 2.1 Proposed Fix
+
+Extend the preprocessor to normalize these continuation lines **before** parsing.
+
+**Strategy A: Append to Previous Line (RECOMMENDED)**
+
+When a line starts with tab or has no level number, append its content to the previous line:
+
+```typescript
+function normalizeTabContinuations(content: string): { content: string; fixCount: number } {
+	const lines = content.split(/\r?\n/);
+	const normalized: string[] = [];
+	let fixCount = 0;
+
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+		const trimmed = line.trimStart();
+
+		// Check if line starts with a digit (valid GEDCOM) or is empty
+		if (/^\d/.test(trimmed) || !trimmed) {
+			normalized.push(line);
+			continue;
+		}
+
+		// Line doesn't start with digit - it's a continuation
+		// Check if it starts with tab (MyHeritage continuation pattern)
+		if (line.startsWith('\t') || !line.match(/^\d/)) {
+			if (normalized.length > 0) {
+				// Append to previous line (with space separator)
+				const prevIndex = normalized.length - 1;
+				normalized[prevIndex] = normalized[prevIndex] + ' ' + trimmed;
+				fixCount++;
+			} else {
+				// Edge case: first line is malformed, keep it
+				normalized.push(line);
+			}
+		}
+	}
+
+	return { content: normalized.join('\n'), fixCount };
+}
+```
+
+**Strategy B: Convert to Proper CONC Lines (Alternative)**
+
+Insert proper CONC tags based on the previous line's level:
+
+```typescript
+// More complex, requires tracking level context
+// May be needed if Strategy A breaks any data
+```
+
+**Decision: Use Strategy A** - Simpler, and CONC lines are already being joined by existing normalization. Appending to the previous line achieves the same result with less complexity.
+
+#### 2.2 Integration Point
+
+Add `normalizeTabContinuations()` as the first step in `preprocessGedcom()`, before `normalizeConcFields()`:
+
+```typescript
+export function preprocessGedcom(
+	content: string,
+	mode: GedcomCompatibilityMode
+): PreprocessResult {
+	// ... detection logic ...
+
+	// Apply fixes
+	let processed = content;
+
+	// Fix 0: Strip UTF-8 BOM (existing)
+	const bomResult = stripUtf8Bom(processed);
+	processed = bomResult.content;
+
+	// Fix 1: Normalize tab-prefixed continuations (NEW)
+	const tabResult = normalizeTabContinuations(processed);
+	processed = tabResult.content;
+
+	// Fix 2: Normalize CONC fields and repair HTML entities (existing)
+	const concResult = normalizeConcFields(processed);
+	processed = concResult.content;
+
+	return {
+		content: processed,
+		wasPreprocessed: true,
+		fixes: {
+			bomRemoved: bomResult.fixed,
+			tabContinuationsFixed: tabResult.fixCount,  // NEW
+			concFieldsNormalized: concResult.fixCount,
+			detectionInfo: detection
+		}
+	};
+}
+```
+
+#### 2.3 Detection Enhancement
+
+Update `detectMyHeritage()` to also check for tab-prefixed lines:
+
+```typescript
+function detectMyHeritage(content: string): PreprocessorDetection {
+	// ... existing checks ...
+
+	// Check for tab-prefixed continuation lines (sample first 50KB)
+	const hasTabContinuations = /^\t[^\t\n]/m.test(sample);
+
+	return {
+		hasUtf8Bom,
+		isMyHeritage,
+		hasDoubleEncodedEntities,
+		hasTabContinuations,  // NEW
+		shouldPreprocess: hasUtf8Bom || hasTabContinuations ||
+			(isMyHeritage && hasDoubleEncodedEntities)
+	};
+}
+```
+
+#### 2.4 UI Update
+
+Update import results to report tab continuation fixes:
+
+```typescript
+if (fixes.tabContinuationsFixed > 0) {
+	details.createEl('li', {
+		text: `Fixed ${fixes.tabContinuationsFixed} malformed continuation lines`
+	});
+}
+```
+
+#### 2.5 Testing
+
+**Unit tests:**
+```typescript
+describe('Tab Continuation Normalization', () => {
+	test('appends tab-prefixed lines to previous line', () => {
+		const input = '3 TEXT Hello\n\tworld\n\tagain';
+		const result = normalizeTabContinuations(input);
+		expect(result.content).toBe('3 TEXT Hello world again');
+		expect(result.fixCount).toBe(2);
+	});
+
+	test('handles lines with no prefix', () => {
+		const input = '4 CONC First\nSecond\nThird';
+		const result = normalizeTabContinuations(input);
+		expect(result.content).toBe('4 CONC First Second Third');
+		expect(result.fixCount).toBe(2);
+	});
+
+	test('preserves valid GEDCOM lines', () => {
+		const input = '0 @I1@ INDI\n1 NAME John /Smith/';
+		const result = normalizeTabContinuations(input);
+		expect(result.content).toBe(input);
+		expect(result.fixCount).toBe(0);
+	});
+});
+```
+
+**Integration test with anonymized sample:**
+- Load `anonymized_file.ged`
+- Verify no "Invalid GEDCOM line format" errors
+- Verify expected number of persons/families imported
+
+#### 2.6 Edge Cases
+
+1. **First line malformed:** The anonymized sample has a malformed first line (anonymization artifact). Real MyHeritage files have `0 HEAD`. The fix should handle this gracefully - if the first line isn't valid, skip it or treat the whole line as content.
+
+2. **Empty lines:** Preserve empty lines as-is (they're valid in GEDCOM).
+
+3. **Lines with only whitespace:** ~~Trim and check - if empty after trim, preserve as empty line.~~ **Updated 2026-01-10:** Whitespace-only lines must be **skipped entirely**, not preserved. MyHeritage exports contain tab-only lines (e.g., `\t`) between continuation fragments. If these are preserved as new groups, subsequent continuation lines get appended to them, producing invalid output like `" [text]"` (space + content) instead of being appended to the previous valid GEDCOM line.
+
+4. **Mixed tabs and spaces:** The anonymized sample shows tab-only prefixes. If real files use mixed whitespace, `trimStart()` handles both.
+
+---
+
+### Phase 3: Enhanced Reporting & Validation (Future)
 
 #### 2.1 Detailed Fix Log
 

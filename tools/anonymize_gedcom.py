@@ -18,6 +18,7 @@ What gets anonymized:
 
 What gets preserved:
     - GEDCOM structure and syntax
+    - Header (0 HEAD) and trailer (0 TRLR) records
     - Record relationships (family links, parent-child connections)
     - Record types (INDI, FAM, SOUR, etc.)
     - Tag structure and hierarchy
@@ -77,11 +78,19 @@ class GedcomAnonymizer:
         else:
             return date  # Unknown format, keep as-is
 
-    def anonymize_line(self, line: str) -> str:
+    def anonymize_line(self, line: str, line_number: int = 0) -> str:
         """Anonymize a single GEDCOM line."""
+        # Strip BOM if present (can appear if file encoding wasn't handled correctly)
+        if line.startswith('\ufeff'):
+            line = line[1:]
+
         # Extract level, tag, and value
         match = re.match(r'^(\d+)\s+(@[^@]+@\s+)?(\w+)(\s+(.*))?$', line)
         if not match:
+            # Non-matching lines are kept as-is (likely malformed continuations)
+            # But warn if it's one of the first few lines (might be a header issue)
+            if line_number < 5 and line.strip():
+                print(f"  Warning: Line {line_number + 1} doesn't match GEDCOM format: {line[:50]!r}")
             return line
 
         level, xref, tag, _, value = match.groups()
@@ -155,11 +164,11 @@ class GedcomAnonymizer:
         print(f"Processing {len(lines)} lines...")
 
         anonymized_lines = []
-        for line in lines:
+        for i, line in enumerate(lines):
             # Strip line ending but preserve structure
             line = line.rstrip('\n\r')
             if line.strip():
-                anonymized_line = self.anonymize_line(line)
+                anonymized_line = self.anonymize_line(line, line_number=i)
                 anonymized_lines.append(anonymized_line)
             else:
                 anonymized_lines.append(line)
