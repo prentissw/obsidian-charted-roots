@@ -1,6 +1,6 @@
 # Plan: Timeline Event Description Display (Issue #157)
 
-- **Status:** Planned
+- **Status:** Shipped (0.19.3, extended in 0.19.4)
 - **GitHub Issue:** [#157](https://github.com/banisterious/obsidian-charted-roots/issues/157)
 
 ---
@@ -39,6 +39,8 @@ When viewing a person's timeline, events like "Occupation of F MISTET" are not i
 | `residence` | Life | Paris, France; 123 Main St |
 | `military` | Life | Army, Navy, Regiment details |
 | `education` | Life | Harvard University, Primary School |
+| `marriage` | Family | Church wedding, Civil ceremony |
+| `engagement` | Family | Wedding banns, Betrothal |
 
 ## Implementation
 
@@ -53,7 +55,7 @@ When viewing a person's timeline, events like "Occupation of F MISTET" are not i
 
 1. **Define descriptive event types:**
 ```typescript
-const DESCRIPTION_DISPLAY_TYPES = ['occupation', 'residence', 'military', 'education'];
+const DESCRIPTION_DISPLAY_TYPES = ['occupation', 'residence', 'military', 'education', 'marriage', 'engagement'];
 ```
 
 2. **Modify `renderTimelineList()` method:**
@@ -112,14 +114,15 @@ if (entry.eventFile) {
 
 ## Testing Checklist
 
-- [ ] Occupation event with description shows "Occupation: {description}"
-- [ ] Residence event with description shows "Residence: {description}"
-- [ ] Military event with description shows "Military: {description}"
-- [ ] Education event with description shows "Education: {description}"
-- [ ] Events without description still show title
-- [ ] Birth/Death events unaffected (still show "Born"/"Died")
-- [ ] Marriage events unaffected (still show title)
-- [ ] Wikilink to event note still works
+- [x] Occupation event with description shows "Occupation: {description}"
+- [x] Residence event with description shows "Residence: {description}"
+- [x] Military event with description shows "Military: {description}"
+- [x] Education event with description shows "Education: {description}"
+- [x] Marriage event with description shows "Marriage: {description}"
+- [x] Engagement event with description shows "Engagement: {description}"
+- [x] Events without description still show title
+- [x] Birth/Death events unaffected (still show "Born"/"Died")
+- [x] Wikilink to event note still works
 - [ ] Freeze to markdown produces correct output
 - [ ] Copy to clipboard produces correct text
 
