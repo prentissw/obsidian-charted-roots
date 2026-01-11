@@ -10,7 +10,8 @@ import type CanvasRootsPlugin from '../../../main';
 import type {
 	MembershipData,
 	PersonMembership,
-	OrganizationInfo
+	OrganizationInfo,
+	FlatMembershipProperties
 } from '../types/organization-types';
 import { OrganizationService } from './organization-service';
 import { getLogger } from '../../core/logging';
@@ -45,6 +46,11 @@ export class MembershipService {
 
 	/**
 	 * Get all memberships from a person file
+	 *
+	 * Reads from three formats in priority order:
+	 * 1. Flat parallel arrays (membership_orgs, etc.) - preferred
+	 * 2. Legacy nested array (memberships) - deprecated
+	 * 3. Simple single membership (house/organization) - legacy
 	 */
 	getPersonMembershipsFromFile(personFile: TFile): PersonMembership[] {
 		const cache = this.app.metadataCache.getFileCache(personFile);
@@ -58,24 +64,37 @@ export class MembershipService {
 		const personCrId = fm.cr_id || '';
 		const personName = typeof fm.name === 'string' ? fm.name : personFile.basename;
 
-		// Check for simple house/role membership
-		if (fm.house || fm.organization) {
-			const orgLink = fm.house || fm.organization;
-			const membership = this.createMembership(
-				personCrId,
-				personName,
-				personFile,
-				orgLink,
-				fm.house_id || fm.organization_id,
-				fm.role,
-				undefined,
-				undefined,
-				true // Simple memberships are considered current
-			);
-			memberships.push(membership);
+		// Priority 1: Check for flat parallel arrays (new format)
+		if (Array.isArray(fm.membership_orgs) && fm.membership_orgs.length > 0) {
+			const orgs = fm.membership_orgs as string[];
+			const orgIds = (fm.membership_org_ids as string[] | undefined) || [];
+			const roles = (fm.membership_roles as string[] | undefined) || [];
+			const fromDates = (fm.membership_from_dates as string[] | undefined) || [];
+			const toDates = (fm.membership_to_dates as string[] | undefined) || [];
+
+			for (let i = 0; i < orgs.length; i++) {
+				const orgLink = orgs[i];
+				if (!orgLink) continue;
+
+				const toDate = toDates[i];
+				const membership = this.createMembership(
+					personCrId,
+					personName,
+					personFile,
+					orgLink,
+					orgIds[i],
+					roles[i],
+					fromDates[i],
+					toDate,
+					!toDate // Current if no end date
+				);
+				memberships.push(membership);
+			}
+
+			return memberships;
 		}
 
-		// Check for memberships array
+		// Priority 2: Check for legacy nested memberships array
 		if (Array.isArray(fm.memberships)) {
 			for (const m of fm.memberships) {
 				if (typeof m === 'object' && m.org) {
@@ -93,6 +112,25 @@ export class MembershipService {
 					memberships.push(membership);
 				}
 			}
+
+			return memberships;
+		}
+
+		// Priority 3: Check for simple house/role membership (legacy)
+		if (fm.house || fm.organization) {
+			const orgLink = fm.house || fm.organization;
+			const membership = this.createMembership(
+				personCrId,
+				personName,
+				personFile,
+				orgLink,
+				fm.house_id || fm.organization_id,
+				fm.role,
+				undefined,
+				undefined,
+				true // Simple memberships are considered current
+			);
+			memberships.push(membership);
 		}
 
 		return memberships;
