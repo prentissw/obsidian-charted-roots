@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Gramps import place hierarchy** ([#178](https://github.com/banisterious/obsidian-charted-roots/issues/178)): Gramps imports now create the full place hierarchy (country, state, county, city) just like GEDCOM imports. Previously only the leaf places were created. Parent places are now linked via `parent_place` and `parent_place_id` properties.
 
+### Enhanced
+
+- **Timeline description display for marriage events** ([#157](https://github.com/banisterious/obsidian-charted-roots/issues/157)): Marriage and engagement events now show description instead of title in timelines, matching occupation/residence/military/education. Also added Gramps event type mappings for "wedding", "wedding publication", and "marriage banns".
+
 ---
 
 ## [0.19.3] - 2026-01-10
