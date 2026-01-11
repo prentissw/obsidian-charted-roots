@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Romantic relationship label preference** ([#167](https://github.com/banisterious/obsidian-charted-roots/issues/167)): New setting lets users choose between "Spouse" or "Partner" terminology throughout the UI. Located in Settings → Charted Roots → Sex & gender. This is a display preference only — frontmatter property names remain unchanged.
+
 - **Edit current note command**: New command "Edit current note" opens the appropriate edit modal (person, place, or event) for the active note. Assign a hotkey in Settings → Hotkeys to quickly edit notes without navigating through the file menu. Reduces the friction of: 3-dot menu → Charted Roots → Edit.
 
 ### Fixed
