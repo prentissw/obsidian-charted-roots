@@ -23,6 +23,7 @@ import { createLucideIcon } from './lucide-icons';
 import { PersonPickerModal, PersonInfo } from './person-picker';
 import { getLogger } from '../core/logging';
 import { ModalStatePersistence, renderResumePromptBanner } from './modal-state-persistence';
+import { getSpouseLabel, getAddSpouseLabel } from '../utils/terminology';
 
 const logger = getLogger('FamilyCreationWizard');
 
@@ -240,7 +241,7 @@ export class FamilyCreationWizardModal extends Modal {
 
 		const steps = [
 			{ num: 1, label: 'Self' },
-			{ num: 2, label: 'Spouse' },
+			{ num: 2, label: getSpouseLabel(this.plugin.settings) },
 			{ num: 3, label: 'Children' },
 			{ num: 4, label: 'Parents' },
 			{ num: 5, label: 'Review' }
@@ -567,7 +568,7 @@ export class FamilyCreationWizardModal extends Modal {
 				this.currentStep = 'step2';
 				this.render();
 			},
-			nextLabel: 'Next: Add Spouse'
+			nextLabel: `Next: Add ${getSpouseLabel(this.plugin.settings)}`
 		});
 	}
 
@@ -586,16 +587,16 @@ export class FamilyCreationWizardModal extends Modal {
 		const centralName = this.getCentralPersonName();
 
 		const sectionTitle = content.createEl('h3', { cls: 'crc-wizard-section-title' });
-		sectionTitle.setText(`Add spouse(s) for ${centralName}`);
+		sectionTitle.setText(`Add ${getSpouseLabel(this.plugin.settings, { lowercase: true })}(s) for ${centralName}`);
 
 		const sectionDesc = content.createEl('p', { cls: 'crc-wizard-section-desc' });
-		sectionDesc.setText('You can add multiple spouses if applicable. Skip this step if there are no spouses to add.');
+		sectionDesc.setText(`You can add multiple ${getSpouseLabel(this.plugin.settings, { plural: true, lowercase: true })} if applicable. Skip this step if there are no ${getSpouseLabel(this.plugin.settings, { plural: true, lowercase: true })} to add.`);
 
 		// Spouse list
 		const list = content.createDiv({ cls: 'crc-wizard-person-list' });
 
 		this.state.spouses.forEach((spouse, index) => {
-			this.renderPersonCard(list, spouse, 'Spouse', () => {
+			this.renderPersonCard(list, spouse, getSpouseLabel(this.plugin.settings), () => {
 				// Edit
 				this.openPersonEditor(spouse, (updated) => {
 					this.state.spouses[index] = updated;
@@ -615,7 +616,7 @@ export class FamilyCreationWizardModal extends Modal {
 		const createBtn = addBtns.createEl('button', { cls: 'crc-wizard-add-btn' });
 		const createIcon = createBtn.createSpan();
 		setIcon(createIcon, 'user-plus');
-		createBtn.appendText(' Create new spouse');
+		createBtn.appendText(` Create new ${getSpouseLabel(this.plugin.settings, { lowercase: true })}`);
 		createBtn.addEventListener('click', () => {
 			const newSpouse: PendingPerson = {
 				id: generateCrId(),
@@ -918,7 +919,7 @@ export class FamilyCreationWizardModal extends Modal {
 		const spouseCount = this.state.spouses.length;
 		const spouseStat = stats.createDiv({ cls: 'crc-wizard-stat-card' });
 		spouseStat.createDiv({ cls: 'crc-wizard-stat-value' }).setText(String(spouseCount));
-		spouseStat.createDiv({ cls: 'crc-wizard-stat-label' }).setText('Spouses');
+		spouseStat.createDiv({ cls: 'crc-wizard-stat-label' }).setText(getSpouseLabel(this.plugin.settings, { plural: true }));
 
 		const childCount = this.state.children.length;
 		const childStat = stats.createDiv({ cls: 'crc-wizard-stat-card' });
@@ -1261,7 +1262,7 @@ export class FamilyCreationWizardModal extends Modal {
 		if (this.state.mother?.crId) excludeIds.add(this.state.mother.crId);
 
 		const roleLabels: Record<typeof role, string> = {
-			spouse: 'Select spouse',
+			spouse: `Select ${getSpouseLabel(this.plugin.settings, { lowercase: true })}`,
 			child: 'Select child',
 			father: 'Select father',
 			mother: 'Select mother'
