@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Edit current note command**: New command "Edit current note" opens the appropriate edit modal (person, place, or event) for the active note. Assign a hotkey in Settings → Hotkeys to quickly edit notes without navigating through the file menu. Reduces the friction of: 3-dot menu → Charted Roots → Edit.
 
+### Fixed
+
+- **Gramps import place hierarchy** ([#178](https://github.com/banisterious/obsidian-charted-roots/issues/178)): Gramps imports now create the full place hierarchy (country, state, county, city) just like GEDCOM imports. Previously only the leaf places were created. Parent places are now linked via `parent_place` and `parent_place_id` properties.
+
 ---
 
 ## [0.19.3] - 2026-01-10
