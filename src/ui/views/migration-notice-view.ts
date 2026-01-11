@@ -11,7 +11,7 @@
  * - v0.19.0: Plugin rename (Canvas Roots → Charted Roots, folder settings reminder)
  */
 
-import { ItemView, WorkspaceLeaf, setIcon } from 'obsidian';
+import { App, ItemView, WorkspaceLeaf, setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 
 export const VIEW_TYPE_MIGRATION_NOTICE = 'canvas-roots-migration-notice';
@@ -385,7 +385,7 @@ Sources folder: Charted Roots/Sources`
 		actionSection.createEl('h3', { text: 'Action recommended' });
 
 		const actionList = actionSection.createEl('ol');
-		actionList.createEl('li', { text: 'Open Control Center → Preferences → Folder locations' });
+		actionList.createEl('li', { text: 'Open Settings → Charted Roots → Folders' });
 		actionList.createEl('li', { text: 'Check that each folder path points to your existing data' });
 		actionList.createEl('li', { text: 'If you see a new empty "Charted Roots" folder, update settings to use your existing "Canvas Roots" folders instead' });
 
@@ -403,8 +403,10 @@ Sources folder: Charted Roots/Sources`
 		settingsBtn.addEventListener('click', () => {
 			void this.markAsSeen();
 			this.leaf.detach();
-			// Open Control Center to Preferences tab
-			this.app.workspace.trigger('charted-roots:open-control-center', 'preferences');
+			// Open Plugin Settings to Charted Roots tab
+			const appWithSettings = this.app as App & { setting?: { open: () => void; openTabById: (id: string) => void } };
+			appWithSettings.setting?.open();
+			appWithSettings.setting?.openTabById('canvas-roots');
 		});
 
 		const dismissBtn = buttons.createEl('button', {
