@@ -6,8 +6,8 @@ Currently, security updates are provided for the latest release version only.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.18.x  | :white_check_mark: |
-| < 0.18  | :x:                |
+| 0.19.x  | :white_check_mark: |
+| < 0.19  | :x:                |
 
 ## Data Privacy and Personally Identifiable Information (PII)
 
@@ -53,7 +53,7 @@ Charted Roots handles **highly sensitive personally identifiable information (PI
    - Contains: Visual layout data, references to person/place/organization notes
 
 5. **Plugin Settings** (`data.json`)
-   - Location: `.obsidian/plugins/canvas-roots/data.json`
+   - Location: `.obsidian/plugins/charted-roots/data.json`
    - Format: Plain text JSON (unencrypted)
    - Contains: Plugin configuration (node sizes, spacing, preferences)
    - Does NOT contain: Personal genealogical data
