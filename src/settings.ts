@@ -1366,7 +1366,21 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.plugin.settings.useCategorySubfolders = value;
 					await this.plugin.saveSettings();
+					this.display(); // Refresh to show/hide overrides section
 				}));
+
+		// Show category folder overrides section if enabled
+		if (this.plugin.settings.useCategorySubfolders) {
+			placesContent.createEl('h4', { text: 'Category folder overrides', cls: 'cr-subsection-title' });
+
+			placesContent.createEl('p', {
+				cls: 'setting-item-description',
+				text: 'Override the default subfolder name for specific categories. Leave empty to use the capitalized category name (e.g., "Historical").'
+			});
+
+			const rulesContainer = placesContent.createDiv({ cls: 'cr-category-folder-rules' });
+			this.renderCategoryFolderRules(rulesContainer);
+		}
 
 		new Setting(placesContent)
 			.setName('Default place category')
@@ -1393,6 +1407,14 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 					this.plugin.settings.enableDMSCoordinates = value;
 					await this.plugin.saveSettings();
 				}));
+
+		// Info note about imports
+		const importNote = placesContent.createDiv({ cls: 'cr-info-box cr-info-box--muted' });
+		const importIcon = importNote.createSpan({ cls: 'cr-info-box-icon' });
+		setIcon(importIcon, 'info');
+		importNote.createSpan({
+			text: 'Imports (GEDCOM, Gramps) always create places in the base folder. Use Data Quality → "Places not in category folders" to organize them afterward.'
+		});
 
 		// ═══════════════════════════════════════════════════════════════════════
 		// SECTION 8: PROPERTY & VALUE ALIASES
@@ -2034,6 +2056,149 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 
 		// Remove the default styling from the Setting
 		addSetting.settingEl.addClass('cr-media-folder-add-setting');
+	}
+
+	/**
+	 * Render the category folder rules list with add/remove functionality
+	 */
+	private renderCategoryFolderRules(container: HTMLElement): void {
+		container.empty();
+
+		const rules = this.plugin.settings.placeCategoryFolderRules || [];
+
+		// Get categories that already have rules
+		const usedCategories = new Set(rules.map(r => r.category));
+
+		// Render existing rules
+		for (let i = 0; i < rules.length; i++) {
+			const rule = rules[i];
+			const ruleRow = container.createDiv({ cls: 'cr-category-folder-rule' });
+
+			// Category label
+			const categoryLabel = PLACE_CATEGORY_LABELS[rule.category as keyof typeof PLACE_CATEGORY_LABELS] || rule.category;
+			ruleRow.createSpan({ cls: 'cr-category-folder-rule-category', text: categoryLabel });
+
+			// Arrow
+			ruleRow.createSpan({ cls: 'cr-category-folder-rule-arrow', text: '→' });
+
+			// Folder path (editable)
+			const folderInput = ruleRow.createEl('input', {
+				cls: 'cr-category-folder-rule-folder',
+				attr: {
+					type: 'text',
+					value: rule.folder,
+					placeholder: categoryLabel
+				}
+			});
+
+			folderInput.addEventListener('change', () => {
+				void (async () => {
+					const newFolder = folderInput.value.trim();
+					if (newFolder) {
+						this.plugin.settings.placeCategoryFolderRules[i].folder = newFolder;
+					} else {
+						// Remove rule if folder is cleared
+						this.plugin.settings.placeCategoryFolderRules.splice(i, 1);
+					}
+					await this.plugin.saveSettings();
+					this.renderCategoryFolderRules(container);
+				})();
+			});
+
+			// Remove button
+			const removeBtn = ruleRow.createSpan({ cls: 'cr-category-folder-rule-remove' });
+			setIcon(removeBtn, 'x');
+			removeBtn.setAttribute('aria-label', 'Remove override');
+
+			removeBtn.addEventListener('click', () => {
+				void (async () => {
+					this.plugin.settings.placeCategoryFolderRules.splice(i, 1);
+					await this.plugin.saveSettings();
+					this.renderCategoryFolderRules(container);
+				})();
+			});
+		}
+
+		// Add new rule row (only show if there are unused categories)
+		const availableCategories = CANONICAL_PLACE_CATEGORIES.filter(c => !usedCategories.has(c));
+
+		if (availableCategories.length > 0) {
+			const addRow = container.createDiv({ cls: 'cr-category-folder-rule cr-category-folder-rule--add' });
+
+			// Category dropdown
+			const categorySelect = addRow.createEl('select', { cls: 'cr-category-folder-rule-select' });
+			categorySelect.createEl('option', { value: '', text: 'Add override...' });
+			for (const cat of availableCategories) {
+				const label = PLACE_CATEGORY_LABELS[cat as keyof typeof PLACE_CATEGORY_LABELS] || cat;
+				categorySelect.createEl('option', { value: cat, text: label });
+			}
+
+			// Arrow (hidden initially)
+			const arrow = addRow.createSpan({ cls: 'cr-category-folder-rule-arrow', text: '→' });
+			arrow.style.display = 'none';
+
+			// Folder input (hidden initially)
+			const folderInput = addRow.createEl('input', {
+				cls: 'cr-category-folder-rule-folder',
+				attr: {
+					type: 'text',
+					placeholder: 'Subfolder path'
+				}
+			});
+			folderInput.style.display = 'none';
+
+			// Show folder input when category is selected
+			categorySelect.addEventListener('change', () => {
+				const selectedCategory = categorySelect.value as PlaceCategory;
+				if (selectedCategory) {
+					arrow.style.display = '';
+					folderInput.style.display = '';
+					// Set placeholder to default folder name
+					const label = PLACE_CATEGORY_LABELS[selectedCategory as keyof typeof PLACE_CATEGORY_LABELS] || selectedCategory;
+					folderInput.placeholder = label;
+					folderInput.focus();
+				} else {
+					arrow.style.display = 'none';
+					folderInput.style.display = 'none';
+				}
+			});
+
+			// Add rule when folder is entered
+			folderInput.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') {
+					const selectedCategory = categorySelect.value as PlaceCategory;
+					const folder = folderInput.value.trim();
+					if (selectedCategory && folder) {
+						void (async () => {
+							const newRule: PlaceCategoryFolderRule = {
+								category: selectedCategory,
+								folder: folder
+							};
+							this.plugin.settings.placeCategoryFolderRules.push(newRule);
+							await this.plugin.saveSettings();
+							this.renderCategoryFolderRules(container);
+						})();
+					}
+				}
+			});
+
+			// Also add on blur if there's a value
+			folderInput.addEventListener('blur', () => {
+				const selectedCategory = categorySelect.value as PlaceCategory;
+				const folder = folderInput.value.trim();
+				if (selectedCategory && folder) {
+					void (async () => {
+						const newRule: PlaceCategoryFolderRule = {
+							category: selectedCategory,
+							folder: folder
+						};
+						this.plugin.settings.placeCategoryFolderRules.push(newRule);
+						await this.plugin.saveSettings();
+						this.renderCategoryFolderRules(container);
+					})();
+				}
+			});
+		}
 	}
 }
 
