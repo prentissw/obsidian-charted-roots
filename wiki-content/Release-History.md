@@ -344,7 +344,7 @@ Opt-in DMS (degrees, minutes, seconds) parsing for coordinate input in place cre
 
 **Documentation:**
 
-- [DMS Coordinate Conversion Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/dms-coordinate-conversion.md)
+- [DMS Coordinate Conversion Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/archive/dms-coordinate-conversion.md)
 
 ---
 
