@@ -321,78 +321,63 @@ export class OrganizationService {
 			throw new Error('File has no frontmatter');
 		}
 
-		// Read current file content
-		const content = await this.app.vault.read(file);
-		const lines = content.split('\n');
+		// Use processFrontMatter to preserve existing properties
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			// Update only the fields that are being edited
+			if (data.name !== undefined) {
+				frontmatter.name = data.name || undefined;
+				if (!data.name) delete frontmatter.name;
+			}
 
-		// Find frontmatter boundaries
-		let frontmatterStart = -1;
-		let frontmatterEnd = -1;
-		for (let i = 0; i < lines.length; i++) {
-			if (lines[i].trim() === '---') {
-				if (frontmatterStart === -1) {
-					frontmatterStart = i;
+			if (data.orgType !== undefined) {
+				frontmatter.org_type = data.orgType;
+			}
+
+			if (data.parentOrg !== undefined) {
+				if (data.parentOrg) {
+					frontmatter.parent_org = data.parentOrg;
 				} else {
-					frontmatterEnd = i;
-					break;
+					delete frontmatter.parent_org;
 				}
 			}
-		}
 
-		if (frontmatterStart === -1 || frontmatterEnd === -1) {
-			throw new Error('Could not find frontmatter boundaries');
-		}
+			if (data.universe !== undefined) {
+				if (data.universe) {
+					frontmatter.universe = data.universe;
+				} else {
+					delete frontmatter.universe;
+				}
+			}
 
-		// Build updated frontmatter
-		const fm = cache.frontmatter;
-		const newFrontmatterLines = ['---'];
+			if (data.founded !== undefined) {
+				if (data.founded) {
+					frontmatter.founded = data.founded;
+				} else {
+					delete frontmatter.founded;
+				}
+			}
 
-		// Preserve cr_type and cr_id
-		newFrontmatterLines.push(`cr_type: ${fm.cr_type || 'organization'}`);
-		newFrontmatterLines.push(`cr_id: ${fm.cr_id}`);
+			if (data.motto !== undefined) {
+				if (data.motto) {
+					frontmatter.motto = data.motto;
+				} else {
+					delete frontmatter.motto;
+				}
+			}
 
-		// Update fields
-		const name = data.name ?? fm.name;
-		if (name) newFrontmatterLines.push(`name: "${name}"`);
-
-		const orgType = data.orgType ?? fm.org_type;
-		if (orgType) newFrontmatterLines.push(`org_type: ${orgType}`);
-
-		const parentOrg = data.parentOrg !== undefined ? data.parentOrg : fm.parent_org;
-		if (parentOrg) newFrontmatterLines.push(`parent_org: "${parentOrg}"`);
-
-		const universe = data.universe !== undefined ? data.universe : fm.universe;
-		if (universe) newFrontmatterLines.push(`universe: ${universe}`);
-
-		const founded = data.founded !== undefined ? data.founded : fm.founded;
-		if (founded) newFrontmatterLines.push(`founded: "${founded}"`);
-
-		const motto = data.motto !== undefined ? data.motto : fm.motto;
-		if (motto) newFrontmatterLines.push(`motto: "${motto}"`);
-
-		const seat = data.seat !== undefined ? data.seat : fm.seat;
-		if (seat) newFrontmatterLines.push(`seat: "${seat}"`);
-
-		// Preserve dissolved if present
-		if (fm.dissolved) newFrontmatterLines.push(`dissolved: "${fm.dissolved}"`);
-
-		newFrontmatterLines.push('---');
-
-		// Reconstruct file content
-		const beforeFrontmatter = lines.slice(0, frontmatterStart);
-		const afterFrontmatter = lines.slice(frontmatterEnd + 1);
-		const newContent = [
-			...beforeFrontmatter,
-			...newFrontmatterLines,
-			...afterFrontmatter
-		].join('\n');
-
-		await this.app.vault.modify(file, newContent);
+			if (data.seat !== undefined) {
+				if (data.seat) {
+					frontmatter.seat = data.seat;
+				} else {
+					delete frontmatter.seat;
+				}
+			}
+		});
 
 		// Reload cache
 		this.reloadCache();
 
-		new Notice(`Updated organization: ${name}`);
+		new Notice(`Updated organization: ${data.name || cache.frontmatter.name}`);
 	}
 
 	/**
