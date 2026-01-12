@@ -13,9 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Large import mode** ([#180](https://github.com/banisterious/obsidian-charted-roots/issues/180)): New toggle in import wizard (Step 3 → Performance) that suspends relationship syncing during import to prevent file system timeouts on large imports (500+ people). Shows notices when activated and when import completes.
 
+### Changed
+
+- **Flat membership format** ([#181](https://github.com/banisterious/obsidian-charted-roots/issues/181)): Organization memberships now use parallel arrays (`membership_orgs`, `membership_org_ids`, `membership_roles`, `membership_from_dates`, `membership_to_dates`, `membership_notes`) instead of nested objects. This improves compatibility with Obsidian's Properties editor and Dataview queries. Legacy formats are still read but new memberships save in the flat format. A Data Quality check and bulk migration action are available for converting existing notes.
+
 ### Fixed
 
 - **Membership YAML array formatting**: Fixed YAML serialization for organization memberships where the hyphen appeared on a separate line from the first property. Now produces standard YAML format with the first property on the same line as the hyphen.
+
+- **Edit Organisation overwrites frontmatter** ([#182](https://github.com/banisterious/obsidian-charted-roots/issues/182)): The Edit Organisation modal now preserves existing frontmatter properties instead of overwriting them. Previously, any custom properties added to organisation notes would be lost when editing.
 
 ---
 
