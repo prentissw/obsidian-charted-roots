@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Referenced notes (shared NOTE records via @N001@ references)
   - Optional import toggle in import wizard (Step 3 → Entity types → Notes)
   - Notes appear in "## Notes" section with "### GEDCOM note" headers
+  - Optional "Create separate note files" toggle creates individual note entity files instead of embedding content, matching Gramps importer behavior
 
 - **Large import mode** ([#180](https://github.com/banisterious/obsidian-charted-roots/issues/180)): New toggle in import wizard (Step 3 → Performance) that suspends relationship syncing during import to prevent file system timeouts on large imports (500+ people). Shows notices when activated and when import completes.
 
