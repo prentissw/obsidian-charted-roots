@@ -1350,10 +1350,11 @@ export class MapView extends ItemView {
 			// Initialize the map
 			await this.mapController.initialize();
 
-			// Register map change callback to filter by universe and sync dropdown
+			// Register map change callback to filter by universe/mapId and sync dropdown
 			this.mapController.onMapChange((mapId, universe) => {
-				// Update universe filter
+				// Update filters for universe and per-map filtering
 				this.filters.universe = universe ?? undefined;
+				this.filters.mapId = mapId;
 
 				// Sync dropdown
 				if (this.mapSelectEl) {
