@@ -58,8 +58,16 @@ export interface PersonNode {
 	// Gender-neutral parent relationships (opt-in via settings)
 	parentCrIds: string[];
 
+	// Tracks custom relationship type IDs for parent relationships (key: crId, value: relationshipTypeId)
+	// Used to preserve custom relationship styling when relationships map to standard parent edge type
+	parentRelationshipTypes?: Map<string, string>;
+
 	// Spouse and child relationships
 	spouseCrIds: string[];
+
+	// Tracks custom relationship type IDs for spouse relationships (key: crId, value: relationshipTypeId)
+	// Used to preserve custom relationship styling when relationships map to standard spouse edge type
+	spouseRelationshipTypes?: Map<string, string>;
 	childrenCrIds: string[];
 
 	// Enhanced spouse relationships with metadata (optional)
@@ -745,7 +753,13 @@ export class FamilyGraphService {
 		for (const parentCrId of node.parentCrIds) {
 			const parent = this.personCache.get(parentCrId);
 			if (parent && this.shouldIncludePerson(parent, options)) {
-				edges.push({ from: parent.crId, to: node.crId, type: 'parent' });
+				const edge: FamilyEdge = { from: parent.crId, to: node.crId, type: 'parent' };
+				// Preserve custom relationship type for edge styling
+				const relTypeId = node.parentRelationshipTypes?.get(parentCrId);
+				if (relTypeId) {
+					edge.relationshipTypeId = relTypeId;
+				}
+				edges.push(edge);
 				this.buildAncestorTree(parent, nodes, edges, options, currentGeneration + 1, visited);
 			}
 		}
@@ -995,7 +1009,13 @@ export class FamilyGraphService {
 			for (const parentCrId of currentPerson.parentCrIds) {
 				const parent = this.personCache.get(parentCrId);
 				if (parent) {
-					edges.push({ from: parent.crId, to: currentCrId, type: 'parent' });
+					const edge: FamilyEdge = { from: parent.crId, to: currentCrId, type: 'parent' };
+					// Preserve custom relationship type for edge styling
+					const relTypeId = currentPerson.parentRelationshipTypes?.get(parentCrId);
+					if (relTypeId) {
+						edge.relationshipTypeId = relTypeId;
+					}
+					edges.push(edge);
 					toProcess.push(parent.crId);
 				}
 			}
@@ -1456,6 +1476,10 @@ export class FamilyGraphService {
 			}
 		}
 
+		// Extract relationship type maps for custom styling
+		const parentRelationshipTypes = relationshipsFromArray.parentRelationshipTypes;
+		const spouseRelationshipTypes = relationshipsFromArray.spouseRelationshipTypes;
+
 		// Parse spouse relationships
 		// Priority: 1) Enhanced flat indexed format (spouse1, spouse2...), 2) Legacy 'spouse_id' or 'spouse' fields
 		// Filter out unresolved Gramps handles
@@ -1628,6 +1652,9 @@ export class FamilyGraphService {
 			adoptedChildCrIds,
 			// Gender-neutral parents
 			parentCrIds,
+			// Custom relationship type tracking for edge styling
+			parentRelationshipTypes: parentRelationshipTypes.size > 0 ? parentRelationshipTypes : undefined,
+			spouseRelationshipTypes: spouseRelationshipTypes.size > 0 ? spouseRelationshipTypes : undefined,
 			// Spouses and children
 			spouseCrIds: [...new Set(spouseCrIds)], // Deduplicate to avoid family-chart issues
 			spouses, // Enhanced spouse relationships with metadata (if present)
@@ -1849,6 +1876,10 @@ export class FamilyGraphService {
 		adoptiveParentCrIds: string[];
 		spouseCrIds: string[];
 		childrenCrIds: string[];
+		/** Maps parent cr_id to custom relationship type ID for styling */
+		parentRelationshipTypes: Map<string, string>;
+		/** Maps spouse cr_id to custom relationship type ID for styling */
+		spouseRelationshipTypes: Map<string, string>;
 	} {
 		const result = {
 			stepfatherCrIds: [] as string[],
@@ -1856,7 +1887,9 @@ export class FamilyGraphService {
 			parentCrIds: [] as string[],
 			adoptiveParentCrIds: [] as string[],
 			spouseCrIds: [] as string[],
-			childrenCrIds: [] as string[]
+			childrenCrIds: [] as string[],
+			parentRelationshipTypes: new Map<string, string>(),
+			spouseRelationshipTypes: new Map<string, string>()
 		};
 
 		// Get all relationship types with family tree mappings
@@ -1885,7 +1918,7 @@ export class FamilyGraphService {
 				const targetCrId = targetIds[i] || this.extractCrIdFromWikilink(target);
 				if (!targetCrId) continue;
 
-				this.addToFamilyGraphResult(result, typeDef.familyGraphMapping as FamilyGraphMapping, targetCrId);
+				this.addToFamilyGraphResult(result, typeDef.familyGraphMapping as FamilyGraphMapping, targetCrId, typeId);
 			}
 		}
 
@@ -1902,7 +1935,7 @@ export class FamilyGraphService {
 				if (!targetCrId) continue;
 
 				// Skip if already added from flat properties (addToFamilyGraphResult handles deduplication)
-				this.addToFamilyGraphResult(result, typeDef.familyGraphMapping, targetCrId);
+				this.addToFamilyGraphResult(result, typeDef.familyGraphMapping, targetCrId, rel.type);
 			}
 		}
 
@@ -1911,6 +1944,7 @@ export class FamilyGraphService {
 
 	/**
 	 * Helper to add a cr_id to the appropriate family graph result array
+	 * Also tracks the relationship type ID for parent/spouse mappings to preserve custom styling
 	 */
 	private addToFamilyGraphResult(
 		result: {
@@ -1920,14 +1954,19 @@ export class FamilyGraphService {
 			adoptiveParentCrIds: string[];
 			spouseCrIds: string[];
 			childrenCrIds: string[];
+			parentRelationshipTypes: Map<string, string>;
+			spouseRelationshipTypes: Map<string, string>;
 		},
 		mapping: FamilyGraphMapping,
-		targetCrId: string
+		targetCrId: string,
+		relationshipTypeId: string
 	): void {
 		switch (mapping) {
 			case 'parent':
 				if (!result.parentCrIds.includes(targetCrId)) {
 					result.parentCrIds.push(targetCrId);
+					// Track the custom relationship type for styling
+					result.parentRelationshipTypes.set(targetCrId, relationshipTypeId);
 				}
 				break;
 
@@ -1952,6 +1991,8 @@ export class FamilyGraphService {
 			case 'spouse':
 				if (!result.spouseCrIds.includes(targetCrId)) {
 					result.spouseCrIds.push(targetCrId);
+					// Track the custom relationship type for styling
+					result.spouseRelationshipTypes.set(targetCrId, relationshipTypeId);
 				}
 				break;
 
@@ -1967,6 +2008,8 @@ export class FamilyGraphService {
 				// but include them for completeness - map to parentCrIds
 				if (!result.parentCrIds.includes(targetCrId)) {
 					result.parentCrIds.push(targetCrId);
+					// Track the custom relationship type for styling
+					result.parentRelationshipTypes.set(targetCrId, relationshipTypeId);
 				}
 				break;
 		}
