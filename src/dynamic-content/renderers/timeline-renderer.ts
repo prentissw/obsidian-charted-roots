@@ -10,11 +10,11 @@ import type { DynamicBlockContext, DynamicBlockConfig } from '../services/dynami
 import type { DynamicContentService } from '../services/dynamic-content-service';
 
 /**
- * Event types that should display description instead of title (#157)
- * These are "descriptive" event types where the description (e.g., "Farmer", "Paris")
- * is more informative than the generated title (e.g., "Occupation of John Smith")
+ * Event types that should ALWAYS show title, never description (#157)
+ * Most event types show description when available, but these fundamental
+ * life events are more meaningful with the person's name in the title.
  */
-const DESCRIPTION_DISPLAY_TYPES = ['occupation', 'residence', 'military', 'education', 'marriage', 'engagement'];
+const TITLE_ONLY_TYPES = ['birth', 'death'];
 
 /**
  * Timeline entry combining events from EventService with person birth/death
@@ -211,9 +211,10 @@ export class TimelineRenderer {
 			li.createSpan({ cls: 'cr-timeline__separator', text: ' — ' });
 
 			// Determine display text (#157)
-			// For descriptive event types, show "Type: description" instead of title
+			// Show "Type: description" for most event types when description exists
+			// Birth/death events always show title (e.g., "Birth of John Smith")
 			let displayText = entry.title;
-			if (DESCRIPTION_DISPLAY_TYPES.includes(entry.type) && entry.description) {
+			if (entry.description && !TITLE_ONLY_TYPES.includes(entry.type)) {
 				const typeLabel = entry.type.charAt(0).toUpperCase() + entry.type.slice(1);
 				displayText = `${typeLabel}: ${entry.description}`;
 			}
@@ -287,8 +288,9 @@ export class TimelineRenderer {
 			let line = `- **${entry.year || entry.date || '?'}** — `;
 
 			// Determine display text (#157)
+			// Show "Type: description" for most event types when description exists
 			let displayText = entry.title;
-			if (DESCRIPTION_DISPLAY_TYPES.includes(entry.type) && entry.description) {
+			if (entry.description && !TITLE_ONLY_TYPES.includes(entry.type)) {
 				const typeLabel = entry.type.charAt(0).toUpperCase() + entry.type.slice(1);
 				displayText = `${typeLabel}: ${entry.description}`;
 			}
