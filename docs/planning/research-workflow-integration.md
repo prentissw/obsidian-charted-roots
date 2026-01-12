@@ -3,7 +3,7 @@
 Unified planning document for GPS-aligned research workflow features combining entity management (#125) and workflow tracking (#124).
 
 - **Status:** Planning
-- **GitHub Issues:** [#124](https://github.com/banisterious/obsidian-charted-roots/issues/124), [#125](https://github.com/banisterious/obsidian-charted-roots/issues/125)
+- **GitHub Issue:** [#145](https://github.com/banisterious/obsidian-charted-roots/issues/145) (consolidates #124, #125)
 - **Created:** 2026-01-05
 - **Contributors:** @ANYroots, @wilbry, @banisterious
 
@@ -63,17 +63,9 @@ Was John Smith (b. ~1850) who married Mary Jones in 1875 the same person as John
 
 ## Research Log
 
-- date: 2026-01-04
-  source: "[[1860 Census - District 42]]"
-  searched_for: "John Smith, age 10-12"
-  result: negative
-  notes: "Searched all pages, no match in expected age range"
+- **2026-01-04** — [[1860 Census - District 42]] — Searched "John Smith, age 10-12" → negative. Searched all pages, no match in expected age range.
 
-- date: 2026-01-05
-  source: "[[Marriage Record - Smith-Jones 1875]]"
-  searched_for: "John Smith parents"
-  result: positive
-  notes: "Parents listed as William and Elizabeth Smith"
+- **2026-01-05** — [[Marriage Record - Smith-Jones 1875]] — Searched "John Smith parents" → positive. Parents listed as William and Elizabeth Smith.
 
 ## Related Reports
 
@@ -272,42 +264,61 @@ date: 2026-01-04
 
 ---
 
-## Research Log Entry Format
+## Research Log Format
 
-Research logs appear in `## Research Log` sections within Research Projects. Each entry uses structured YAML format:
+> **Note:** This section was revised to avoid nested/structured YAML, which causes compatibility issues with Obsidian's Properties editor, DataView, and Bases (#181).
 
-```yaml
-- date: YYYY-MM-DD
-  source: "[[Source Note]]"        # Optional: source consulted
-  searched_for: "search criteria"  # What you were looking for
-  result: positive | negative | inconclusive
-  notes: "Free-form notes"
-```
+Research logs appear in `## Research Log` sections within Research Projects. Use simple markdown bullet lists rather than structured YAML:
 
-**Examples:**
+**Recommended Format:**
 
-```yaml
+```markdown
 ## Research Log
 
-- date: 2026-01-04
-  source: "[[1860 Census - District 42]]"
-  searched_for: "John Smith, age 10-12"
-  result: negative
-  notes: "Searched all pages of district 42, no match in expected age range"
+- **2026-01-04** — [[1860 Census - District 42]] — Searched "John Smith, age 10-12" → negative. Searched all pages of district 42, no match in expected age range.
 
-- date: 2026-01-05
-  source: "[[Marriage Record - Smith-Jones 1875]]"
-  searched_for: "John Smith parents"
-  result: positive
-  notes: "Parents listed as William and Elizabeth Smith"
+- **2026-01-05** — [[Marriage Record - Smith-Jones 1875]] — Searched "John Smith parents" → positive. Parents listed as William and Elizabeth Smith.
 
-- date: 2026-01-06
-  searched_for: "Elizabeth Smith maiden name"
-  result: negative
-  notes: "No records found in county index 1820-1850"
+- **2026-01-06** — Searched "Elizabeth Smith maiden name" → negative. No records found in county index 1820-1850.
 ```
 
-**Negative Findings:** Document "searched X, found nothing" scenarios using `result: negative`. This tracks meaningful absence of expected records per Mills' methodology.
+**Why not structured YAML?**
+
+The original plan proposed nested YAML entries, but this approach has significant drawbacks:
+
+- **No Obsidian Properties editor support** — Users can't edit via native UI
+- **DataView/Bases incompatibility** — These tools query frontmatter, not embedded YAML in content
+- **Parsing fragility** — Special characters, multi-line notes, or malformed YAML break things
+- **Inconsistent with project direction** — We flattened nested membership properties in v0.19.5 (#181) for these reasons
+
+**Simple markdown advantages:**
+
+- Human-readable and editable
+- No custom parsing required
+- Works with text search
+- Can still use DataView inline queries if needed
+- Consistent with how most Obsidian users document research
+
+**Negative Findings:** Document "searched X, found nothing" scenarios with `→ negative`. This tracks meaningful absence of expected records per Mills' methodology.
+
+**Alternative: Separate log entry notes**
+
+For users who need queryable research logs, consider creating separate notes for each entry:
+
+```yaml
+---
+cr_type: research_log_entry
+date: 2026-01-04
+project: "[[Identity of John Smith Project]]"
+source: "[[1860 Census - District 42]]"
+searched_for: "John Smith, age 10-12"
+result: negative
+---
+
+Searched all pages of district 42, no match in expected age range.
+```
+
+This approach uses flat frontmatter properties that work with DataView and Bases, at the cost of more files in the vault.
 
 ---
 
@@ -376,24 +387,14 @@ export const researchProjectSchema = {
 - Add `subject` for IRNs
 - Add `date`, `repositories` for research journals
 
-### 3. Research Log Parsing
+### 3. Research Log Support
+
+> **Note:** Research log parsing was removed from Phase 1 scope. See [Research Log Format](#research-log-format) for rationale.
 
 **Implementation:**
-- Parse `## Research Log` sections in Research Projects
-- Extract structured YAML entries
-- Store in metadata for querying
-- No UI initially (access via DataView/Bases queries)
-
-**Parser Logic:**
-```typescript
-interface ResearchLogEntry {
-  date: string;
-  source?: string;  // Wikilink to source note
-  searched_for: string;
-  result: 'positive' | 'negative' | 'inconclusive';
-  notes: string;
-}
-```
+- Research logs use simple markdown format (no custom parsing)
+- Optional: Recognize `cr_type: research_log_entry` for users who prefer separate notes
+- No structured YAML parsing in content sections
 
 ### 4. Data Quality Integration
 
@@ -427,7 +428,7 @@ Research Entities
 - `src/schemas/research-report-schema.ts`
 - `src/schemas/individual-research-note-schema.ts`
 - `src/schemas/research-journal-schema.ts`
-- `src/parsers/research-log-parser.ts` — Parse research log YAML
+- `src/schemas/research-log-entry-schema.ts` — Optional separate log entry notes
 
 **Files to Modify:**
 - `src/services/EntityTypeManager.ts` — Register research entity types
