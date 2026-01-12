@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.19.5] - 2026-01-12
+
 ### Added
 
 - **GEDCOM notes import** ([#179](https://github.com/banisterious/obsidian-charted-roots/issues/179)): GEDCOM NOTE tags attached to individuals are now imported and appended to person notes. Features include:
@@ -31,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Edit Organisation overwrites frontmatter** ([#182](https://github.com/banisterious/obsidian-charted-roots/issues/182)): The Edit Organisation modal now preserves existing frontmatter properties instead of overwriting them. Previously, any custom properties added to organisation notes would be lost when editing.
 
+### Enhanced
+
+- **Timeline description display for all event types** ([#157](https://github.com/banisterious/obsidian-charted-roots/issues/157)): Timeline now shows event descriptions for all event types (census, custom, occupation, residence, etc.) when a description exists, instead of showing the generic event title. For example, a census event displays "Census: 1850 Federal Census" instead of "Census of John Smith". Birth and death events continue to show the full title with the person's name since that's more meaningful for those life events. Related: [#183](https://github.com/banisterious/obsidian-charted-roots/issues/183) for birth event role filtering.
+
 ---
 
 ## [0.19.4] - 2026-01-11
@@ -52,10 +60,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Gramps import place hierarchy** ([#178](https://github.com/banisterious/obsidian-charted-roots/issues/178)): Gramps imports now create the full place hierarchy (country, state, county, city) just like GEDCOM imports. Previously only the leaf places were created. Parent places are now linked via `parent_place` and `parent_place_id` properties.
 
 - **Custom relationship family tree integration**: The "Include on family trees" toggle for custom relationship types now works for all mapping options. Previously only "Parent" and "Step-parent" mappings were implemented. Now "Foster parent", "Adoptive parent", "Guardian", "Spouse", and "Child" mappings all properly add people to generated trees.
-
-### Enhanced
-
-- **Timeline description display for all event types** ([#157](https://github.com/banisterious/obsidian-charted-roots/issues/157)): Timeline now shows event descriptions for all event types (census, custom, occupation, residence, etc.) when a description exists, instead of showing the generic event title. For example, a census event displays "Census: 1850 Federal Census" instead of "Census of John Smith". Birth and death events continue to show the full title with the person's name since that's more meaningful for those life events. Related: [#183](https://github.com/banisterious/obsidian-charted-roots/issues/183) for birth event role filtering.
 
 ---
 
