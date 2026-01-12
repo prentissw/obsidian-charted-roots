@@ -314,8 +314,10 @@ export function repairHtmlEntities(text: string): { content: string; fixed: bool
 }
 
 /**
- * Normalize CONC continuation fields
- * Joins CONC lines and repairs any entity issues in the combined content
+ * Normalize CONC and CONT continuation fields
+ * - CONC: Joins without newline (per GEDCOM spec)
+ * - CONT: Joins with newline (per GEDCOM spec)
+ * Also repairs any entity issues in the combined content
  */
 export function normalizeConcFields(content: string): { content: string; fixCount: number } {
 	const lines = content.split(/\r?\n/);
@@ -326,25 +328,34 @@ export function normalizeConcFields(content: string): { content: string; fixCoun
 	while (i < lines.length) {
 		const line = lines[i];
 
-		// Check if this is a line followed by CONC continuations
-		if (i + 1 < lines.length && /^\s*\d+\s+CONC\s/.test(lines[i + 1])) {
+		// Check if this is a line followed by CONC or CONT continuations
+		if (i + 1 < lines.length && /^\s*\d+\s+CON[CT]\s/.test(lines[i + 1])) {
 			// Extract the level number from the current line
 			const levelMatch = line.match(/^\s*(\d+)/);
 			if (levelMatch) {
 				const baseLevel = parseInt(levelMatch[1]);
-				const concLevel = baseLevel + 1;
-				const concRegex = new RegExp(`^\\s*${concLevel}\\s+CONC\\s?(.*)$`);
+				const contLevel = baseLevel + 1;
+				const concRegex = new RegExp(`^\\s*${contLevel}\\s+CONC\\s?(.*)$`);
+				const contRegex = new RegExp(`^\\s*${contLevel}\\s+CONT\\s?(.*)$`);
 
 				let accumulated = line;
 				let j = i + 1;
 
-				while (j < lines.length && concRegex.test(lines[j])) {
-					const match = lines[j].match(concRegex);
-					if (match) {
-						// CONC means concatenate WITHOUT space (per GEDCOM spec)
-						accumulated += match[1];
+				while (j < lines.length) {
+					const concMatch = lines[j].match(concRegex);
+					const contMatch = lines[j].match(contRegex);
+
+					if (concMatch) {
+						// CONC means concatenate WITHOUT newline (per GEDCOM spec)
+						accumulated += concMatch[1];
+						j++;
+					} else if (contMatch) {
+						// CONT means continue WITH newline (per GEDCOM spec)
+						accumulated += '\n' + contMatch[1];
+						j++;
+					} else {
+						break;
 					}
-					j++;
 				}
 
 				// Now process the accumulated content for HTML entity issues
@@ -354,12 +365,12 @@ export function normalizeConcFields(content: string): { content: string; fixCoun
 				}
 				fixed.push(processed.content);
 
-				i = j; // Skip past all CONC lines
+				i = j; // Skip past all CONC/CONT lines
 				continue;
 			}
 		}
 
-		// Not a CONC situation, but still check for entity issues in regular lines
+		// Not a CONC/CONT situation, but still check for entity issues in regular lines
 		// This handles DATA/TEXT fields that may have entities without CONC
 		if (/&amp;|&lt;|&gt;|&nbsp;|<br/i.test(line)) {
 			const processed = repairHtmlEntities(line);
@@ -397,22 +408,32 @@ export async function normalizeConcFieldsAsync(content: string): Promise<{ conte
 	while (i < lines.length) {
 		const line = lines[i];
 
-		if (i + 1 < lines.length && /^\s*\d+\s+CONC\s/.test(lines[i + 1])) {
+		if (i + 1 < lines.length && /^\s*\d+\s+CON[CT]\s/.test(lines[i + 1])) {
 			const levelMatch = line.match(/^\s*(\d+)/);
 			if (levelMatch) {
 				const baseLevel = parseInt(levelMatch[1]);
-				const concLevel = baseLevel + 1;
-				const concRegex = new RegExp(`^\\s*${concLevel}\\s+CONC\\s?(.*)$`);
+				const contLevel = baseLevel + 1;
+				const concRegex = new RegExp(`^\\s*${contLevel}\\s+CONC\\s?(.*)$`);
+				const contRegex = new RegExp(`^\\s*${contLevel}\\s+CONT\\s?(.*)$`);
 
 				let accumulated = line;
 				let j = i + 1;
 
-				while (j < lines.length && concRegex.test(lines[j])) {
-					const match = lines[j].match(concRegex);
-					if (match) {
-						accumulated += match[1];
+				while (j < lines.length) {
+					const concMatch = lines[j].match(concRegex);
+					const contMatch = lines[j].match(contRegex);
+
+					if (concMatch) {
+						// CONC means concatenate WITHOUT newline (per GEDCOM spec)
+						accumulated += concMatch[1];
+						j++;
+					} else if (contMatch) {
+						// CONT means continue WITH newline (per GEDCOM spec)
+						accumulated += '\n' + contMatch[1];
+						j++;
+					} else {
+						break;
 					}
-					j++;
 				}
 
 				const processed = repairHtmlEntities(accumulated);

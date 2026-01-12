@@ -308,6 +308,11 @@ export interface GedcomIndividualV2 {
 
 	// NEW: Person attributes
 	attributes: Record<string, string>;
+
+	// Notes (inline text from 1 NOTE under INDI)
+	notes: string[];
+	// References to shared NOTE records (@N001@ style)
+	noteRefs: string[];
 }
 
 /**
@@ -325,6 +330,19 @@ export interface GedcomFamilyV2 {
 
 	// NEW: All events for this family
 	events: GedcomEvent[];
+
+	// Notes (inline text from 1 NOTE under FAM)
+	notes: string[];
+	// References to shared NOTE records (@N001@ style)
+	noteRefs: string[];
+}
+
+/**
+ * Shared NOTE record (0 @N001@ NOTE)
+ */
+export interface GedcomNoteRecord {
+	id: string;
+	text: string;
 }
 
 /**
@@ -334,6 +352,7 @@ export interface GedcomDataV2 {
 	individuals: Map<string, GedcomIndividualV2>;
 	families: Map<string, GedcomFamilyV2>;
 	sources: Map<string, GedcomSource>;
+	notes: Map<string, GedcomNoteRecord>;
 	header: {
 		source?: string;
 		version?: string;
@@ -401,6 +420,9 @@ export interface GedcomImportOptionsV2 {
 	/** Create place notes from unique places */
 	createPlaceNotes: boolean;
 
+	/** Import notes attached to individuals (default: true) */
+	importNotes?: boolean;
+
 	/** Filename format for created notes (legacy single format) */
 	filenameFormat?: FilenameFormat;
 	/** Per-type filename formats (takes precedence over filenameFormat) */
@@ -431,6 +453,7 @@ export interface GedcomImportResultV2 {
 	sourcesCreated: number;
 	placesCreated: number;
 	placesUpdated: number;
+	notesImported: number;
 	errors: string[];
 	warnings: string[];
 	/** Whether preprocessing was applied to the GEDCOM content */
