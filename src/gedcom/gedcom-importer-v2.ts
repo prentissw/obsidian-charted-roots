@@ -17,6 +17,7 @@ import {
 	GedcomImportResultV2
 } from './gedcom-types';
 import { preprocessGedcom, preprocessGedcomAsync, type GedcomCompatibilityMode, type PreprocessResult } from './gedcom-preprocessor';
+import { formatGedcomNotesSection } from './gedcom-note-formatter';
 import { getLogger } from '../core/logging';
 import { createPersonNote, PersonData } from '../core/person-note-writer';
 import { generateCrId } from '../core/uuid';
@@ -373,6 +374,7 @@ export class GedcomImporterV2 {
 			sourcesCreated: 0,
 			placesCreated: 0,
 			placesUpdated: 0,
+			notesImported: 0,
 			errors: [],
 			warnings: []
 		};
@@ -509,7 +511,7 @@ export class GedcomImporterV2 {
 				for (const [gedcomId, individual] of gedcomData.individuals) {
 					reportProgress({ phase: 'people', current: personIndex, total: totalPeople });
 					try {
-						const { crId, notePath } = await this.importIndividual(
+						const { crId, notePath, notesCount } = await this.importIndividual(
 							individual,
 							gedcomData,
 							options,
@@ -521,6 +523,7 @@ export class GedcomImporterV2 {
 						gedcomToCrId.set(gedcomId, crId);
 						gedcomToNotePath.set(gedcomId, notePath);
 						result.individualsImported++;
+						result.notesImported += notesCount;
 					} catch (error: unknown) {
 						result.errors.push(
 							`Failed to import ${individual.name || 'Unknown'}: ${getErrorMessage(error)}`
@@ -628,6 +631,9 @@ export class GedcomImporterV2 {
 			if (result.eventsCreated > 0) {
 				importMessage += `, ${result.eventsCreated} events`;
 			}
+			if (result.notesImported > 0) {
+				importMessage += `, ${result.notesImported} notes`;
+			}
 			if (result.errors.length > 0) {
 				importMessage += `. ${result.errors.length} errors occurred`;
 			}
@@ -655,7 +661,7 @@ export class GedcomImporterV2 {
 		gedcomToCrId: Map<string, string>,
 		placeToNoteInfo: Map<string, PlaceNoteInfo>,
 		createdPersonPaths?: Set<string>
-	): Promise<{ crId: string; notePath: string }> {
+	): Promise<{ crId: string; notePath: string; notesCount: number }> {
 		const crId = generateCrId();
 
 		// Convert place strings to wikilinks if place notes were created
@@ -771,6 +777,28 @@ export class GedcomImporterV2 {
 			personData.childName = childNames;
 		}
 
+		// Add notes if enabled (default: true)
+		let notesCount = 0;
+		if (options.importNotes !== false) {
+			// Collect all notes: inline notes + resolved referenced notes
+			const allNotes: string[] = [...(individual.notes || [])];
+
+			// Resolve referenced notes
+			if (individual.noteRefs && individual.noteRefs.length > 0) {
+				for (const noteRef of individual.noteRefs) {
+					const noteRecord = gedcomData.notes.get(noteRef);
+					if (noteRecord && noteRecord.text) {
+						allNotes.push(noteRecord.text);
+					}
+				}
+			}
+
+			if (allNotes.length > 0) {
+				personData.notesContent = formatGedcomNotesSection(allNotes);
+				notesCount = allNotes.length;
+			}
+		}
+
 		// Create person note
 		const file = await createPersonNote(this.app, personData, {
 			directory: options.peopleFolder,
@@ -782,7 +810,7 @@ export class GedcomImporterV2 {
 			createdPaths: createdPersonPaths
 		});
 
-		return { crId, notePath: file.path };
+		return { crId, notePath: file.path, notesCount };
 	}
 
 	// ============================================================================
