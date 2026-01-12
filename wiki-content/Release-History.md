@@ -9,6 +9,8 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.19.x](#v019x)
+  - [GEDCOM Notes Support](#gedcom-notes-support-v0195)
+  - [Timeline Event Description Display](#timeline-event-description-display-v0195)
   - [Romantic Relationship Label Preference](#romantic-relationship-label-preference-v0195)
   - [Partial Date Support](#partial-date-support-v0192)
   - [Plugin Rename: Canvas Roots → Charted Roots](#plugin-rename-canvas-roots--charted-roots-v0190)
@@ -95,6 +97,95 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.19.x
+
+### GEDCOM Notes Support (v0.19.5)
+
+Import GEDCOM NOTE tags attached to individuals into person notes, with support for inline notes, multi-line continuation, and shared NOTE record references.
+
+**GitHub Issue:** [#179](https://github.com/banisterious/obsidian-charted-roots/issues/179)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| Inline notes | `1 NOTE text` tags parsed and imported |
+| Multi-line notes | `CONT` (newline) and `CONC` (concatenate) continuation support |
+| Referenced notes | `1 NOTE @N001@` resolves shared NOTE records |
+| Embedded notes | Notes appear in "## Notes" section with "### GEDCOM note" headers |
+| Separate note files | Optional toggle creates individual note entity files with wikilinks |
+| Import wizard toggle | Step 3 → Entity types → Notes checkbox |
+
+**Import Options:**
+
+- **Import notes** (default: on) — Import NOTE tags attached to individuals
+- **Create separate note files** (default: off) — Create individual note files instead of embedding content
+
+**Output Formats:**
+
+Embedded (default):
+```markdown
+## Notes
+
+### GEDCOM note
+
+Information from Mary Jones in letter of September 25, 1990.
+```
+
+Separate file (when enabled):
+- Creates `Note for {Person Name}.md` in Notes folder
+- Person note contains wikilink: `- [[Note for John Smith]]`
+
+**Files Modified:**
+
+- `src/gedcom/gedcom-types.ts` — Added `notes`, `noteRefs` to individual interface; added `GedcomNoteRecord`
+- `src/gedcom/gedcom-parser-v2.ts` — Parse `1 NOTE` under INDI; parse `0 @N001@ NOTE` records
+- `src/gedcom/gedcom-importer-v2.ts` — Resolve notes, format and write to person notes or create separate files
+- `src/gedcom/gedcom-note-formatter.ts` — New file: `formatGedcomNotesSection()`
+- `src/gedcom/gedcom-import-wizard-modal.ts` — Added "Import notes" and "Create separate note files" toggles
+
+**Documentation:**
+
+- [GEDCOM Notes Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/gedcom-notes.md)
+
+**Future Work:**
+
+- Family-level notes (deferred)
+- GEDCOM export with notes (deferred)
+
+---
+
+### Timeline Event Description Display (v0.19.5)
+
+Timeline now shows event descriptions for all event types when a description exists, instead of showing the generic event title.
+
+**GitHub Issue:** [#157](https://github.com/banisterious/obsidian-charted-roots/issues/157)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| Description display | Events show "Type: description" when description exists |
+| Birth/death exception | These events continue showing full title with person's name |
+| List and markdown | Both timeline list view and markdown export updated |
+
+**Example:**
+
+Before: `1850 — Census of John Smith`
+After: `1850 — Census: 1850 Federal Census`
+
+**Implementation:**
+
+Changed from allowlist (`DESCRIPTION_DISPLAY_TYPES`) to blocklist (`TITLE_ONLY_TYPES = ['birth', 'death']`). All other event types (census, custom, occupation, residence, military, education, marriage, engagement, etc.) now show description when available.
+
+**Files Modified:**
+
+- `src/dynamic-content/renderers/timeline-renderer.ts` — Updated display logic in `renderTimelineList()` and `generateMarkdown()`
+
+**Related:**
+
+- [#183](https://github.com/banisterious/obsidian-charted-roots/issues/183) — Birth event role filtering (tracked separately)
+
+---
 
 ### Romantic Relationship Label Preference (v0.19.5)
 

@@ -1,9 +1,10 @@
 # GEDCOM Notes Support
 
-- **Status:** Planning
-- **Target Version:** TBD
+- **Status:** Completed
+- **Implemented Version:** 0.19.5
 - **GitHub Issue:** [#179](https://github.com/banisterious/obsidian-charted-roots/issues/179)
 - **Created:** 2026-01-11
+- **Completed:** 2026-01-12
 - **Origin:** User feedback from wilbry
 
 ---
@@ -399,24 +400,24 @@ export function extractNotesFromMarkdown(content: string): string[] {
 ## Testing Checklist
 
 ### Import
-- [ ] Inline notes (`1 NOTE text`) are parsed correctly
-- [ ] Multi-line notes with `CONT` preserve line breaks
-- [ ] Continuation with `CONC` concatenates without line break
-- [ ] Referenced notes (`1 NOTE @N001@`) are resolved
-- [ ] Multiple notes per person are numbered correctly
-- [ ] Notes appear in `## Notes` section of person notes
-- [ ] Family notes are handled appropriately
-- [ ] Separate note files are created when option enabled
-- [ ] Wikilinks to note files are correct
-- [ ] Import wizard toggles work correctly
-- [ ] Notes are not imported when option disabled
-- [ ] Import statistics include `notesImported` count
+- [x] Inline notes (`1 NOTE text`) are parsed correctly
+- [x] Multi-line notes with `CONT` preserve line breaks
+- [x] Continuation with `CONC` concatenates without line break
+- [x] Referenced notes (`1 NOTE @N001@`) are resolved
+- [x] Multiple notes per person are numbered correctly
+- [x] Notes appear in `## Notes` section of person notes
+- [ ] Family notes are handled appropriately (deferred)
+- [x] Separate note files are created when option enabled
+- [x] Wikilinks to note files are correct
+- [x] Import wizard toggles work correctly
+- [x] Notes are not imported when option disabled
+- [x] Import statistics include `notesImported` count
 
 ### Export
-- [ ] Notes from `## Notes` section are exported
-- [ ] Multi-line notes use `CONT` continuation
-- [ ] Round-trip preserves note content (import → export → import)
-- [ ] Referenced note IDs are preserved when possible (`gedcom_note_id`)
+- [ ] Notes from `## Notes` section are exported (deferred)
+- [ ] Multi-line notes use `CONT` continuation (deferred)
+- [ ] Round-trip preserves note content (import → export → import) (deferred)
+- [ ] Referenced note IDs are preserved when possible (`gedcom_note_id`) (deferred)
 
 ## Comparison with Gramps Notes
 

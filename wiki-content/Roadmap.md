@@ -9,7 +9,6 @@ This document outlines planned features for Charted Roots. For completed feature
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
-  - [GEDCOM Notes Support](#gedcom-notes-support) 📋 Medium
   - [DNA Match Tracking](#dna-match-tracking) 💡 Low
   - [Per-Map Marker Assignment](#per-map-marker-assignment) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
@@ -32,9 +31,10 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.19.5 | [GEDCOM Notes Support](Release-History#gedcom-notes-support-v0195) | Import GEDCOM NOTE tags with optional separate note files |
+| v0.19.5 | [Timeline Event Description Display](Release-History#timeline-event-description-display-v0195) | All event types show description when available (except birth/death) |
 | v0.19.5 | [Romantic Relationship Label Preference](Release-History#romantic-relationship-label-preference-v0195) | UI preference to display "Spouse" or "Partner" terminology |
 | v0.19.3 | [Place Category Folder Mapping](Release-History#place-category-folder-mapping-v0193) | Automatic organization of places into category-based subfolders |
-| v0.19.3 | [Timeline Event Description Display](Release-History#timeline-event-description-display-v0193) | Descriptive event types show description instead of title in timelines |
 | v0.19.2 | [Partial Date Support](Release-History#partial-date-support-v0192) | GEDCOM import preserves date precision (year-only, month+year, qualifiers, ranges) |
 | v0.19.0 | [Plugin Rename](Release-History#plugin-rename-canvas-roots--charted-roots-v0190) | Renamed from Canvas Roots to Charted Roots with automatic vault migration |
 | v0.18.32 | [Automatic Wikilink Resolution](Release-History#automatic-wikilink-resolution-v01832) | Resolve `[[Person Name]]` wikilinks to cr_id values in relationship fields |
@@ -110,53 +110,6 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 **Documentation:**
 - See [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/research-workflow-integration.md) for detailed specifications
 - Community contributors: @ANYroots (IRN structure, GPS methodology, templates), @wilbry (lightweight approach, unified design)
-
----
-
-### GEDCOM Notes Support
-
-**Priority:** 📋 Medium — Completes GEDCOM round-trip data portability
-
-**Status:** Planning
-
-**GitHub Issue:** [#179](https://github.com/banisterious/obsidian-charted-roots/issues/179)
-
-**Summary:** Import GEDCOM NOTE records attached to individuals, families, events, and sources. Export notes back to GEDCOM for round-trip compatibility.
-
-**The Problem:** GEDCOM files often contain research notes, biographical narratives, and source transcriptions in NOTE records. Currently these notes are not imported, losing valuable context that genealogists have documented.
-
-**The Solution:** Full NOTE support across import and export:
-- Parse individual-level, family-level, event-level, and shared NOTE records
-- Support inline notes (`1 NOTE text`) and referenced notes (`1 NOTE @N001@`)
-- Handle continuation lines (`CONT`/`CONC`) correctly
-- Optional separate note files with wikilinks (like Gramps import)
-- Export notes back to GEDCOM format
-
-**Phased Approach:**
-
-| Phase | Feature | Status |
-|-------|---------|--------|
-| 0 | Preprocessor enhancement for CONT lines | Planning |
-| 1 | Parse individual and family notes | Planning |
-| 2 | Parse shared NOTE records (0-level) | Planning |
-| 3 | Write notes to person/family notes | Planning |
-| 4 | Optional separate note files | Planning |
-| 5 | Settings UI for note options | Planning |
-| 6 | GEDCOM export with notes | Planning |
-
-**Key Features:**
-- **Continuation line handling** — Proper CONT (newline) vs CONC (concatenate) support
-- **Referenced notes** — Resolve `@N001@` references to shared NOTE records
-- **Family notes** — Write to marriage events or relationship notes
-- **Separate note files** — Optional feature matching Gramps import behavior
-- **Round-trip support** — Preserve note IDs for export compatibility
-
-**User Impact:** Non-breaking change
-- Existing imports continue to work
-- Notes appear in person note content or as linked files
-- New setting toggles for note import behavior
-
-See [GEDCOM Notes Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/gedcom-notes.md) for detailed specifications.
 
 ---
 
