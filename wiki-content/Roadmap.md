@@ -85,7 +85,7 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 **Phase 1 — Foundation:**
 - Entity type recognition for all four types
 - Schema validation with Data Quality integration
-- Research log parsing (YAML in `## Research Log` sections)
+- Simple markdown research logs (no nested YAML parsing — see #181)
 - Properties: `status`, `private`, `up`, `related`, `reportTo`, `subject`
 - No UI changes required
 
