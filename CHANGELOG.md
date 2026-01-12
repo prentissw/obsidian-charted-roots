@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Enhanced
 
-- **Timeline description display for marriage events** ([#157](https://github.com/banisterious/obsidian-charted-roots/issues/157)): Marriage and engagement events now show description instead of title in timelines, matching occupation/residence/military/education. Also added Gramps event type mappings for "wedding", "wedding publication", and "marriage banns".
+- **Timeline description display for all event types** ([#157](https://github.com/banisterious/obsidian-charted-roots/issues/157)): Timeline now shows event descriptions for all event types (census, custom, occupation, residence, etc.) when a description exists, instead of showing the generic event title. For example, a census event displays "Census: 1850 Federal Census" instead of "Census of John Smith". Birth and death events continue to show the full title with the person's name since that's more meaningful for those life events. Related: [#183](https://github.com/banisterious/obsidian-charted-roots/issues/183) for birth event role filtering.
 
 ---
 
