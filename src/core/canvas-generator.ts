@@ -1014,21 +1014,29 @@ export class CanvasGenerator {
 			const [fromEnd, toEnd] = this.getArrowEndpoints(arrowStyle);
 
 			// Determine edge color and line style based on relationship type and settings
+			// Priority: custom relationship styling > default edge type styling
 			let edgeColor: string | undefined;
 			let lineStyle: 'solid' | 'dashed' | 'dotted' | undefined;
-			if (edge.type === 'parent') {
-				edgeColor = options.parentChildEdgeColor === 'none' ? undefined : options.parentChildEdgeColor;
-			} else if (edge.type === 'relationship') {
-				// Relationships use their defined color and line style
-				if (edge.relationshipTypeId) {
-					// Try custom types first, then fall back to built-in defaults
-					const relType = options.relationshipTypes?.get(edge.relationshipTypeId) ??
-						getDefaultRelationshipType(edge.relationshipTypeId);
-					edgeColor = relType?.color;
-					lineStyle = relType?.lineStyle;
+
+			// Check for custom relationship type first (handles mapped relationships like custom→parent)
+			if (edge.relationshipTypeId) {
+				// Try custom types first, then fall back to built-in defaults
+				const relType = options.relationshipTypes?.get(edge.relationshipTypeId) ??
+					getDefaultRelationshipType(edge.relationshipTypeId);
+				if (relType?.color) {
+					edgeColor = relType.color;
+					lineStyle = relType.lineStyle;
 				}
-			} else {
-				edgeColor = options.spouseEdgeColor === 'none' ? undefined : options.spouseEdgeColor;
+			}
+
+			// Fall back to default edge type colors if no custom relationship color
+			if (!edgeColor) {
+				if (edge.type === 'parent') {
+					edgeColor = options.parentChildEdgeColor === 'none' ? undefined : options.parentChildEdgeColor;
+				} else if (edge.type === 'spouse') {
+					edgeColor = options.spouseEdgeColor === 'none' ? undefined : options.spouseEdgeColor;
+				}
+				// edge.type === 'relationship' with no color falls through to undefined (canvas default)
 			}
 
 			// Generate label for edge
