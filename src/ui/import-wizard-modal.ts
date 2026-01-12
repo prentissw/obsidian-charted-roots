@@ -57,7 +57,7 @@ interface ImportWizardFormData {
 	importSources: boolean;
 	importEvents: boolean;
 	importMedia: boolean;
-	importNotes: boolean;  // Import notes attached to entities (Gramps only)
+	importNotes: boolean;  // Import notes attached to entities (GEDCOM and Gramps)
 	createSeparateNoteFiles: boolean;  // Create separate note files instead of embedding (Gramps only)
 	mediaFolder: string;
 	preserveMediaFolderStructure: boolean;
@@ -193,7 +193,7 @@ export class ImportWizardModal extends Modal {
 			importSources: true,
 			importEvents: true,
 			importMedia: true,
-			importNotes: true,  // Default: import notes (Gramps only)
+			importNotes: true,  // Default: import notes (GEDCOM and Gramps)
 			createSeparateNoteFiles: false,  // Default: embed notes (Gramps only)
 			mediaFolder: this.plugin?.settings?.mediaFolders?.[0] || 'Charted Roots/Media',
 			preserveMediaFolderStructure: false,
@@ -508,6 +508,13 @@ export class ImportWizardModal extends Modal {
 		this.renderToggleOption(entityOptions, 'Events', 'Historical events', this.formData.importEvents, (val) => {
 			this.formData.importEvents = val;
 		});
+
+		// Notes toggle for GEDCOM format
+		if (this.formData.format === 'gedcom') {
+			this.renderToggleOption(entityOptions, 'Notes', 'Append GEDCOM notes to person content', this.formData.importNotes, (val) => {
+				this.formData.importNotes = val;
+			});
+		}
 
 		if (this.formData.format === 'gramps') {
 			this.renderToggleOption(entityOptions, 'Media', 'Attached media files', this.formData.importMedia, (val) => {
@@ -1008,6 +1015,7 @@ export class ImportWizardModal extends Modal {
 						createEventNotes: this.formData.importEvents,
 						createSourceNotes: this.formData.importSources,
 						createPlaceNotes: this.formData.importPlaces,
+						importNotes: this.formData.importNotes,
 						includeDynamicBlocks: this.formData.includeDynamicBlocks,
 						dynamicBlockTypes: ['media', 'timeline', 'relationships'],
 						compatibilityMode: settings.gedcomCompatibilityMode,
