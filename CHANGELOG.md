@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Custom relationship edge colors on canvas trees** ([#185](https://github.com/banisterious/obsidian-charted-roots/issues/185)): Custom relationships that map to standard family tree connections (e.g., a "Godparent" relationship mapped to Parent) now display with their configured color and line style on canvas trees. Previously these relationships appeared correctly but used the default parent or spouse edge color instead of the custom color.
+
 ---
 
 ## [0.19.5] - 2026-01-12
