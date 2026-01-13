@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.19.7] - 2026-01-13
+
+### Added
+
+- **Name components support** ([#174](https://github.com/banisterious/obsidian-charted-roots/issues/174), [#192](https://github.com/banisterious/obsidian-charted-roots/issues/192)): Explicit name component properties in frontmatter for multi-surname cultures and maiden/married name tracking:
+  - `given_name`: First/given name(s) - populated from GEDCOM GIVN tag
+  - `surnames`: Array of surnames - supports Hispanic, Portuguese, and other multi-surname naming conventions
+  - `maiden_name`: Birth surname (already existed with aliases)
+  - `married_names`: Array of married surnames - supports multiple marriages
+  - Statistics Top Surnames now counts all surnames in the array
+  - Split Wizard matches against all surname variants (maiden name, married names, explicit surnames)
+  - GEDCOM import writes `given_name` and `surnames` from GIVN/SURN tags
+  - GEDCOM export writes name components to GIVN/SURN tags
+  - Create/Edit Person modal includes fields for all name components
+
+---
+
 ## [0.19.6] - 2026-01-12
 
 ### Added
