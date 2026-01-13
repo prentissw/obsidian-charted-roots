@@ -100,6 +100,14 @@ export interface PersonNode {
 	// External IDs for import round-trip support (#175)
 	externalId?: string;         // Original ID from import source (e.g., GEDCOM xref, Gramps handle)
 	externalIdSource?: string;   // Source of the external ID (e.g., "gedcom", "gramps")
+
+	// Name components (#174, #192)
+	givenName?: string;          // First/given name(s) - from GEDCOM GIVN tag
+	surname?: string;            // Primary surname - for compound surnames like "da Silva"
+	surnames?: string[];         // Multiple surnames - for Hispanic/Portuguese naming
+	maidenName?: string;         // Birth surname (before marriage)
+	marriedName?: string;        // Married surname (single marriage)
+	marriedNames?: string[];     // Multiple married surnames (multiple marriages)
 }
 
 /**
