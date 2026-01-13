@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.19.x](#v019x)
+  - [Per-Map Marker Assignment](#per-map-marker-assignment-v0196)
   - [GEDCOM Notes Support](#gedcom-notes-support-v0195)
   - [Timeline Event Description Display](#timeline-event-description-display-v0195)
   - [Romantic Relationship Label Preference](#romantic-relationship-label-preference-v0195)
@@ -97,6 +98,49 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.19.x
+
+### Per-Map Marker Assignment (v0.19.6)
+
+Restrict places to specific custom maps within a universe. Enables regional maps, era-specific views, and detail-level separation without affecting universe-wide filtering.
+
+**GitHub Issue:** [#153](https://github.com/banisterious/obsidian-charted-roots/issues/153)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| `maps` property | Array of map IDs that a place should appear on |
+| Backward compatibility | Places without `maps` appear on all maps in their universe |
+| Path filtering | Paths/journeys only appear if both endpoints are visible on current map |
+| Create Place modal | "Restrict to maps" checkbox section with available maps |
+| Auto-select current map | When creating a place from a pixel map, current map is pre-selected |
+
+**Usage:**
+
+Add a `maps` property to place notes to restrict which maps they appear on:
+
+```yaml
+name: Fort Ticonderoga
+universe: colonial-america
+maps:
+  - french-indian-war-map
+  - revolutionary-war-map
+```
+
+**Filtering Logic:**
+- If place has no `maps` property: Shows on all maps with matching universe (existing behavior)
+- If place has `maps` property: Only shows on specified map(s)
+- Events inherit filtering from their associated places
+- Paths appear only if both endpoints are visible on the current map
+
+**UI Integration:**
+
+The Create/Edit Place modal includes a "Restrict to maps" section when custom maps exist in the vault:
+- Checkboxes for each available map in the same universe
+- Current map is highlighted and auto-selected when creating from a pixel map click
+- Empty selection means "show on all maps" (backward compatible)
+
+---
 
 ### GEDCOM Notes Support (v0.19.5)
 
