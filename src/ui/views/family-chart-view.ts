@@ -841,6 +841,25 @@ export class FamilyChartView extends ItemView {
 			return;
 		}
 
+		// Validate that the requested root person exists in the filtered data
+		if (this.rootPersonId) {
+			const rootExists = this.chartData.some(p => p.id === this.rootPersonId);
+			if (!rootExists) {
+				// Root person was filtered out (e.g., not in configured folders)
+				logger.warn('chart-init', 'Requested root person not found in filtered data', {
+					rootPersonId: this.rootPersonId,
+					chartDataCount: this.chartData.length
+				});
+				new Notice(
+					'The requested person is not included in the current folder filter. ' +
+					'Check your Charted Roots folder settings.',
+					8000
+				);
+				// Clear the invalid root so the chart shows the default view
+				this.rootPersonId = null;
+			}
+		}
+
 		// Apply theme-appropriate styling
 		const isDarkMode = document.body.classList.contains('theme-dark');
 		const customColors = this.plugin.settings.familyChartColors;
