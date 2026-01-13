@@ -7,8 +7,9 @@
 
 import { App, Modal, Notice, Setting, TFile, TFolder } from 'obsidian';
 import type { CanvasRootsSettings } from '../settings';
-import { FamilyGraphService, type FamilyTree } from '../core/family-graph';
+import { FamilyGraphService, type FamilyTree, type PersonNode } from '../core/family-graph';
 import { FolderFilterService } from '../core/folder-filter';
+import { extractSurnames, extractAllSurnames, matchesSurname } from '../utils/name-utils';
 import {
 	CanvasSplitService,
 	type GenerationSplitOptions,
@@ -828,69 +829,59 @@ export class SplitWizardModal extends Modal {
 
 	/**
 	 * Load available surnames from all people
+	 *
+	 * Uses extractSurnames() to support multiple naming conventions:
+	 * - Explicit surnames/surname properties
+	 * - Maiden name
+	 * - Parsed from name (fallback)
 	 */
 	private loadAvailableSurnames(): void {
 		const surnames = new Map<string, number>();
 
-		// Scan all people files in the vault
-		const files = this.app.vault.getMarkdownFiles();
-		const peopleFolder = this.settings.peopleFolder;
+		// Get all people from FamilyGraphService (respects folder filter)
+		const people = this.familyGraph.getAllPeople();
 
-		for (const file of files) {
-			// Check if file is in people folder
-			if (peopleFolder && !file.path.startsWith(peopleFolder)) {
-				continue;
-			}
+		for (const person of people) {
+			// Use extractSurnames to get all surnames for statistics
+			// This handles explicit surnames[], surname, maiden_name, and name parsing
+			const personSurnames = extractSurnames(person);
+			for (const surname of personSurnames) {
+				// Normalize case for counting
+				const normalized = surname.toLowerCase();
+				const displayName = surname.charAt(0).toUpperCase() + surname.slice(1);
 
-			// Apply folder filter if set
-			if (this.folderFilter && !this.folderFilter.shouldIncludePath(file.path)) {
-				continue;
-			}
-
-			// Extract surname from file name (last word typically)
-			const baseName = file.basename;
-			const nameParts = baseName.split(/\s+/);
-			if (nameParts.length >= 2) {
-				const surname = nameParts[nameParts.length - 1];
-				// Skip if it looks like a date or number
-				if (!/^\d+$/.test(surname) && surname.length > 1) {
-					surnames.set(surname, (surnames.get(surname) || 0) + 1);
+				// Track with normalized key but preserve display casing
+				const existing = surnames.get(normalized);
+				if (existing !== undefined) {
+					surnames.set(normalized, existing + 1);
+				} else {
+					surnames.set(normalized, 1);
 				}
 			}
 		}
 
 		// Sort by count (most common first), then alphabetically
+		// Capitalize first letter for display
 		this.availableSurnames = Array.from(surnames.entries())
 			.sort((a, b) => {
 				if (b[1] !== a[1]) return b[1] - a[1];
 				return a[0].localeCompare(b[0]);
 			})
-			.map(([name]) => name);
+			.map(([name]) => name.charAt(0).toUpperCase() + name.slice(1));
 	}
 
 	/**
 	 * Get count of people with a given surname
+	 *
+	 * Uses matchesSurname() for comprehensive matching across all surname variants.
 	 */
 	private getSurnameCount(surname: string): number {
 		let count = 0;
-		const files = this.app.vault.getMarkdownFiles();
-		const peopleFolder = this.settings.peopleFolder;
+		const people = this.familyGraph.getAllPeople();
 
-		for (const file of files) {
-			if (peopleFolder && !file.path.startsWith(peopleFolder)) {
-				continue;
-			}
-			if (this.folderFilter && !this.folderFilter.shouldIncludePath(file.path)) {
-				continue;
-			}
-
-			const baseName = file.basename;
-			const nameParts = baseName.split(/\s+/);
-			if (nameParts.length >= 2) {
-				const fileSurname = nameParts[nameParts.length - 1];
-				if (fileSurname.toLowerCase() === surname.toLowerCase()) {
-					count++;
-				}
+		for (const person of people) {
+			if (matchesSurname(person, surname)) {
+				count++;
 			}
 		}
 
@@ -1937,45 +1928,36 @@ export class SplitWizardModal extends Modal {
 	/**
 	 * Find all people matching any of the selected surnames
 	 *
+	 * When surnameIncludeMaidenNames is enabled, uses extractAllSurnames() to check
+	 * all surname variants (explicit surnames, maiden name, married names).
+	 * Otherwise, uses extractSurnames() to check only primary surnames.
+	 *
 	 * @returns Map of file path -> matched surname
 	 */
 	private findPeopleBySurname(surnames: string[]): Map<string, string> {
 		const peopleFiles = new Map<string, string>();
-		const files = this.app.vault.getMarkdownFiles();
-		const peopleFolder = this.settings.peopleFolder;
 		const surnameLower = surnames.map(s => s.toLowerCase());
 
-		for (const file of files) {
-			// Filter by people folder
-			if (peopleFolder && !file.path.startsWith(peopleFolder)) {
-				continue;
-			}
+		// Get all people from the family graph (already filtered by folder settings)
+		const people = this.familyGraph.getAllPeople();
 
+		for (const person of people) {
 			// Apply folder filter if set
-			if (this.folderFilter && !this.folderFilter.shouldIncludePath(file.path)) {
+			if (this.folderFilter && person.file && !this.folderFilter.shouldIncludePath(person.file.path)) {
 				continue;
 			}
 
-			// Extract surname from file name (last word)
-			const baseName = file.basename;
-			const nameParts = baseName.split(/\s+/);
-			if (nameParts.length >= 2) {
-				const fileSurname = nameParts[nameParts.length - 1];
-				if (surnameLower.includes(fileSurname.toLowerCase())) {
-					peopleFiles.set(file.path, fileSurname);
-				}
-			}
+			// Use extractAllSurnames when including maiden/married names, otherwise primary surnames only
+			const personSurnames = this.surnameIncludeMaidenNames
+				? extractAllSurnames(person)
+				: extractSurnames(person);
 
-			// Also check maiden name if enabled
-			if (this.surnameIncludeMaidenNames) {
-				try {
-					const metadata = this.app.metadataCache.getFileCache(file);
-					const maidenName = metadata?.frontmatter?.maiden_name as string | undefined;
-					if (maidenName && surnameLower.includes(maidenName.toLowerCase())) {
-						peopleFiles.set(file.path, maidenName);
+			for (const personSurname of personSurnames) {
+				if (surnameLower.includes(personSurname.toLowerCase())) {
+					if (person.file) {
+						peopleFiles.set(person.file.path, personSurname);
 					}
-				} catch {
-					// Ignore metadata errors
+					break; // Found a match, no need to check other surnames
 				}
 			}
 		}
