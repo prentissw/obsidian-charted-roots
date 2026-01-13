@@ -105,8 +105,7 @@ export interface PersonNode {
 	givenName?: string;          // First/given name(s) - from GEDCOM GIVN tag
 	surnames?: string[];         // Surnames - supports single or multiple (Hispanic/Portuguese)
 	maidenName?: string;         // Birth surname (before marriage)
-	marriedName?: string;        // Married surname (single marriage)
-	marriedNames?: string[];     // Multiple married surnames (multiple marriages)
+	marriedNames?: string[];     // Married surnames (supports multiple marriages)
 }
 
 /**
@@ -1617,7 +1616,6 @@ export class FamilyGraphService {
 			? (Array.isArray(surnamesRaw) ? surnamesRaw : [surnamesRaw])
 			: undefined;
 		const maidenName = this.resolveProperty<string>(fm, 'maiden_name');
-		const marriedName = this.resolveProperty<string>(fm, 'married_name');
 		const marriedNamesRaw = this.resolveProperty<string | string[]>(fm, 'married_names');
 		const marriedNames = marriedNamesRaw
 			? (Array.isArray(marriedNamesRaw) ? marriedNamesRaw : [marriedNamesRaw])
@@ -1692,7 +1690,6 @@ export class FamilyGraphService {
 			givenName,
 			surnames,
 			maidenName,
-			marriedName,
 			marriedNames
 		};
 	}

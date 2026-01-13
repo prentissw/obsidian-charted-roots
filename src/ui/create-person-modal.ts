@@ -165,7 +165,6 @@ export class CreatePersonModal extends Modal {
 				givenName?: string;
 				surnames?: string[];
 				maidenName?: string;
-				marriedName?: string;
 				marriedNames?: string[];
 				// Dates and places
 				born?: string;
@@ -248,7 +247,6 @@ export class CreatePersonModal extends Modal {
 				givenName: ep.givenName,
 				surnames: ep.surnames,
 				maidenName: ep.maidenName,
-				marriedName: ep.marriedName,
 				marriedNames: ep.marriedNames,
 				// Dates and places
 				birthDate: ep.born,
@@ -470,13 +468,17 @@ export class CreatePersonModal extends Modal {
 					}));
 
 			new Setting(form)
-				.setName('Married name')
-				.setDesc('Surname after marriage')
+				.setName('Married name(s)')
+				.setDesc('Surname(s) after marriage - separate multiple with commas')
 				.addText(text => text
-					.setPlaceholder('e.g., Smith')
-					.setValue(this.personData.marriedName || '')
+					.setPlaceholder('e.g., Smith, Jones')
+					.setValue(this.personData.marriedNames?.join(', ') || '')
 					.onChange(value => {
-						this.personData.marriedName = value || undefined;
+						if (value) {
+							this.personData.marriedNames = value.split(',').map(s => s.trim()).filter(s => s);
+						} else {
+							this.personData.marriedNames = undefined;
+						}
 					}));
 		}
 

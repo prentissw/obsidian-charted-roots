@@ -69,8 +69,7 @@ export interface PersonData {
 	givenName?: string;          // First/given name(s) - from GEDCOM GIVN tag
 	surnames?: string[];         // Surnames - supports single or multiple
 	maidenName?: string;         // Birth surname (before marriage)
-	marriedName?: string;        // Married surname (single marriage)
-	marriedNames?: string[];     // Multiple married surnames (multiple marriages)
+	marriedNames?: string[];     // Married surnames (supports multiple marriages)
 	// Basic info
 	birthDate?: string;
 	deathDate?: string;
@@ -248,9 +247,6 @@ export async function createPersonNote(
 	}
 	if (person.maidenName) {
 		frontmatter[prop('maiden_name')] = person.maidenName;
-	}
-	if (person.marriedName) {
-		frontmatter[prop('married_name')] = person.marriedName;
 	}
 	if (person.marriedNames && person.marriedNames.length > 0) {
 		frontmatter[prop('married_names')] = person.marriedNames;

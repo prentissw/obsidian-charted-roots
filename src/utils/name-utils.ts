@@ -78,9 +78,6 @@ export function extractAllSurnames(person: PersonNode): string[] {
 	if (person.marriedNames?.length) {
 		person.marriedNames.forEach(s => surnames.add(s));
 	}
-	if (person.marriedName) {
-		surnames.add(person.marriedName);
-	}
 
 	// Fallback: parse from name (only if no explicit surnames found)
 	if (surnames.size === 0 && person.name) {

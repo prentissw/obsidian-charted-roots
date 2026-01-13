@@ -3278,7 +3278,6 @@ export class ControlCenterModal extends Modal {
 					givenName: fm.given_name,
 					surnames: Array.isArray(fm.surnames) ? fm.surnames : (fm.surnames ? [fm.surnames] : undefined),
 					maidenName: fm.maiden_name,
-					marriedName: fm.married_name,
 					marriedNames: Array.isArray(fm.married_names) ? fm.married_names : (fm.married_names ? [fm.married_names] : undefined),
 					// Other
 					cr_living: typeof fm.cr_living === 'boolean' ? fm.cr_living : (fm.cr_living === 'true' ? true : (fm.cr_living === 'false' ? false : undefined)),
