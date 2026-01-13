@@ -3274,6 +3274,12 @@ export class ControlCenterModal extends Modal {
 					sex: fm.sex,
 					gender: fm.gender,
 					pronouns: fm.pronouns,
+					// Name components (#174, #192)
+					givenName: fm.given_name,
+					surnames: Array.isArray(fm.surnames) ? fm.surnames : (fm.surnames ? [fm.surnames] : undefined),
+					maidenName: fm.maiden_name,
+					marriedNames: Array.isArray(fm.married_names) ? fm.married_names : (fm.married_names ? [fm.married_names] : undefined),
+					// Other
 					cr_living: typeof fm.cr_living === 'boolean' ? fm.cr_living : (fm.cr_living === 'true' ? true : (fm.cr_living === 'false' ? false : undefined)),
 					born: person.birthDate,
 					died: person.deathDate,

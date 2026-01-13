@@ -20,6 +20,10 @@ export const CANONICAL_PERSON_PROPERTIES = [
 	'gender', // Kept for users who prefer gender over sex
 	'nickname',
 	'maiden_name',
+	// Name components (for multi-surname cultures and married/maiden name tracking)
+	'given_name',
+	'surnames',
+	'married_names',
 	// Dates
 	'born',
 	'died',
@@ -180,6 +184,9 @@ export const CANONICAL_PROPERTY_LABELS: Record<string, string> = {
 	gender: 'Gender',
 	nickname: 'Nickname',
 	maiden_name: 'Maiden name',
+	given_name: 'Given name',
+	surnames: 'Surnames',
+	married_names: 'Married names',
 	born: 'Birth date',
 	died: 'Death date',
 	birth_place: 'Birth place',
@@ -326,6 +333,28 @@ export const PERSON_PROPERTY_METADATA: PropertyMetadata[] = [
 		description: 'Birth surname (before marriage)',
 		category: 'person',
 		commonAliases: ['birth_name', 'birth_surname', 'née', 'nee']
+	},
+	// Name components
+	{
+		canonical: 'given_name',
+		label: 'Given name',
+		description: 'First/given name(s)',
+		category: 'person',
+		commonAliases: ['first_name', 'forename', 'christian_name']
+	},
+	{
+		canonical: 'surnames',
+		label: 'Surnames',
+		description: 'Family name(s)/surname(s)',
+		category: 'person',
+		commonAliases: ['last_name', 'family_name']
+	},
+	{
+		canonical: 'married_names',
+		label: 'Married names',
+		description: 'Surname(s) after marriage',
+		category: 'person',
+		commonAliases: []
 	},
 	// Dates
 	{

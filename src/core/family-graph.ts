@@ -100,6 +100,12 @@ export interface PersonNode {
 	// External IDs for import round-trip support (#175)
 	externalId?: string;         // Original ID from import source (e.g., GEDCOM xref, Gramps handle)
 	externalIdSource?: string;   // Source of the external ID (e.g., "gedcom", "gramps")
+
+	// Name components (#174, #192)
+	givenName?: string;          // First/given name(s) - from GEDCOM GIVN tag
+	surnames?: string[];         // Surnames - supports single or multiple (Hispanic/Portuguese)
+	maidenName?: string;         // Birth surname (before marriage)
+	marriedNames?: string[];     // Married surnames (supports multiple marriages)
 }
 
 /**
@@ -1603,6 +1609,18 @@ export class FamilyGraphService {
 		const externalId = this.resolveProperty<string>(fm, 'external_id');
 		const externalIdSource = this.resolveProperty<string>(fm, 'external_id_source');
 
+		// Name components (#174, #192)
+		const givenName = this.resolveProperty<string>(fm, 'given_name');
+		const surnamesRaw = this.resolveProperty<string | string[]>(fm, 'surnames');
+		const surnames = surnamesRaw
+			? (Array.isArray(surnamesRaw) ? surnamesRaw : [surnamesRaw])
+			: undefined;
+		const maidenName = this.resolveProperty<string>(fm, 'maiden_name');
+		const marriedNamesRaw = this.resolveProperty<string | string[]>(fm, 'married_names');
+		const marriedNames = marriedNamesRaw
+			? (Array.isArray(marriedNamesRaw) ? marriedNamesRaw : [marriedNamesRaw])
+			: undefined;
+
 		// cr_living is a boolean for manual living status override (no aliasing needed)
 		// Handle both boolean and string representations (YAML may parse as string in some cases)
 		let cr_living: boolean | undefined = undefined;
@@ -1667,7 +1685,12 @@ export class FamilyGraphService {
 			privateFields: privateFields.length > 0 ? privateFields : undefined,
 			// External IDs for import round-trip (#175)
 			externalId,
-			externalIdSource
+			externalIdSource,
+			// Name components (#174, #192)
+			givenName,
+			surnames,
+			maidenName,
+			marriedNames
 		};
 	}
 

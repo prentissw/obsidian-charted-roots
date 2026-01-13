@@ -161,6 +161,12 @@ export class CreatePersonModal extends Modal {
 				sex?: string;
 				gender?: string; // Kept for backwards compatibility
 				pronouns?: string;
+				// Name components (#174, #192)
+				givenName?: string;
+				surnames?: string[];
+				maidenName?: string;
+				marriedNames?: string[];
+				// Dates and places
 				born?: string;
 				died?: string;
 				birthPlace?: string;
@@ -237,6 +243,12 @@ export class CreatePersonModal extends Modal {
 				crId: ep.crId,
 				sex: ep.sex || ep.gender, // sex preferred, gender for backwards compatibility
 				pronouns: ep.pronouns,
+				// Name components (#174, #192)
+				givenName: ep.givenName,
+				surnames: ep.surnames,
+				maidenName: ep.maidenName,
+				marriedNames: ep.marriedNames,
+				// Dates and places
 				birthDate: ep.born,
 				deathDate: ep.died,
 				birthPlace: ep.birthPlace,
@@ -416,6 +428,59 @@ export class CreatePersonModal extends Modal {
 				.onChange(value => {
 					this.personData.nickname = value || undefined;
 				}));
+
+		// Name components (optional) - for cultures with multiple surnames or explicit name parts
+		new Setting(form)
+			.setName('Given name')
+			.setDesc('First/given name(s), if different from what appears in full name')
+			.addText(text => text
+				.setPlaceholder('e.g., María José')
+				.setValue(this.personData.givenName || '')
+				.onChange(value => {
+					this.personData.givenName = value || undefined;
+				}));
+
+		new Setting(form)
+			.setName('Surname(s)')
+			.setDesc('Family name(s) - separate multiple with commas (e.g., "García, López")')
+			.addText(text => text
+				.setPlaceholder('e.g., García, López')
+				.setValue(this.personData.surnames?.join(', ') || '')
+				.onChange(value => {
+					if (value) {
+						// Split on commas, trim whitespace
+						this.personData.surnames = value.split(',').map(s => s.trim()).filter(s => s);
+					} else {
+						this.personData.surnames = undefined;
+					}
+				}));
+
+		// Maiden/married names - only show in edit mode
+		if (this.editMode) {
+			new Setting(form)
+				.setName('Maiden name')
+				.setDesc('Birth surname (before marriage)')
+				.addText(text => text
+					.setPlaceholder('e.g., Johnson')
+					.setValue(this.personData.maidenName || '')
+					.onChange(value => {
+						this.personData.maidenName = value || undefined;
+					}));
+
+			new Setting(form)
+				.setName('Married name(s)')
+				.setDesc('Surname(s) after marriage - separate multiple with commas')
+				.addText(text => text
+					.setPlaceholder('e.g., Smith, Jones')
+					.setValue(this.personData.marriedNames?.join(', ') || '')
+					.onChange(value => {
+						if (value) {
+							this.personData.marriedNames = value.split(',').map(s => s.trim()).filter(s => s);
+						} else {
+							this.personData.marriedNames = undefined;
+						}
+					}));
+		}
 
 		// Sex
 		new Setting(form)

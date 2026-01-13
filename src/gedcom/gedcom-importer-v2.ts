@@ -734,6 +734,10 @@ export class GedcomImporterV2 {
 			name: individual.name || 'Unknown',
 			crId: crId,
 			nickname: individual.nickname,
+			// Name components from GEDCOM GIVN/SURN tags (#174, #192)
+			givenName: individual.givenName,
+			surnames: individual.surname ? [individual.surname] : undefined,
+			// Core dates and places
 			birthDate: GedcomParserV2.gedcomDateToISO(individual.birthDate || ''),
 			deathDate: GedcomParserV2.gedcomDateToISO(individual.deathDate || ''),
 			birthPlace: birthPlaceValue,

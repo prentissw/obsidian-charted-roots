@@ -609,14 +609,20 @@ export class GedcomExporter {
 		const gedcomName = this.formatNameForGedcom(displayName);
 		lines.push(`1 NAME ${gedcomName}`);
 
-		// Parse given/surname if possible (only if not obfuscated)
+		// Add given/surname if available (only if not obfuscated)
+		// Prefer explicit name components from frontmatter, fall back to parsing from display name
 		if (!privacyResult?.isProtected) {
-			const nameParts = this.parseNameParts(displayName);
-			if (nameParts.given) {
-				lines.push(`2 GIVN ${nameParts.given}`);
+			// Given name: prefer explicit givenName, fall back to parsed
+			const givenName = person.givenName || this.parseNameParts(displayName).given;
+			if (givenName) {
+				lines.push(`2 GIVN ${givenName}`);
 			}
-			if (nameParts.surname) {
-				lines.push(`2 SURN ${nameParts.surname}`);
+
+			// Surname: prefer explicit surnames array, fall back to parsed
+			const surname = (person.surnames && person.surnames.length > 0 ? person.surnames.join(' ') : undefined)
+				|| this.parseNameParts(displayName).surname;
+			if (surname) {
+				lines.push(`2 SURN ${surname}`);
 			}
 		}
 
