@@ -9,6 +9,7 @@ import type { App, TFile } from 'obsidian';
 import type { CanvasRootsSettings } from '../../settings';
 import { VaultStatsService } from '../../core/vault-stats';
 import { FamilyGraphService, type PersonNode } from '../../core/family-graph';
+import { extractSurnames } from '../../utils/name-utils';
 import { FolderFilterService } from '../../core/folder-filter';
 import { OrganizationService } from '../../organizations';
 import type {
@@ -467,21 +468,39 @@ export class StatisticsService {
 
 	/**
 	 * Compute top surnames
+	 *
+	 * Uses extractSurnames() to support multiple naming conventions:
+	 * - Explicit surnames/surname properties (for Hispanic/Portuguese naming)
+	 * - Maiden name (for users who track by birth surname)
+	 * - Parsed surname from name (fallback for Western naming)
 	 */
 	private computeTopSurnames(people: PersonNode[], limit: number = DEFAULT_TOP_LIST_LIMIT): TopListItem[] {
 		const surnameCount = new Map<string, number>();
 
 		for (const person of people) {
-			if (!person.name) continue;
-			const parts = person.name.trim().split(/\s+/);
-			if (parts.length > 1) {
-				const surname = parts[parts.length - 1];
-				surnameCount.set(surname, (surnameCount.get(surname) ?? 0) + 1);
+			// Use extractSurnames to get all surnames for this person
+			// This handles explicit surnames[], surname, maiden_name, and name parsing
+			const surnames = extractSurnames(person);
+			for (const surname of surnames) {
+				// Normalize case for counting (but preserve original for display)
+				const normalized = surname.toLowerCase();
+				const existing = surnameCount.get(normalized);
+				if (existing !== undefined) {
+					surnameCount.set(normalized, existing + 1);
+				} else {
+					// Store with original casing for first occurrence
+					surnameCount.set(normalized, 1);
+				}
 			}
 		}
 
+		// Convert to array and restore original casing from first occurrence
+		// by capitalizing first letter (simple heuristic)
 		return Array.from(surnameCount.entries())
-			.map(([name, count]) => ({ name, count }))
+			.map(([normalizedName, count]) => ({
+				name: normalizedName.charAt(0).toUpperCase() + normalizedName.slice(1),
+				count
+			}))
 			.sort((a, b) => b.count - a.count)
 			.slice(0, limit);
 	}
