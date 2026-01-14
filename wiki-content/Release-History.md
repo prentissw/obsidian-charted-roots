@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.19.x](#v019x)
+  - [DNA Match Tracking](#dna-match-tracking-v0199)
   - [Name Components](#name-components-v0197)
   - [Per-Map Marker Assignment](#per-map-marker-assignment-v0196)
   - [GEDCOM Notes Support](#gedcom-notes-support-v0195)
@@ -99,6 +100,52 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.19.x
+
+### DNA Match Tracking (v0.19.9)
+
+Opt-in DNA match tracking for genetic genealogists, enabling recording of key DNA matches alongside family tree research. All features are invisible when the setting is disabled (default: OFF).
+
+**GitHub Issue:** [#126](https://github.com/banisterious/obsidian-charted-roots/issues/126)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| `enableDnaTracking` setting | Master toggle in Settings → Advanced → DNA tracking |
+| DNA Match person type | Select "DNA Match" when creating persons to mark them as genetic matches |
+| DNA Information fields | Track shared cM, testing company, kit ID, match type, endogamy flag, notes |
+| `dna_match` relationship | Bidirectional relationship type (A→B automatically creates B→A) |
+| DNA badge in person picker | Shows flask icon and shared cM value for DNA Match persons |
+| `dna` relationship category | New category for DNA/genetic relationships |
+
+**Match Types:**
+- `BKM` — Best Known Match (confirmed relationship, high confidence)
+- `BMM` — Best Mystery Match (strong match, relationship unknown)
+- `confirmed` — DNA confirms documented relationship
+- `unconfirmed` — Match recorded but not yet analyzed
+
+**Design Philosophy:**
+- Charted Roots is not a DNA analysis tool—specialized tools (DNAPainter, Genetic Affairs, etc.) handle that well
+- Focus on tracking "key matches" (BKM/BMM methodology) rather than comprehensive DNA management
+- All features are opt-in via settings; default experience is unchanged
+
+**Files Modified:**
+
+- `src/settings.ts` — Added `enableDnaTracking` setting
+- `src/ui/settings-tab.ts` — Added DNA tracking toggle in Advanced section
+- `src/models/person.ts` — Added `personType` and DNA properties to interfaces
+- `src/ui/create-person-modal.ts` — Added Person Type dropdown and DNA fields
+- `src/ui/control-center.ts` — Added DNA fields to Edit Person modal
+- `src/relationships/types/relationship-types.ts` — Added `dna` category, `requiresSetting` property
+- `src/relationships/constants/default-relationship-types.ts` — Added `dna_match` relationship type
+- `src/core/bidirectional-linker.ts` — Added `syncDnaMatch()` and `removeDnaMatchLink()` methods
+- `src/ui/person-picker-modal.ts` — Added DNA badge rendering
+
+**Documentation:**
+
+- [DNA Match Tracking Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/dna-match-tracking.md)
+
+---
 
 ### Name Components (v0.19.7)
 

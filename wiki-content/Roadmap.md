@@ -9,7 +9,6 @@ This document outlines planned features for Charted Roots. For completed feature
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
-  - [DNA Match Tracking](#dna-match-tracking) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
 - [Future Considerations](#future-considerations)
@@ -29,6 +28,7 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.19.9 | [DNA Match Tracking](Release-History#dna-match-tracking-v0199) | Opt-in DNA match tracking with person type, fields, bidirectional relationships, and person picker badge |
 | v0.19.7 | [Name Components](Release-History#name-components-v0197) | Explicit surname properties for multi-surname cultures and maiden/married name tracking |
 | v0.19.6 | [Per-Map Marker Assignment](Release-History#per-map-marker-assignment-v0196) | Restrict places to specific custom maps within a universe |
 | v0.19.5 | [GEDCOM Notes Support](Release-History#gedcom-notes-support-v0195) | Import GEDCOM NOTE tags with optional separate note files |
@@ -110,50 +110,6 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 **Documentation:**
 - See [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/research-workflow-integration.md) for detailed specifications
 - Community contributors: @ANYroots (IRN structure, GPS methodology, templates), @wilbry (lightweight approach, unified design)
-
----
-
-### DNA Match Tracking
-
-**Priority:** 💡 Low — Specialized for genetic genealogists
-
-**Status:** Phase 1 complete (v0.18.27+), Phases 2-4 planned
-
-**Summary:** Lightweight DNA match tracking for genetic genealogists, designed to record key DNA matches alongside family tree research. Keeps advanced features out of the way of users who don't need them.
-
-**Design Philosophy:**
-- Charted Roots is not a DNA analysis tool—specialized tools (DNAPainter, Genetic Affairs, etc.) handle that well
-- Focus on tracking "key matches" (BKM/BMM methodology) rather than comprehensive DNA management
-- All phases are opt-in via settings; default experience is unchanged
-
-**Phased Approach (all opt-in):**
-
-| Phase | Feature | Gated By | Status |
-|-------|---------|----------|--------|
-| 1 | Frontmatter properties (`dna_shared_cm`, `dna_match_type`, etc.) | Documentation only | ✅ Complete (v0.18.27) |
-| 2 | DNA Match person subtype with UI support | `enableDnaTracking` setting | Planned |
-| 3 | DNA relationship type (bidirectional, non-transitive) | `enableDnaTracking` setting | Planned |
-| 4 | Visualization & reports | `enableDnaVisualization` setting | Future |
-
-**Phase 1 — Documentation & Templates:** ✅ Complete (v0.18.27)
-
-- DNA match template snippet in template snippets modal
-- "DNA Matches" view in People Bases template (filters by `dna_shared_cm`, sorts by highest matches first)
-- DNA property display names in base template
-- Documented frontmatter properties for manual use
-
-**Match Types:**
-- `BKM` — Best Known Match (confirmed relationship, high confidence)
-- `BMM` — Best Mystery Match (strong match, relationship unknown)
-- `confirmed` — DNA confirms documented relationship
-- `unconfirmed` — Match recorded but not yet analyzed
-
-**Non-Goals:**
-- Segment analysis, chromosome browser, match management (use specialized tools)
-- Automatic relationship prediction
-- DNA import from testing companies
-
-See [DNA Match Tracking Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/dna-match-tracking.md) for detailed specifications.
 
 ---
 
