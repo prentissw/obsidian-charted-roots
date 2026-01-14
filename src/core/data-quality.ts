@@ -1591,6 +1591,87 @@ export class DataQualityService {
 	}
 
 	/**
+	 * Repair missing relationship IDs by resolving wikilinks to cr_ids
+	 * Only repairs unambiguous, resolvable wikilinks
+	 */
+	async repairMissingIds(options: DataQualityOptions = {}): Promise<BatchOperationResult> {
+		const results: BatchOperationResult = {
+			processed: 0,
+			modified: 0,
+			errors: [],
+		};
+
+		// Skip if PersonIndexService not available
+		if (!this.personIndex) {
+			logger.warn('repair-missing-ids', 'PersonIndexService not available');
+			return results;
+		}
+
+		// Get preview to find repairable cases
+		const preview = await this.previewNormalization(options);
+
+		// Group repairs by person file for efficiency
+		const repairsByFile = new Map<string, MissingIdRepair[]>();
+		for (const repair of preview.missingIdRepairs) {
+			const filePath = repair.person.file.path;
+			const existing = repairsByFile.get(filePath) || [];
+			existing.push(repair);
+			repairsByFile.set(filePath, existing);
+		}
+
+		const totalFiles = repairsByFile.size;
+		let fileIndex = 0;
+
+		for (const [filePath, repairs] of repairsByFile) {
+			fileIndex++;
+			const file = repairs[0].person.file;
+			options.progress?.onProgress(fileIndex, totalFiles, file.basename);
+
+			try {
+				await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+					for (const repair of repairs) {
+						const idField = `${repair.field}_id`;
+						const currentIdValue = frontmatter[idField];
+
+						// Handle array fields
+						if (repair.arrayIndex !== undefined) {
+							// Get or create the ID array
+							let idArray: string[] = [];
+							if (currentIdValue) {
+								idArray = Array.isArray(currentIdValue) ? [...currentIdValue] : [currentIdValue];
+							}
+
+							// Extend array if needed
+							while (idArray.length <= repair.arrayIndex) {
+								idArray.push('');
+							}
+
+							// Set the ID at the correct index
+							idArray[repair.arrayIndex] = repair.resolvedCrId;
+							frontmatter[idField] = idArray;
+						} else {
+							// Single value field
+							frontmatter[idField] = repair.resolvedCrId;
+						}
+					}
+				});
+
+				results.modified++;
+			} catch (error) {
+				results.errors.push({
+					file: filePath,
+					error: error instanceof Error ? error.message : String(error),
+				});
+			}
+
+			results.processed++;
+		}
+
+		logger.info('repair-missing-ids', `Repaired missing IDs: ${results.modified}/${results.processed} files modified, ${preview.missingIdRepairs.length} IDs added`);
+		return results;
+	}
+
+	/**
 	 * Flatten nested properties in frontmatter
 	 * Converts nested YAML objects to flat dot-notation or underscore-separated keys
 	 * Returns the number of files modified
