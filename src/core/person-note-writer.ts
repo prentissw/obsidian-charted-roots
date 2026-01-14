@@ -976,6 +976,13 @@ export async function updatePersonNote(
 	await app.fileManager.processFrontMatter(file, (frontmatter) => {
 		// Update basic fields if provided
 		if (person.name !== undefined) frontmatter.name = person.name;
+		if (person.personType !== undefined) {
+			if (person.personType) {
+				frontmatter.personType = person.personType;
+			} else {
+				delete frontmatter.personType;
+			}
+		}
 		if (person.birthDate !== undefined) frontmatter.born = person.birthDate || '';
 		if (person.deathDate !== undefined) frontmatter.died = person.deathDate || '';
 		if (person.sex !== undefined) {
@@ -1047,6 +1054,49 @@ export async function updatePersonNote(
 				frontmatter.research_level = person.researchLevel;
 			} else {
 				delete frontmatter.research_level;
+			}
+		}
+		// DNA tracking fields
+		if (person.dnaSharedCm !== undefined) {
+			if (typeof person.dnaSharedCm === 'number') {
+				frontmatter.dna_shared_cm = person.dnaSharedCm;
+			} else {
+				delete frontmatter.dna_shared_cm;
+			}
+		}
+		if (person.dnaTestingCompany !== undefined) {
+			if (person.dnaTestingCompany) {
+				frontmatter.dna_testing_company = person.dnaTestingCompany;
+			} else {
+				delete frontmatter.dna_testing_company;
+			}
+		}
+		if (person.dnaKitId !== undefined) {
+			if (person.dnaKitId) {
+				frontmatter.dna_kit_id = person.dnaKitId;
+			} else {
+				delete frontmatter.dna_kit_id;
+			}
+		}
+		if (person.dnaMatchType !== undefined) {
+			if (person.dnaMatchType) {
+				frontmatter.dna_match_type = person.dnaMatchType;
+			} else {
+				delete frontmatter.dna_match_type;
+			}
+		}
+		if (person.dnaEndogamyFlag !== undefined) {
+			if (typeof person.dnaEndogamyFlag === 'boolean') {
+				frontmatter.dna_endogamy_flag = person.dnaEndogamyFlag;
+			} else {
+				delete frontmatter.dna_endogamy_flag;
+			}
+		}
+		if (person.dnaNotes !== undefined) {
+			if (person.dnaNotes) {
+				frontmatter.dna_notes = person.dnaNotes;
+			} else {
+				delete frontmatter.dna_notes;
 			}
 		}
 		// Handle birth place (dual storage: wikilink + ID)
