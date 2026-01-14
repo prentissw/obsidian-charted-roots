@@ -2384,6 +2384,8 @@ export class DataQualityService {
 			orphanClearing: [],
 			legacyTypeMigration: [],
 			legacyMembershipsMigration: [],
+			missingIdRepairs: [],
+			unresolvableWikilinks: [],
 		};
 
 		// Build lookup of valid cr_ids for orphan detection
@@ -2523,10 +2525,126 @@ export class DataQualityService {
 						});
 					}
 				}
+
+				// Check for missing relationship IDs (when PersonIndexService is available)
+				if (this.personIndex) {
+					this.previewMissingIdRepairs(person, fm, preview);
+				}
 			}
 		}
 
 		return preview;
+	}
+
+	/**
+	 * Check for missing relationship IDs and populate preview arrays
+	 */
+	private previewMissingIdRepairs(
+		person: PersonNode,
+		fm: Record<string, unknown>,
+		preview: NormalizationPreview
+	): void {
+		// Relationship fields that use the wikilink + _id dual storage pattern
+		const relationshipFields = [
+			'father', 'mother', 'spouse', 'children', 'parents',
+			'stepfather', 'stepmother', 'adoptive_father',
+			'adoptive_mother', 'adoptive_parent',
+			// Custom relationship types
+			'mentor', 'disciple', 'godparent', 'godchild',
+			'guardian', 'ward', 'master', 'apprentice',
+			'employer', 'employee', 'liege', 'vassal',
+			'dna_match'
+		];
+
+		for (const field of relationshipFields) {
+			const idField = `${field}_id`;
+			const value = fm[field];
+			const idValue = fm[idField];
+
+			if (!value) {
+				continue;
+			}
+
+			// Handle both single values and arrays
+			const values = Array.isArray(value) ? value : [value];
+			const idValues = idValue ? (Array.isArray(idValue) ? idValue : [idValue]) : [];
+
+			for (let i = 0; i < values.length; i++) {
+				const val = values[i];
+
+				// Skip if this index already has an ID
+				if (idValues[i]) {
+					continue;
+				}
+
+				if (typeof val === 'string' && val.includes('[[')) {
+					// Extract wikilink text
+					const match = val.match(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/);
+					if (match) {
+						const wikilinkPath = match[1];
+
+						// Try to resolve the wikilink
+						const resolvedCrId = this.personIndex!.getCrIdByWikilink(wikilinkPath);
+
+						if (resolvedCrId) {
+							// Get target name for display
+							const targetFile = this.personIndex!.getFileByCrId(resolvedCrId);
+							const targetCache = targetFile ? this.app.metadataCache.getFileCache(targetFile) : null;
+							const targetName = targetCache?.frontmatter?.name || targetFile?.basename || wikilinkPath;
+
+							preview.missingIdRepairs.push({
+								person,
+								field,
+								wikilink: val,
+								resolvedCrId,
+								targetName,
+								arrayIndex: values.length > 1 ? i : undefined,
+							});
+						} else if (this.personIndex!.hasAmbiguousFilename(wikilinkPath)) {
+							const matchCount = this.personIndex!.getFilesWithBasename(wikilinkPath).length;
+							preview.unresolvableWikilinks.push({
+								person,
+								field,
+								wikilink: val,
+								reason: 'ambiguous',
+								details: `Matches ${matchCount} files`,
+							});
+						} else {
+							// Check if file exists but is missing cr_id
+							const files = this.personIndex!.getFilesWithBasename(wikilinkPath);
+							if (files.length === 1) {
+								const targetCache = this.app.metadataCache.getFileCache(files[0]);
+								if (targetCache?.frontmatter && !targetCache.frontmatter.cr_id) {
+									preview.unresolvableWikilinks.push({
+										person,
+										field,
+										wikilink: val,
+										reason: 'target_missing_crid',
+										details: `Target file ${files[0].basename} has no cr_id`,
+									});
+								} else {
+									preview.unresolvableWikilinks.push({
+										person,
+										field,
+										wikilink: val,
+										reason: 'broken',
+										details: 'No matching file found',
+									});
+								}
+							} else {
+								preview.unresolvableWikilinks.push({
+									person,
+									field,
+									wikilink: val,
+									reason: 'broken',
+									details: 'No matching file found',
+								});
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	/**
