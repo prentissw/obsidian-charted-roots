@@ -239,7 +239,8 @@ export class RelationshipService {
 			religious: 0,
 			professional: 0,
 			social: 0,
-			feudal: 0
+			feudal: 0,
+			dna: 0
 		};
 
 		for (const rel of definedRels) {
