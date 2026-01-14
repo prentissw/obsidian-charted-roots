@@ -444,6 +444,9 @@ export interface CanvasRootsSettings {
 	enableInclusiveParents: boolean;
 	/** Label for gender-neutral parent field (e.g., "Parents", "Guardians", "Progenitors") */
 	parentFieldLabel: string;
+	// DNA match tracking (opt-in feature)
+	/** Enable DNA match tracking features (person subtype, relationship type, UI fields) */
+	enableDnaTracking: boolean;
 	// Plugin rename migration (Charted Roots → Charted Roots)
 	/**
 	 * True when migration from Charted Roots to Charted Roots is complete.
@@ -791,7 +794,9 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	frozenGalleryCalloutType: 'info',          // Callout type for frozen media galleries
 	// Inclusive parent relationships (opt-in feature)
 	enableInclusiveParents: false,             // Default: OFF - users opt-in to gender-neutral parents
-	parentFieldLabel: 'Parents'                // Default label for gender-neutral parent field
+	parentFieldLabel: 'Parents',               // Default label for gender-neutral parent field
+	// DNA match tracking (opt-in feature)
+	enableDnaTracking: false                   // Default: OFF - users opt-in to DNA match tracking
 };
 
 export class CanvasRootsSettingTab extends PluginSettingTab {
