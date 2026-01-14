@@ -2507,6 +2507,7 @@ export class CreatePersonModal extends Modal {
 			// Build person data with relationships
 			const data: Partial<PersonData> = {
 				name: this.personData.name,
+				personType: this.personData.personType,
 				birthDate: this.personData.birthDate,
 				deathDate: this.personData.deathDate,
 				sex: this.personData.sex,
@@ -2518,7 +2519,14 @@ export class CreatePersonModal extends Modal {
 				givenName: this.personData.givenName,
 				surnames: this.personData.surnames,
 				maidenName: this.personData.maidenName,
-				marriedNames: this.personData.marriedNames
+				marriedNames: this.personData.marriedNames,
+				// DNA tracking fields
+				dnaSharedCm: this.personData.dnaSharedCm,
+				dnaTestingCompany: this.personData.dnaTestingCompany,
+				dnaKitId: this.personData.dnaKitId,
+				dnaMatchType: this.personData.dnaMatchType,
+				dnaEndogamyFlag: this.personData.dnaEndogamyFlag,
+				dnaNotes: this.personData.dnaNotes
 			};
 
 			// Add father relationship
