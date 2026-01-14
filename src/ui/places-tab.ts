@@ -73,7 +73,7 @@ export function renderPlacesTab(
 		.addButton(button => button
 			.setButtonText('Create')
 			.onClick(() => {
-				plugin.app.commands.executeCommandById('canvas-roots:create-places-base-template');
+				plugin.app.commands.executeCommandById('charted-roots:create-places-base-template');
 			}));
 
 	container.appendChild(actionsCard);

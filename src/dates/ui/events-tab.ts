@@ -100,7 +100,7 @@ function renderEventNotesCard(
 		.addButton(button => button
 			.setButtonText('Create')
 			.onClick(() => {
-				plugin.app.commands.executeCommandById('canvas-roots:create-events-base-template');
+				plugin.app.commands.executeCommandById('charted-roots:create-events-base-template');
 			}));
 
 	// Templater templates button

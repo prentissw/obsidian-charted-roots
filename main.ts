@@ -473,10 +473,10 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 		});
 
-		// Add command: Regenerate Canvas
+		// Add command: Regenerate Tree
 		this.addCommand({
-			id: 'regenerate-canvas',
-			name: 'Regenerate canvas',
+			id: 'regenerate-tree',
+			name: 'Regenerate tree',
 			callback: () => {
 				const activeFile = this.app.workspace.getActiveFile();
 
@@ -817,10 +817,10 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 		});
 
-		// Add command: Split Canvas Wizard
+		// Add command: Split Tree Wizard
 		this.addCommand({
-			id: 'split-canvas-wizard',
-			name: 'Split canvas wizard',
+			id: 'split-tree-wizard',
+			name: 'Split tree wizard',
 			callback: () => {
 				new SplitWizardModal(this.app, this.settings, this.folderFilter ?? undefined).open();
 			}

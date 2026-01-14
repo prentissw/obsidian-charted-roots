@@ -1995,12 +1995,12 @@ export class ControlCenterModal extends Modal {
 		});
 
 		const baseTemplates = [
-			{ icon: 'user', title: 'People', desc: 'Family members with relationships', command: 'canvas-roots:create-base-template' },
-			{ icon: 'map-pin', title: 'Places', desc: 'Geographic locations', command: 'canvas-roots:create-places-base-template' },
-			{ icon: 'calendar', title: 'Events', desc: 'Life events and milestones', command: 'canvas-roots:create-events-base-template' },
-			{ icon: 'building', title: 'Organizations', desc: 'Businesses, churches, schools', command: 'canvas-roots:create-organizations-base-template' },
-			{ icon: 'book', title: 'Sources', desc: 'Citations and references', command: 'canvas-roots:create-sources-base-template' },
-			{ icon: 'globe', title: 'Universes', desc: 'Fictional worlds and settings', command: 'canvas-roots:create-universes-base-template' }
+			{ icon: 'user', title: 'People', desc: 'Family members with relationships', command: 'charted-roots:create-base-template' },
+			{ icon: 'map-pin', title: 'Places', desc: 'Geographic locations', command: 'charted-roots:create-places-base-template' },
+			{ icon: 'calendar', title: 'Events', desc: 'Life events and milestones', command: 'charted-roots:create-events-base-template' },
+			{ icon: 'building', title: 'Organizations', desc: 'Businesses, churches, schools', command: 'charted-roots:create-organizations-base-template' },
+			{ icon: 'book', title: 'Sources', desc: 'Citations and references', command: 'charted-roots:create-sources-base-template' },
+			{ icon: 'globe', title: 'Universes', desc: 'Fictional worlds and settings', command: 'charted-roots:create-universes-base-template' }
 		];
 
 		const templateGrid = templatesContent.createDiv({ cls: 'crc-template-grid' });
@@ -2026,7 +2026,7 @@ export class ControlCenterModal extends Modal {
 		});
 		createAllBtn.addEventListener('click', () => {
 			this.close();
-			this.app.commands.executeCommandById('canvas-roots:create-all-bases');
+			this.app.commands.executeCommandById('charted-roots:create-all-bases');
 		});
 
 		container.appendChild(templatesCard);
@@ -2280,7 +2280,7 @@ export class ControlCenterModal extends Modal {
 			.addButton(button => button
 				.setButtonText('Create')
 				.onClick(() => {
-					this.app.commands.executeCommandById('canvas-roots:create-base-template');
+					this.app.commands.executeCommandById('charted-roots:create-base-template');
 				}));
 
 		new Setting(actionsContent)
@@ -9484,12 +9484,12 @@ export class ControlCenterModal extends Modal {
 		});
 
 		const baseTypes = [
-			{ value: 'people', label: 'People', command: 'canvas-roots:create-base-template' },
-			{ value: 'places', label: 'Places', command: 'canvas-roots:create-places-base-template' },
-			{ value: 'events', label: 'Events', command: 'canvas-roots:create-events-base-template' },
-			{ value: 'organizations', label: 'Organizations', command: 'canvas-roots:create-organizations-base-template' },
-			{ value: 'sources', label: 'Sources', command: 'canvas-roots:create-sources-base-template' },
-			{ value: 'universes', label: 'Universes', command: 'canvas-roots:create-universes-base-template' }
+			{ value: 'people', label: 'People', command: 'charted-roots:create-base-template' },
+			{ value: 'places', label: 'Places', command: 'charted-roots:create-places-base-template' },
+			{ value: 'events', label: 'Events', command: 'charted-roots:create-events-base-template' },
+			{ value: 'organizations', label: 'Organizations', command: 'charted-roots:create-organizations-base-template' },
+			{ value: 'sources', label: 'Sources', command: 'charted-roots:create-sources-base-template' },
+			{ value: 'universes', label: 'Universes', command: 'charted-roots:create-universes-base-template' }
 		];
 
 		let selectedBaseType = baseTypes[0];

@@ -532,7 +532,7 @@ function renderDataToolsCard(
 			.setButtonText('Create template')
 			.setCta()
 			.onClick(() => {
-				plugin.app.commands.executeCommandById('canvas-roots:create-organizations-base-template');
+				plugin.app.commands.executeCommandById('charted-roots:create-organizations-base-template');
 			})
 		);
 

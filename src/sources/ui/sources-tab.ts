@@ -170,7 +170,7 @@ function renderSourcesListCard(
 			.setButtonText('Create')
 			.setCta()
 			.onClick(() => {
-				plugin.app.commands.executeCommandById('canvas-roots:create-source-note');
+				plugin.app.commands.executeCommandById('charted-roots:create-source-note');
 			}));
 
 	// Create base button
@@ -180,7 +180,7 @@ function renderSourcesListCard(
 		.addButton(button => button
 			.setButtonText('Create')
 			.onClick(() => {
-				plugin.app.commands.executeCommandById('canvas-roots:create-sources-base-template');
+				plugin.app.commands.executeCommandById('charted-roots:create-sources-base-template');
 			}));
 
 	// Import source images button
