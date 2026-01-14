@@ -5,7 +5,7 @@
  * in addition to person notes.
  */
 
-import { App, Notice, TFile, TFolder, normalizePath } from 'obsidian';
+import { App, Notice, TFile, TFolder, Vault, normalizePath } from 'obsidian';
 import { GedcomParserV2 } from './gedcom-parser-v2';
 import {
 	GedcomDataV2,
@@ -487,6 +487,7 @@ export class GedcomImporterV2 {
 			if (options.createSourceNotes && gedcomData.sources.size > 0) {
 				const totalSources = gedcomData.sources.size;
 				let sourceIndex = 0;
+				const YIELD_INTERVAL = 50; // Yield every N iterations to keep UI responsive
 				for (const [sourceId, source] of gedcomData.sources) {
 					reportProgress({ phase: 'sources', current: sourceIndex, total: totalSources });
 					try {
@@ -499,6 +500,10 @@ export class GedcomImporterV2 {
 						);
 					}
 					sourceIndex++;
+					// Yield periodically to prevent UI freezing
+					if (sourceIndex % YIELD_INTERVAL === 0) {
+						await this.yieldToEventLoop();
+					}
 				}
 			}
 
@@ -513,6 +518,7 @@ export class GedcomImporterV2 {
 
 				const totalNotes = gedcomData.notes.size;
 				let noteIndex = 0;
+				const YIELD_INTERVAL = 50; // Yield every N iterations to keep UI responsive
 
 				for (const [noteId, noteRecord] of gedcomData.notes) {
 					try {
@@ -539,6 +545,10 @@ export class GedcomImporterV2 {
 					}
 					noteIndex++;
 					reportProgress({ phase: 'people', current: noteIndex, total: totalNotes, message: `Creating note files (${noteIndex}/${totalNotes})...` });
+					// Yield periodically to prevent UI freezing
+					if (noteIndex % YIELD_INTERVAL === 0) {
+						await this.yieldToEventLoop();
+					}
 				}
 			}
 
@@ -549,6 +559,7 @@ export class GedcomImporterV2 {
 				// Track created person paths to handle duplicate filenames
 				// (vault indexing may not catch up fast enough between sequential creates)
 				const createdPersonPaths = new Set<string>();
+				const YIELD_INTERVAL = 50; // Yield every N iterations to keep UI responsive
 				for (const [gedcomId, individual] of gedcomData.individuals) {
 					reportProgress({ phase: 'people', current: personIndex, total: totalPeople });
 					try {
@@ -572,6 +583,10 @@ export class GedcomImporterV2 {
 						);
 					}
 					personIndex++;
+					// Yield periodically to prevent UI freezing
+					if (personIndex % YIELD_INTERVAL === 0) {
+						await this.yieldToEventLoop();
+					}
 				}
 
 				// Phase 2: Update relationships with real cr_ids
@@ -591,6 +606,10 @@ export class GedcomImporterV2 {
 						);
 					}
 					relIndex++;
+					// Yield periodically to prevent UI freezing
+					if (relIndex % YIELD_INTERVAL === 0) {
+						await this.yieldToEventLoop();
+					}
 				}
 			}
 
@@ -600,6 +619,7 @@ export class GedcomImporterV2 {
 				// Track created event paths to handle duplicate filenames
 				// (vault indexing may not catch up fast enough between sequential creates)
 				const createdEventPaths = new Set<string>();
+				const YIELD_INTERVAL = 50; // Yield every N iterations to keep UI responsive
 
 				// Individual events
 				for (const individual of gedcomData.individuals.values()) {
@@ -624,6 +644,10 @@ export class GedcomImporterV2 {
 							);
 						}
 						eventIndex++;
+						// Yield periodically to prevent UI freezing
+						if (eventIndex % YIELD_INTERVAL === 0) {
+							await this.yieldToEventLoop();
+						}
 					}
 				}
 
@@ -652,6 +676,10 @@ export class GedcomImporterV2 {
 							);
 						}
 						eventIndex++;
+						// Yield periodically to prevent UI freezing
+						if (eventIndex % YIELD_INTERVAL === 0) {
+							await this.yieldToEventLoop();
+						}
 					}
 				}
 			}
@@ -1317,15 +1345,19 @@ export class GedcomImporterV2 {
 		const fileName = this.formatFilename(title, eventFormat);
 		const filePath = normalizePath(`${options.eventsFolder}/${fileName}`);
 
-		// Handle duplicate filenames
+		// Handle duplicate filenames with safety limit to prevent infinite loops
 		// Check both the vault and the set of paths created during this import session
 		// (vault indexing may not have caught up yet for recently created files)
 		let finalPath = filePath;
 		let counter = 1;
-		while (this.app.vault.getAbstractFileByPath(finalPath) || createdEventPaths?.has(finalPath)) {
+		const MAX_DUPLICATE_ATTEMPTS = 1000;
+		while ((this.app.vault.getAbstractFileByPath(finalPath) || createdEventPaths?.has(finalPath)) && counter < MAX_DUPLICATE_ATTEMPTS) {
 			const baseName = this.formatFilename(`${title}-${counter}`, eventFormat);
 			finalPath = normalizePath(`${options.eventsFolder}/${baseName}`);
 			counter++;
+		}
+		if (counter >= MAX_DUPLICATE_ATTEMPTS) {
+			throw new Error(`Too many duplicate event files with name "${title}"`);
 		}
 
 		// Track this path as created before actually creating the file
@@ -1475,13 +1507,17 @@ export class GedcomImporterV2 {
 		const fileName = this.formatFilename(title, sourceFormat);
 		const filePath = normalizePath(`${options.sourcesFolder}/${fileName}`);
 
-		// Handle duplicate filenames
+		// Handle duplicate filenames with safety limit to prevent infinite loops
 		let finalPath = filePath;
 		let counter = 1;
-		while (this.app.vault.getAbstractFileByPath(finalPath)) {
+		const MAX_DUPLICATE_ATTEMPTS = 1000;
+		while (this.app.vault.getAbstractFileByPath(finalPath) && counter < MAX_DUPLICATE_ATTEMPTS) {
 			const baseName = this.formatFilename(`${title}-${counter}`, sourceFormat);
 			finalPath = normalizePath(`${options.sourcesFolder}/${baseName}`);
 			counter++;
+		}
+		if (counter >= MAX_DUPLICATE_ATTEMPTS) {
+			throw new Error(`Too many duplicate source files with name "${title}"`);
 		}
 
 		await this.app.vault.create(finalPath, content);
@@ -1491,6 +1527,14 @@ export class GedcomImporterV2 {
 	// ============================================================================
 	// Private: Utilities
 	// ============================================================================
+
+	/**
+	 * Yield to the event loop to prevent UI freezing.
+	 * Uses setTimeout with 0ms which defers to the next event loop iteration.
+	 */
+	private async yieldToEventLoop(): Promise<void> {
+		return new Promise(resolve => setTimeout(resolve, 0));
+	}
 
 	/**
 	 * Escape special regex characters in a string
@@ -1814,7 +1858,7 @@ export class GedcomImporterV2 {
 		let updated = 0;
 
 		// Build a cache of existing place notes by full_name for fast lookup
-		const existingPlaces = this.buildExistingPlaceCache();
+		const existingPlaces = this.buildExistingPlaceCache(options.placesFolder);
 
 		// Build a set of all place strings for context-aware type inference
 		const allPlaceStrings = new Set(places.keys());
@@ -1859,14 +1903,36 @@ export class GedcomImporterV2 {
 	 * Indexes by:
 	 * 1. full_name (case-insensitive) - primary lookup
 	 * 2. title + parent combination - fallback for notes without full_name
+	 *
+	 * @param placesFolder - If provided, only scans files in this folder (performance optimization)
 	 */
-	private buildExistingPlaceCache(): {
+	private buildExistingPlaceCache(placesFolder?: string): {
 		byFullName: Map<string, TFile>;
 		byTitleAndParent: Map<string, TFile>;
 	} {
 		const byFullName = new Map<string, TFile>();
 		const byTitleAndParent = new Map<string, TFile>();
-		const files = this.app.vault.getMarkdownFiles();
+
+		// Get files to scan - prefer just the places folder if specified
+		let files: TFile[];
+		if (placesFolder) {
+			const folder = this.app.vault.getAbstractFileByPath(placesFolder);
+			if (folder && folder instanceof TFolder) {
+				// Only get markdown files in the places folder (and subfolders)
+				files = [];
+				Vault.recurseChildren(folder, (file) => {
+					if (file instanceof TFile && file.extension === 'md') {
+						files.push(file);
+					}
+				});
+			} else {
+				// Folder doesn't exist yet, no existing places to cache
+				return { byFullName, byTitleAndParent };
+			}
+		} else {
+			// Fallback to all markdown files (slower)
+			files = this.app.vault.getMarkdownFiles();
+		}
 
 		for (const file of files) {
 			const fileCache = this.app.metadataCache.getFileCache(file);
@@ -2137,13 +2203,17 @@ export class GedcomImporterV2 {
 		const fileName = this.formatFilename(baseName, placeFormat);
 		const filePath = normalizePath(`${options.placesFolder}/${fileName}`);
 
-		// Handle duplicate filenames
+		// Handle duplicate filenames with safety limit to prevent infinite loops
 		let finalPath = filePath;
 		let counter = 1;
-		while (this.app.vault.getAbstractFileByPath(finalPath)) {
+		const MAX_DUPLICATE_ATTEMPTS = 1000;
+		while (this.app.vault.getAbstractFileByPath(finalPath) && counter < MAX_DUPLICATE_ATTEMPTS) {
 			const dupeName = this.formatFilename(`${baseName}-${counter}`, placeFormat);
 			finalPath = normalizePath(`${options.placesFolder}/${dupeName}`);
 			counter++;
+		}
+		if (counter >= MAX_DUPLICATE_ATTEMPTS) {
+			throw new Error(`Too many duplicate place files with name "${baseName}"`);
 		}
 
 		await this.app.vault.create(finalPath, content);

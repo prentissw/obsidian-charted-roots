@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Name components not saving in Edit Person modal** ([#174](https://github.com/banisterious/obsidian-charted-roots/issues/174)): Name component fields (given name, surnames, maiden name, married names) were not being written to frontmatter when editing existing person notes. The fields displayed correctly when reading but changes were not persisted.
+
+- **GEDCOM import freezing on large imports** ([#193](https://github.com/banisterious/obsidian-charted-roots/issues/193)): Added periodic event loop yielding during all import phases (sources, notes, people, relationships, events) to prevent UI freezing. Also added safety limits (max 1000 iterations) to duplicate filename detection loops and optimized place cache building to only scan the places folder instead of all vault files.
+
+- **Source linking via Edit Person uses wrong folder** ([#196](https://github.com/banisterious/obsidian-charted-roots/issues/196)): When linking a source via Edit Person modal, the wikilink now uses the file's basename instead of the frontmatter title. Previously, if the filename differed from the title, clicking the link would create a new file in the vault root instead of opening the existing source.
+
 ---
 
 ## [0.19.7] - 2026-01-13

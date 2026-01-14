@@ -1423,8 +1423,10 @@ export class CreatePersonModal extends Modal {
 					}
 
 					// Add to arrays
+					// Use file basename for wikilink (not title, which may differ from filename)
+					const basename = source.filePath.replace(/\.md$/, '').split('/').pop() || source.title;
 					this.sourcesField.crIds.push(source.crId);
-					this.sourcesField.names.push(source.title);
+					this.sourcesField.names.push(basename);
 					renderSourceList();
 				},
 				excludeSources: this.sourcesField.crIds,
@@ -1448,8 +1450,10 @@ export class CreatePersonModal extends Modal {
 						if (source) {
 							// Check if already added (shouldn't happen but safety check)
 							if (!this.sourcesField.crIds.includes(source.crId)) {
+								// Use file basename for wikilink (not title, which may differ from filename)
+								const basename = file.basename;
 								this.sourcesField.crIds.push(source.crId);
-								this.sourcesField.names.push(source.title);
+								this.sourcesField.names.push(basename);
 								renderSourceList();
 							}
 						}
