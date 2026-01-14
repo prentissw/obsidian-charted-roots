@@ -255,7 +255,22 @@ See the [template documentation](https://github.com/banisterious/obsidian-charte
 
 **Note on other sources:** For API-based place sources (FamilySearch Places API, GeoNames, OpenStreetMap Nominatim), Charted Roots is planning native plugin integration via the **Unified Place Lookup** feature. This will provide a better user experience than Web Clipper templates for API-only sources. See [Place Data Sources Research](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/research/place-data-sources.md) for detailed comparison of all available sources.
 
-If you're interested in helping develop a GOV template or have suggestions for other place sources, please contribute to [issue #128](https://github.com/banisterious/obsidian-charted-roots/issues/128).
+### Potential Future Person/Record Templates
+
+Community members have suggested templates for these genealogy-specific sites:
+
+| Site | Type | Notes |
+|------|------|-------|
+| **JewishGen** | Records database | Jewish genealogical records and databases |
+| **ItalianGen** | Records database | Italian genealogical records |
+| **ReclaimTheRecords** | Vital records | FOIA-obtained vital records collections |
+| **NARA** | Archives | US National Archives catalog and digitized records |
+| **BillionGraves** | Cemetery records | GPS-tagged headstone photos and transcriptions |
+| **Newspapers.com** | Historical newspapers | Obituaries, birth/marriage announcements |
+
+These sites typically have structured page layouts that could work well with CSS selector extraction (no LLM required).
+
+**Interested in developing a template?** Share your work in the [Web Clipper Templates discussion](https://github.com/banisterious/obsidian-charted-roots/discussions/categories/web-clipper-templates).
 
 ---
 
