@@ -3271,6 +3271,7 @@ export class ControlCenterModal extends Modal {
 				editPersonData: {
 					crId: person.crId,
 					name: person.name,
+					personType: fm.personType,
 					sex: fm.sex,
 					gender: fm.gender,
 					pronouns: fm.pronouns,

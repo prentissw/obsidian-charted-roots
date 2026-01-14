@@ -158,6 +158,7 @@ export class CreatePersonModal extends Modal {
 			editPersonData?: {
 				crId: string;
 				name: string;
+				personType?: string;
 				sex?: string;
 				gender?: string; // Kept for backwards compatibility
 				pronouns?: string;
@@ -241,6 +242,7 @@ export class CreatePersonModal extends Modal {
 			this.personData = {
 				name: ep.name,
 				crId: ep.crId,
+				personType: ep.personType,
 				sex: ep.sex || ep.gender, // sex preferred, gender for backwards compatibility
 				pronouns: ep.pronouns,
 				// Name components (#174, #192)
@@ -506,6 +508,20 @@ export class CreatePersonModal extends Modal {
 				.onChange(value => {
 					this.personData.pronouns = value || undefined;
 				}));
+
+		// Person type (only shown when DNA tracking is enabled)
+		if (this.plugin?.settings.enableDnaTracking) {
+			new Setting(form)
+				.setName('Person type')
+				.setDesc('Classify this person (for genetic genealogy workflows)')
+				.addDropdown(dropdown => dropdown
+					.addOption('', '(Regular person)')
+					.addOption('DNA Match', 'DNA Match')
+					.setValue(this.personData.personType || '')
+					.onChange(value => {
+						this.personData.personType = value || undefined;
+					}));
+		}
 
 		// Birth date
 		new Setting(form)
