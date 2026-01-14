@@ -228,6 +228,41 @@ const dnaMatchRelationship: RelationshipTypeDefinition = {
 };
 ```
 
+### Bidirectional Syncing Implementation
+
+**Background:** The existing `BidirectionalLinker` only auto-syncs specific family relationships (spouse, parent/child, adopted, step). Custom relationship types use `symmetric`/`inverse` properties for read-only inference but don't write to frontmatter automatically.
+
+**Approach:** Add a `syncDnaMatch()` method to `BidirectionalLinker`, following the same pattern as `syncSpouse()`:
+
+```typescript
+// In BidirectionalLinker
+private async syncDnaMatch(
+  file: TFile,
+  fm: FrontMatterCache,
+  snapshot: RelationshipSnapshot
+): Promise<void> {
+  // Similar to syncSpouse():
+  // 1. Read dna_match array from frontmatter
+  // 2. For each match, ensure the reverse relationship exists
+  // 3. Handle additions and deletions based on snapshot comparison
+}
+```
+
+**Why this approach:**
+- Users expect that adding a DNA match to Person A shows up in Person B's frontmatter
+- Follows established patterns in the codebase
+- The `syncSpouse()` method provides a working template
+
+**Non-transitive guarantee:** The codebase has no transitive relationship propagation logic. When A↔B and B↔C are created, A↔C is never automatically inferred. This is already the correct behavior — no additional safeguards needed.
+
+### Testing Requirements
+
+Add unit tests to verify:
+1. Adding `dna_match: [[Person B]]` to Person A creates `dna_match: [[Person A]]` on Person B
+2. Removing the match from either side removes it from both
+3. A↔B + B↔C does NOT create A↔C (non-transitive)
+4. DNA relationships don't appear on family tree canvas
+
 ### Edge Styling
 
 - Dashed line style
@@ -243,6 +278,7 @@ When `enableDnaTracking` is on:
 ### Files to Modify
 
 - `src/relationships/constants/default-relationship-types.ts` — Conditional registration
+- `src/core/bidirectional-linker.ts` — Add `syncDnaMatch()` method
 - `src/relationships/relationship-service.ts` — Handle bidirectional creation
 - `src/ui/relationship-picker-modal.ts` — Add DNA option when enabled
 - `src/core/canvas-generator.ts` — Style DNA edges distinctly
@@ -375,9 +411,9 @@ Charted Roots provides a place to **record and organize** key DNA matches alongs
 
 ## Status
 
-| Phase | Status |
-|-------|--------|
-| Phase 1 | Implemented |
-| Phase 2 | Planned |
-| Phase 3 | Planned |
-| Phase 4 | Future Consideration |
+| Phase | Status | Target |
+|-------|--------|--------|
+| Phase 1 | ✅ Implemented | v0.18.x |
+| Phase 2 | Planned | v0.19.9 |
+| Phase 3 | Planned | v0.19.9 |
+| Phase 4 | Future Consideration | — |
