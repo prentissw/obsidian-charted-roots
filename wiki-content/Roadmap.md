@@ -60,7 +60,7 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Priority:** 📋 Medium — Supports GPS methodology for serious genealogists
 
-**Status:** Planning (Phase 1 ready for implementation)
+**Status:** ✅ Phase 1 complete | Phases 2-3 planned
 
 **GitHub Issue:** [#145](https://github.com/banisterious/obsidian-charted-roots/issues/145) (consolidates #124, #125)
 
@@ -68,26 +68,29 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **The Problem:** Serious genealogists need to track research progress, document negative findings, maintain research logs, and synthesize analysis across sources. Current Charted Roots focuses on person/event/source entities but lacks structures for research workflow.
 
-**The Solution:** Four GPS-aligned research entity types:
+**The Solution:** Five GPS-aligned research entity types:
 - **Research Project** — Hub for complex, multi-phase research cases
 - **Research Report** — Living/working document analyzing specific questions
 - **Individual Research Note (IRN)** — Synthesis between reports and person notes
 - **Research Journal** — Optional daily/session tracking across projects
+- **Research Log Entry** — Optional separate notes for queryable research logs
 
 **Phased Approach:**
 
 | Phase | Feature | Status |
 |-------|---------|--------|
-| 1 | Foundation: Entity Recognition & Schemas | Ready for implementation |
+| 1 | Foundation: Entity Recognition & Statistics | ✅ Complete |
 | 2 | Workflow Integration: Tagging & Auto-generation | After Phase 1 feedback |
 | 3 | Advanced Features: Queries & Timeline Views | Future |
 
-**Phase 1 — Foundation:**
-- Entity type recognition for all four types
-- Schema validation with Data Quality integration
-- Simple markdown research logs (no nested YAML parsing — see #181)
+**Phase 1 — Foundation (Complete):**
+- Entity type recognition for all five types via `cr_type` or tags
+- Tag detection including `#irn` shorthand for Individual Research Notes
+- Research entities counted in Statistics view with status breakdowns
 - Properties: `status`, `private`, `up`, `related`, `reportTo`, `subject`
-- No UI changes required
+- Works with DataView and Bases for querying
+
+See [Research Workflow](Research-Workflow) for usage documentation.
 
 **Phase 2 — Workflow Integration (Future):**
 - `needs_research` tagging on person/event/place notes
@@ -105,9 +108,10 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 - **Research logs with negative findings** — Document "searched X, found nothing" scenarios per Mills' methodology
 - **Hierarchical organization** — Use `up`/`related` properties for flexible hierarchy (recognized but not enforced)
 - **IRNs separate from person notes** — Analysis/synthesis vs structured facts (GPS methodology)
-- **Integration with existing features** — Data Quality filtering, schema validation, export privacy
+- **Integration with existing features** — Statistics dashboard, export privacy
 
 **Documentation:**
+- See [Research Workflow](Research-Workflow) for usage documentation
 - See [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/research-workflow-integration.md) for detailed specifications
 - Community contributors: @ANYroots (IRN structure, GPS methodology, templates), @wilbry (lightweight approach, unified design)
 

@@ -3,12 +3,15 @@
 
 set -e
 
+# Store the original directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "📚 Charted Roots Wiki Upload Script"
 echo "===================================="
 echo ""
 
 # Check if wiki-content directory exists
-if [ ! -d "wiki-content" ]; then
+if [ ! -d "$SCRIPT_DIR/wiki-content" ]; then
     echo "❌ Error: wiki-content directory not found"
     exit 1
 fi
@@ -30,7 +33,7 @@ fi
 # Copy all wiki content
 echo "📝 Copying wiki content..."
 cd obsidian-charted-roots.wiki
-cp -r /home/fitz/projects/obsidian-plugins/charted-roots/wiki-content/* .
+cp -r "$SCRIPT_DIR/wiki-content/"* .
 
 # Commit and push
 echo "🚀 Uploading to GitHub..."
@@ -44,5 +47,5 @@ echo "📖 View at: https://github.com/banisterious/obsidian-charted-roots/wiki"
 echo ""
 
 # Cleanup
-cd /home/fitz/projects/obsidian-plugins/charted-roots
+cd "$SCRIPT_DIR"
 echo "🧹 Cleanup complete"

@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.19.x](#v019x)
+  - [Research Workflow Phase 1](#research-workflow-phase-1-v01910)
   - [DNA Match Tracking](#dna-match-tracking-v0199)
   - [Name Components](#name-components-v0197)
   - [Per-Map Marker Assignment](#per-map-marker-assignment-v0196)
@@ -100,6 +101,63 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.19.x
+
+### Research Workflow Phase 1 (v0.19.10)
+
+GPS-aligned research workflow entity types for managing research projects, reports, individual research notes, and research journals within Obsidian.
+
+**GitHub Issue:** [#145](https://github.com/banisterious/obsidian-charted-roots/issues/145) (consolidates #124, #125)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| 5 research entity types | `research_project`, `research_report`, `individual_research_note`, `research_journal`, `research_log_entry` |
+| Note type detection | Recognize entities via `cr_type` frontmatter property |
+| Tag detection | Recognize via tags including `#irn` shorthand for Individual Research Notes |
+| Statistics integration | Research section in Statistics view with entity counts and status breakdowns |
+| Status tracking | Project statuses (open, in-progress, on-hold, completed) and report statuses (draft, review, final, published) |
+
+**Entity Types:**
+
+| Type | Purpose |
+|------|---------|
+| `research_project` | Hub for complex, multi-phase research cases |
+| `research_report` | Living document analyzing specific research questions |
+| `individual_research_note` | Synthesis between reports and person notes (IRN) |
+| `research_journal` | Daily/session tracking across projects |
+| `research_log_entry` | Individual log entries as separate queryable notes |
+
+**Key Properties:**
+
+- `subject` — Links IRN to the person being researched
+- `up` — Links to parent in research hierarchy (project → report, etc.)
+- `status` — Current state of project or report
+- `private` — Exclude from exports when true
+- `related` — Related research entities
+
+**Files Created:**
+
+- `src/research/types/research-types.ts` — Type definitions for research entities
+- `src/research/index.ts` — Module exports
+
+**Files Modified:**
+
+- `src/utils/note-type-detection.ts` — Added research entity types and detection functions
+- `src/statistics/types/statistics-types.ts` — Added research statistics types
+- `src/statistics/services/statistics-service.ts` — Added research entity counting and `getResearchStatistics()`
+- `src/statistics/constants/statistics-constants.ts` — Added RESEARCH section ID
+- `src/statistics/ui/statistics-view.ts` — Added research section with entity cards and status breakdowns
+- `styles/statistics.css` — Added research card and status badge styles
+
+**Documentation:**
+
+- [Research Workflow](Research-Workflow) — User documentation
+- [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/research-workflow-integration.md) — Detailed specifications
+
+**Community Contributors:** @ANYroots (IRN structure, GPS methodology), @wilbry (lightweight approach, research journal concept)
+
+---
 
 ### DNA Match Tracking (v0.19.9)
 
