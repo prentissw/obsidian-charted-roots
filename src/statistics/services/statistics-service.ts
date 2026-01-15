@@ -769,25 +769,28 @@ export class StatisticsService {
 
 	/**
 	 * Get people with a specific surname
+	 *
+	 * Uses extractSurnames() for consistency with surname counting.
+	 * Supports explicit surnames[], maiden_name, and parsed surname from name.
 	 */
 	getPeopleBySurname(surname: string): PersonRef[] {
 		const people = this.getFamilyGraphService().getAllPeople();
 		const matches: PersonRef[] = [];
+		const normalizedSurname = surname.toLowerCase();
 
 		for (const person of people) {
-			if (!person.name) continue;
-			const parts = person.name.trim().split(/\s+/);
-			if (parts.length > 1) {
-				const personSurname = parts[parts.length - 1];
-				if (personSurname.toLowerCase() === surname.toLowerCase()) {
-					const file = this.getPersonFile(person);
-					if (file) {
-						matches.push({
-							crId: person.crId,
-							name: person.name,
-							file
-						});
-					}
+			// Use extractSurnames for consistency with counting logic
+			const surnames = extractSurnames(person);
+			const hasMatch = surnames.some(s => s.toLowerCase() === normalizedSurname);
+
+			if (hasMatch) {
+				const file = this.getPersonFile(person);
+				if (file) {
+					matches.push({
+						crId: person.crId,
+						name: person.name || 'Unknown',
+						file
+					});
 				}
 			}
 		}
