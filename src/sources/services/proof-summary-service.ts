@@ -22,6 +22,7 @@ import type { FactKey, SourceNote, SourceQuality } from '../types/source-types';
 import { FACT_KEYS, getSourceQuality } from '../types/source-types';
 import { SourceService } from './source-service';
 import { generateCrId } from '../../core/uuid';
+import { isProofSummaryNote } from '../../utils/note-type-detection';
 
 /**
  * Service for managing proof summary notes
@@ -273,7 +274,7 @@ export class ProofSummaryService {
 		// Build frontmatter
 		const frontmatterLines: string[] = [
 			'---',
-			'type: proof_summary',
+			'cr_type: proof_summary',
 			`cr_id: ${crId}`,
 			`title: "${data.title.replace(/"/g, '\\"')}"`,
 			`subject_person: "${data.subjectPerson}"`,
@@ -405,8 +406,8 @@ export class ProofSummaryService {
 	 * Parse a file into a ProofSummaryNote object
 	 */
 	parseProofNote(file: TFile, frontmatter: Record<string, unknown>): ProofSummaryNote | null {
-		// Must have type: proof_summary
-		if (frontmatter.type !== 'proof_summary') {
+		// Must be a proof_summary note (supports cr_type, type, or tags)
+		if (!isProofSummaryNote(frontmatter)) {
 			return null;
 		}
 

@@ -262,6 +262,18 @@ function hasSourceProperties(frontmatter: Record<string, unknown>): boolean {
 }
 
 /**
+ * Check if a note has properties that indicate it's a proof summary note
+ * (used to exclude from legacy person detection)
+ */
+function hasProofSummaryProperties(frontmatter: Record<string, unknown>): boolean {
+	return (
+		'subject_person' in frontmatter ||
+		'fact_type' in frontmatter ||
+		'conclusion' in frontmatter
+	);
+}
+
+/**
  * Check if a note is a person note
  */
 export function isPersonNote(
@@ -277,7 +289,8 @@ export function isPersonNote(
 		if (
 			hasPlaceProperties(frontmatter) ||
 			hasEventProperties(frontmatter) ||
-			hasSourceProperties(frontmatter)
+			hasSourceProperties(frontmatter) ||
+			hasProofSummaryProperties(frontmatter)
 		) {
 			return false;
 		}
