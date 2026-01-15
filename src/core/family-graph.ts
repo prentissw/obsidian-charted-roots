@@ -1288,6 +1288,27 @@ export class FamilyGraphService {
 					adoptedChild.adoptiveParentCrIds.push(crId);
 				}
 			}
+
+			// Build reverse adopted child relationships from adoptive parent declarations
+			// If this person has adoptive_father/mother/parent: X, then X should have this person as adopted child
+			if (person.adoptiveFatherCrId) {
+				const adoptiveFather = this.personCache.get(person.adoptiveFatherCrId);
+				if (adoptiveFather && !adoptiveFather.adoptedChildCrIds.includes(crId)) {
+					adoptiveFather.adoptedChildCrIds.push(crId);
+				}
+			}
+			if (person.adoptiveMotherCrId) {
+				const adoptiveMother = this.personCache.get(person.adoptiveMotherCrId);
+				if (adoptiveMother && !adoptiveMother.adoptedChildCrIds.includes(crId)) {
+					adoptiveMother.adoptedChildCrIds.push(crId);
+				}
+			}
+			for (const adoptiveParentCrId of person.adoptiveParentCrIds) {
+				const adoptiveParent = this.personCache.get(adoptiveParentCrId);
+				if (adoptiveParent && !adoptiveParent.adoptedChildCrIds.includes(crId)) {
+					adoptiveParent.adoptedChildCrIds.push(crId);
+				}
+			}
 		}
 
 		// Third pass: count source backlinks for each person

@@ -1226,11 +1226,11 @@ export class FamilyChartView extends ItemView {
 		// the child MUST list the parent back, otherwise family-chart throws
 		// "child has more than 1 parent" error during tree construction
 		// Include biological, gender-neutral, and adoptive children (matching the parent logic above)
-		// Combine childrenCrIds and adoptedChildCrIds for complete child list
-		const allChildIds = [
+		// Combine childrenCrIds and adoptedChildCrIds for complete child list (deduplicated)
+		const allChildIds = [...new Set([
 			...(person.childrenCrIds || []),
 			...(person.adoptedChildCrIds || [])
-		];
+		])];
 		const children = allChildIds.filter(childId => {
 			if (!validIds.has(childId)) return false;
 			// Use the pre-built map for O(1) lookup instead of service call
