@@ -522,6 +522,7 @@ The source classification and citation practices in Charted Roots are informed b
 
 ## Related Pages
 
+- [Research Workflow](Research-Workflow) - GPS-aligned research projects, reports, and IRNs
 - [Canvas Trees](Visual-Trees) - Generate trees with source indicators
 - [Frontmatter Reference](Frontmatter-Reference) - Complete property documentation
 - [Bases Integration](Bases-Integration) - Using Obsidian Bases for data management

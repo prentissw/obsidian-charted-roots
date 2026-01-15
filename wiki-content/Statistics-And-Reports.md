@@ -326,6 +326,7 @@ This summary is useful for quick health checks without opening the full dashboar
 
 ## Related Documentation
 
+- [Research Workflow](Research-Workflow) - Research projects, reports, and IRNs (counted in Statistics)
 - [Data Quality](Data-Quality) - Batch operations for fixing data issues
 - [Evidence And Sources](Evidence-And-Sources) - Managing source citations
 - [Events And Timelines](Events-And-Timelines) - Working with events
