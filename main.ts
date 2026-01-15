@@ -6662,9 +6662,9 @@ export default class CanvasRootsPlugin extends Plugin {
 							propertiesAdded = true;
 						}
 
-						// place_category: Default to 'real' if missing
+						// place_category: Use setting default if missing
 						if (!frontmatter.place_category) {
-							frontmatter.place_category = 'real';
+							frontmatter.place_category = this.settings.defaultPlaceCategory;
 							propertiesAdded = true;
 						}
 					});
