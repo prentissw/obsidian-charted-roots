@@ -911,9 +911,11 @@ export class FamilyCreationWizardModal extends Modal {
 		// Stats summary
 		const stats = content.createDiv({ cls: 'crc-wizard-stats-summary' });
 		const peopleToCreate = this.getPeopleToCreate();
+		const existingPeople = this.getExistingPeopleToLink();
+		const totalPeople = peopleToCreate.length + existingPeople.length;
 
 		const totalStat = stats.createDiv({ cls: 'crc-wizard-stat-card' });
-		totalStat.createDiv({ cls: 'crc-wizard-stat-value' }).setText(String(peopleToCreate.length));
+		totalStat.createDiv({ cls: 'crc-wizard-stat-value' }).setText(String(totalPeople));
 		totalStat.createDiv({ cls: 'crc-wizard-stat-label' }).setText('People');
 
 		const spouseCount = this.state.spouses.length;
@@ -940,33 +942,42 @@ export class FamilyCreationWizardModal extends Modal {
 
 		this.renderFamilyTreePreview(preview);
 
-		// People list
-		const listSection = content.createDiv({ cls: 'crc-wizard-people-list-section' });
-		const listTitle = listSection.createEl('h4');
-		listTitle.setText('People to be created:');
+		// People to create list (new notes)
+		if (peopleToCreate.length > 0) {
+			const createSection = content.createDiv({ cls: 'crc-wizard-people-list-section' });
+			const createTitle = createSection.createEl('h4');
+			createTitle.setText(`New notes to create (${peopleToCreate.length}):`);
 
-		const list = listSection.createDiv({ cls: 'crc-wizard-person-list' });
+			const createList = createSection.createDiv({ cls: 'crc-wizard-person-list' });
 
-		peopleToCreate.forEach(person => {
-			const card = list.createDiv({ cls: 'crc-wizard-person-card' });
-			const cardIcon = card.createDiv({ cls: 'crc-wizard-person-card-icon' });
-			if (person.sex === 'male') {
-				cardIcon.addClass('crc-wizard-person-card-icon--male');
-			} else if (person.sex === 'female') {
-				cardIcon.addClass('crc-wizard-person-card-icon--female');
-			}
-			setIcon(cardIcon, 'user');
+			peopleToCreate.forEach(person => {
+				this.renderPersonListCard(createList, person, false);
+			});
+		}
 
-			const cardInfo = card.createDiv({ cls: 'crc-wizard-person-card-info' });
-			cardInfo.createDiv({ cls: 'crc-wizard-person-card-name' }).setText(person.name || 'Unnamed');
-			if (person.birthDate) {
-				cardInfo.createDiv({ cls: 'crc-wizard-person-card-meta' }).setText(
-					`Born: ${person.birthDate}`
-				);
-			}
-		});
+		// Existing people to link list
+		if (existingPeople.length > 0) {
+			const linkSection = content.createDiv({ cls: 'crc-wizard-people-list-section' });
+			const linkTitle = linkSection.createEl('h4');
+			linkTitle.setText(`Existing notes to link (${existingPeople.length}):`);
 
-		// Footer
+			const linkList = linkSection.createDiv({ cls: 'crc-wizard-person-list' });
+
+			existingPeople.forEach(person => {
+				this.renderPersonListCard(linkList, person, true);
+			});
+		}
+
+		// Footer with appropriate button label
+		let nextLabel: string;
+		if (peopleToCreate.length > 0 && existingPeople.length > 0) {
+			nextLabel = `Create ${peopleToCreate.length} & Link ${existingPeople.length}`;
+		} else if (peopleToCreate.length > 0) {
+			nextLabel = `Create ${peopleToCreate.length} People`;
+		} else {
+			nextLabel = `Link ${existingPeople.length} People`;
+		}
+
 		this.renderFooter({
 			onBack: () => {
 				this.currentStep = 'step4';
@@ -975,8 +986,39 @@ export class FamilyCreationWizardModal extends Modal {
 			onNext: () => {
 				void this.createAllPeople();
 			},
-			nextLabel: `Create ${peopleToCreate.length} People`
+			nextLabel
 		});
+	}
+
+	/**
+	 * Render a person card in the review list
+	 */
+	private renderPersonListCard(container: HTMLElement, person: PendingPerson, isExisting: boolean): void {
+		const card = container.createDiv({ cls: 'crc-wizard-person-card' });
+		if (isExisting) {
+			card.addClass('crc-wizard-person-card--existing');
+		}
+
+		const cardIcon = card.createDiv({ cls: 'crc-wizard-person-card-icon' });
+		if (person.sex === 'male') {
+			cardIcon.addClass('crc-wizard-person-card-icon--male');
+		} else if (person.sex === 'female') {
+			cardIcon.addClass('crc-wizard-person-card-icon--female');
+		}
+		setIcon(cardIcon, isExisting ? 'link' : 'user');
+
+		const cardInfo = card.createDiv({ cls: 'crc-wizard-person-card-info' });
+		cardInfo.createDiv({ cls: 'crc-wizard-person-card-name' }).setText(person.name || 'Unnamed');
+		if (person.birthDate) {
+			cardInfo.createDiv({ cls: 'crc-wizard-person-card-meta' }).setText(
+				`Born: ${person.birthDate}`
+			);
+		}
+		if (isExisting) {
+			cardInfo.createDiv({ cls: 'crc-wizard-person-card-meta crc-text--muted' }).setText(
+				'Existing note'
+			);
+		}
 	}
 
 	/**
@@ -1143,25 +1185,51 @@ export class FamilyCreationWizardModal extends Modal {
 		return this.state.centralPerson?.sex || '';
 	}
 
+	/**
+	 * Get people who need NEW notes created (don't already have files)
+	 */
 	private getPeopleToCreate(): PendingPerson[] {
 		const people: PendingPerson[] = [];
 
 		// Central person (if starting from scratch)
-		if (this.state.mode === 'scratch' && this.state.centralPerson?.name.trim()) {
+		if (this.state.mode === 'scratch' && this.state.centralPerson?.name.trim() && !this.state.centralPerson.file) {
 			people.push(this.state.centralPerson);
 		}
 
-		// Spouses
-		people.push(...this.state.spouses.filter(s => s.name.trim()));
+		// Spouses - only those without existing files
+		people.push(...this.state.spouses.filter(s => s.name.trim() && !s.file));
 
-		// Children
-		people.push(...this.state.children.filter(c => c.name.trim()));
+		// Children - only those without existing files
+		people.push(...this.state.children.filter(c => c.name.trim() && !c.file));
 
-		// Parents
-		if (this.state.father?.name.trim()) {
+		// Parents - only those without existing files
+		if (this.state.father?.name.trim() && !this.state.father.file) {
 			people.push(this.state.father);
 		}
-		if (this.state.mother?.name.trim()) {
+		if (this.state.mother?.name.trim() && !this.state.mother.file) {
+			people.push(this.state.mother);
+		}
+
+		return people;
+	}
+
+	/**
+	 * Get existing people who will be linked (already have files)
+	 */
+	private getExistingPeopleToLink(): PendingPerson[] {
+		const people: PendingPerson[] = [];
+
+		// Spouses with existing files
+		people.push(...this.state.spouses.filter(s => s.name.trim() && s.file));
+
+		// Children with existing files
+		people.push(...this.state.children.filter(c => c.name.trim() && c.file));
+
+		// Parents with existing files
+		if (this.state.father?.name.trim() && this.state.father.file) {
+			people.push(this.state.father);
+		}
+		if (this.state.mother?.name.trim() && this.state.mother.file) {
 			people.push(this.state.mother);
 		}
 
