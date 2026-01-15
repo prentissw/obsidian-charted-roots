@@ -900,11 +900,26 @@ export class StatisticsService {
 		const matches: PersonRef[] = [];
 
 		for (const person of people) {
-			const hasNoRelationships =
+			// Check all parent types: biological, gender-neutral, step, and adoptive
+			const hasNoParents =
 				!person.fatherCrId &&
 				!person.motherCrId &&
+				person.parentCrIds.length === 0 &&
+				person.stepfatherCrIds.length === 0 &&
+				person.stepmotherCrIds.length === 0 &&
+				!person.adoptiveFatherCrId &&
+				!person.adoptiveMotherCrId &&
+				person.adoptiveParentCrIds.length === 0;
+
+			// Check all children types: biological and adopted
+			const hasNoChildren =
+				person.childrenCrIds.length === 0 &&
+				person.adoptedChildCrIds.length === 0;
+
+			const hasNoRelationships =
+				hasNoParents &&
 				person.spouseCrIds.length === 0 &&
-				person.childrenCrIds.length === 0;
+				hasNoChildren;
 
 			if (hasNoRelationships) {
 				const file = this.getPersonFile(person);
