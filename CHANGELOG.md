@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **"Add essential place properties" ignores default category setting** ([#199](https://github.com/banisterious/obsidian-charted-roots/issues/199)): The context menu command now respects the "Default Place Category" setting instead of always defaulting to "real".
+
+---
+
 ## [0.19.9] - 2026-01-14
 
 ### Added
