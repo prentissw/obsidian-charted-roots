@@ -204,18 +204,25 @@ The user's scenario:
 
 ---
 
-## Open Questions
+## Resolved Questions
 
-1. **Default behavior for path resolution?**
-   - If no prefix configured, use filename only?
-   - Or preserve full path and let user fix manually?
+1. **Support for OBJE on events?**
+   - ✅ Yes, include event OBJE support in Phase 1
+   - Per @jeff962: ~90% of media is on individuals, ~9% on events (birth/death certificates), ~1% on other events (occupation, residence)
+   - Event media is common enough to warrant inclusion from the start
 
-2. **Handle missing OBJE records?**
-   - If `1 OBJE @O999@` references non-existent object, warn or skip?
+2. **Default behavior for path resolution?**
+   - ✅ Use filename only as the default (no prefix configured)
+   - Filename-only wikilinks like `[[Hatfield_2022.jpg]]` resolve if the file exists anywhere in the vault
+   - Full absolute paths are unlikely to match another user's vault structure
+   - Users with complex folder structures can configure prefix stripping for precise control
+   - Warn in import summary if potential filename collisions are detected
 
-3. **Support for OBJE on events?**
-   - GEDCOM allows OBJE on event sub-records
-   - Gramps supports this - should we for parity?
+3. **Handle missing OBJE records?**
+   - ✅ Warn and skip with summary reporting
+   - Collect all missing references and report at end: "3 media references could not be resolved: @O999@, @O1001@, @O1002@"
+   - Matches existing behavior for unresolved person handles, missing places, etc.
+   - Informs user without blocking the import
 
 ---
 
