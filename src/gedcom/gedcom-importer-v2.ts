@@ -376,6 +376,9 @@ export class GedcomImporterV2 {
 			placesCreated: 0,
 			placesUpdated: 0,
 			notesImported: 0,
+			mediaObjectsFound: 0,
+			mediaReferencesLinked: 0,
+			unresolvedMediaRefs: [],
 			errors: [],
 			warnings: []
 		};
@@ -441,6 +444,9 @@ export class GedcomImporterV2 {
 				result.preprocessingApplied = preprocessResult.wasPreprocessed;
 				result.preprocessingFixes = preprocessResult.fixes;
 			}
+
+			// Count media objects found
+			result.mediaObjectsFound = gedcomData.media.size;
 
 			// Count events for progress
 			let totalEvents = 0;
@@ -563,7 +569,7 @@ export class GedcomImporterV2 {
 				for (const [gedcomId, individual] of gedcomData.individuals) {
 					reportProgress({ phase: 'people', current: personIndex, total: totalPeople });
 					try {
-						const { crId, notePath, notesCount } = await this.importIndividual(
+						const { crId, notePath, notesCount, mediaCount } = await this.importIndividual(
 							individual,
 							gedcomData,
 							options,
@@ -577,6 +583,9 @@ export class GedcomImporterV2 {
 						gedcomToNotePath.set(gedcomId, notePath);
 						result.individualsImported++;
 						result.notesImported += notesCount;
+						if (result.mediaReferencesLinked !== undefined) {
+							result.mediaReferencesLinked += mediaCount;
+						}
 					} catch (error: unknown) {
 						result.errors.push(
 							`Failed to import ${individual.name || 'Unknown'}: ${getErrorMessage(error)}`
@@ -732,7 +741,7 @@ export class GedcomImporterV2 {
 		placeToNoteInfo: Map<string, PlaceNoteInfo>,
 		createdPersonPaths?: Set<string>,
 		noteIdToWikilink?: Map<string, string>
-	): Promise<{ crId: string; notePath: string; notesCount: number }> {
+	): Promise<{ crId: string; notePath: string; notesCount: number; mediaCount: number }> {
 		const crId = generateCrId();
 
 		// Convert place strings to wikilinks if place notes were created
@@ -919,6 +928,21 @@ export class GedcomImporterV2 {
 			}
 		}
 
+		// Add media references if enabled (default: true)
+		let mediaCount = 0;
+		if (options.importMedia !== false) {
+			const mediaResult = this.resolveMediaRefs(
+				individual.mediaRefs,
+				individual.inlineMedia,
+				gedcomData,
+				options
+			);
+			if (mediaResult.wikilinks.length > 0) {
+				personData.media = mediaResult.wikilinks;
+				mediaCount = mediaResult.wikilinks.length;
+			}
+		}
+
 		// Create person note
 		const file = await createPersonNote(this.app, personData, {
 			directory: options.peopleFolder,
@@ -930,7 +954,7 @@ export class GedcomImporterV2 {
 			createdPaths: createdPersonPaths
 		});
 
-		return { crId, notePath: file.path, notesCount };
+		return { crId, notePath: file.path, notesCount, mediaCount };
 	}
 
 	// ============================================================================
@@ -1571,6 +1595,94 @@ export class GedcomImporterV2 {
 			.split('_')
 			.map(word => word.charAt(0).toUpperCase() + word.slice(1))
 			.join(' ');
+	}
+
+	/**
+	 * Resolve media references for an individual to wikilinks
+	 * @param mediaRefs Array of GEDCOM media IDs
+	 * @param inlineMedia Array of inline media objects
+	 * @param gedcomData Parsed GEDCOM data with media map
+	 * @param options Import options with mediaPathPrefix
+	 * @returns Array of wikilinks to media files
+	 */
+	private resolveMediaRefs(
+		mediaRefs: string[] | undefined,
+		inlineMedia: { filePath: string; title?: string }[] | undefined,
+		gedcomData: GedcomDataV2,
+		options: GedcomImportOptionsV2
+	): { wikilinks: string[]; unresolvedCount: number } {
+		const wikilinks: string[] = [];
+		let unresolvedCount = 0;
+
+		// Process referenced media (OBJE @Oxxxx@)
+		if (mediaRefs && mediaRefs.length > 0) {
+			for (const mediaRef of mediaRefs) {
+				const media = gedcomData.media.get(mediaRef);
+				if (media && media.filePath) {
+					const wikilink = this.mediaPathToWikilink(media.filePath, options.mediaPathPrefix);
+					if (wikilink) {
+						wikilinks.push(wikilink);
+					} else {
+						unresolvedCount++;
+					}
+				} else {
+					unresolvedCount++;
+					logger.warn('resolveMediaRefs', `Media reference not found: ${mediaRef}`);
+				}
+			}
+		}
+
+		// Process inline media (OBJE without pointer)
+		if (inlineMedia && inlineMedia.length > 0) {
+			for (const media of inlineMedia) {
+				if (media.filePath) {
+					const wikilink = this.mediaPathToWikilink(media.filePath, options.mediaPathPrefix);
+					if (wikilink) {
+						wikilinks.push(wikilink);
+					} else {
+						unresolvedCount++;
+					}
+				}
+			}
+		}
+
+		return { wikilinks, unresolvedCount };
+	}
+
+	/**
+	 * Convert a GEDCOM media file path to an Obsidian wikilink
+	 * Strips the configured prefix and extracts just the filename
+	 */
+	private mediaPathToWikilink(filePath: string, pathPrefix?: string): string | null {
+		if (!filePath) return null;
+
+		let resolvedPath = filePath;
+
+		// Strip the configured prefix if present
+		if (pathPrefix) {
+			// Normalize both paths for comparison (handle both / and \)
+			const normalizedPath = filePath.replace(/\\/g, '/');
+			const normalizedPrefix = pathPrefix.replace(/\\/g, '/').replace(/\/$/, ''); // Remove trailing slash
+
+			if (normalizedPath.startsWith(normalizedPrefix)) {
+				// Remove prefix, leaving relative path
+				resolvedPath = normalizedPath.substring(normalizedPrefix.length);
+				// Remove leading slash if present
+				if (resolvedPath.startsWith('/')) {
+					resolvedPath = resolvedPath.substring(1);
+				}
+			} else {
+				// Prefix doesn't match - fall back to filename only
+				resolvedPath = normalizedPath;
+			}
+		}
+
+		// Extract just the filename (default behavior per planning doc)
+		const filename = resolvedPath.split('/').pop() || resolvedPath.split('\\').pop();
+		if (!filename) return null;
+
+		// Return as wikilink
+		return `[[${filename}]]`;
 	}
 
 	/**
