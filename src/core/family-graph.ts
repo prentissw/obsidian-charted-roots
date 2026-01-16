@@ -13,7 +13,7 @@ import { FolderFilterService } from './folder-filter';
 import { PersonIndexService } from './person-index-service';
 import type { CanvasRootsSettings, ValueAliasSettings } from '../settings';
 import { CANONICAL_GENDERS, BUILTIN_SYNONYMS } from './value-alias-service';
-import { isSourceNote, isEventNote, isPlaceNote, isOrganizationNote } from '../utils/note-type-detection';
+import { isSourceNote, isEventNote, isPlaceNote, isOrganizationNote, isProofSummaryNote } from '../utils/note-type-detection';
 import type { RawRelationship, FamilyGraphMapping } from '../relationships/types/relationship-types';
 import { getRelationshipType, getAllRelationshipTypesWithCustomizations } from '../relationships/constants/default-relationship-types';
 
@@ -1425,6 +1425,9 @@ export class FamilyGraphService {
 		}
 		if (isOrganizationNote(fm, cache, noteTypeSettings)) {
 			return { isOrganization: true };
+		}
+		if (isProofSummaryNote(fm, cache, noteTypeSettings)) {
+			return { isProofSummary: true };
 		}
 
 		// Extract name (from frontmatter or filename) with alias support
