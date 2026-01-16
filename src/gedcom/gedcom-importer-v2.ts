@@ -929,10 +929,22 @@ export class GedcomImporterV2 {
 		}
 
 		// Add media references if enabled (default: true)
+		// Collect media from:
+		// 1. Individual-level media refs (1 OBJE @Oxxxx@)
+		// 2. Individual-level inline media (1 OBJE / 2 FILE ...)
+		// 3. Event-level media refs (2 OBJE @Oxxxx@ under BIRT, DEAT, etc.)
 		let mediaCount = 0;
 		if (options.importMedia !== false) {
+			// Collect all media refs including those on events
+			const allMediaRefs = [...individual.mediaRefs];
+			for (const event of individual.events) {
+				if (event.mediaRefs) {
+					allMediaRefs.push(...event.mediaRefs);
+				}
+			}
+
 			const mediaResult = this.resolveMediaRefs(
-				individual.mediaRefs,
+				allMediaRefs,
 				individual.inlineMedia,
 				gedcomData,
 				options
@@ -1345,6 +1357,18 @@ export class GedcomImporterV2 {
 			}
 		}
 
+		// Resolve media references on the event
+		let mediaWikilinks: string[] = [];
+		if (options.importMedia !== false && event.mediaRefs && event.mediaRefs.length > 0) {
+			const mediaResult = this.resolveMediaRefs(
+				event.mediaRefs,
+				undefined, // No inline media on events currently
+				gedcomData,
+				options
+			);
+			mediaWikilinks = mediaResult.wikilinks;
+		}
+
 		// Build event data
 		const eventData: CreateEventData = {
 			title,
@@ -1360,7 +1384,7 @@ export class GedcomImporterV2 {
 
 		// Create the event note file directly (not using EventService to avoid circular deps)
 		const crId = generateCrId();
-		const frontmatterLines = this.buildEventFrontmatter(crId, eventData, sourceWikilinks, placeWikilink);
+		const frontmatterLines = this.buildEventFrontmatter(crId, eventData, sourceWikilinks, placeWikilink, mediaWikilinks);
 		const body = `\n# ${title}\n\n${eventData.description || ''}\n`;
 		const content = frontmatterLines.join('\n') + body;
 
@@ -1416,7 +1440,8 @@ export class GedcomImporterV2 {
 		crId: string,
 		data: CreateEventData,
 		sourceWikilinks: string[] = [],
-		placeWikilink?: string
+		placeWikilink?: string,
+		mediaWikilinks: string[] = []
 	): string[] {
 		const lines: string[] = [
 			'---',
@@ -1456,6 +1481,13 @@ export class GedcomImporterV2 {
 			lines.push(`sources:`);
 			for (const source of sourceWikilinks) {
 				lines.push(`  - "[[${source}]]"`);
+			}
+		}
+		// Add media references as wikilinks
+		if (mediaWikilinks.length > 0) {
+			lines.push(`media:`);
+			for (const media of mediaWikilinks) {
+				lines.push(`  - "${media}"`);
 			}
 		}
 
