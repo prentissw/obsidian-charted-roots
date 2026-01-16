@@ -3206,6 +3206,34 @@ export class ControlCenterModal extends Modal {
 			});
 		}
 
+		// Research coverage badge (when fact-level source tracking is enabled)
+		if (this.plugin.settings.trackFactSourcing) {
+			const evidenceService = new EvidenceService(this.app, this.plugin.settings);
+			const coverage = evidenceService.getFactCoverageForFile(person.file);
+
+			if (coverage && coverage.totalFactCount > 0) {
+				// Determine badge class based on coverage percent
+				let badgeClass = 'crc-person-list-badge';
+				if (coverage.coveragePercent >= 75) {
+					badgeClass += ' crc-person-list-badge--coverage-high';
+				} else if (coverage.coveragePercent >= 50) {
+					badgeClass += ' crc-person-list-badge--coverage-medium';
+				} else {
+					badgeClass += ' crc-person-list-badge--coverage-low';
+				}
+
+				const coverageBadge = actionsCell.createEl('span', {
+					cls: badgeClass,
+					attr: {
+						title: `Research coverage: ${coverage.coveragePercent}% (${coverage.sourcedFactCount}/${coverage.totalFactCount} facts sourced)`
+					}
+				});
+				const bookIcon = createLucideIcon('book-open', 12);
+				coverageBadge.appendChild(bookIcon);
+				coverageBadge.appendText(`${coverage.coveragePercent}%`);
+			}
+		}
+
 		// Open note button
 		const openBtn = actionsCell.createEl('button', {
 			cls: 'crc-person-table__open-btn clickable-icon',
