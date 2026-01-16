@@ -2,7 +2,7 @@
 
 **GitHub Issue:** [#202](https://github.com/banisterious/obsidian-charted-roots/issues/202)
 
-**Status:** Planning
+**Status:** Implemented
 
 ---
 
@@ -172,35 +172,35 @@ The user's scenario:
 
 ## Implementation Plan
 
-### Phase 1: Core OBJE Import
+### Phase 1: Core OBJE Import ✅
 
-1. **Add GEDCOM media types**
+1. **Add GEDCOM media types** ✅
    - Define `GedcomMedia` interface
    - Add `mediaRefs: string[]` to person, family, source types
 
-2. **Implement OBJE parsing**
+2. **Implement OBJE parsing** ✅
    - Parse top-level `0 @Oxxxx@ OBJE` records
    - Build media handle → path map
    - Parse `1 OBJE` references (both pointer and inline forms)
 
-3. **Implement path resolution**
+3. **Implement path resolution** ✅
    - Reuse Gramps pattern with `mediaHandleToPath` map
    - Convert FILE paths to vault-relative wikilinks
    - Use existing media folder setting
 
-4. **Update frontmatter generation**
+4. **Update frontmatter generation** ✅
    - Add `media` property with resolved wikilinks
    - Follow same format as Gramps import
 
-5. **Add import option**
+5. **Add import option** ✅
    - Checkbox: "Import media references"
    - Text field: "External media path prefix" (to strip)
 
-### Phase 2: Validation & Preview (Future)
+### Phase 2: Validation & Preview ✅
 
-1. **Path validation** - Check if files exist
-2. **Preview UI** - Show path mappings before import
-3. **Missing file report** - Summary of unresolved media
+1. **Path validation** ✅ - Check if files exist in vault using `getFirstLinkpathDest`
+2. **Preview UI** ✅ - Show path mappings before import in wizard (up to 3 samples with live updates)
+3. **Missing file report** ✅ - Summary of unresolved media via Notice after import
 
 ---
 

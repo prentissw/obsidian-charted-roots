@@ -566,10 +566,12 @@ export class GedcomImporterV2 {
 				// (vault indexing may not catch up fast enough between sequential creates)
 				const createdPersonPaths = new Set<string>();
 				const YIELD_INTERVAL = 50; // Yield every N iterations to keep UI responsive
+				// Track unique missing media files across all individuals
+				const allMissingMedia = new Set<string>();
 				for (const [gedcomId, individual] of gedcomData.individuals) {
 					reportProgress({ phase: 'people', current: personIndex, total: totalPeople });
 					try {
-						const { crId, notePath, notesCount, mediaCount } = await this.importIndividual(
+						const { crId, notePath, notesCount, mediaCount, missingMedia } = await this.importIndividual(
 							individual,
 							gedcomData,
 							options,
@@ -586,6 +588,10 @@ export class GedcomImporterV2 {
 						if (result.mediaReferencesLinked !== undefined) {
 							result.mediaReferencesLinked += mediaCount;
 						}
+						// Track missing media files (deduplicated)
+						for (const missing of missingMedia) {
+							allMissingMedia.add(missing);
+						}
 					} catch (error: unknown) {
 						result.errors.push(
 							`Failed to import ${individual.name || 'Unknown'}: ${getErrorMessage(error)}`
@@ -597,6 +603,8 @@ export class GedcomImporterV2 {
 						await this.yieldToEventLoop();
 					}
 				}
+				// Store unique missing media in result
+				result.unresolvedMediaRefs = Array.from(allMissingMedia);
 
 				// Phase 2: Update relationships with real cr_ids
 				let relIndex = 0;
@@ -713,11 +721,28 @@ export class GedcomImporterV2 {
 			if (result.notesImported > 0) {
 				importMessage += `, ${result.notesImported} notes`;
 			}
+			if (result.mediaReferencesLinked && result.mediaReferencesLinked > 0) {
+				importMessage += `, ${result.mediaReferencesLinked} media`;
+			}
 			if (result.errors.length > 0) {
 				importMessage += `. ${result.errors.length} errors occurred`;
 			}
 
 			new Notice(importMessage, 8000);
+
+			// Show separate notice for missing media files (if any)
+			if (result.unresolvedMediaRefs && result.unresolvedMediaRefs.length > 0) {
+				const missingCount = result.unresolvedMediaRefs.length;
+				const maxToShow = 3;
+				let missingMsg = `${missingCount} media file${missingCount > 1 ? 's' : ''} not found in vault`;
+				if (missingCount <= maxToShow) {
+					missingMsg += `: ${result.unresolvedMediaRefs.join(', ')}`;
+				} else {
+					missingMsg += `: ${result.unresolvedMediaRefs.slice(0, maxToShow).join(', ')} and ${missingCount - maxToShow} more`;
+				}
+				new Notice(missingMsg, 10000);
+			}
+
 			result.success = result.errors.length === 0;
 
 		} catch (error: unknown) {
@@ -741,7 +766,7 @@ export class GedcomImporterV2 {
 		placeToNoteInfo: Map<string, PlaceNoteInfo>,
 		createdPersonPaths?: Set<string>,
 		noteIdToWikilink?: Map<string, string>
-	): Promise<{ crId: string; notePath: string; notesCount: number; mediaCount: number }> {
+	): Promise<{ crId: string; notePath: string; notesCount: number; mediaCount: number; missingMedia: string[] }> {
 		const crId = generateCrId();
 
 		// Convert place strings to wikilinks if place notes were created
@@ -934,6 +959,7 @@ export class GedcomImporterV2 {
 		// 2. Individual-level inline media (1 OBJE / 2 FILE ...)
 		// 3. Event-level media refs (2 OBJE @Oxxxx@ under BIRT, DEAT, etc.)
 		let mediaCount = 0;
+		let missingMedia: string[] = [];
 		if (options.importMedia !== false) {
 			// Collect all media refs including those on events
 			const allMediaRefs = [...individual.mediaRefs];
@@ -947,12 +973,14 @@ export class GedcomImporterV2 {
 				allMediaRefs,
 				individual.inlineMedia,
 				gedcomData,
-				options
+				options,
+				true // Validate files exist in vault
 			);
 			if (mediaResult.wikilinks.length > 0) {
 				personData.media = mediaResult.wikilinks;
 				mediaCount = mediaResult.wikilinks.length;
 			}
+			missingMedia = mediaResult.missingFiles;
 		}
 
 		// Create person note
@@ -966,7 +994,7 @@ export class GedcomImporterV2 {
 			createdPaths: createdPersonPaths
 		});
 
-		return { crId, notePath: file.path, notesCount, mediaCount };
+		return { crId, notePath: file.path, notesCount, mediaCount, missingMedia };
 	}
 
 	// ============================================================================
@@ -1635,15 +1663,18 @@ export class GedcomImporterV2 {
 	 * @param inlineMedia Array of inline media objects
 	 * @param gedcomData Parsed GEDCOM data with media map
 	 * @param options Import options with mediaPathPrefix
-	 * @returns Array of wikilinks to media files
+	 * @param validateInVault If true, check if files exist in vault and track missing ones
+	 * @returns Array of wikilinks to media files, count of unresolved refs, and list of missing filenames
 	 */
 	private resolveMediaRefs(
 		mediaRefs: string[] | undefined,
 		inlineMedia: { filePath: string; title?: string }[] | undefined,
 		gedcomData: GedcomDataV2,
-		options: GedcomImportOptionsV2
-	): { wikilinks: string[]; unresolvedCount: number } {
+		options: GedcomImportOptionsV2,
+		validateInVault = false
+	): { wikilinks: string[]; unresolvedCount: number; missingFiles: string[] } {
 		const wikilinks: string[] = [];
+		const missingFiles: string[] = [];
 		let unresolvedCount = 0;
 
 		// Process referenced media (OBJE @Oxxxx@)
@@ -1651,9 +1682,16 @@ export class GedcomImporterV2 {
 			for (const mediaRef of mediaRefs) {
 				const media = gedcomData.media.get(mediaRef);
 				if (media && media.filePath) {
-					const wikilink = this.mediaPathToWikilink(media.filePath, options.mediaPathPrefix);
-					if (wikilink) {
-						wikilinks.push(wikilink);
+					const result = this.mediaPathToWikilink(
+						media.filePath,
+						options.mediaPathPrefix,
+						validateInVault
+					);
+					if (result.wikilink) {
+						wikilinks.push(result.wikilink);
+						if (result.fileNotFound) {
+							missingFiles.push(result.filename);
+						}
 					} else {
 						unresolvedCount++;
 					}
@@ -1668,9 +1706,16 @@ export class GedcomImporterV2 {
 		if (inlineMedia && inlineMedia.length > 0) {
 			for (const media of inlineMedia) {
 				if (media.filePath) {
-					const wikilink = this.mediaPathToWikilink(media.filePath, options.mediaPathPrefix);
-					if (wikilink) {
-						wikilinks.push(wikilink);
+					const result = this.mediaPathToWikilink(
+						media.filePath,
+						options.mediaPathPrefix,
+						validateInVault
+					);
+					if (result.wikilink) {
+						wikilinks.push(result.wikilink);
+						if (result.fileNotFound) {
+							missingFiles.push(result.filename);
+						}
 					} else {
 						unresolvedCount++;
 					}
@@ -1678,15 +1723,23 @@ export class GedcomImporterV2 {
 			}
 		}
 
-		return { wikilinks, unresolvedCount };
+		return { wikilinks, unresolvedCount, missingFiles };
 	}
 
 	/**
 	 * Convert a GEDCOM media file path to an Obsidian wikilink
 	 * Strips the configured prefix and extracts just the filename
+	 * @param filePath The file path from GEDCOM
+	 * @param pathPrefix Optional prefix to strip from paths
+	 * @param validateInVault If true, check if the file exists in the vault
+	 * @returns Object with wikilink (or null), filename, and whether file was not found in vault
 	 */
-	private mediaPathToWikilink(filePath: string, pathPrefix?: string): string | null {
-		if (!filePath) return null;
+	private mediaPathToWikilink(
+		filePath: string,
+		pathPrefix?: string,
+		validateInVault = false
+	): { wikilink: string | null; filename: string; fileNotFound: boolean } {
+		if (!filePath) return { wikilink: null, filename: '', fileNotFound: false };
 
 		let resolvedPath = filePath;
 
@@ -1710,11 +1763,22 @@ export class GedcomImporterV2 {
 		}
 
 		// Extract just the filename (default behavior per planning doc)
-		const filename = resolvedPath.split('/').pop() || resolvedPath.split('\\').pop();
-		if (!filename) return null;
+		const filename = resolvedPath.split('/').pop() || resolvedPath.split('\\').pop() || '';
+		if (!filename) return { wikilink: null, filename: '', fileNotFound: false };
 
-		// Return as wikilink
-		return `[[${filename}]]`;
+		// Check if file exists in vault (if validation enabled)
+		let fileNotFound = false;
+		if (validateInVault) {
+			const resolvedFile = this.app.metadataCache.getFirstLinkpathDest(filename, '');
+			fileNotFound = resolvedFile === null;
+		}
+
+		// Return as wikilink (always create wikilink, but flag if file not found)
+		return {
+			wikilink: `[[${filename}]]`,
+			filename,
+			fileNotFound
+		};
 	}
 
 	/**

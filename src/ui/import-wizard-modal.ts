@@ -546,9 +546,83 @@ export class ImportWizardModal extends Modal {
 					value: this.formData.mediaPathPrefix,
 					placeholder: 'e.g., /media/photos/ancestors'
 				});
+
+				// Container for preview (will update dynamically)
+				const previewContainer = entityOptions.createDiv({ cls: 'crc-media-preview-container crc-mt-1' });
+
+				// Function to update the preview
+				const updateMediaPreview = () => {
+					previewContainer.empty();
+					if (!this.formData.parsedData || this.formData.parsedData.media.size === 0) {
+						return;
+					}
+
+					// Get sample media paths (up to 3)
+					const mediaEntries = Array.from(this.formData.parsedData.media.values());
+					const samplesToShow = Math.min(3, mediaEntries.length);
+
+					if (samplesToShow > 0) {
+						const previewEl = previewContainer.createDiv({ cls: 'crc-media-preview' });
+						previewEl.createEl('div', {
+							text: 'Preview:',
+							cls: 'crc-media-preview-label'
+						});
+
+						const listEl = previewEl.createEl('ul', { cls: 'crc-media-preview-list' });
+						for (let i = 0; i < samplesToShow; i++) {
+							const media = mediaEntries[i];
+							const originalPath = media.filePath || '';
+							let resolvedFilename = originalPath;
+
+							// Strip prefix if configured
+							if (this.formData.mediaPathPrefix) {
+								const normalizedPath = originalPath.replace(/\\/g, '/');
+								const normalizedPrefix = this.formData.mediaPathPrefix.replace(/\\/g, '/').replace(/\/$/, '');
+								if (normalizedPath.startsWith(normalizedPrefix)) {
+									resolvedFilename = normalizedPath.substring(normalizedPrefix.length);
+									if (resolvedFilename.startsWith('/')) {
+										resolvedFilename = resolvedFilename.substring(1);
+									}
+								}
+							}
+
+							// Extract filename
+							const filename = resolvedFilename.split('/').pop() || resolvedFilename.split('\\').pop() || resolvedFilename;
+
+							const itemEl = listEl.createEl('li', { cls: 'crc-media-preview-item' });
+							// Show truncated original path → wikilink
+							const truncatedPath = originalPath.length > 40
+								? '...' + originalPath.slice(-37)
+								: originalPath;
+							itemEl.createEl('span', {
+								text: truncatedPath,
+								cls: 'crc-media-path-original',
+								attr: { title: originalPath }
+							});
+							itemEl.createEl('span', { text: ' → ', cls: 'crc-media-path-arrow' });
+							itemEl.createEl('span', {
+								text: `[[${filename}]]`,
+								cls: 'crc-media-path-wikilink'
+							});
+						}
+
+						if (mediaEntries.length > samplesToShow) {
+							previewEl.createEl('div', {
+								text: `...and ${mediaEntries.length - samplesToShow} more`,
+								cls: 'crc-media-preview-more'
+							});
+						}
+					}
+				};
+
+				// Update preview on input change
 				prefixInput.addEventListener('input', () => {
 					this.formData.mediaPathPrefix = prefixInput.value;
+					updateMediaPreview();
 				});
+
+				// Initial preview render
+				updateMediaPreview();
 
 				// Add hint text
 				const hintEl = entityOptions.createDiv({ cls: 'crc-import-option-hint crc-mt-1' });

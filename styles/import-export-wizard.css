@@ -763,6 +763,80 @@
   flex-shrink: 0;
 }
 
+/* Spacing utilities */
+.crc-mt-1 {
+  margin-top: 8px;
+}
+
+/* Option hint text */
+.crc-import-option-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Media path preview */
+.crc-media-preview-container {
+  margin-top: 8px;
+}
+
+.crc-media-preview {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.crc-media-preview-label {
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.crc-media-preview-list {
+  margin: 0;
+  padding: 0 0 0 4px;
+  list-style: none;
+}
+
+.crc-media-preview-item {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.crc-media-preview-item:last-child {
+  margin-bottom: 0;
+}
+
+.crc-media-path-original {
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.crc-media-path-arrow {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.crc-media-path-wikilink {
+  color: var(--text-accent);
+  font-family: var(--font-monospace);
+  font-size: 11px;
+}
+
+.crc-media-preview-more {
+  margin-top: 6px;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
 /* Conflict/choice options */
 .crc-import-conflict-options,
 .crc-export-conflict-options {
