@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **GEDCOM media import** ([#202](https://github.com/banisterious/obsidian-charted-roots/issues/202)): Import media references (OBJE records) from GEDCOM files with full parity to Gramps media handling:
+  - Parses top-level OBJE records and inline media on individuals, families, sources, and events
+  - Resolves external file paths to vault wikilinks (filename-only by default)
+  - Optional path prefix stripping for complex folder structures
+  - Live preview in import wizard showing path → wikilink mappings
+  - Validates files exist in vault and reports missing media after import
+  - Adds `media` property to person and event frontmatter
+
 ### Fixed
 
 - **Research coverage badge not showing in People tab** ([#145](https://github.com/banisterious/obsidian-charted-roots/issues/145)): When "Enable fact-level source tracking" is enabled in settings, the research coverage badge now appears in the Control Center's People tab, showing what percentage of facts are sourced for each person.
