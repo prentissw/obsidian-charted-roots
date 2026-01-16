@@ -12,6 +12,8 @@ import {
 	GedcomSource,
 	GedcomEvent,
 	GedcomSourceCitation,
+	GedcomMedia,
+	GedcomInlineMedia,
 	FamilyAsChildRef,
 	isIndividualEventTag,
 	isFamilyEventTag,
@@ -85,33 +87,38 @@ export class GedcomParserV2 {
 			families: new Map(),
 			sources: new Map(),
 			notes: new Map(),
+			media: new Map(),
 			header: {}
 		};
 
-		let currentRecord: 'INDI' | 'FAM' | 'SOUR' | 'NOTE' | 'HEAD' | null = null;
+		let currentRecord: 'INDI' | 'FAM' | 'SOUR' | 'NOTE' | 'OBJE' | 'HEAD' | null = null;
 		let currentIndividual: GedcomIndividualV2 | null = null;
 		let currentFamily: GedcomFamilyV2 | null = null;
 		let currentSource: GedcomSource | null = null;
 		let currentNoteRecord: { id: string; text: string } | null = null;
+		let currentMedia: GedcomMedia | null = null;
 		let currentEvent: GedcomEvent | null = null;
 		let currentCitation: GedcomSourceCitation | null = null;
 		let currentFamcRef: FamilyAsChildRef | undefined = undefined;
+		let currentInlineMedia: GedcomInlineMedia | undefined = undefined;
 		let contextStack: string[] = [];
 
 		for (const line of lines) {
 			// Level 0 records - start of new record
 			if (line.level === 0) {
 				// Save previous records
-				this.saveCurrentRecords(data, currentIndividual, currentFamily, currentSource, currentNoteRecord, currentEvent);
+				this.saveCurrentRecords(data, currentIndividual, currentFamily, currentSource, currentNoteRecord, currentMedia, currentEvent);
 
 				// Reset state
 				currentIndividual = null;
 				currentFamily = null;
 				currentSource = null;
 				currentNoteRecord = null;
+				currentMedia = null;
 				currentEvent = null;
 				currentCitation = null;
 				currentFamcRef = undefined;
+				currentInlineMedia = undefined;
 				contextStack = [];
 
 				if (line.tag === 'HEAD') {
@@ -132,6 +139,10 @@ export class GedcomParserV2 {
 						id: line.xref,
 						text: line.value || ''
 					};
+				} else if (line.xref && line.tag === 'OBJE') {
+					// Media object record (0 @O205@ OBJE)
+					currentRecord = 'OBJE';
+					currentMedia = this.createEmptyMedia(line.xref);
 				} else if (line.tag === 'TRLR') {
 					currentRecord = null;
 				}
@@ -158,11 +169,13 @@ export class GedcomParserV2 {
 							currentEvent,
 							currentCitation,
 							contextStack,
-							currentFamcRef
+							currentFamcRef,
+							currentInlineMedia
 						);
 						currentEvent = result.currentEvent;
 						currentCitation = result.currentCitation;
 						currentFamcRef = result.currentFamcRef;
+						currentInlineMedia = result.currentInlineMedia;
 					}
 					break;
 
@@ -173,10 +186,12 @@ export class GedcomParserV2 {
 							currentFamily,
 							currentEvent,
 							currentCitation,
-							contextStack
+							contextStack,
+							currentInlineMedia
 						);
 						currentEvent = result.currentEvent;
 						currentCitation = result.currentCitation;
+						currentInlineMedia = result.currentInlineMedia;
 					}
 					break;
 
@@ -196,11 +211,17 @@ export class GedcomParserV2 {
 						currentNoteRecord.text += '\n' + (line.value || '');
 					}
 					break;
+
+				case 'OBJE':
+					if (currentMedia) {
+						this.parseMediaLine(line, currentMedia);
+					}
+					break;
 			}
 		}
 
 		// Save final records
-		this.saveCurrentRecords(data, currentIndividual, currentFamily, currentSource, currentNoteRecord, currentEvent);
+		this.saveCurrentRecords(data, currentIndividual, currentFamily, currentSource, currentNoteRecord, currentMedia, currentEvent);
 
 		// Link families to individuals
 		this.linkFamilies(data);
@@ -307,17 +328,20 @@ export class GedcomParserV2 {
 			families: new Map(),
 			sources: new Map(),
 			notes: new Map(),
+			media: new Map(),
 			header: {}
 		};
 
-		let currentRecord: 'INDI' | 'FAM' | 'SOUR' | 'NOTE' | 'HEAD' | null = null;
+		let currentRecord: 'INDI' | 'FAM' | 'SOUR' | 'NOTE' | 'OBJE' | 'HEAD' | null = null;
 		let currentIndividual: GedcomIndividualV2 | null = null;
 		let currentFamily: GedcomFamilyV2 | null = null;
 		let currentSource: GedcomSource | null = null;
 		let currentNoteRecord: { id: string; text: string } | null = null;
+		let currentMedia: GedcomMedia | null = null;
 		let currentEvent: GedcomEvent | null = null;
 		let currentCitation: GedcomSourceCitation | null = null;
 		let currentFamcRef: FamilyAsChildRef | undefined = undefined;
+		let currentInlineMedia: GedcomInlineMedia | undefined = undefined;
 		let contextStack: string[] = [];
 
 		const totalLines = lines.length;
@@ -329,16 +353,18 @@ export class GedcomParserV2 {
 			// Level 0 records - start of new record
 			if (line.level === 0) {
 				// Save previous records
-				this.saveCurrentRecords(data, currentIndividual, currentFamily, currentSource, currentNoteRecord, currentEvent);
+				this.saveCurrentRecords(data, currentIndividual, currentFamily, currentSource, currentNoteRecord, currentMedia, currentEvent);
 
 				// Reset state
 				currentIndividual = null;
 				currentFamily = null;
 				currentSource = null;
 				currentNoteRecord = null;
+				currentMedia = null;
 				currentEvent = null;
 				currentCitation = null;
 				currentFamcRef = undefined;
+				currentInlineMedia = undefined;
 				contextStack = [];
 
 				if (line.tag === 'HEAD') {
@@ -359,6 +385,10 @@ export class GedcomParserV2 {
 						id: line.xref,
 						text: line.value || ''
 					};
+				} else if (line.xref && line.tag === 'OBJE') {
+					// Media object record (0 @O205@ OBJE)
+					currentRecord = 'OBJE';
+					currentMedia = this.createEmptyMedia(line.xref);
 				} else if (line.tag === 'TRLR') {
 					currentRecord = null;
 				}
@@ -393,11 +423,13 @@ export class GedcomParserV2 {
 							currentEvent,
 							currentCitation,
 							contextStack,
-							currentFamcRef
+							currentFamcRef,
+							currentInlineMedia
 						);
 						currentEvent = result.currentEvent;
 						currentCitation = result.currentCitation;
 						currentFamcRef = result.currentFamcRef;
+						currentInlineMedia = result.currentInlineMedia;
 					}
 					break;
 
@@ -408,10 +440,12 @@ export class GedcomParserV2 {
 							currentFamily,
 							currentEvent,
 							currentCitation,
-							contextStack
+							contextStack,
+							currentInlineMedia
 						);
 						currentEvent = result.currentEvent;
 						currentCitation = result.currentCitation;
+						currentInlineMedia = result.currentInlineMedia;
 					}
 					break;
 
@@ -431,6 +465,12 @@ export class GedcomParserV2 {
 						currentNoteRecord.text += '\n' + (line.value || '');
 					}
 					break;
+
+				case 'OBJE':
+					if (currentMedia) {
+						this.parseMediaLine(line, currentMedia);
+					}
+					break;
 			}
 
 			// Yield periodically
@@ -443,7 +483,7 @@ export class GedcomParserV2 {
 		}
 
 		// Save final records
-		this.saveCurrentRecords(data, currentIndividual, currentFamily, currentSource, currentNoteRecord, currentEvent);
+		this.saveCurrentRecords(data, currentIndividual, currentFamily, currentSource, currentNoteRecord, currentMedia, currentEvent);
 
 		// Link families to individuals
 		this.linkFamilies(data);
@@ -465,7 +505,9 @@ export class GedcomParserV2 {
 			events: [],
 			attributes: {},
 			notes: [],
-			noteRefs: []
+			noteRefs: [],
+			mediaRefs: [],
+			inlineMedia: []
 		};
 	}
 
@@ -475,12 +517,21 @@ export class GedcomParserV2 {
 			childRefs: [],
 			events: [],
 			notes: [],
-			noteRefs: []
+			noteRefs: [],
+			mediaRefs: [],
+			inlineMedia: []
 		};
 	}
 
 	private static createEmptySource(id: string): GedcomSource {
 		return { id };
+	}
+
+	private static createEmptyMedia(id: string): GedcomMedia {
+		return {
+			id,
+			filePath: ''
+		};
 	}
 
 	private static createEmptyEvent(tag: string, isFamilyEvent: boolean): GedcomEvent {
@@ -504,6 +555,7 @@ export class GedcomParserV2 {
 		family: GedcomFamilyV2 | null,
 		source: GedcomSource | null,
 		noteRecord: { id: string; text: string } | null,
+		media: GedcomMedia | null,
 		event: GedcomEvent | null
 	): void {
 		// Save pending event to its parent
@@ -527,6 +579,9 @@ export class GedcomParserV2 {
 		}
 		if (noteRecord && noteRecord.id) {
 			data.notes.set(noteRecord.id, noteRecord);
+		}
+		if (media && media.id && media.filePath) {
+			data.media.set(media.id, media);
 		}
 	}
 
@@ -561,11 +616,13 @@ export class GedcomParserV2 {
 		currentEvent: GedcomEvent | null,
 		currentCitation: GedcomSourceCitation | null,
 		contextStack: string[],
-		currentFamcRef?: FamilyAsChildRef
+		currentFamcRef?: FamilyAsChildRef,
+		currentInlineMedia?: GedcomInlineMedia
 	): {
 		currentEvent: GedcomEvent | null;
 		currentCitation: GedcomSourceCitation | null;
 		currentFamcRef?: FamilyAsChildRef;
+		currentInlineMedia?: GedcomInlineMedia;
 	} {
 		const tag = line.tag;
 		const value = line.value;
@@ -578,6 +635,11 @@ export class GedcomParserV2 {
 				individual.events.push(currentEvent);
 				currentEvent = null;
 			}
+			// Save previous inline media if exists and has a file path
+			if (currentInlineMedia && currentInlineMedia.filePath) {
+				individual.inlineMedia.push(currentInlineMedia);
+				currentInlineMedia = undefined;
+			}
 			currentCitation = null;
 
 			// Check if this is an event tag
@@ -589,7 +651,7 @@ export class GedcomParserV2 {
 				if (value) {
 					currentEvent.description = value;
 				}
-				return { currentEvent, currentCitation, currentFamcRef: undefined };
+				return { currentEvent, currentCitation, currentFamcRef: undefined, currentInlineMedia: undefined };
 			}
 
 			// Check if this is an attribute tag
@@ -598,16 +660,16 @@ export class GedcomParserV2 {
 				if (propName && value) {
 					individual.attributes[propName] = value;
 				}
-				return { currentEvent, currentCitation, currentFamcRef: undefined };
+				return { currentEvent, currentCitation, currentFamcRef: undefined, currentInlineMedia: undefined };
 			}
 
 			// Check for custom _RESEARCH_LEVEL tag (Charted Roots export)
 			if (tag === '_RESEARCH_LEVEL' && value) {
-				const level = parseInt(value, 10);
-				if (!isNaN(level) && level >= 0 && level <= 6) {
-					individual.attributes['researchLevel'] = String(level);
+				const researchLevel = parseInt(value, 10);
+				if (!isNaN(researchLevel) && researchLevel >= 0 && researchLevel <= 6) {
+					individual.attributes['researchLevel'] = String(researchLevel);
 				}
-				return { currentEvent, currentCitation, currentFamcRef: undefined };
+				return { currentEvent, currentCitation, currentFamcRef: undefined, currentInlineMedia: undefined };
 			}
 
 			// Basic individual fields
@@ -623,7 +685,7 @@ export class GedcomParserV2 {
 					const familyRef = value.replace(/@/g, '');
 					currentFamcRef = { familyRef, pedigree: 'birth' };
 					individual.familyAsChildRefs.push(currentFamcRef);
-					return { currentEvent, currentCitation, currentFamcRef };
+					return { currentEvent, currentCitation, currentFamcRef, currentInlineMedia: undefined };
 				}
 				case 'FAMS':
 					individual.familyAsSpouseRefs.push(value.replace(/@/g, ''));
@@ -638,19 +700,46 @@ export class GedcomParserV2 {
 						individual.notes.push(value);
 					}
 					break;
+				case 'OBJE':
+					// Media reference or inline media
+					if (value.startsWith('@') && value.endsWith('@')) {
+						// Reference to top-level OBJE record
+						individual.mediaRefs.push(value.replace(/@/g, ''));
+					} else {
+						// Inline media - start tracking
+						currentInlineMedia = { filePath: '' };
+						return { currentEvent, currentCitation, currentFamcRef: undefined, currentInlineMedia };
+					}
+					break;
 			}
 
-			return { currentEvent, currentCitation, currentFamcRef: undefined };
+			return { currentEvent, currentCitation, currentFamcRef: undefined, currentInlineMedia: undefined };
 		}
 
-		// Level 2: Sub-tags under events, NAME, or FAMC
+		// Level 2: Sub-tags under events, NAME, FAMC, or OBJE
 		if (level === 2) {
 			currentCitation = null;
 
 			// PEDI tag under FAMC - update the pedigree type
 			if (tag === 'PEDI' && currentFamcRef) {
 				currentFamcRef.pedigree = getPedigreeType(value);
-				return { currentEvent, currentCitation, currentFamcRef };
+				return { currentEvent, currentCitation, currentFamcRef, currentInlineMedia };
+			}
+
+			// Under inline media (OBJE)
+			if (currentInlineMedia) {
+				switch (tag) {
+					case 'FILE':
+						currentInlineMedia.filePath = value;
+						break;
+					case 'FORM':
+						currentInlineMedia.format = value;
+						break;
+					case 'TITL':
+						currentInlineMedia.title = value;
+						break;
+				}
+				return { currentEvent, currentCitation, currentFamcRef, currentInlineMedia };
 			}
 
 			// Under an event
@@ -709,6 +798,17 @@ export class GedcomParserV2 {
 							currentEvent.description += '\n' + value;
 						}
 						break;
+
+					case 'OBJE':
+						// Media reference on event
+						if (value.startsWith('@') && value.endsWith('@')) {
+							if (!currentEvent.mediaRefs) {
+								currentEvent.mediaRefs = [];
+							}
+							currentEvent.mediaRefs.push(value.replace(/@/g, ''));
+						}
+						// Note: inline media on events could be added here if needed
+						break;
 				}
 			} else {
 				// Level 2 under NAME
@@ -727,26 +827,40 @@ export class GedcomParserV2 {
 				}
 			}
 
-			return { currentEvent, currentCitation, currentFamcRef };
+			return { currentEvent, currentCitation, currentFamcRef, currentInlineMedia };
 		}
 
-		// Level 3: Sub-tags under source citations
-		if (level === 3 && currentCitation) {
-			switch (tag) {
-				case 'PAGE':
-					currentCitation.page = value;
-					break;
-				case 'QUAY': {
-					const quay = parseInt(value, 10);
-					if (!isNaN(quay)) {
-						currentCitation.quay = quay;
+		// Level 3: Sub-tags under source citations or inline media
+		if (level === 3) {
+			// Under inline media - handle nested tags (FILE may have FORM/TITL at level 3)
+			if (currentInlineMedia) {
+				switch (tag) {
+					case 'FORM':
+						currentInlineMedia.format = value;
+						break;
+					case 'TITL':
+						currentInlineMedia.title = value;
+						break;
+				}
+			}
+			// Under source citation
+			if (currentCitation) {
+				switch (tag) {
+					case 'PAGE':
+						currentCitation.page = value;
+						break;
+					case 'QUAY': {
+						const quay = parseInt(value, 10);
+						if (!isNaN(quay)) {
+							currentCitation.quay = quay;
+						}
+						break;
 					}
-					break;
 				}
 			}
 		}
 
-		return { currentEvent, currentCitation, currentFamcRef };
+		return { currentEvent, currentCitation, currentFamcRef, currentInlineMedia };
 	}
 
 	// ============================================================================
@@ -758,8 +872,9 @@ export class GedcomParserV2 {
 		family: GedcomFamilyV2,
 		currentEvent: GedcomEvent | null,
 		currentCitation: GedcomSourceCitation | null,
-		contextStack: string[]
-	): { currentEvent: GedcomEvent | null; currentCitation: GedcomSourceCitation | null } {
+		contextStack: string[],
+		currentInlineMedia?: GedcomInlineMedia
+	): { currentEvent: GedcomEvent | null; currentCitation: GedcomSourceCitation | null; currentInlineMedia?: GedcomInlineMedia } {
 		const tag = line.tag;
 		const value = line.value;
 		const level = line.level;
@@ -771,6 +886,11 @@ export class GedcomParserV2 {
 				family.events.push(currentEvent);
 				currentEvent = null;
 			}
+			// Save previous inline media if exists and has a file path
+			if (currentInlineMedia && currentInlineMedia.filePath) {
+				family.inlineMedia.push(currentInlineMedia);
+				currentInlineMedia = undefined;
+			}
 			currentCitation = null;
 
 			// Check if this is a family event tag
@@ -778,7 +898,7 @@ export class GedcomParserV2 {
 				currentEvent = this.createEmptyEvent(tag, true);
 				currentEvent.spouse1Ref = family.husbandRef;
 				currentEvent.spouse2Ref = family.wifeRef;
-				return { currentEvent, currentCitation };
+				return { currentEvent, currentCitation, currentInlineMedia: undefined };
 			}
 
 			// Basic family fields
@@ -802,87 +922,142 @@ export class GedcomParserV2 {
 						family.notes.push(value);
 					}
 					break;
+				case 'OBJE':
+					// Media reference or inline media
+					if (value.startsWith('@') && value.endsWith('@')) {
+						// Reference to top-level OBJE record
+						family.mediaRefs.push(value.replace(/@/g, ''));
+					} else {
+						// Inline media - start tracking
+						currentInlineMedia = { filePath: '' };
+						return { currentEvent, currentCitation, currentInlineMedia };
+					}
+					break;
 			}
 
-			return { currentEvent, currentCitation };
+			return { currentEvent, currentCitation, currentInlineMedia: undefined };
 		}
 
-		// Level 2: Sub-tags under events
-		if (level === 2 && currentEvent) {
+		// Level 2: Sub-tags under events or inline media
+		if (level === 2) {
 			currentCitation = null;
 
-			switch (tag) {
-				case 'DATE': {
-					currentEvent.dateRaw = value;
-					const { datePrecision, cleanedDate } = parseDatePrecision(value);
-					currentEvent.datePrecision = datePrecision;
+			// Under inline media (OBJE)
+			if (currentInlineMedia) {
+				switch (tag) {
+					case 'FILE':
+						currentInlineMedia.filePath = value;
+						break;
+					case 'FORM':
+						currentInlineMedia.format = value;
+						break;
+					case 'TITL':
+						currentInlineMedia.title = value;
+						break;
+				}
+				return { currentEvent, currentCitation, currentInlineMedia };
+			}
 
-					// Check for date range
-					const range = parseDateRange(value);
-					if (range) {
-						currentEvent.date = this.gedcomDateToISO(range.startDate);
-						if (range.endDate) {
-							currentEvent.dateEnd = this.gedcomDateToISO(range.endDate);
+			// Under an event
+			if (currentEvent) {
+				switch (tag) {
+					case 'DATE': {
+						currentEvent.dateRaw = value;
+						const { datePrecision, cleanedDate } = parseDatePrecision(value);
+						currentEvent.datePrecision = datePrecision;
+
+						// Check for date range
+						const range = parseDateRange(value);
+						if (range) {
+							currentEvent.date = this.gedcomDateToISO(range.startDate);
+							if (range.endDate) {
+								currentEvent.dateEnd = this.gedcomDateToISO(range.endDate);
+							}
+						} else {
+							currentEvent.date = this.gedcomDateToISO(cleanedDate);
 						}
-					} else {
-						currentEvent.date = this.gedcomDateToISO(cleanedDate);
+
+						// Also update core date on family for compatibility
+						if (currentEvent.tag === 'MARR') {
+							family.marriageDate = value;
+						}
+						break;
 					}
 
-					// Also update core date on family for compatibility
-					if (currentEvent.tag === 'MARR') {
-						family.marriageDate = value;
+					case 'PLAC':
+						currentEvent.place = value;
+						// Also update core place on family for compatibility
+						if (currentEvent.tag === 'MARR') {
+							family.marriagePlace = value;
+						}
+						break;
+
+					case 'SOUR': {
+						// Start a source citation
+						const sourceRef = value.replace(/@/g, '');
+						currentCitation = {
+							sourceRef
+						};
+						currentEvent.sourceRefs.push(sourceRef);
+						currentEvent.sourceCitations.push(currentCitation);
+						break;
 					}
-					break;
-				}
 
-				case 'PLAC':
-					currentEvent.place = value;
-					// Also update core place on family for compatibility
-					if (currentEvent.tag === 'MARR') {
-						family.marriagePlace = value;
-					}
-					break;
+					case 'NOTE':
+						if (!currentEvent.description) {
+							currentEvent.description = value;
+						} else {
+							currentEvent.description += '\n' + value;
+						}
+						break;
 
-				case 'SOUR': {
-					// Start a source citation
-					const sourceRef = value.replace(/@/g, '');
-					currentCitation = {
-						sourceRef
-					};
-					currentEvent.sourceRefs.push(sourceRef);
-					currentEvent.sourceCitations.push(currentCitation);
-					break;
-				}
-
-				case 'NOTE':
-					if (!currentEvent.description) {
-						currentEvent.description = value;
-					} else {
-						currentEvent.description += '\n' + value;
-					}
-					break;
-			}
-
-			return { currentEvent, currentCitation };
-		}
-
-		// Level 3: Sub-tags under source citations
-		if (level === 3 && currentCitation) {
-			switch (tag) {
-				case 'PAGE':
-					currentCitation.page = value;
-					break;
-				case 'QUAY': {
-					const quay = parseInt(value, 10);
-					if (!isNaN(quay)) {
-						currentCitation.quay = quay;
-					}
-					break;
+					case 'OBJE':
+						// Media reference on event
+						if (value.startsWith('@') && value.endsWith('@')) {
+							if (!currentEvent.mediaRefs) {
+								currentEvent.mediaRefs = [];
+							}
+							currentEvent.mediaRefs.push(value.replace(/@/g, ''));
+						}
+						// Note: inline media on events could be added here if needed
+						break;
 				}
 			}
+
+			return { currentEvent, currentCitation, currentInlineMedia };
 		}
 
-		return { currentEvent, currentCitation };
+		// Level 3: Sub-tags under source citations or inline media
+		if (level === 3) {
+			// Under inline media - handle nested tags (FILE may have FORM/TITL at level 3)
+			if (currentInlineMedia) {
+				switch (tag) {
+					case 'FORM':
+						currentInlineMedia.format = value;
+						break;
+					case 'TITL':
+						currentInlineMedia.title = value;
+						break;
+				}
+			}
+			// Under source citation
+			if (currentCitation) {
+				switch (tag) {
+					case 'PAGE':
+						currentCitation.page = value;
+						break;
+					case 'QUAY': {
+						const quay = parseInt(value, 10);
+						if (!isNaN(quay)) {
+							currentCitation.quay = quay;
+						}
+						break;
+					}
+				}
+			}
+		}
+
+		return { currentEvent, currentCitation, currentInlineMedia };
 	}
 
 	// ============================================================================
@@ -909,6 +1084,40 @@ export class GedcomParserV2 {
 				} else {
 					source.notes += '\n' + line.value;
 				}
+				break;
+			case 'OBJE':
+				// Media reference on source
+				if (line.value.startsWith('@') && line.value.endsWith('@')) {
+					if (!source.mediaRefs) {
+						source.mediaRefs = [];
+					}
+					source.mediaRefs.push(line.value.replace(/@/g, ''));
+				}
+				// Note: inline media on sources is rare; skip for now
+				break;
+		}
+	}
+
+	// ============================================================================
+	// Private: Media Parsing
+	// ============================================================================
+
+	private static parseMediaLine(line: GedcomLine, media: GedcomMedia): void {
+		// GEDCOM 5.5.1 OBJE structure:
+		// 0 @O001@ OBJE
+		//   1 FILE /path/to/file.jpg
+		//     2 FORM jpeg
+		//     2 TITL Photo description
+		//   1 TITL Alternative title location (some exporters)
+		switch (line.tag) {
+			case 'FILE':
+				media.filePath = line.value;
+				break;
+			case 'FORM':
+				media.format = line.value;
+				break;
+			case 'TITL':
+				media.title = line.value;
 				break;
 		}
 	}
