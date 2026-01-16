@@ -59,6 +59,7 @@ interface ImportWizardFormData {
 	importMedia: boolean;
 	importNotes: boolean;  // Import notes attached to entities (GEDCOM and Gramps)
 	createSeparateNoteFiles: boolean;  // Create separate note files instead of embedding (GEDCOM and Gramps)
+	mediaPathPrefix: string;  // External media path prefix to strip (GEDCOM only)
 	mediaFolder: string;
 	preserveMediaFolderStructure: boolean;
 	includeDynamicBlocks: boolean;
@@ -195,6 +196,7 @@ export class ImportWizardModal extends Modal {
 			importMedia: true,
 			importNotes: true,  // Default: import notes (GEDCOM and Gramps)
 			createSeparateNoteFiles: false,  // Default: embed notes (GEDCOM and Gramps)
+			mediaPathPrefix: '',  // Default: no prefix stripping
 			mediaFolder: this.plugin?.settings?.mediaFolders?.[0] || 'Charted Roots/Media',
 			preserveMediaFolderStructure: false,
 			includeDynamicBlocks: true,
@@ -509,7 +511,7 @@ export class ImportWizardModal extends Modal {
 			this.formData.importEvents = val;
 		});
 
-		// Notes toggle for GEDCOM format
+		// Notes and Media toggles for GEDCOM format
 		if (this.formData.format === 'gedcom') {
 			this.renderToggleOption(entityOptions, 'Notes', 'Append GEDCOM notes to person content', this.formData.importNotes, (val) => {
 				this.formData.importNotes = val;
@@ -522,6 +524,35 @@ export class ImportWizardModal extends Modal {
 				this.renderToggleOption(entityOptions, 'Create separate note files', 'Create individual note files instead of embedding content', this.formData.createSeparateNoteFiles, (val) => {
 					this.formData.createSeparateNoteFiles = val;
 				});
+			}
+
+			// Media toggle for GEDCOM
+			this.renderToggleOption(entityOptions, 'Media references', 'Link OBJE media references as wikilinks', this.formData.importMedia, (val) => {
+				this.formData.importMedia = val;
+				// Refresh to show/hide path prefix field
+				this.renderCurrentStep();
+			});
+
+			// Show media path prefix option when Media is enabled
+			if (this.formData.importMedia) {
+				const prefixRow = entityOptions.createDiv({ cls: 'crc-import-option-row crc-mt-1' });
+				prefixRow.createEl('label', {
+					text: 'External media path prefix to strip',
+					cls: 'crc-import-option-label'
+				});
+				const prefixInput = prefixRow.createEl('input', {
+					type: 'text',
+					cls: 'crc-import-input',
+					value: this.formData.mediaPathPrefix,
+					placeholder: 'e.g., /media/photos/ancestors'
+				});
+				prefixInput.addEventListener('input', () => {
+					this.formData.mediaPathPrefix = prefixInput.value;
+				});
+
+				// Add hint text
+				const hintEl = entityOptions.createDiv({ cls: 'crc-import-option-hint crc-mt-1' });
+				hintEl.textContent = 'If your GEDCOM has full paths like "/media/photos/ancestors/smith/photo.jpg", enter the prefix to strip. Only the filename will be used as a wikilink.';
 			}
 		}
 
@@ -1027,6 +1058,8 @@ export class ImportWizardModal extends Modal {
 						importNotes: this.formData.importNotes,
 						createSeparateNoteFiles: this.formData.createSeparateNoteFiles,
 						notesFolder: settings.notesFolder,
+						importMedia: this.formData.importMedia,
+						mediaPathPrefix: this.formData.mediaPathPrefix || undefined,
 						includeDynamicBlocks: this.formData.includeDynamicBlocks,
 						dynamicBlockTypes: ['media', 'timeline', 'relationships'],
 						compatibilityMode: settings.gedcomCompatibilityMode,
