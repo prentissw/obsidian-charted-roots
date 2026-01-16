@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Research coverage badge not showing in People tab** ([#145](https://github.com/banisterious/obsidian-charted-roots/issues/145)): When "Enable fact-level source tracking" is enabled in settings, the research coverage badge now appears in the Control Center's People tab, showing what percentage of facts are sourced for each person.
+
 ---
 
 ## [0.19.12] - 2026-01-15
