@@ -22,6 +22,7 @@ const WIKILINK_PATTERN = /^!?\[\[([^\]|]+)(?:\|[^\]]+)?\]\]$/;
  * Check if a string is in wikilink format
  */
 export function isWikilink(value: string): boolean {
+	if (typeof value !== 'string') return false;
 	return WIKILINK_PATTERN.test(value.trim());
 }
 
@@ -31,6 +32,10 @@ export function isWikilink(value: string): boolean {
  * Also handles edge cases where quotes may be embedded
  */
 export function extractWikilinkPath(value: string): string {
+	// Guard against non-string values (e.g., from malformed frontmatter)
+	if (typeof value !== 'string') {
+		return String(value ?? '');
+	}
 	let trimmed = value.trim();
 
 	// Handle case where YAML parsed [["path"]] as a nested structure

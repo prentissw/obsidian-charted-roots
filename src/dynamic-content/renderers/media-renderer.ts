@@ -151,8 +151,9 @@ export class MediaRenderer {
 	/**
 	 * Parse a media wikilink into a MediaItem
 	 */
-	private parseMediaLink(link: string, isFirst: boolean): MediaItem | null {
-		if (!link) return null;
+	private parseMediaLink(link: unknown, isFirst: boolean): MediaItem | null {
+		// Ensure link is a string (frontmatter could contain non-string values)
+		if (!link || typeof link !== 'string') return null;
 
 		// Strip wikilink brackets and handle alias format
 		const path = extractWikilinkPath(link);
