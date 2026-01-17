@@ -210,6 +210,7 @@ export class CreatePersonModal extends Modal {
 				motherName?: string;
 				spouseIds?: string[];
 				spouseNames?: string[];
+				spouseMetadata?: SpouseWithMetadata[];
 				collection?: string;
 				universe?: string;
 				// Step and adoptive parents

@@ -41,6 +41,7 @@ import { SplitWizardModal } from './src/ui/split-wizard-modal';
 import { CreatePlaceModal } from './src/ui/create-place-modal';
 import { CreatePersonModal } from './src/ui/create-person-modal';
 import { CreateMapWizardModal } from './src/ui/create-map-wizard-modal';
+import type { SpouseMetadata } from './src/core/person-note-writer';
 import { PlaceGraphService } from './src/core/place-graph';
 import { MergeDuplicatePlacesModal, findDuplicatePlaceNotes } from './src/ui/merge-duplicate-places-modal';
 import { SchemaService, ValidationService } from './src/schemas';
@@ -5416,20 +5417,50 @@ export default class CanvasRootsPlugin extends Plugin {
 			return match ? match[1] : value;
 		};
 
-		// Extract spouse names/IDs
+		// Extract spouse names/IDs - check for indexed format first (#204)
 		const spouseNames: string[] = [];
 		const spouseIds: string[] = [];
-		if (fm.spouse) {
-			const spouses = Array.isArray(fm.spouse) ? fm.spouse : [fm.spouse];
-			for (const s of spouses) {
-				const name = extractName(String(s));
+		const spouseMetadata: SpouseMetadata[] = [];
+
+		// Check for indexed spouse format (spouse1, spouse1_id, spouse1_marriage_date, etc.)
+		let hasIndexedSpouses = false;
+		for (let i = 1; i <= 10; i++) {
+			const spouseLink = fm[`spouse${i}`];
+			const spouseId = fm[`spouse${i}_id`];
+			if (spouseLink || spouseId) {
+				hasIndexedSpouses = true;
+				const name = extractName(String(spouseLink || ''));
+				const crId = String(spouseId || '');
+
 				if (name) spouseNames.push(name);
+				if (crId) spouseIds.push(crId);
+
+				// Build metadata object
+				spouseMetadata.push({
+					crId: crId || '',
+					name: name || crId || `Spouse ${i}`,
+					marriageDate: fm[`spouse${i}_marriage_date`] as string | undefined,
+					marriageLocation: fm[`spouse${i}_marriage_location`] as string | undefined,
+					marriageStatus: fm[`spouse${i}_marriage_status`] as SpouseMetadata['marriageStatus'],
+					divorceDate: fm[`spouse${i}_divorce_date`] as string | undefined
+				});
 			}
 		}
-		if (fm.spouse_id) {
-			const ids = Array.isArray(fm.spouse_id) ? fm.spouse_id : [fm.spouse_id];
-			for (const id of ids) {
-				spouseIds.push(String(id));
+
+		// Fall back to legacy array format if no indexed spouses found
+		if (!hasIndexedSpouses) {
+			if (fm.spouse) {
+				const spouses = Array.isArray(fm.spouse) ? fm.spouse : [fm.spouse];
+				for (const s of spouses) {
+					const name = extractName(String(s));
+					if (name) spouseNames.push(name);
+				}
+			}
+			if (fm.spouse_id) {
+				const ids = Array.isArray(fm.spouse_id) ? fm.spouse_id : [fm.spouse_id];
+				for (const id of ids) {
+					spouseIds.push(String(id));
+				}
 			}
 		}
 
@@ -5523,6 +5554,7 @@ export default class CanvasRootsPlugin extends Plugin {
 				motherName: extractName(fm.mother),
 				spouseIds: spouseIds.length > 0 ? spouseIds : undefined,
 				spouseNames: spouseNames.length > 0 ? spouseNames : undefined,
+				spouseMetadata: spouseMetadata.length > 0 ? spouseMetadata : undefined,
 				childIds: childIds.length > 0 ? childIds : undefined,
 				childNames: childNames.length > 0 ? childNames : undefined,
 				sourceIds: sourceIds.length > 0 ? sourceIds : undefined,

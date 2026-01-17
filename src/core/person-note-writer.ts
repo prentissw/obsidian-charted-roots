@@ -379,8 +379,38 @@ export async function createPersonNote(
 		logger.debug('mother', `Added (legacy): ${person.mother}`);
 	}
 
-	// Spouse relationship(s) (dual storage)
-	if (person.spouseCrId && person.spouseCrId.length > 0) {
+	// Spouse relationship(s) - use indexed format with metadata when available (#204)
+	const hasSpouseMetadata = person.spouseMetadata?.some(s =>
+		s.marriageDate || s.marriageLocation || s.marriageStatus || s.divorceDate
+	);
+
+	if (hasSpouseMetadata && person.spouseMetadata) {
+		// Write indexed spouse format with metadata (spouse1, spouse1_id, spouse1_marriage_date, etc.)
+		for (let i = 0; i < person.spouseMetadata.length; i++) {
+			const spouse = person.spouseMetadata[i];
+			const idx = i + 1; // 1-indexed
+
+			// Write spouse link and ID
+			frontmatter[prop(`spouse${idx}`)] = `"${createSmartWikilink(spouse.name, app)}"`;
+			frontmatter[prop(`spouse${idx}_id`)] = spouse.crId;
+
+			// Write optional metadata fields
+			if (spouse.marriageDate) {
+				frontmatter[prop(`spouse${idx}_marriage_date`)] = spouse.marriageDate;
+			}
+			if (spouse.marriageLocation) {
+				frontmatter[prop(`spouse${idx}_marriage_location`)] = spouse.marriageLocation;
+			}
+			if (spouse.marriageStatus) {
+				frontmatter[prop(`spouse${idx}_marriage_status`)] = spouse.marriageStatus;
+			}
+			if (spouse.divorceDate) {
+				frontmatter[prop(`spouse${idx}_divorce_date`)] = spouse.divorceDate;
+			}
+		}
+		logger.debug('spouse', `Added (indexed): ${person.spouseMetadata.length} spouses with metadata`);
+	} else if (person.spouseCrId && person.spouseCrId.length > 0) {
+		// Legacy dual storage format (spouse/spouse_id arrays)
 		if (person.spouseName && person.spouseName.length === person.spouseCrId.length) {
 			// Dual storage with both names and IDs
 			if (person.spouseName.length === 1) {
@@ -1218,9 +1248,52 @@ export async function updatePersonNote(
 			}
 		}
 
-		// Handle spouse relationships
-		if (person.spouseCrId !== undefined || person.spouseName !== undefined) {
-			if (person.spouseCrId && person.spouseCrId.length > 0) {
+		// Handle spouse relationships - use indexed format with metadata when available (#204)
+		if (person.spouseCrId !== undefined || person.spouseName !== undefined || person.spouseMetadata !== undefined) {
+			// Check if any spouse has metadata
+			const hasMetadata = person.spouseMetadata?.some(s =>
+				s.marriageDate || s.marriageLocation || s.marriageStatus || s.divorceDate
+			);
+
+			// First, clear any existing indexed spouse properties
+			for (let i = 1; i <= 10; i++) {
+				delete frontmatter[`spouse${i}`];
+				delete frontmatter[`spouse${i}_id`];
+				delete frontmatter[`spouse${i}_marriage_date`];
+				delete frontmatter[`spouse${i}_marriage_location`];
+				delete frontmatter[`spouse${i}_marriage_status`];
+				delete frontmatter[`spouse${i}_divorce_date`];
+			}
+
+			if (hasMetadata && person.spouseMetadata && person.spouseMetadata.length > 0) {
+				// Write indexed spouse format with metadata
+				for (let i = 0; i < person.spouseMetadata.length; i++) {
+					const spouse = person.spouseMetadata[i];
+					const idx = i + 1;
+
+					frontmatter[`spouse${idx}`] = createSmartWikilink(spouse.name, app);
+					frontmatter[`spouse${idx}_id`] = spouse.crId;
+
+					if (spouse.marriageDate) {
+						frontmatter[`spouse${idx}_marriage_date`] = spouse.marriageDate;
+					}
+					if (spouse.marriageLocation) {
+						frontmatter[`spouse${idx}_marriage_location`] = spouse.marriageLocation;
+					}
+					if (spouse.marriageStatus) {
+						frontmatter[`spouse${idx}_marriage_status`] = spouse.marriageStatus;
+					}
+					if (spouse.divorceDate) {
+						frontmatter[`spouse${idx}_divorce_date`] = spouse.divorceDate;
+					}
+				}
+				// Clear legacy arrays when using indexed format
+				delete frontmatter.spouse;
+				delete frontmatter.spouse_id;
+				delete frontmatter.spouses;
+				logger.debug('update-spouse', `Set indexed: ${person.spouseMetadata.length} spouses with metadata`);
+			} else if (person.spouseCrId && person.spouseCrId.length > 0) {
+				// Legacy array format (no metadata)
 				if (person.spouseName && person.spouseName.length === person.spouseCrId.length) {
 					frontmatter.spouse = person.spouseName.length === 1
 						? `${createSmartWikilink(person.spouseName[0], app)}`
