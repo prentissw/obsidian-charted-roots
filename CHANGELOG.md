@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Settings tab UX**: All sections now start collapsed, and toggling settings that trigger a re-render no longer resets section state or scroll position.
 
+- **Create Person modal UX** ([#209](https://github.com/banisterious/obsidian-charted-roots/issues/209)): Reduced modal length with inline expansion for optional sections (DNA, step/adoptive parents, sources), moved birth/death fields higher, and added a sticky footer so action buttons stay visible while scrolling.
+
 ### Fixed
 
 - **Bidirectional relationship normalization bugs** ([#210](https://github.com/banisterious/obsidian-charted-roots/issues/210)): The "Fix bidirectional relationship inconsistencies" operation now respects gender-neutral parents, adoptive relationships, and custom relationship types instead of incorrectly normalizing them to mother/father.
