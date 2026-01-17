@@ -221,11 +221,11 @@ See [Event Type Icons Planning Document](https://github.com/banisterious/obsidia
 
 **Priority:** 💡 Low — Clarity for complex family structures
 
-**Status:** Planning
+**Status:** ✅ Phase 1 complete | Phase 2 planned
 
 **GitHub Issue:** [#195](https://github.com/banisterious/obsidian-charted-roots/issues/195)
 
-**Summary:** Add visual cues to the family chart to clarify relationships when a person has multiple spouses, making it clear who the "hub" person is.
+**Summary:** Visual cues in the family chart clarify relationships when a person has multiple spouses, making it clear who the "hub" person is.
 
 **The Problem:** When displaying multi-spouse families in the family chart, the horizontal layout can be ambiguous:
 
@@ -235,17 +235,18 @@ Philomene > Régis > Morven
 
 This makes it look like Régis connects the other two, when actually Philomene is the person with multiple marriages.
 
-**The Solution:** Add spouse numbering on the connecting edges (①, ② etc.) to indicate marriage order. Numbers work in static exports (PNG, SVG, PDF) unlike hover-based solutions.
+**The Solution:** Spouse numbering on connecting edges (①, ② etc.) indicates marriage order. Numbers work in static exports (PNG, SVG, PDF) unlike hover-based solutions.
 
-**Phase 1 Scope:**
-- Detect multi-spouse scenarios in chart data
-- Add numbered labels to spouse connection edges
-- Position labels at edge midpoint
-- Style consistently with existing chart elements
+**Phase 1 (Complete):**
+- ✅ Detect multi-spouse scenarios via `getSpouseNumberForLink()`
+- ✅ Circled numbers (①②③...) on spouse connection edges
+- ✅ Labels positioned in visible gap between cards
+- ✅ Works with "Show kinship labels" toggle
+- ✅ Compatible with PNG/SVG/PDF exports
 
 **Phase 2 (Future):**
 - Marriage date annotations on edges (when available)
-- Settings toggle for numbering vs dates
+- Dedicated settings toggle for numbering vs dates
 
 See [Multi-Spouse Visual Cues Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/multi-spouse-visual-cues.md) for implementation details.
 

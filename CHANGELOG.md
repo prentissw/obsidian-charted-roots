@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Multi-spouse visual cues in family chart** ([#195](https://github.com/banisterious/obsidian-charted-roots/issues/195)): When a person has multiple spouses, circled numbers (①②③...) now appear on spouse connection lines to indicate marriage order. This clarifies who the "hub" person is in complex family structures. Enable via "Show kinship labels" in the chart toolbar. Works in PNG, SVG, and PDF exports.
+
 - **Per-spouse marriage metadata** ([#204](https://github.com/banisterious/obsidian-charted-roots/issues/204)): Edit Person modal now supports per-spouse marriage metadata with progressive disclosure. Click the calendar icon next to any spouse to expand and enter marriage date, location, status (current/divorced/widowed/separated/annulled), and divorce date. When metadata is present, the indexed property format (`spouse1`, `spouse1_marriage_date`, etc.) is used; otherwise the legacy array format is preserved.
 
 ### Improved

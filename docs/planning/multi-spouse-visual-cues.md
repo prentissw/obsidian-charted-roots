@@ -2,7 +2,7 @@
 
 **GitHub Issue:** [#195](https://github.com/banisterious/obsidian-charted-roots/issues/195)
 
-**Status:** Planning
+**Status:** ✅ Phase 1 complete | Phase 2 planned
 
 **Prerequisite:** ✅ [#204](https://github.com/banisterious/obsidian-charted-roots/issues/204) - Per-spouse marriage metadata UI (completed)
 
@@ -102,18 +102,18 @@ D3 text elements should export correctly in all formats.
 
 ## Implementation Plan
 
-### Phase 1: Basic Spouse Numbering
+### Phase 1: Basic Spouse Numbering ✅
 
-1. **Detect multi-spouse scenarios**
-   - In family chart data processing, flag persons with >1 spouse
+1. ✅ **Detect multi-spouse scenarios**
+   - `getSpouseNumberForLink()` identifies persons with >1 spouse by matching link endpoints to card positions
 
-2. **Add edge labels**
-   - Modify edge rendering to add numbered labels
-   - Position label at midpoint of edge or near the hub person
+2. ✅ **Add edge labels**
+   - Circled numbers (①②③...) displayed on spouse connection lines
+   - Labels positioned in visible gap between cards (125px from spouse center)
 
-3. **Style the labels**
-   - Small, unobtrusive text (e.g., circled number)
-   - Consistent with existing chart styling
+3. ✅ **Style the labels**
+   - CSS class `.cr-kinship-label--numbered` with accent color styling
+   - Labels follow pan/zoom transforms by appending to `.view` group
 
 ### Phase 2: Enhanced Annotations (Future)
 
