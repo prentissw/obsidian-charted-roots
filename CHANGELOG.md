@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Bidirectional relationship normalization bugs** ([#210](https://github.com/banisterious/obsidian-charted-roots/issues/210)): The "Fix bidirectional relationship inconsistencies" operation now respects gender-neutral parents, adoptive relationships, and custom relationship types instead of incorrectly normalizing them to mother/father.
+
 ---
 
 ## [0.19.13] - 2026-01-16
