@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.19.x](#v019x)
+  - [GEDCOM Media Import](#gedcom-media-import-v01913)
   - [Research Workflow Phase 1](#research-workflow-phase-1-v01910)
   - [DNA Match Tracking](#dna-match-tracking-v0199)
   - [Name Components](#name-components-v0197)
@@ -101,6 +102,41 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.19.x
+
+### GEDCOM Media Import (v0.19.13)
+
+Import media object references (OBJE records) from GEDCOM files, bringing GEDCOM import to full parity with Gramps for media handling.
+
+**GitHub Issue:** [#202](https://github.com/banisterious/obsidian-charted-roots/issues/202)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| OBJE record parsing | Parse top-level `0 @Oxxxx@ OBJE` records to build media handle → file path map |
+| Reference collection | Collect `1 OBJE @Oxxxx@` references on INDI, FAM, SOUR, and event records |
+| Path resolution | Convert external file paths to vault-relative wikilinks (filename-only by default) |
+| Path prefix stripping | Optional setting to strip external path prefixes for complex folder structures |
+| Import wizard preview | Live preview showing path → wikilink mappings before import |
+| Vault validation | Validates files exist in vault and reports missing media after import |
+| Inline OBJE support | Handle both pointer (`@Oxxxx@`) and inline OBJE formats |
+
+**Import Wizard Options:**
+
+- **Media references** — Enable/disable media import
+- **Path prefix** — Optional external path prefix to strip from GEDCOM paths
+
+**Frontmatter Output:**
+
+```yaml
+media:
+  - "[[photo1.jpg]]"
+  - "[[document.pdf]]"
+```
+
+**Note:** Media is added to person notes, event notes, and source notes based on where the OBJE reference appears in the GEDCOM file.
+
+---
 
 ### Research Workflow Phase 1 (v0.19.10)
 

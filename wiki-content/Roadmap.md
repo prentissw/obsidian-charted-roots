@@ -9,7 +9,6 @@ This document outlines planned features for Charted Roots. For completed feature
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
-  - [GEDCOM Media Import](#gedcom-media-import) 📋 Medium
   - [Calendarium Integration](#calendarium-integration) 💡 Low
   - [Event Type Icons for Visual Views](#event-type-icons-for-visual-views) 💡 Low
   - [Multi-Spouse Visual Cues](#multi-spouse-visual-cues) 💡 Low
@@ -32,6 +31,7 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.19.13 | [GEDCOM Media Import](Release-History#gedcom-media-import-v01913) | Import media references (OBJE records) from GEDCOM files with path resolution and vault validation |
 | v0.19.11 | [Research Workflow Phase 1](Release-History#research-workflow-phase-1-v01911) | GPS-aligned research entity types with Statistics Dashboard integration |
 | v0.19.9 | [DNA Match Tracking](Release-History#dna-match-tracking-v0199) | Opt-in DNA match tracking with person type, fields, bidirectional relationships, and person picker badge |
 | v0.19.7 | [Name Components](Release-History#name-components-v0197) | Explicit surname properties for multi-surname cultures and maiden/married name tracking |
@@ -119,48 +119,6 @@ See [Research Workflow](Research-Workflow) for usage documentation.
 - See [Research Workflow](Research-Workflow) for usage documentation
 - See [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/research-workflow-integration.md) for detailed specifications
 - Community contributors: @ANYroots (IRN structure, GPS methodology, templates), @wilbry (lightweight approach, unified design)
-
----
-
-### GEDCOM Media Import
-
-**Priority:** 📋 Medium — Brings GEDCOM import to parity with Gramps
-
-**Status:** Planning
-
-**GitHub Issue:** [#202](https://github.com/banisterious/obsidian-charted-roots/issues/202)
-
-**Summary:** Import media object references (OBJE tags) from GEDCOM files, linking photos and documents to persons, families, and sources.
-
-**The Problem:** GEDCOM files contain OBJE (media object) references pointing to image and document files, but the current GEDCOM importer ignores them. Users who prefer GEDCOM import (for better place name handling, smaller file size, faster import) lose their media associations, forcing them to use Gramps import instead.
-
-**The Solution:** Parse GEDCOM OBJE records and references, resolve file paths to vault-relative wikilinks, and add `media` properties to frontmatter—matching the behavior of Gramps import.
-
-**GEDCOM OBJE Structure:**
-```gedcom
-0 @O0205@ OBJE
-1 FILE /path/to/image.jpg
-2 FORM jpg
-2 TITL Photo title
-
-0 @I001@ INDI
-1 NAME John /Smith/
-1 OBJE @O0205@
-```
-
-**Phase 1 Scope:**
-- Parse top-level OBJE record definitions
-- Parse OBJE references on INDI, FAM, SOUR records
-- Path resolution with configurable external path prefix
-- Add `media` property to person/source frontmatter
-- Support both pointer (`@Oxxxx@`) and inline OBJE formats
-
-**Phase 2 (Future):**
-- Path validation (check if files exist)
-- Preview UI for path mappings before import
-- Missing file report in import summary
-
-See [GEDCOM Media Import Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/gedcom-media-import.md) for implementation details.
 
 ---
 
