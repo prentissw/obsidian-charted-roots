@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Event type icons for visual views** ([#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)): A new "Event icon display mode" setting lets you show Lucide icons for event types in timelines and map popups. Choose from three modes:
+  - **Text only** (default): Current behavior with text labels
+  - **Icon only**: Icons with tooltips on hover
+  - **Icon and text**: Both icon and text label
+
+  Icons appear in person/family/place timelines (Control Center), dynamic timeline blocks (`canvas-roots-timeline`), and map marker popups. Each event type uses its defined icon and color.
+
 - **Create event context menu action**: Right-clicking the Events folder now shows "Create event" in the Charted Roots submenu, matching the pattern for People and Places folders.
 
 ---
