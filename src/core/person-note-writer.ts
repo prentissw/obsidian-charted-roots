@@ -594,7 +594,14 @@ export async function createPersonNote(
 			for (const item of value) {
 				// Handle potential object items in arrays
 				const itemStr = typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item);
-				yamlLines.push(`  - ${itemStr}`);
+				// Quote strings containing wikilinks to prevent YAML parsing as nested arrays
+				// [[foo]] in YAML is interpreted as [["foo"]] without quotes
+				const needsQuotes = typeof item === 'string' && itemStr.includes('[[') && !itemStr.startsWith('"');
+				if (needsQuotes) {
+					yamlLines.push(`  - "${itemStr}"`);
+				} else {
+					yamlLines.push(`  - ${itemStr}`);
+				}
 			}
 		} else if (typeof value === 'object' && value !== null) {
 			// Handle nested objects by serializing to JSON

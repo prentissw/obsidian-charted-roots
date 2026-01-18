@@ -152,11 +152,36 @@ export class MediaRenderer {
 	 * Parse a media wikilink into a MediaItem
 	 */
 	private parseMediaLink(link: unknown, isFirst: boolean): MediaItem | null {
-		// Ensure link is a string (frontmatter could contain non-string values)
-		if (!link || typeof link !== 'string') return null;
+		if (!link) return null;
+
+		// Handle different link formats:
+		// 1. String wikilink: "[[filename.jpg]]" (properly quoted in YAML)
+		// 2. Link object: { link: "filename.jpg", ... } (Obsidian parses unquoted [[]] as Link)
+		// 3. Nested array: [["filename.jpg"]] (YAML parses unquoted [[]] as nested array)
+		let linkStr: string;
+		if (typeof link === 'string') {
+			linkStr = link;
+		} else if (typeof link === 'object' && 'link' in link && typeof (link as { link: unknown }).link === 'string') {
+			// Obsidian Link object - extract the path directly
+			linkStr = (link as { link: string }).link;
+		} else if (Array.isArray(link)) {
+			// Nested array from YAML parsing unquoted [[filename]] as [["filename"]]
+			// Recursively unwrap until we find a string
+			let unwrapped: unknown = link;
+			while (Array.isArray(unwrapped) && unwrapped.length > 0) {
+				unwrapped = unwrapped[0];
+			}
+			if (typeof unwrapped === 'string') {
+				linkStr = unwrapped;
+			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
 
 		// Strip wikilink brackets and handle alias format
-		const path = extractWikilinkPath(link);
+		const path = extractWikilinkPath(linkStr) || linkStr;
 
 		if (!path) return null;
 
@@ -172,7 +197,7 @@ export class MediaRenderer {
 		const file = this.plugin.app.metadataCache.getFirstLinkpathDest(path, '');
 
 		return {
-			wikilink: link,
+			wikilink: linkStr.includes('[[') ? linkStr : `[[${linkStr}]]`,
 			path,
 			extension,
 			file: file instanceof TFile ? file : undefined,
