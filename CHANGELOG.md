@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **gender_identity property not recognized** ([#215](https://github.com/banisterious/obsidian-charted-roots/issues/215)): The `gender_identity` frontmatter property is now recognized in Sex & Gender Distribution statistics, in addition to `sex` and `gender`.
 
+- **Places tab showing error count without listing errors** ([#213](https://github.com/banisterious/obsidian-charted-roots/issues/213)): The Data Quality card in the Places tab could show an issue count (e.g., "3 issues found") without displaying the corresponding issue sections. This occurred when orphan place issues were counted using one set of criteria but displayed using stricter filtering.
+
 ---
 
 ## [0.19.14] - 2026-01-17
