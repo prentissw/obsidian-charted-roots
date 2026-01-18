@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.19.15] - 2026-01-18
+
 ### Added
 
 - **Event type icons for visual views** ([#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)): A new "Event icon display mode" setting lets you show Lucide icons for event types in timelines and map popups. Choose from three modes:
