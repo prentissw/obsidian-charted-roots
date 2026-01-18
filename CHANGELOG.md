@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Media gallery not displaying after GEDCOM import** ([#202](https://github.com/banisterious/obsidian-charted-roots/issues/202)): Media wikilinks imported from GEDCOM were written to YAML without quotes (e.g., `- [[photo.jpg]]`), causing YAML to parse them as nested arrays instead of strings. The GEDCOM importer now properly quotes wikilinks in arrays, and the media renderer handles both properly quoted strings and malformed nested arrays for backward compatibility with existing notes.
 
+- **Kinship labels persisting during chart navigation** ([#195](https://github.com/banisterious/obsidian-charted-roots/issues/195)): Relationship labels (like "Spouse" and "Parent") would remain floating in incorrect positions after any action that caused the family tree to shift or rearrange, including clicking on relatives in the info panel, using the navigation buttons on cards, or adjusting tree spacing. Labels now properly clear before chart movement and reappear in correct positions after animation completes.
+
+- **Data quality not respecting cr_living property** ([#217](https://github.com/banisterious/obsidian-charted-roots/issues/217)): People marked as living with `cr_living: true` were still appearing in the "Missing Death Dates" list in the Data Quality section. The check now correctly respects the living status property.
+
 ---
 
 ## [0.19.14] - 2026-01-17
