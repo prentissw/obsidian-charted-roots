@@ -567,6 +567,14 @@ export interface MapSettings {
 
 	/** Folder for custom map images */
 	customMapsFolder: string;
+
+	// Event display settings (from main plugin settings)
+	/** Event icon display mode */
+	eventIconMode?: 'text' | 'icon' | 'both';
+	/** Custom event type definitions */
+	customEventTypes?: { type: string; name: string; icon: string; color: string; category?: string }[];
+	/** Whether to show built-in event types */
+	showBuiltInEventTypes?: boolean;
 }
 
 /**

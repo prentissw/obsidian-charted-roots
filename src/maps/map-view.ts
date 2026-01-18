@@ -1701,7 +1701,11 @@ export class MapView extends ItemView {
 			heatMapBlur: 15,
 			heatMapRadius: 25,
 			// Custom maps folder
-			customMapsFolder: this.plugin.settings.mapsFolder || 'Charted Roots/Places/Maps'
+			customMapsFolder: this.plugin.settings.mapsFolder || 'Charted Roots/Places/Maps',
+			// Event display settings (from main plugin settings)
+			eventIconMode: this.plugin.settings.eventIconMode,
+			customEventTypes: this.plugin.settings.customEventTypes,
+			showBuiltInEventTypes: this.plugin.settings.showBuiltInEventTypes
 		};
 	}
 

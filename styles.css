@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-charted-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2026-01-17 20:51:21 UTC
+ * - Generated: 2026-01-18 18:49:59 UTC
  * - Components: 41 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -21726,7 +21726,7 @@ settings:
    COMPONENT: MAP-VIEW.CSS
    ========================================================================== */
 
-/* Component Size: 1929 lines, 39.32 KB */
+/* Component Size: 1945 lines, 39.54 KB */
 
 /* ==========================================================================
    Map View Styles
@@ -22725,6 +22725,22 @@ svg.leaflet-image-layer.leaflet-interactive path {
   font-size: var(--font-small);
   color: var(--text-muted);
   margin-bottom: var(--cr-spacing-xs);
+}
+
+.cr-map-popup-type {
+  display: flex;
+  align-items: center;
+  gap: var(--cr-spacing-xs);
+}
+
+.cr-map-popup-type-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.cr-map-popup-type-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .cr-map-popup-buttons {
@@ -24337,7 +24353,7 @@ input[type="text"]::-webkit-input-placeholder {
    COMPONENT: EVENTS.CSS
    ========================================================================== */
 
-/* Component Size: 1455 lines, 29.41 KB */
+/* Component Size: 1479 lines, 29.99 KB */
 
 /**
  * Events Styles
@@ -24460,6 +24476,14 @@ input[type="text"]::-webkit-input-placeholder {
 .crc-timeline-event__node svg {
   width: 14px;
   height: 14px;
+}
+
+/* Text-only mode: colored dot instead of icon */
+.crc-timeline-event__node--dot {
+  width: 12px;
+  height: 12px;
+  background-color: var(--event-color, var(--text-muted));
+  border: none;
 }
 
 /* Event content */
@@ -24988,6 +25012,14 @@ input[type="text"]::-webkit-input-placeholder {
   height: 14px;
 }
 
+/* Text-only mode: colored dot instead of icon */
+.crc-family-timeline-event__node--dot {
+  width: 12px;
+  height: 12px;
+  background-color: var(--event-color, var(--text-muted));
+  border: none;
+}
+
 /* Event content */
 .crc-family-timeline-event__content {
   flex: 1;
@@ -25288,6 +25320,14 @@ input[type="text"]::-webkit-input-placeholder {
 .crc-place-timeline-event__node svg {
   width: 14px;
   height: 14px;
+}
+
+/* Text-only mode: colored dot instead of icon */
+.crc-place-timeline-event__node--dot {
+  width: 12px;
+  height: 12px;
+  background-color: var(--event-color, var(--text-muted));
+  border: none;
 }
 
 .crc-place-timeline-event__content {
@@ -35340,7 +35380,7 @@ body:has(.cr-media-linker) .suggestion-container {
    COMPONENT: DYNAMIC-CONTENT.CSS
    ========================================================================== */
 
-/* Component Size: 509 lines, 10.94 KB */
+/* Component Size: 524 lines, 11.18 KB */
 
 /**
  * Dynamic Content Styles
@@ -35440,6 +35480,21 @@ body:has(.cr-media-linker) .suggestion-container {
 
 .cr-timeline__item:last-child {
   border-bottom: none;
+}
+
+.cr-timeline__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: var(--cr-spacing-xs);
+  flex-shrink: 0;
+}
+
+.cr-timeline__icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .cr-timeline__year {
@@ -36021,11 +36076,11 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2026-01-17 20:51:22 UTC
+ * Build completed: 2026-01-18 18:49:59 UTC
  * Components processed: 41
- * Total lines: 35629
- * Total size: 708.29 KB
- * Build duration: 0.88 seconds
+ * Total lines: 35684
+ * Total size: 709.33 KB
+ * Build duration: 0.3 seconds
  *
  * Component breakdown:
  * - variables.css: 56 lines, 1.61 KB
@@ -36052,10 +36107,10 @@ body:has(.cr-media-linker) .suggestion-container {
  * - data-quality.css: 1393 lines, 27.56 KB
  * - relationships.css: 510 lines, 9.63 KB
  * - canvas-navigation.css: 683 lines, 14.64 KB
- * - map-view.css: 1929 lines, 39.32 KB
+ * - map-view.css: 1945 lines, 39.54 KB
  * - leaflet-distortable.css: 368 lines, 7.73 KB
  * - date-systems.css: 287 lines, 5.31 KB
- * - events.css: 1455 lines, 29.41 KB
+ * - events.css: 1479 lines, 29.99 KB
  * - timeline-callouts.css: 321 lines, 10.66 KB
  * - organizations.css: 238 lines, 4.23 KB
  * - sources.css: 2796 lines, 56.78 KB
@@ -36066,7 +36121,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - map-wizard.css: 606 lines, 12.52 KB
  * - preferences.css: 431 lines, 9.44 KB
  * - tree-output.css: 1548 lines, 30.08 KB
- * - dynamic-content.css: 509 lines, 10.94 KB
+ * - dynamic-content.css: 524 lines, 11.18 KB
  * - migration-notice.css: 135 lines, 2.67 KB
  * - responsive.css: 9 lines, 0.13 KB
  */

@@ -121,6 +121,14 @@
   height: 14px;
 }
 
+/* Text-only mode: colored dot instead of icon */
+.crc-timeline-event__node--dot {
+  width: 12px;
+  height: 12px;
+  background-color: var(--event-color, var(--text-muted));
+  border: none;
+}
+
 /* Event content */
 .crc-timeline-event__content {
   flex: 1;
@@ -647,6 +655,14 @@
   height: 14px;
 }
 
+/* Text-only mode: colored dot instead of icon */
+.crc-family-timeline-event__node--dot {
+  width: 12px;
+  height: 12px;
+  background-color: var(--event-color, var(--text-muted));
+  border: none;
+}
+
 /* Event content */
 .crc-family-timeline-event__content {
   flex: 1;
@@ -947,6 +963,14 @@
 .crc-place-timeline-event__node svg {
   width: 14px;
   height: 14px;
+}
+
+/* Text-only mode: colored dot instead of icon */
+.crc-place-timeline-event__node--dot {
+  width: 12px;
+  height: 12px;
+  background-color: var(--event-color, var(--text-muted));
+  border: none;
 }
 
 .crc-place-timeline-event__content {

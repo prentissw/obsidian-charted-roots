@@ -10,7 +10,7 @@ This document outlines planned features for Charted Roots. For completed feature
 - [Planned Features](#planned-features)
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
   - [Multi-Spouse Visual Cues](#multi-spouse-visual-cues) 💡 Low
-  - [Event Type Icons for Visual Views](#event-type-icons-for-visual-views) 💡 Low
+  - [Event Type Icons for Visual Views](#event-type-icons-for-visual-views) ✅ Phase 1 Complete
   - [Unified Place Lookup](#unified-place-lookup) 💡 Low
   - [Inheritance & Succession Tracking](#inheritance--succession-tracking) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
@@ -161,7 +161,7 @@ See [Multi-Spouse Visual Cues Planning Document](https://github.com/banisterious
 
 **Priority:** 💡 Low — Visual polish for timelines and charts
 
-**Status:** Planning
+**Status:** ✅ Phase 1 Complete
 
 **GitHub Issue:** [#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)
 
@@ -179,12 +179,14 @@ See [Multi-Spouse Visual Cues Planning Document](https://github.com/banisterious
 | `icon` | Icons only, with text in tooltip |
 | `both` | Icon + text label |
 
-**Phase 1 Scope:**
-- Timelines (person, family, place via dynamic content)
-- Canvas trees (event nodes on generated canvases)
-- Maps (event markers on interactive map view)
-- Global setting for display mode
-- Fallback icon for custom types without assigned icons
+**Phase 1 (Complete):**
+- ✅ Global `eventIconMode` setting in Preferences > Canvas & Trees
+- ✅ Person, family, and place timelines (Control Center)
+- ✅ Dynamic timeline block (`canvas-roots-timeline`)
+- ✅ Map popup icons with event type colors
+- ✅ Tooltip on hover in icon-only mode
+- ✅ Fallback calendar icon for custom types without assigned icons
+- ⏭️ Canvas tree event nodes — Not applicable (canvas exports use file embeds)
 
 **Phase 2 (Future):**
 - Per-view override settings

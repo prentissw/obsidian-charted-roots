@@ -98,6 +98,21 @@
   border-bottom: none;
 }
 
+.cr-timeline__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: var(--cr-spacing-xs);
+  flex-shrink: 0;
+}
+
+.cr-timeline__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
 .cr-timeline__year {
   font-weight: var(--font-semibold);
   color: var(--text-accent);

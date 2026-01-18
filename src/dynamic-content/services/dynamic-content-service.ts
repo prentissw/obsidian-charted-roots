@@ -51,6 +51,13 @@ export class DynamicContentService {
 	}
 
 	/**
+	 * Get the plugin settings
+	 */
+	getSettings() {
+		return this.plugin.settings;
+	}
+
+	/**
 	 * Parse YAML-like config from code block source
 	 * Supports simple key: value pairs and arrays
 	 *

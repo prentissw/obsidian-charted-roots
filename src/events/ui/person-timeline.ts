@@ -217,21 +217,38 @@ function renderTimelineEvent(
 		settings.showBuiltInEventTypes !== false
 	);
 
+	const iconMode = settings.eventIconMode || 'text';
+	const showIcon = iconMode === 'icon' || iconMode === 'both';
+	const showText = iconMode === 'text' || iconMode === 'both';
+
 	const item = container.createDiv({ cls: 'crc-timeline-event' });
 
 	// Timeline connector (vertical line + node)
 	const connector = item.createDiv({ cls: 'crc-timeline-event__connector' });
 
-	// Node with icon
+	// Node with icon (or neutral dot for text-only mode)
 	const node = connector.createDiv({ cls: 'crc-timeline-event__node' });
 	if (eventType) {
 		node.setCssProps({ '--event-color': eventType.color });
-		const icon = createLucideIcon(eventType.icon, 14);
-		node.appendChild(icon);
+		if (showIcon) {
+			const icon = createLucideIcon(eventType.icon, 14);
+			node.appendChild(icon);
+		} else {
+			// Text-only mode: show colored dot instead of icon
+			node.addClass('crc-timeline-event__node--dot');
+		}
+		// Add tooltip for icon-only mode
+		if (iconMode === 'icon') {
+			node.setAttribute('title', eventType.name);
+		}
 	} else {
 		// Default for custom/unknown types
-		const icon = createLucideIcon('calendar', 14);
-		node.appendChild(icon);
+		if (showIcon) {
+			const icon = createLucideIcon('calendar', 14);
+			node.appendChild(icon);
+		} else {
+			node.addClass('crc-timeline-event__node--dot');
+		}
 	}
 
 	// Event content
@@ -261,8 +278,8 @@ function renderTimelineEvent(
 		}
 	});
 
-	// Event type label
-	if (eventType) {
+	// Event type label (only shown in 'text' or 'both' mode)
+	if (eventType && showText) {
 		titleRow.createEl('span', {
 			text: eventType.name,
 			cls: 'crc-timeline-event__type',

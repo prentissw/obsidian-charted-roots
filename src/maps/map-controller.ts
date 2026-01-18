@@ -63,8 +63,11 @@ function createMarkerClusterGroup(options?: L.MarkerClusterGroupOptions): L.Mark
 	throw new Error('leaflet.markercluster is not properly loaded');
 }
 
+import { setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
 import { getLogger } from '../core/logging';
+import { getEventType } from '../events/types/event-types';
+import type { LucideIconName } from '../ui/lucide-icons';
 import type {
 	MapData,
 	MapMarker,
@@ -697,12 +700,43 @@ export class MapController {
 			text: data.personName
 		});
 
-		const typeLabel = data.type.charAt(0).toUpperCase() + data.type.slice(1);
-		const dateText = data.date ? `: ${data.date}` : '';
-		container.createEl('div', {
-			cls: 'cr-map-popup-type',
-			text: `${typeLabel}${dateText}`
+		// Get event type info and icon mode
+		const iconMode = this.settings.eventIconMode || 'text';
+		const showIcon = iconMode === 'icon' || iconMode === 'both';
+		const showText = iconMode === 'text' || iconMode === 'both';
+
+		const eventType = getEventType(
+			data.type,
+			this.settings.customEventTypes || [],
+			this.settings.showBuiltInEventTypes !== false
+		);
+
+		// Event type row with optional icon
+		const typeRow = container.createEl('div', {
+			cls: 'cr-map-popup-type'
 		});
+
+		if (showIcon && eventType) {
+			const iconSpan = typeRow.createEl('span', {
+				cls: 'cr-map-popup-type-icon'
+			});
+			setIcon(iconSpan, eventType.icon as LucideIconName);
+			// Use event type color for map popup icons (per design decisions)
+			iconSpan.style.setProperty('color', eventType.color);
+		}
+
+		const dateText = data.date ? `: ${data.date}` : '';
+		if (showText) {
+			const typeLabel = data.type.charAt(0).toUpperCase() + data.type.slice(1);
+			typeRow.createEl('span', {
+				text: `${typeLabel}${dateText}`
+			});
+		} else if (data.date) {
+			// Icon-only mode: still show the date
+			typeRow.createEl('span', {
+				text: data.date
+			});
+		}
 
 		container.createEl('div', {
 			cls: 'cr-map-popup-place',

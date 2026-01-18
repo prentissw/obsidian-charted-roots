@@ -2,7 +2,7 @@
 
 **GitHub Issue:** [#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)
 
-**Status:** Planning
+**Status:** Phase 1 Complete
 
 ---
 
@@ -256,6 +256,57 @@ Default to `text` (current behavior). Icons are opt-in to preserve existing user
 **Cons:** Less flexible, some users may prefer text
 
 **Decision:** Provide options to accommodate different preferences.
+
+---
+
+## Implementation Notes (Phase 1)
+
+Phase 1 was completed in January 2026. Here's what was implemented:
+
+### Setting Added
+
+- `eventIconMode: 'text' | 'icon' | 'both'` — Global setting in Preferences > Canvas & Trees > Event display
+- Default: `'text'` (preserves existing behavior)
+
+### Views Updated
+
+| View | Location | Implementation |
+|------|----------|----------------|
+| Person timeline | Control Center > People tab | Icon in timeline node circle |
+| Family timeline | Control Center > People tab | Icon in timeline node circle |
+| Place timeline | Control Center > Places tab | Icon in timeline node circle |
+| Dynamic timeline block | `canvas-roots-timeline` | Inline icon before year |
+| Map popups | Map view marker click | Icon with event type color before label |
+
+### Files Modified
+
+- `src/settings.ts` — Added `EventIconMode` type and `eventIconMode` setting with UI
+- `src/events/ui/person-timeline.ts` — Icon mode support
+- `src/events/ui/family-timeline.ts` — Icon mode support
+- `src/events/ui/place-timeline.ts` — Icon mode support
+- `src/dynamic-content/services/dynamic-content-service.ts` — Added `getSettings()` method
+- `src/dynamic-content/renderers/timeline-renderer.ts` — Icon support
+- `src/maps/map-controller.ts` — Popup icon support
+- `src/maps/map-view.ts` — Pass event icon settings to controller
+- `src/maps/types/map-types.ts` — Added icon settings to `MapSettings` interface
+- `styles/events.css` — Added `--dot` CSS variants for text-only mode
+- `styles/dynamic-content.css` — Added `.cr-timeline__icon` styles
+- `styles/map-view.css` — Added `.cr-map-popup-type-icon` styles
+
+### Design Decisions Applied
+
+- **Icon size:** 14-16px depending on context
+- **Timeline icons:** Colored to match event type
+- **Map popup icons:** Colored to match event type (stands out against map background)
+- **Text-only mode:** Shows colored dot in timeline nodes instead of icon
+- **Icon-only mode:** Shows tooltip on hover with event type name
+- **Canvas trees:** Not applicable — canvas exports use file embeds, not custom rendered content
+
+### Not Implemented (Out of Scope)
+
+- Per-view overrides (single global setting only)
+- Icon size options
+- Canvas tree event node icons (would require significant canvas rendering changes)
 
 ---
 
