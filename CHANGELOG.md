@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Places tab showing error count without listing errors** ([#213](https://github.com/banisterious/obsidian-charted-roots/issues/213)): The Data Quality card in the Places tab could show an issue count (e.g., "3 issues found") without displaying the corresponding issue sections. This occurred when orphan place issues were counted using one set of criteria but displayed using stricter filtering.
 
+- **Media gallery not displaying after GEDCOM import** ([#202](https://github.com/banisterious/obsidian-charted-roots/issues/202)): Media wikilinks imported from GEDCOM were written to YAML without quotes (e.g., `- [[photo.jpg]]`), causing YAML to parse them as nested arrays instead of strings. The GEDCOM importer now properly quotes wikilinks in arrays, and the media renderer handles both properly quoted strings and malformed nested arrays for backward compatibility with existing notes.
+
 ---
 
 ## [0.19.14] - 2026-01-17
