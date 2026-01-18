@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Statistics label update** ([#216](https://github.com/banisterious/obsidian-charted-roots/issues/216)): Renamed "Sex distribution" to "Sex & gender distribution" in Control Center statistics to better reflect the data being displayed.
 
+### Fixed
+
+- **Universe notes counted as people in statistics** ([#214](https://github.com/banisterious/obsidian-charted-roots/issues/214)): Universe notes with `cr_id` were incorrectly appearing in the People list and statistics. They are now properly excluded like other non-person entity types.
+
+- **gender_identity property not recognized** ([#215](https://github.com/banisterious/obsidian-charted-roots/issues/215)): The `gender_identity` frontmatter property is now recognized in Sex & Gender Distribution statistics, in addition to `sex` and `gender`.
+
 ---
 
 ## [0.19.14] - 2026-01-17
