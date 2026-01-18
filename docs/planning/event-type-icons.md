@@ -206,20 +206,28 @@ Icons should export correctly in:
 
 ---
 
-## Open Questions
+## Design Decisions
 
-1. **Icon size in different contexts?**
-   - Timelines: 16px inline
-   - Canvas: 20px or match text size
-   - Maps: marker-sized
+### Icon Size
 
-2. **Color handling?**
-   - Use event type color for icon?
-   - Or keep icon monochrome and use color for background/border?
+Use **16px** uniformly across all views for simplicity. Lucide icons scale well, and a consistent size reduces visual complexity. Adjust per-view only if testing reveals issues.
 
-3. **Tooltip behavior in icon-only mode?**
-   - Show event type name on hover
-   - How to handle touch devices?
+### Color Handling
+
+| View | Icon Color | Rationale |
+|------|------------|-----------|
+| Timelines | Monochrome | Clean look, works with light/dark themes |
+| Canvas nodes | Monochrome | Cards already have structure, icon is secondary |
+| Map markers | Event type color | Stands out against busy map background, aids visual scanning |
+
+### Tooltip Behavior (Icon-Only Mode)
+
+- **Desktop:** Show tooltip on hover with event type name (via `title` attribute or CSS tooltip)
+- **Touch devices:** No special handling - the date and description provide context; users can switch to "both" mode if needed
+
+### Default Mode
+
+Default to `text` (current behavior). Icons are opt-in to preserve existing user experience.
 
 ---
 
