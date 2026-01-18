@@ -685,6 +685,64 @@ interface FamilyChartEphemeralState {
 
 ---
 
+## family-chart Library Internals
+
+This section documents key implementation details of the family-chart library that affect our integration.
+
+### Tree Update Lifecycle
+
+family-chart provides two callback hooks for the tree update lifecycle:
+
+- `setBeforeUpdate(fn)` - Called before any tree update (before animation starts)
+- `setAfterUpdate(fn)` - Called after tree update completes (after animation)
+
+We use these hooks to manage kinship labels (#195):
+```typescript
+this.f3Chart = f3.createChart(container, data)
+    .setBeforeUpdate(() => this.clearKinshipLabelsForUpdate())
+    .setAfterUpdate(() => this.scheduleKinshipLabelRerender());
+```
+
+### Mini-Tree Buttons
+
+The small colored circles (pink/blue based on gender) that appear on cards when relatives are not fully displayed are called "mini-tree" buttons. These are rendered by:
+
+- **Template**: `external/family-chart/src/renderers/card-svg/templates.ts` → `MiniTree()`
+- **Element handler**: `external/family-chart/src/renderers/card-svg/elements.ts` → `miniTree()`
+- **Click action**: `external/family-chart/src/renderers/card-svg/methods.ts` → `cardChangeMain()`
+
+When clicked, mini-tree buttons call:
+```typescript
+// methods.ts
+export function cardChangeMain(store: Store, {d}: {d: TreeDatum}) {
+  store.updateMainId(d.data.id)
+  store.updateTree({})
+  return true
+}
+```
+
+This triggers the same `updateTree()` as navigation, spacing changes, etc., which is why using `setBeforeUpdate`/`setAfterUpdate` catches all update sources.
+
+### Card Click Handlers
+
+The `CardSvg` wrapper class exposes `setOnCardClick()` for card body clicks, but **does not** expose `setOnMiniTreeClick()`. The mini-tree click handler is internal to family-chart.
+
+To customize mini-tree behavior, you would need to:
+1. Fork the library and add `setOnMiniTreeClick()` to `CardSvg` class
+2. Or use `setBeforeUpdate`/`setAfterUpdate` to handle side effects (recommended)
+
+### Key Files in family-chart
+
+| File | Purpose |
+|------|---------|
+| `src/core/chart.ts` | Main `CreateChart` class with all chainable methods |
+| `src/core/cards/card-svg.ts` | `CardSvg` wrapper for SVG card configuration |
+| `src/renderers/card-svg/` | Card rendering templates and handlers |
+| `src/handlers/view-handlers.ts` | Zoom, pan, and positioning utilities |
+| `src/store/` | State management for tree data |
+
+---
+
 ## References
 
 - [Obsidian ItemView Documentation](../developer/obsidian-developer-docs/en/Plugins/User%20interface/Views.md)
