@@ -10,12 +10,11 @@
 2 VERS 5.5.1
 2 FORM LINEAGE-LINKED
 1 CHAR UTF-8
-1 NOTE This test file is designed to verify sibling ordering when a person has multiple spouses.
-2 CONT The children from each spouse should be grouped together, not interleaved.
-2 CONT Test case: George Wilson has two wives (Mary Smith, then Elizabeth Brown).
-2 CONT Expected grouping: [Alice, Bob] from Mary, then [Charles, Diana, Edward] from Elizabeth.
+1 NOTE This test file is designed to test multi-spouse visual cues and kinship label navigation.
+2 CONT Multiple people have multiple spouses across 4 generations to test label persistence during navigation.
 0 @SUBM1@ SUBM
 1 NAME Canvas Roots User
+
 0 @I1@ INDI
 1 NAME George /Wilson/
 2 GIVN George
@@ -26,6 +25,7 @@
 2 PLAC Boston, Massachusetts, USA
 1 FAMS @F1@
 1 FAMS @F2@
+
 0 @I2@ INDI
 1 NAME Mary /Smith/
 2 GIVN Mary
@@ -38,6 +38,7 @@
 2 DATE 20 AUG 1985
 2 PLAC Boston, Massachusetts, USA
 1 FAMS @F1@
+
 0 @I3@ INDI
 1 NAME Elizabeth /Brown/
 2 GIVN Elizabeth
@@ -47,6 +48,7 @@
 2 DATE 22 SEP 1955
 2 PLAC Philadelphia, Pennsylvania, USA
 1 FAMS @F2@
+
 0 @I4@ INDI
 1 NAME Alice /Wilson/
 2 GIVN Alice
@@ -56,6 +58,9 @@
 2 DATE 5 JAN 1975
 2 PLAC Boston, Massachusetts, USA
 1 FAMC @F1@
+1 FAMS @F4@
+1 FAMS @F5@
+
 0 @I5@ INDI
 1 NAME Bob /Wilson/
 2 GIVN Bob
@@ -65,6 +70,8 @@
 2 DATE 12 MAR 1978
 2 PLAC Boston, Massachusetts, USA
 1 FAMC @F1@
+1 FAMS @F6@
+
 0 @I6@ INDI
 1 NAME Charles /Wilson/
 2 GIVN Charles
@@ -74,6 +81,8 @@
 2 DATE 8 NOV 1988
 2 PLAC Boston, Massachusetts, USA
 1 FAMC @F2@
+1 FAMS @F7@
+
 0 @I7@ INDI
 1 NAME Diana /Wilson/
 2 GIVN Diana
@@ -83,6 +92,7 @@
 2 DATE 3 APR 1990
 2 PLAC Boston, Massachusetts, USA
 1 FAMC @F2@
+
 0 @I8@ INDI
 1 NAME Edward /Wilson/
 2 GIVN Edward
@@ -92,6 +102,7 @@
 2 DATE 17 JUL 1993
 2 PLAC Boston, Massachusetts, USA
 1 FAMC @F2@
+
 0 @I9@ INDI
 1 NAME Henry /Wilson/
 2 GIVN Henry
@@ -104,6 +115,7 @@
 2 DATE 15 DEC 1995
 2 PLAC Boston, Massachusetts, USA
 1 FAMS @F3@
+
 0 @I10@ INDI
 1 NAME Martha /Jones/
 2 GIVN Martha
@@ -116,6 +128,121 @@
 2 DATE 3 JAN 2000
 2 PLAC Boston, Massachusetts, USA
 1 FAMS @F3@
+
+0 @I11@ INDI
+1 NAME Thomas /Clark/
+2 GIVN Thomas
+2 SURN Clark
+1 SEX M
+1 BIRT
+2 DATE 1 FEB 1973
+2 PLAC Denver, Colorado, USA
+1 DEAT
+2 DATE 10 MAY 2005
+2 PLAC Boston, Massachusetts, USA
+1 FAMS @F4@
+
+0 @I12@ INDI
+1 NAME Robert /Davis/
+2 GIVN Robert
+2 SURN Davis
+1 SEX M
+1 BIRT
+2 DATE 14 AUG 1970
+2 PLAC Seattle, Washington, USA
+1 FAMS @F5@
+
+0 @I13@ INDI
+1 NAME Jennifer /Taylor/
+2 GIVN Jennifer
+2 SURN Taylor
+1 SEX F
+1 BIRT
+2 DATE 25 DEC 1980
+2 PLAC Los Angeles, California, USA
+1 FAMS @F6@
+
+0 @I14@ INDI
+1 NAME Sarah /Adams/
+2 GIVN Sarah
+2 SURN Adams
+1 SEX F
+1 BIRT
+2 DATE 30 OCT 1990
+2 PLAC Miami, Florida, USA
+1 FAMS @F7@
+
+0 @I15@ INDI
+1 NAME Emily /Clark/
+2 GIVN Emily
+2 SURN Clark
+1 SEX F
+1 BIRT
+2 DATE 18 MAR 1998
+2 PLAC Boston, Massachusetts, USA
+1 FAMC @F4@
+1 FAMS @F8@
+
+0 @I16@ INDI
+1 NAME Michael /Clark/
+2 GIVN Michael
+2 SURN Clark
+1 SEX M
+1 BIRT
+2 DATE 22 JUN 2000
+2 PLAC Boston, Massachusetts, USA
+1 FAMC @F4@
+
+0 @I17@ INDI
+1 NAME Olivia /Davis/
+2 GIVN Olivia
+2 SURN Davis
+1 SEX F
+1 BIRT
+2 DATE 5 SEP 2008
+2 PLAC Boston, Massachusetts, USA
+1 FAMC @F5@
+
+0 @I18@ INDI
+1 NAME James /Wilson/
+2 GIVN James
+2 SURN Wilson
+1 SEX M
+1 BIRT
+2 DATE 11 NOV 2005
+2 PLAC Boston, Massachusetts, USA
+1 FAMC @F6@
+
+0 @I19@ INDI
+1 NAME Sophia /Wilson/
+2 GIVN Sophia
+2 SURN Wilson
+1 SEX F
+1 BIRT
+2 DATE 7 APR 2010
+2 PLAC Boston, Massachusetts, USA
+1 FAMC @F7@
+
+0 @I20@ INDI
+1 NAME Daniel /Miller/
+2 GIVN Daniel
+2 SURN Miller
+1 SEX M
+1 BIRT
+2 DATE 12 JAN 1995
+2 PLAC Atlanta, Georgia, USA
+1 FAMS @F8@
+
+0 @I21@ INDI
+1 NAME Grace /Miller/
+2 GIVN Grace
+2 SURN Miller
+1 SEX F
+1 BIRT
+2 DATE 28 FEB 2020
+2 PLAC Boston, Massachusetts, USA
+1 FAMC @F8@
+
 0 @F1@ FAM
 1 HUSB @I1@
 1 WIFE @I2@
@@ -124,6 +251,7 @@
 2 PLAC Boston, Massachusetts, USA
 1 CHIL @I4@
 1 CHIL @I5@
+
 0 @F2@ FAM
 1 HUSB @I1@
 1 WIFE @I3@
@@ -133,6 +261,7 @@
 1 CHIL @I6@
 1 CHIL @I7@
 1 CHIL @I8@
+
 0 @F3@ FAM
 1 HUSB @I9@
 1 WIFE @I10@
@@ -140,4 +269,46 @@
 2 DATE 5 APR 1945
 2 PLAC Chicago, Illinois, USA
 1 CHIL @I1@
+
+0 @F4@ FAM
+1 HUSB @I11@
+1 WIFE @I4@
+1 MARR
+2 DATE 20 JUL 1997
+2 PLAC Boston, Massachusetts, USA
+1 CHIL @I15@
+1 CHIL @I16@
+
+0 @F5@ FAM
+1 HUSB @I12@
+1 WIFE @I4@
+1 MARR
+2 DATE 15 MAR 2007
+2 PLAC Boston, Massachusetts, USA
+1 CHIL @I17@
+
+0 @F6@ FAM
+1 HUSB @I5@
+1 WIFE @I13@
+1 MARR
+2 DATE 8 AUG 2003
+2 PLAC Boston, Massachusetts, USA
+1 CHIL @I18@
+
+0 @F7@ FAM
+1 HUSB @I6@
+1 WIFE @I14@
+1 MARR
+2 DATE 12 DEC 2012
+2 PLAC Boston, Massachusetts, USA
+1 CHIL @I19@
+
+0 @F8@ FAM
+1 HUSB @I20@
+1 WIFE @I15@
+1 MARR
+2 DATE 5 JUN 2018
+2 PLAC Boston, Massachusetts, USA
+1 CHIL @I21@
+
 0 TRLR
