@@ -69,6 +69,16 @@ Add an option to display icons instead of (or alongside) text labels for event t
 2. **Canvas trees** (event nodes on generated canvases)
 3. **Maps** (event markers on interactive map view)
 
+**Dynamic blocks in scope:**
+- `canvas-roots-timeline` — Person timeline
+- `canvas-roots-family-timeline` — Family timeline
+- `canvas-roots-place-timeline` — Place timeline
+- `canvas-roots-events` — Events list/table
+
+**Out of scope for Phase 1:**
+- `canvas-roots-media` — Media gallery (no event types)
+- `canvas-roots-facts` — Facts display (no event types)
+
 ### Display Modes
 
 | Mode | Description |
