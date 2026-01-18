@@ -201,19 +201,31 @@ function loadDataQualityCard(
 	// Get places with non-standard types (locality, etc.)
 	const nonStandardTypePlaces = findNonStandardTypePlaces(placeService);
 
+	// Calculate orphan real places (used for both count and UI section)
+	// Exclude top-level types - countries and regions without parents are typically
+	// sovereign nations (Taiwan, South Korea, etc.) that don't need parent linking
+	const topLevelTypes = ['country', 'region'];
+	const allPlaces = placeService.getAllPlaces();
+	const orphanRealPlaces = allPlaces.filter(place =>
+		!place.parentId &&
+		!topLevelTypes.includes(place.placeType || '') &&
+		['real', 'historical', 'disputed'].includes(place.category)
+	);
+
 	// Calculate total issues (missing places + other issues, but avoid double counting)
 	// Missing places are tracked separately from PlaceIssue 'missing_place_note'
-	// Exclude 'duplicate_name' from place-graph since we use findDuplicatePlaceNotes instead
+	// Exclude 'duplicate_name' and 'orphan_place' from place-graph since we use our own calculations
 	const missingPlaceNoteIssues = issuesByType.get('missing_place_note') || [];
 	const duplicateNameIssues = issuesByType.get('duplicate_name') || [];
-	const otherIssueCount = issues.length - missingPlaceNoteIssues.length - duplicateNameIssues.length;
-	const totalIssues = missingPlaces.length + otherIssueCount + duplicateGroups.length + nonStandardTypePlaces.length;
+	const orphanPlaceIssues = issuesByType.get('orphan_place') || [];
+	const otherIssueCount = issues.length - missingPlaceNoteIssues.length - duplicateNameIssues.length - orphanPlaceIssues.length;
+	const totalIssues = missingPlaces.length + otherIssueCount + duplicateGroups.length + nonStandardTypePlaces.length + orphanRealPlaces.length;
 
 	// Count categories (only count non-empty ones)
 	let categoryCount = 0;
 	if (missingPlaces.length > 0) categoryCount++;
 	if (issuesByType.has('real_missing_coords')) categoryCount++;
-	if (issuesByType.has('orphan_place')) categoryCount++;
+	if (orphanRealPlaces.length > 0) categoryCount++;
 	if (duplicateGroups.length > 0) categoryCount++;
 	if (nonStandardTypePlaces.length > 0) categoryCount++;
 	if (issuesByType.has('circular_hierarchy')) categoryCount++;
@@ -323,16 +335,7 @@ function loadDataQualityCard(
 	}
 
 	// 3. Orphan places (simplified - just count + action button)
-	// Count real-world places without parents (matching EnrichPlaceHierarchyModal criteria)
-	// Exclude top-level types - countries and regions without parents are typically
-	// sovereign nations (Taiwan, South Korea, etc.) that don't need parent linking
-	const topLevelTypes = ['country', 'region'];
-	const allPlaces = placeService.getAllPlaces();
-	const orphanRealPlaces = allPlaces.filter(place =>
-		!place.parentId &&
-		!topLevelTypes.includes(place.placeType || '') &&
-		['real', 'historical', 'disputed'].includes(place.category)
-	);
+	// orphanRealPlaces is calculated earlier for both counting and UI display
 	if (orphanRealPlaces.length > 0) {
 		renderSimplifiedIssueRow(sectionsContainer, {
 			icon: 'alert-circle',
