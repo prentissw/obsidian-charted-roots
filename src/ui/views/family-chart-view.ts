@@ -691,6 +691,7 @@ export class FamilyChartView extends ItemView {
 	 */
 	private navigateToPersonInChart(personId: string): void {
 		// Update chart to center on the person
+		// Note: Kinship label clearing/re-rendering is handled by setBeforeUpdate/setAfterUpdate callbacks (#195)
 		if (this.f3Chart) {
 			this.f3Chart.updateMainId(personId);
 			this.f3Chart.updateTree({});
@@ -899,7 +900,12 @@ export class FamilyChartView extends ItemView {
 			this.f3Chart = f3.createChart(this.chartContainerEl, this.chartData)
 				.setTransitionTime(800)
 				.setCardXSpacing(this.nodeSpacing)
-				.setCardYSpacing(this.levelSpacing);
+				.setCardYSpacing(this.levelSpacing)
+				// Clear kinship labels before any tree update to prevent stale labels (#195)
+				// This handles all update sources: mini-tree buttons, navigation, spacing changes, etc.
+				.setBeforeUpdate(() => this.clearKinshipLabelsForUpdate())
+				// Re-render kinship labels after tree animation completes (#195)
+				.setAfterUpdate(() => this.scheduleKinshipLabelRerender());
 
 			// Apply tree orientation
 			if (this.isHorizontal) {
@@ -3977,6 +3983,29 @@ export class FamilyChartView extends ItemView {
 	}
 
 	/**
+	 * Clear kinship labels before a tree update (#195)
+	 * Called by setBeforeUpdate callback to prevent stale labels during animation
+	 */
+	private clearKinshipLabelsForUpdate(): void {
+		if (this.showKinshipLabels && this.chartContainerEl) {
+			const existingLabels = this.chartContainerEl.querySelectorAll('.cr-kinship-label');
+			existingLabels.forEach(label => label.remove());
+		}
+	}
+
+	/**
+	 * Schedule kinship label re-render after tree animation (#195)
+	 * Called by setAfterUpdate callback to restore labels after animation completes
+	 */
+	private scheduleKinshipLabelRerender(): void {
+		if (this.showKinshipLabels) {
+			// Delay must be longer than family-chart's transition_time (~800ms)
+			// to ensure link positions have stabilized
+			setTimeout(() => this.renderKinshipLabels(), 1500);
+		}
+	}
+
+	/**
 	 * Render kinship labels on links
 	 * Adds text labels showing relationship type (Father, Mother, Spouse, etc.)
 	 */
@@ -4302,13 +4331,8 @@ export class FamilyChartView extends ItemView {
 			});
 		}
 
+		// Note: Kinship label clearing/re-rendering is handled by setBeforeUpdate/setAfterUpdate callbacks (#195)
 		this.f3Chart.updateTree({});
-
-		// Re-render kinship labels after tree update
-		if (this.showKinshipLabels) {
-			// Delay must be longer than family-chart's transition_time (1000-2000ms)
-			setTimeout(() => this.renderKinshipLabels(), 1500);
-		}
 	}
 
 	/**
@@ -4317,6 +4341,7 @@ export class FamilyChartView extends ItemView {
 	private setNodeSpacing(spacing: number): void {
 		this.nodeSpacing = spacing;
 		if (this.f3Chart) {
+			// Note: Kinship label clearing/re-rendering is handled by setBeforeUpdate/setAfterUpdate callbacks (#195)
 			this.f3Chart.setCardXSpacing(spacing);
 			this.f3Chart.updateTree({});
 			new Notice(`Node spacing set to ${spacing}px`);
@@ -4331,6 +4356,7 @@ export class FamilyChartView extends ItemView {
 	private setLevelSpacing(spacing: number): void {
 		this.levelSpacing = spacing;
 		if (this.f3Chart) {
+			// Note: Kinship label clearing/re-rendering is handled by setBeforeUpdate/setAfterUpdate callbacks (#195)
 			this.f3Chart.setCardYSpacing(spacing);
 			this.f3Chart.updateTree({});
 			new Notice(`Level spacing set to ${spacing}px`);
