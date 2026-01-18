@@ -221,7 +221,7 @@ export class StatisticsView extends ItemView {
 		});
 
 		// Gender Distribution section
-		this.buildSection(sectionsContainer, SECTION_IDS.GENDER_DISTRIBUTION, 'Sex distribution', 'users', () => {
+		this.buildSection(sectionsContainer, SECTION_IDS.GENDER_DISTRIBUTION, 'Sex & gender distribution', 'users', () => {
 			return this.buildGenderContent();
 		});
 

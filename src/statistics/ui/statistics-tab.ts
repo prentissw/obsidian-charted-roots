@@ -133,7 +133,7 @@ function renderCompletenessCard(
 	const total = male + female + other + unknown;
 	if (total > 0) {
 		const genderSection = content.createDiv({ cls: 'cr-gender-section' });
-		genderSection.createEl('h4', { text: 'Sex distribution', cls: 'cr-subsection-heading' });
+		genderSection.createEl('h4', { text: 'Sex & gender distribution', cls: 'cr-subsection-heading' });
 
 		const genderGrid = genderSection.createDiv({ cls: 'cr-gender-grid' });
 		const createGenderItem = (label: string, count: number, colorClass: string) => {
