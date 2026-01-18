@@ -997,6 +997,22 @@ svg.leaflet-image-layer.leaflet-interactive path {
   margin-bottom: var(--cr-spacing-xs);
 }
 
+.cr-map-popup-type {
+  display: flex;
+  align-items: center;
+  gap: var(--cr-spacing-xs);
+}
+
+.cr-map-popup-type-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.cr-map-popup-type-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
 .cr-map-popup-buttons {
   display: flex;
   gap: var(--cr-spacing-xs);

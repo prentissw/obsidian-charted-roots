@@ -5,9 +5,11 @@
  * Creates a styled list of events with dates and descriptions.
  */
 
-import { MarkdownRenderer, MarkdownRenderChild } from 'obsidian';
+import { MarkdownRenderer, MarkdownRenderChild, setIcon } from 'obsidian';
 import type { DynamicBlockContext, DynamicBlockConfig } from '../services/dynamic-content-service';
 import type { DynamicContentService } from '../services/dynamic-content-service';
+import { getEventType } from '../../events/types/event-types';
+import type { LucideIconName } from '../../ui/lucide-icons';
 
 /**
  * Event types that should ALWAYS show title, never description (#157)
@@ -198,10 +200,33 @@ export class TimelineRenderer {
 		context: DynamicBlockContext,
 		component: MarkdownRenderChild
 	): Promise<void> {
+		const settings = this.service.getSettings();
+		const iconMode = settings.eventIconMode || 'text';
+		const showIcon = iconMode === 'icon' || iconMode === 'both';
+		const showText = iconMode === 'text' || iconMode === 'both';
+
 		const list = contentEl.createEl('ul', { cls: 'cr-timeline__list' });
 
 		for (const entry of entries) {
 			const li = list.createEl('li', { cls: 'cr-timeline__item' });
+
+			// Get event type info for icon/color
+			const eventType = getEventType(
+				entry.type,
+				settings.customEventTypes || [],
+				settings.showBuiltInEventTypes !== false
+			);
+
+			// Icon (if icon mode is 'icon' or 'both')
+			if (showIcon && eventType) {
+				const iconSpan = li.createSpan({ cls: 'cr-timeline__icon' });
+				setIcon(iconSpan, eventType.icon as LucideIconName);
+				iconSpan.style.setProperty('color', eventType.color);
+				// Add tooltip for icon-only mode
+				if (iconMode === 'icon') {
+					iconSpan.setAttribute('title', eventType.name);
+				}
+			}
 
 			// Year/date
 			const yearSpan = li.createSpan({ cls: 'cr-timeline__year' });
@@ -215,8 +240,14 @@ export class TimelineRenderer {
 			// Birth/death events always show title (e.g., "Birth of John Smith")
 			let displayText = entry.title;
 			if (entry.description && !TITLE_ONLY_TYPES.includes(entry.type)) {
-				const typeLabel = entry.type.charAt(0).toUpperCase() + entry.type.slice(1);
-				displayText = `${typeLabel}: ${entry.description}`;
+				// In icon-only mode, still show type label since we don't have text label
+				if (showText) {
+					const typeLabel = entry.type.charAt(0).toUpperCase() + entry.type.slice(1);
+					displayText = `${typeLabel}: ${entry.description}`;
+				} else {
+					// Icon-only mode - description without type prefix
+					displayText = entry.description;
+				}
 			}
 
 			// Event title with optional link

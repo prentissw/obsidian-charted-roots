@@ -333,6 +333,10 @@ function renderFamilyTimelineEvent(
 		settings.showBuiltInEventTypes !== false
 	);
 
+	const iconMode = settings.eventIconMode || 'text';
+	const showIcon = iconMode === 'icon' || iconMode === 'both';
+	const showText = iconMode === 'text' || iconMode === 'both';
+
 	const item = container.createDiv({ cls: 'crc-family-timeline-event' });
 
 	// Timeline connector (vertical line + node)
@@ -344,11 +348,24 @@ function renderFamilyTimelineEvent(
 	node.setCssStyles({ borderColor: member.color });
 
 	if (eventType) {
-		const icon = createLucideIcon(eventType.icon, 14);
-		node.appendChild(icon);
+		if (showIcon) {
+			const icon = createLucideIcon(eventType.icon, 14);
+			node.appendChild(icon);
+		} else {
+			// Text-only mode: show colored dot instead of icon
+			node.addClass('crc-family-timeline-event__node--dot');
+		}
+		// Add tooltip for icon-only mode
+		if (iconMode === 'icon') {
+			node.setAttribute('title', eventType.name);
+		}
 	} else {
-		const icon = createLucideIcon('calendar', 14);
-		node.appendChild(icon);
+		if (showIcon) {
+			const icon = createLucideIcon('calendar', 14);
+			node.appendChild(icon);
+		} else {
+			node.addClass('crc-family-timeline-event__node--dot');
+		}
 	}
 
 	// Event content
@@ -377,8 +394,8 @@ function renderFamilyTimelineEvent(
 		}
 	});
 
-	// Event type label
-	if (eventType) {
+	// Event type label (only shown in 'text' or 'both' mode)
+	if (eventType && showText) {
 		titleRow.createEl('span', {
 			text: eventType.name,
 			cls: 'crc-family-timeline-event__type',

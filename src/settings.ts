@@ -199,6 +199,14 @@ export type CalendariumIntegrationMode = 'off' | 'read';
  */
 export type SexNormalizationMode = 'standard' | 'schema-aware' | 'disabled';
 
+/**
+ * Event icon display mode for visual views (timelines, canvas, maps)
+ * - 'text': Text labels only (default - current behavior)
+ * - 'icon': Icons only, with text in tooltip
+ * - 'both': Icon + text label
+ */
+export type EventIconMode = 'text' | 'icon' | 'both';
+
 export interface CanvasRootsSettings {
 	defaultNodeWidth: number;
 	defaultNodeHeight: number;
@@ -373,6 +381,8 @@ export interface CanvasRootsSettings {
 	categoryCustomizations: Record<string, Partial<EventCategoryDefinition>>;
 	/** Hidden/deleted built-in category IDs */
 	hiddenCategories: string[];
+	/** Event icon display mode for visual views (timelines, canvas, maps) */
+	eventIconMode: EventIconMode;
 	// Note type detection settings
 	noteTypeDetection: NoteTypeDetectionSettings;
 	// Date validation settings
@@ -763,6 +773,7 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	customEventCategories: [],                 // User-defined event categories
 	categoryCustomizations: {},                // Overrides for built-in category names
 	hiddenCategories: [],                      // Hidden/deleted built-in categories
+	eventIconMode: 'text',                     // Default: text labels only (current behavior)
 	// Note type detection settings
 	noteTypeDetection: {
 		enableTagDetection: true,              // Allow #person, #place, etc. as fallback
@@ -1250,6 +1261,22 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.spouseEdgeLabelFormat)
 				.onChange(async (value) => {
 					this.plugin.settings.spouseEdgeLabelFormat = value as SpouseEdgeLabelFormat;
+					await this.plugin.saveSettings();
+				}));
+
+		// --- Event display subsection ---
+		canvasContent.createEl('h4', { text: 'Event display', cls: 'cr-subsection-title' });
+
+		new Setting(canvasContent)
+			.setName('Event type display')
+			.setDesc('How to show event types in timelines, canvas event nodes, and maps')
+			.addDropdown(dropdown => dropdown
+				.addOption('text', 'Text only')
+				.addOption('icon', 'Icon only (with tooltip)')
+				.addOption('both', 'Icon and text')
+				.setValue(this.plugin.settings.eventIconMode)
+				.onChange(async (value) => {
+					this.plugin.settings.eventIconMode = value as EventIconMode;
 					await this.plugin.saveSettings();
 				}));
 
