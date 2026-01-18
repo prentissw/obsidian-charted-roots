@@ -900,12 +900,12 @@ export class StatisticsService {
 		for (const person of people) {
 			// Missing death date but not marked as living (has birth but no death)
 			if (!person.deathDate && person.birthDate) {
-				// Check if marked as living in frontmatter
+				// Check if marked as living in frontmatter (cr_living property)
 				const file = this.getPersonFile(person);
 				if (file) {
 					const cache = this.app.metadataCache.getFileCache(file);
-					const isLiving = cache?.frontmatter?.living === true ||
-						cache?.frontmatter?.living === 'true';
+					const isLiving = cache?.frontmatter?.cr_living === true ||
+						cache?.frontmatter?.cr_living === 'true';
 					if (!isLiving) {
 						matches.push({
 							crId: person.crId,
