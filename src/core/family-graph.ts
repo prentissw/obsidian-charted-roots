@@ -13,7 +13,7 @@ import { FolderFilterService } from './folder-filter';
 import { PersonIndexService } from './person-index-service';
 import type { CanvasRootsSettings, ValueAliasSettings } from '../settings';
 import { CANONICAL_GENDERS, BUILTIN_SYNONYMS } from './value-alias-service';
-import { isSourceNote, isEventNote, isPlaceNote, isOrganizationNote, isProofSummaryNote } from '../utils/note-type-detection';
+import { isSourceNote, isEventNote, isPlaceNote, isOrganizationNote, isProofSummaryNote, isUniverseNote } from '../utils/note-type-detection';
 import type { RawRelationship, FamilyGraphMapping } from '../relationships/types/relationship-types';
 import { getRelationshipType, getAllRelationshipTypesWithCustomizations } from '../relationships/constants/default-relationship-types';
 
@@ -1383,7 +1383,7 @@ export class FamilyGraphService {
 	/**
 	 * Extracts person node data from a file
 	 */
-	private extractPersonNode(file: TFile): PersonNode | { isSource?: boolean; isEvent?: boolean; isPlace?: boolean } | null {
+	private extractPersonNode(file: TFile): PersonNode | { isSource?: boolean; isEvent?: boolean; isPlace?: boolean; isOrganization?: boolean; isProofSummary?: boolean; isUniverse?: boolean } | null {
 		const cache = this.app.metadataCache.getFileCache(file);
 		if (!cache || !cache.frontmatter) {
 			return null;
@@ -1428,6 +1428,9 @@ export class FamilyGraphService {
 		}
 		if (isProofSummaryNote(fm, cache, noteTypeSettings)) {
 			return { isProofSummary: true };
+		}
+		if (isUniverseNote(fm, cache, noteTypeSettings)) {
+			return { isUniverse: true };
 		}
 
 		// Extract name (from frontmatter or filename) with alias support
