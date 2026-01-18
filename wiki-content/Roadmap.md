@@ -9,14 +9,14 @@ This document outlines planned features for Charted Roots. For completed feature
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
-  - [Calendarium Integration](#calendarium-integration) 💡 Low
-  - [Event Type Icons for Visual Views](#event-type-icons-for-visual-views) 💡 Low
   - [Multi-Spouse Visual Cues](#multi-spouse-visual-cues) 💡 Low
+  - [Event Type Icons for Visual Views](#event-type-icons-for-visual-views) 💡 Low
   - [Unified Place Lookup](#unified-place-lookup) 💡 Low
+  - [Inheritance & Succession Tracking](#inheritance--succession-tracking) 💡 Low
+  - [Calendarium Integration](#calendarium-integration) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
 - [Future Considerations](#future-considerations)
   - [Research Tracking](#research-tracking)
-  - [Dynasty Management](#dynasty-management)
   - [Universe Batch Operations](#universe-batch-operations)
   - [Import Wizard Filename Parser Enhancements](#import-wizard-filename-parser-enhancements)
   - [Accessibility](#accessibility)
@@ -122,61 +122,38 @@ See [Research Workflow](Research-Workflow) for usage documentation.
 
 ---
 
-### Calendarium Integration
+### Multi-Spouse Visual Cues
 
-**Priority:** 💡 Low — Unified timeline experience for fictional worldbuilders
+**Priority:** 💡 Low — Clarity for complex family structures
 
-**Status:** ✅ Phase 1 complete (v0.12.0) | ✅ Phase 2 complete (v0.15.2) | Phases 3-4 planned
+**Status:** ✅ Phase 1 complete | Phase 2 planned
 
-**Summary:** Integration with the [Calendarium](https://plugins.javalent.com/calendarium) plugin to share calendar definitions, eliminating duplicate configuration for worldbuilders. Designed to be invisible to users who don't need it—settings default to off, and no UI changes appear unless Calendarium is installed.
+**GitHub Issue:** [#195](https://github.com/banisterious/obsidian-charted-roots/issues/195)
 
-**User Feedback (December 2024):**
-- Calendar definition is the main value—users want Calendarium for setting up calendar structure (dates, eras), not primarily for events
-- Date ranges (`fc-date` + `fc-end`) are important for lifespans, reign periods, residences
-- Pain points with Calendarium include era handling and per-calendar frontmatter fields
-- Phase 1 (read-only calendar import) validated as the right starting point
+**Summary:** Visual cues in the family chart clarify relationships when a person has multiple spouses, making it clear who the "hub" person is.
 
-**Integration Modes:**
+**The Problem:** When displaying multi-spouse families in the family chart, the horizontal layout can be ambiguous:
 
-| Mode | Description | Use Case |
-|------|-------------|----------|
-| Standalone | Charted Roots manages its own calendars | Users without Calendarium |
-| Calendarium Primary | Charted Roots reads Calendarium calendars | Existing Calendarium users |
-| Bidirectional | Full sync between both plugins | Power users wanting unified experience |
+```
+Philomene > Régis > Morven
+```
 
-**Phased Approach:**
-- ✅ **Phase 1 (v0.12.0):** Import calendar definitions from Calendarium—delivers ~80% of value
-- ✅ **Phase 2 (v0.15.2):** Display Calendarium events on Charted Roots timelines; support date ranges (`fc-end`)
-- **Phase 3:** Bidirectional sync between plugins
-- **Phase 4:** Cross-calendar date translation
+This makes it look like Régis connects the other two, when actually Philomene is the person with multiple marriages.
 
-**Phase 1 Implementation (v0.12.0):**
-- Detects Calendarium plugin installation
-- Imports calendar definitions (names, eras, abbreviations, year directions)
-- Displays imported calendars in Date Systems card and Create Event modal
-- Graceful fallback when Calendarium not installed
-- Integrations card hidden when Calendarium not installed
+**The Solution:** Spouse numbering on connecting edges (①, ② etc.) indicates marriage order. Numbers work in static exports (PNG, SVG, PDF) unlike hover-based solutions.
 
-See [Fictional Date Systems - Calendarium Integration](Fictional-Date-Systems#calendarium-integration) for usage documentation.
+**Phase 1 (Complete):**
+- ✅ Detect multi-spouse scenarios via `getSpouseNumberForLink()`
+- ✅ Circled numbers (①②③...) on spouse connection edges
+- ✅ Labels positioned in visible gap between cards
+- ✅ Works with "Show kinship labels" toggle
+- ✅ Compatible with PNG/SVG/PDF exports
 
-**Data Mapping (Planned for Phase 3+):**
+**Phase 2 (Future):**
+- Marriage date annotations on edges (when available)
+- Dedicated settings toggle for numbering vs dates
 
-| Charted Roots Field | Calendarium Field |
-|--------------------|-------------------|
-| `fictional_date` | `fc-date` / `fc-start` |
-| `fictional_date_end` | `fc-end` |
-| `calendar_system` | `fc-calendar` |
-| `event_category` | `fc-category` |
-| `display_name` | `fc-display-name` |
-
-**Settings:**
-- `calendariumIntegration`: off / read-only (bidirectional planned for Phase 3)
-
-**API Integration:** Uses `window.Calendarium` global when available, with graceful fallback when Calendarium is not installed.
-
-**Future Consideration:** Per-calendar frontmatter fields (e.g., `mycalendar-date` instead of `fc-calendar` + `fc-date`) to allow one note to have dates across multiple calendars.
-
-See [Calendarium Integration Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/archive/calendarium-integration.md) for implementation details.
+See [Multi-Spouse Visual Cues Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/multi-spouse-visual-cues.md) for implementation details.
 
 ---
 
@@ -214,41 +191,6 @@ See [Calendarium Integration Planning Document](https://github.com/banisterious/
 - Icon size options
 
 See [Event Type Icons Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/event-type-icons.md) for implementation details.
-
----
-
-### Multi-Spouse Visual Cues
-
-**Priority:** 💡 Low — Clarity for complex family structures
-
-**Status:** ✅ Phase 1 complete | Phase 2 planned
-
-**GitHub Issue:** [#195](https://github.com/banisterious/obsidian-charted-roots/issues/195)
-
-**Summary:** Visual cues in the family chart clarify relationships when a person has multiple spouses, making it clear who the "hub" person is.
-
-**The Problem:** When displaying multi-spouse families in the family chart, the horizontal layout can be ambiguous:
-
-```
-Philomene > Régis > Morven
-```
-
-This makes it look like Régis connects the other two, when actually Philomene is the person with multiple marriages.
-
-**The Solution:** Spouse numbering on connecting edges (①, ② etc.) indicates marriage order. Numbers work in static exports (PNG, SVG, PDF) unlike hover-based solutions.
-
-**Phase 1 (Complete):**
-- ✅ Detect multi-spouse scenarios via `getSpouseNumberForLink()`
-- ✅ Circled numbers (①②③...) on spouse connection edges
-- ✅ Labels positioned in visible gap between cards
-- ✅ Works with "Show kinship labels" toggle
-- ✅ Compatible with PNG/SVG/PDF exports
-
-**Phase 2 (Future):**
-- Marriage date annotations on edges (when available)
-- Dedicated settings toggle for numbering vs dates
-
-See [Multi-Spouse Visual Cues Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/multi-spouse-visual-cues.md) for implementation details.
 
 ---
 
@@ -293,6 +235,49 @@ See [Multi-Spouse Visual Cues Planning Document](https://github.com/banisterious
 | 4 | GOV/Nominatim, historical date support |
 
 See [Unified Place Lookup Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/unified-place-lookup.md) for implementation details.
+
+---
+
+### Inheritance & Succession Tracking
+
+**Priority:** 💡 Low — Track inheritance chains for genealogical research and worldbuilding
+
+**Status:** Planning
+
+**GitHub Issue:** [#123](https://github.com/banisterious/obsidian-charted-roots/issues/123)
+
+**Summary:** Track inheritance and succession relationships for both genealogical research and fictional worldbuilding.
+
+**Genealogical use cases:**
+- Tracking enslaved ancestors through inheritance chains (probate records, estate divisions)
+- Following property/person transfers across generations
+- Linking inheritance events to source documents
+
+**Worldbuilding use cases:**
+- Line of succession calculator
+- Title/position inheritance rules
+- Regnal numbering
+- Heir designation and succession events
+
+**Proposed minimal approach:** Custom relationship types (`inherited_from`, `succeeded`) plus event notes, queryable via Bases. See [planning document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/inheritance-succession-tracking.md) for details.
+
+---
+
+### Calendarium Integration
+
+**Priority:** 💡 Low — Unified timeline experience for fictional worldbuilders
+
+**Status:** ✅ Phase 1 complete (v0.12.0) | ✅ Phase 2 complete (v0.15.2) | Phases 3-4 planned
+
+**Summary:** Integration with the [Calendarium](https://plugins.javalent.com/calendarium) plugin to share calendar definitions, eliminating duplicate configuration for worldbuilders. Designed to be invisible to users who don't need it—settings default to off, and no UI changes appear unless Calendarium is installed.
+
+**Phased Approach:**
+- ✅ **Phase 1 (v0.12.0):** Import calendar definitions from Calendarium—delivers ~80% of value
+- ✅ **Phase 2 (v0.15.2):** Display Calendarium events on Charted Roots timelines; support date ranges (`fc-end`)
+- **Phase 3:** Bidirectional sync between plugins
+- **Phase 4:** Cross-calendar date translation
+
+See [Fictional Date Systems - Calendarium Integration](Fictional-Date-Systems#calendarium-integration) for usage documentation and [Calendarium Integration Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/archive/calendarium-integration.md) for implementation details.
 
 ---
 
@@ -341,15 +326,6 @@ These features are under consideration but not yet prioritized.
 - **Proof summaries** — GPS-aligned proof summary notes with evidence tracking, conflict detection, and resolution
 
 See [Evidence and Sources](Evidence-And-Sources) for documentation on existing features.
-
-### Dynasty Management
-
-Tools for tracking succession and inheritance in worldbuilding:
-
-- Line of succession calculator
-- Title/position inheritance rules
-- Regnal numbering
-- Heir designation and succession events
 
 ### Universe Batch Operations
 
