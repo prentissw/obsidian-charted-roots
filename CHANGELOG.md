@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Create event context menu action**: Right-clicking the Events folder now shows "Create event" in the Charted Roots submenu, matching the pattern for People and Places folders.
 
+### Changed
+
+- **Statistics label update** ([#216](https://github.com/banisterious/obsidian-charted-roots/issues/216)): Renamed "Sex distribution" to "Sex & gender distribution" in Control Center statistics to better reflect the data being displayed.
+
 ---
 
 ## [0.19.14] - 2026-01-17
