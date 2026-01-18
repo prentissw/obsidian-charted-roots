@@ -1626,8 +1626,8 @@ export class FamilyGraphService {
 		const deathPlace = this.resolveProperty<string>(fm, 'death_place');
 		const burialPlace = this.resolveProperty<string>(fm, 'burial_place');
 		const occupation = this.resolveProperty<string>(fm, 'occupation');
-		// Check 'sex' first (GEDCOM standard), then 'gender' for backwards compatibility
-		const rawSex = this.resolveProperty<string>(fm, 'sex') || this.resolveProperty<string>(fm, 'gender');
+		// Check 'sex' first (GEDCOM standard), then 'gender' and 'gender_identity' for compatibility
+		const rawSex = this.resolveProperty<string>(fm, 'sex') || this.resolveProperty<string>(fm, 'gender') || this.resolveProperty<string>(fm, 'gender_identity');
 		const sex = this.resolveGender(rawSex);
 		const pronouns = this.resolveProperty<string>(fm, 'pronouns');
 		const collectionName = this.resolveProperty<string>(fm, 'group_name');
