@@ -958,21 +958,9 @@ export class FamilyChartView extends ItemView {
 				});
 			}
 
-			// Configure cards based on current card style
-			// Each inner array is a line, with fields joined by space
-			const displayFields: string[][] = [['first name', 'last name']];
-			if (this.showBirthDates && this.showDeathDates) {
-				// Put each date on its own line for better readability
-				displayFields.push(['birthday']);
-				displayFields.push(['deathday']);
-			} else if (this.showBirthDates) {
-				displayFields.push(['birthday']);
-			} else if (this.showDeathDates) {
-				displayFields.push(['deathday']);
-			}
-
-			// Calculate if we need taller cards (3 lines when both dates shown)
-			const needsTallerCards = this.showBirthDates && this.showDeathDates;
+			// Configure cards based on current card style (#90)
+			// Use helper methods for display fields and dimensions
+			const displayFields = this.buildDisplayFields();
 
 			// Apply container style class for CSS targeting
 			this.updateContainerStyleClass();
@@ -988,40 +976,28 @@ export class FamilyChartView extends ItemView {
 
 				case 'compact':
 					// Text-only cards, no avatars
-					// Height: 50px for 2 lines, 65px for 3 lines
 					this.f3Card = this.f3Chart.setCardSvg()
 						.setCardDisplay(displayFields)
-						.setCardDim({ w: 180, h: needsTallerCards ? 65 : 50, text_x: 10, text_y: 12, img_w: 0, img_h: 0, img_x: 0, img_y: 0 })
+						.setCardDim(this.getCardDimensions('compact'))
 						.setOnCardClick((e, d) => this.handleCardClick(e, d))
 						.setOnCardUpdate(this.createOpenNoteButtonCallback());
 					break;
 
 				case 'mini':
-					// Smaller cards for overview (name only)
+					// Smaller cards for overview
 					this.f3Card = this.f3Chart.setCardSvg()
-						.setCardDisplay([['first name', 'last name']])
-						.setCardDim({ w: 120, h: 35, text_x: 5, text_y: 10, img_w: 0, img_h: 0, img_x: 0, img_y: 0 })
+						.setCardDisplay(displayFields)
+						.setCardDim(this.getCardDimensions('mini'))
 						.setOnCardClick((e, d) => this.handleCardClick(e, d))
 						.setOnCardUpdate(this.createOpenNoteButtonCallback());
 					break;
 
 				case 'rectangle':
 				default:
-					// Default: SVG cards with square avatars (current implementation)
-					// Height: 70px for 2 lines, 90px for 3 lines (both dates)
-					// Avatar scales with card height; text_x shifts to avoid overlap
+					// Default: SVG cards with square avatars
 					this.f3Card = this.f3Chart.setCardSvg()
 						.setCardDisplay(displayFields)
-						.setCardDim({
-							w: needsTallerCards ? 220 : 200,
-							h: needsTallerCards ? 90 : 70,
-							text_x: needsTallerCards ? 90 : 75,
-							text_y: needsTallerCards ? 12 : 15,
-							img_w: needsTallerCards ? 80 : 60,
-							img_h: needsTallerCards ? 80 : 60,
-							img_x: 5,
-							img_y: 5
-						})
+						.setCardDim(this.getCardDimensions('rectangle'))
 						.setOnCardClick((e, d) => this.handleCardClick(e, d))
 						.setOnCardUpdate(this.createOpenNoteButtonCallback());
 					break;
@@ -4336,17 +4312,22 @@ export class FamilyChartView extends ItemView {
 	}
 
 	/**
-	 * Update card display based on current options
+	 * Build display fields array based on current name and date options (#90)
+	 * Each inner array is a line, with fields joined by space
 	 */
-	private updateCardDisplay(): void {
-		if (!this.f3Chart || !this.f3Card) return;
+	private buildDisplayFields(): string[][] {
+		const displayFields: string[][] = [];
 
-		// Build card display array based on options
-		// Each inner array is a line, with fields joined by space
-		const displayFields: string[][] = [['first name', 'last name']];
+		// Name display: split mode puts given/surname on separate lines
+		if (this.nameDisplayMode === 'split') {
+			displayFields.push(['first name']);
+			displayFields.push(['last name']);
+		} else {
+			displayFields.push(['first name', 'last name']);
+		}
 
+		// Add dates
 		if (this.showBirthDates && this.showDeathDates) {
-			// Put each date on its own line for better readability
 			displayFields.push(['birthday']);
 			displayFields.push(['deathday']);
 		} else if (this.showBirthDates) {
@@ -4355,35 +4336,89 @@ export class FamilyChartView extends ItemView {
 			displayFields.push(['deathday']);
 		}
 
-		// Calculate if we need taller cards (3 lines when both dates shown)
-		const needsTallerCards = this.showBirthDates && this.showDeathDates;
+		return displayFields;
+	}
+
+	/**
+	 * Calculate total content lines for card height calculation (#90)
+	 */
+	private calculateContentLines(): number {
+		const nameLines = this.nameDisplayMode === 'split' ? 2 : 1;
+		const dateLines = (this.showBirthDates ? 1 : 0) + (this.showDeathDates ? 1 : 0);
+		return nameLines + dateLines;
+	}
+
+	/**
+	 * Get card dimensions based on card style and content lines (#90)
+	 */
+	private getCardDimensions(style: CardStyle): { w: number; h: number; text_x: number; text_y: number; img_w: number; img_h: number; img_x: number; img_y: number } {
+		const lines = this.calculateContentLines();
+
+		switch (style) {
+			case 'compact':
+				// Text-only cards, no avatars
+				// Height: ~15px per line + padding
+				return {
+					w: 180,
+					h: 35 + (lines - 1) * 15,
+					text_x: 10,
+					text_y: 12,
+					img_w: 0,
+					img_h: 0,
+					img_x: 0,
+					img_y: 0
+				};
+
+			case 'mini':
+				// Mini cards - allow split name but keep compact
+				// Height: 35px base + 15px per extra line
+				return {
+					w: 120,
+					h: 35 + (lines - 1) * 15,
+					text_x: 5,
+					text_y: 10,
+					img_w: 0,
+					img_h: 0,
+					img_x: 0,
+					img_y: 0
+				};
+
+			case 'rectangle':
+			default:
+				// Default: SVG cards with square avatars
+				// Base: 2 lines = 70px, each additional line adds 20px
+				// Avatar scales with card height
+				const baseHeight = 70;
+				const extraLines = Math.max(0, lines - 2);
+				const h = baseHeight + extraLines * 20;
+				const imgSize = Math.min(80, h - 10); // Avatar size scales with height, max 80px
+				return {
+					w: 200 + extraLines * 10,
+					h,
+					text_x: imgSize + 15,
+					text_y: 12,
+					img_w: imgSize,
+					img_h: imgSize,
+					img_x: 5,
+					img_y: 5
+				};
+		}
+	}
+
+	/**
+	 * Update card display based on current options
+	 */
+	private updateCardDisplay(): void {
+		if (!this.f3Chart || !this.f3Card) return;
+
+		const displayFields = this.buildDisplayFields();
 
 		// Update card display and dimensions based on card style
 		this.f3Card.setCardDisplay(displayFields);
 
-		// Update card dimensions for styles that support dates
-		if (this.cardStyle === 'rectangle') {
-			this.f3Card.setCardDim({
-				w: needsTallerCards ? 220 : 200,
-				h: needsTallerCards ? 90 : 70,
-				text_x: needsTallerCards ? 90 : 75,
-				text_y: needsTallerCards ? 12 : 15,
-				img_w: needsTallerCards ? 80 : 60,
-				img_h: needsTallerCards ? 80 : 60,
-				img_x: 5,
-				img_y: 5
-			});
-		} else if (this.cardStyle === 'compact') {
-			this.f3Card.setCardDim({
-				w: 180,
-				h: needsTallerCards ? 65 : 50,
-				text_x: 10,
-				text_y: 12,
-				img_w: 0,
-				img_h: 0,
-				img_x: 0,
-				img_y: 0
-			});
+		// Update card dimensions for styles that support dynamic sizing
+		if (this.cardStyle === 'rectangle' || this.cardStyle === 'compact' || this.cardStyle === 'mini') {
+			this.f3Card.setCardDim(this.getCardDimensions(this.cardStyle));
 		}
 
 		// Note: Kinship label clearing/re-rendering is handled by setBeforeUpdate/setAfterUpdate callbacks (#195)
