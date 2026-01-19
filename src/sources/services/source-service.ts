@@ -13,7 +13,9 @@ import {
 	SourceQuality,
 	SourceTypeDefinition,
 	getAllSourceTypes,
-	getSourceType
+	getSourceType,
+	PERSON_ROLE_PROPERTIES,
+	PersonRoleProperty
 } from '../types/source-types';
 import { getSourceTemplate, applyTemplatePlaceholders } from '../types/source-templates';
 import { generateCrId } from '../../core/uuid';
@@ -488,6 +490,21 @@ export class SourceService {
 			}
 		}
 
+		// Parse person role arrays (#219)
+		const roleArrays: Partial<Record<PersonRoleProperty, string[]>> = {};
+		for (const prop of PERSON_ROLE_PROPERTIES) {
+			const value = frontmatter[prop];
+			if (value) {
+				if (Array.isArray(value)) {
+					// Filter to only string entries
+					roleArrays[prop] = value.filter((item): item is string => typeof item === 'string');
+				} else if (typeof value === 'string') {
+					// Single value - wrap in array
+					roleArrays[prop] = [value];
+				}
+			}
+		}
+
 		return {
 			filePath: file.path,
 			crId,
@@ -503,7 +520,9 @@ export class SourceService {
 			media,
 			confidence,
 			citationOverride: frontmatter.citation_override ? fmToString(frontmatter.citation_override) : undefined,
-			sourceQuality
+			sourceQuality,
+			// Person roles (#219)
+			...roleArrays
 		};
 	}
 
