@@ -106,6 +106,10 @@
   height: 16px;
   margin-right: var(--cr-spacing-xs);
   flex-shrink: 0;
+  /* Align icon with text baseline - offset accounts for icon being vertically centered */
+  align-self: center;
+  position: relative;
+  top: 1px;
 }
 
 .cr-timeline__icon svg {
