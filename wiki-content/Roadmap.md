@@ -9,6 +9,7 @@ This document outlines planned features for Charted Roots. For completed feature
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
+  - [Person Roles in Sources](#person-roles-in-sources) 📋 Medium
   - [Unified Place Lookup](#unified-place-lookup) 💡 Low
   - [Inheritance & Succession Tracking](#inheritance--succession-tracking) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
@@ -119,6 +120,46 @@ See [Research Workflow](Research-Workflow) for usage documentation.
 - See [Research Workflow](Research-Workflow) for usage documentation
 - See [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/research-workflow-integration.md) for detailed specifications
 - Community contributors: @ANYroots (IRN structure, GPS methodology, templates), @wilbry (lightweight approach, unified design)
+
+---
+
+### Person Roles in Sources
+
+**Priority:** 📋 Medium — Supports FAN network research and information quality assessment
+
+**Status:** Planning
+
+**GitHub Issue:** [#219](https://github.com/banisterious/obsidian-charted-roots/issues/219)
+
+**Discussion:** [#189](https://github.com/banisterious/obsidian-charted-roots/discussions/189)
+
+**Summary:** Track the roles that people play in source documents (principal, witness, informant, official, etc.) to support FAN network research, information quality assessment, and enslaved ancestor research.
+
+**The Problem:** Source documents name multiple people in different capacities—a death certificate names the deceased, informant, spouse, parents, and officials. Currently there's no structured way to track these roles, making it difficult to assess information quality or build research networks.
+
+**The Solution:** Role-based person tracking on source notes with seven canonical role categories:
+
+| Role | Use Case |
+|------|----------|
+| `principals` | Subject(s) of the document (deceased, testator, groom/bride) |
+| `witnesses` | Named witnesses to events or document signing |
+| `informants` | Person providing information (affects quality assessment) |
+| `officials` | Clerks, judges, officiants, physicians, undertakers |
+| `enslaved_individuals` | Persons listed as property in wills, inventories |
+| `family` | Family members named in relation to principals |
+| `others` | Catch-all for roles not fitting above categories |
+
+**Key Features:**
+- **Inline YAML notation** — `"[[Person]] (Role details)"` for readability
+- **Modal UI** — Assign roles when linking people to sources
+- **Dynamic block** — Render roles in clean table format
+- **Query support** — "Show all sources where Person X was a witness"
+
+**Related:** [#123](https://github.com/banisterious/obsidian-charted-roots/issues/123) (Inheritance & Succession Tracking) — person roles provide foundation for inheritance chain visualization
+
+See [Person Roles in Sources Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/person-roles-in-sources.md) for implementation details.
+
+Community contributors: @ANYroots (original proposal, use cases, terminology), @wilbry (simplified role categories)
 
 ---
 
