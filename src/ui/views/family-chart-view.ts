@@ -69,6 +69,13 @@ interface FamilyChartPerson {
 type CardStyle = 'rectangle' | 'circle' | 'compact' | 'mini';
 
 /**
+ * Name display mode options for Family Chart
+ * - 'full': Display full name on single line (default)
+ * - 'split': Display given name and surname on separate lines
+ */
+type NameDisplayMode = 'full' | 'split';
+
+/**
  * View state that gets persisted
  */
 interface FamilyChartViewState {
@@ -92,6 +99,8 @@ interface FamilyChartViewState {
 	hidePrivateLiving?: boolean;
 	// Card style
 	cardStyle?: CardStyle;
+	// Name display mode (#90)
+	nameDisplayMode?: NameDisplayMode;
 	[key: string]: unknown;  // Index signature for Record<string, unknown> compatibility
 }
 
@@ -122,6 +131,8 @@ export class FamilyChartView extends ItemView {
 	private hidePrivateLiving: boolean = false;
 	// Card style: rectangle (default SVG), circle (HTML circular), compact (text-only), mini (smaller)
 	private cardStyle: CardStyle = 'rectangle';
+	// Name display mode: full (single line) or split (given/surname on separate lines) (#90)
+	private nameDisplayMode: NameDisplayMode = 'full';
 
 	// family-chart instances
 	private f3Chart: ReturnType<typeof f3.createChart> | null = null;
@@ -1169,10 +1180,9 @@ export class FamilyChartView extends ItemView {
 	 * @param peopleMap Map of crId to PersonNode for O(1) lookups
 	 */
 	private transformPersonNode(person: PersonNode, validIds: Set<string>, peopleMap: Map<string, PersonNode>): FamilyChartPerson {
-		// Parse name into first and last
-		const nameParts = (person.name || '').trim().split(' ');
-		const firstName = nameParts[0] || '';
-		const lastName = nameParts.slice(1).join(' ');
+		// Extract name components (#90)
+		// Priority: explicit given_name/surnames properties, then fallback to parsing name field
+		const { firstName, lastName } = this.extractNameComponents(person);
 
 		// Map gender - family-chart requires 'M' or 'F', default to 'M' if unknown
 		let gender: 'M' | 'F' = 'M';
