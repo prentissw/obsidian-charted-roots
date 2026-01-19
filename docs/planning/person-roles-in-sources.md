@@ -175,6 +175,12 @@ Renders as a formatted table:
 | Enslaved Individual | [[Mary]] | — |
 | ... | ... | ... |
 
+**Discoverability:** Add right-click context menu action on source notes:
+- Menu item: "Add source roles block" (or similar)
+- Only shown when right-clicking on a source note (cr_type: source)
+- Inserts the dynamic block at cursor position or end of note
+- Pre-populates `source` parameter with current note's wikilink
+
 ### Phase 3: Modal UI Integration
 
 **Effort:** Medium-High
@@ -224,6 +230,7 @@ UI mockup:
 ### Phase 2
 - `src/dynamic-content/renderers/` — Add source-roles-renderer.ts
 - `src/dynamic-content/dynamic-content-processor.ts` — Register block type
+- `src/main.ts` or context menu handler — Add "Add source roles block" menu item
 
 ### Phase 3
 - `src/ui/` — Add or extend modal for role assignment
@@ -260,6 +267,9 @@ Person roles in sources provide the foundation for inheritance chain visualizati
 - [ ] Handles sources with no roles
 - [ ] Handles sources with many roles
 - [ ] Details column shows "—" when empty
+- [ ] Right-click menu shows "Add source roles block" on source notes
+- [ ] Menu item hidden on non-source notes
+- [ ] Block inserted with correct source wikilink
 
 ### Phase 3
 - [ ] Modal shows role options
