@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-charted-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2026-01-18 21:58:22 UTC
+ * - Generated: 2026-01-19 23:16:18 UTC
  * - Components: 41 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -35380,7 +35380,7 @@ body:has(.cr-media-linker) .suggestion-container {
    COMPONENT: DYNAMIC-CONTENT.CSS
    ========================================================================== */
 
-/* Component Size: 524 lines, 11.18 KB */
+/* Component Size: 579 lines, 12.52 KB */
 
 /**
  * Dynamic Content Styles
@@ -35490,6 +35490,10 @@ body:has(.cr-media-linker) .suggestion-container {
   height: 16px;
   margin-right: var(--cr-spacing-xs);
   flex-shrink: 0;
+  /* Align icon with text baseline - offset accounts for icon being vertically centered */
+  align-self: center;
+  position: relative;
+  top: 1px;
 }
 
 .cr-timeline__icon svg {
@@ -35898,6 +35902,57 @@ body:has(.cr-media-linker) .suggestion-container {
 /* stylelint-enable selector-class-pattern */
 
 /* ==========================================================================
+   Source Roles Block (#219)
+   ========================================================================== */
+
+.cr-source-roles__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-ui-small);
+}
+
+.cr-source-roles__table th {
+  text-align: left;
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--font-ui-smaller);
+  padding: var(--cr-spacing-xs) var(--cr-spacing-sm);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.cr-source-roles__table td {
+  padding: var(--cr-spacing-xs) var(--cr-spacing-sm);
+  border-bottom: 1px solid var(--background-modifier-border-hover);
+  vertical-align: top;
+}
+
+.cr-source-roles__table tr:last-child td {
+  border-bottom: none;
+}
+
+.cr-source-roles__role {
+  font-weight: var(--font-medium);
+  color: var(--text-normal);
+  white-space: nowrap;
+}
+
+.cr-source-roles__person a {
+  color: var(--text-accent);
+  text-decoration: none;
+}
+
+.cr-source-roles__person a:hover {
+  text-decoration: underline;
+}
+
+.cr-source-roles__details {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ==========================================================================
    Theme Compatibility
    ========================================================================== */
 
@@ -36076,11 +36131,11 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2026-01-18 21:58:23 UTC
+ * Build completed: 2026-01-19 23:16:19 UTC
  * Components processed: 41
- * Total lines: 35684
- * Total size: 709.33 KB
- * Build duration: 0.98 seconds
+ * Total lines: 35739
+ * Total size: 710.66 KB
+ * Build duration: 0.97 seconds
  *
  * Component breakdown:
  * - variables.css: 56 lines, 1.61 KB
@@ -36121,7 +36176,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - map-wizard.css: 606 lines, 12.52 KB
  * - preferences.css: 431 lines, 9.44 KB
  * - tree-output.css: 1548 lines, 30.08 KB
- * - dynamic-content.css: 524 lines, 11.18 KB
+ * - dynamic-content.css: 579 lines, 12.52 KB
  * - migration-notice.css: 135 lines, 2.67 KB
  * - responsive.css: 9 lines, 0.13 KB
  */
