@@ -5148,6 +5148,7 @@ export class FamilyChartView extends ItemView {
 			sortChildrenByBirthDate: this.sortChildrenByBirthDate,
 			hidePrivateLiving: this.hidePrivateLiving,
 			cardStyle: this.cardStyle,
+			nameDisplayMode: this.nameDisplayMode,
 		};
 	}
 
@@ -5208,6 +5209,9 @@ export class FamilyChartView extends ItemView {
 		if (state.cardStyle !== undefined) {
 			this.cardStyle = state.cardStyle;
 			logger.debug('set-state', 'cardStyle set to', { cardStyle: this.cardStyle });
+		}
+		if (state.nameDisplayMode !== undefined) {
+			this.nameDisplayMode = state.nameDisplayMode;
 		}
 
 		// Re-initialize chart if the view is already open (chartContainerEl exists)
