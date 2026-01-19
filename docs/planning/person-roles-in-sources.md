@@ -48,9 +48,29 @@ Simplified canonical list per @wilbry's proposal:
 | `family` | Family members of principals | Named relatives |
 | `others` | Catch-all | Any role not fitting above |
 
+### Relevant Source Types
+
+Role tracking is most useful for source types that name multiple people:
+
+- `probate` — Wills, estate inventories, appraisements
+- `vital_record` — Birth, death, marriage certificates
+- `legal` — Deeds, contracts, court records
+- `church` — Baptism, marriage, burial records
+- `military` — Service records, pension applications
+
+Role properties are optional on any source type and will be recognized wherever present.
+
+## Edge Cases
+
+**Person appears in multiple role arrays:** Allowed. A person may legitimately serve multiple roles in a document (e.g., a family member who also witnessed a will).
+
+**Wikilink doesn't resolve to existing note:** Allowed. The person note may not exist yet or may be created later. Parse the link target as-is without validation errors.
+
+**Same person listed multiple times in one array:** Allowed but discouraged. May indicate duplicate entry; no enforcement.
+
 ## YAML Structure
 
-Inline notation with optional parenthetical details:
+Uses Obsidian's wikilink alias syntax to embed optional role details in the display text:
 
 ```yaml
 ---
@@ -61,32 +81,40 @@ date: 1817-03-15
 
 # Person roles
 principals:
-  - "[[John Smith Sr.]] (Decedent)"
+  - "[[John Smith Sr.|John Smith Sr. (Decedent)]]"
 officials:
-  - "[[Thomas Brown]] (Administrator)"
-  - "[[James Wilson]] (Appraiser)"
-  - "[[Robert Davis]] (Appraiser)"
+  - "[[Thomas Brown|Thomas Brown (Administrator)]]"
+  - "[[James Wilson|James Wilson (Appraiser)]]"
+  - "[[Robert Davis|Robert Davis (Appraiser)]]"
 enslaved_individuals:
   - "[[Mary]]"
   - "[[Peter]]"
   - "[[Hannah]]"
 family:
-  - "[[John Smith Jr.]] (Heir - received Mary & Peter)"
-  - "[[William Smith]] (Heir - received Hannah)"
+  - "[[John Smith Jr.|John Smith Jr. (Heir)]]"
+  - "[[William Smith|William Smith (Heir)]]"
 ---
 ```
 
 ### Parsing Strategy
 
-Role entries follow the pattern: `[[Person Link]] (Optional Details)`
+Role entries use standard wikilink syntax: `[[Link Target]]` or `[[Link Target|Display Text]]`
 
-Regex for parsing:
-```
-^\[\[([^\]]+)\]\](?:\s*\(([^)]+)\))?$
-```
+The role category comes from the array name (e.g., `witnesses`, `officials`). Optional details are embedded in the display text using parentheses.
 
-- Group 1: Person wikilink target
-- Group 2: Optional role details
+Regex for parsing wikilinks with optional alias:
+
+    ^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$
+
+- Group 1: Link target (file path or note name)
+- Group 2: Optional display text (may contain role details in parentheses)
+
+To extract details from display text:
+
+    ^(.+?)\s*\(([^)]+)\)$
+
+- Group 1: Person name
+- Group 2: Role details
 
 ## Implementation Phases
 
@@ -99,6 +127,31 @@ Regex for parsing:
 - Parse role entries in source note reader
 - Display roles in source info panel (if exists)
 - Support in Bases/DataView queries
+
+**Example Dataview Queries:**
+
+Find all sources where a specific person was a witness:
+
+    ```dataview
+    TABLE title, date
+    FROM "Sources"
+    WHERE contains(witnesses, "[[John Smith]]")
+    ```
+
+List all witnesses across all sources:
+
+    ```dataview
+    TABLE witnesses
+    FROM "Sources"
+    WHERE witnesses
+    FLATTEN witnesses
+    ```
+
+**Example Bases Filter:**
+
+In an Obsidian Base, filter sources by role:
+- Filter: `witnesses` contains `[[John Smith]]`
+- Or use formula: `contains(witnesses, "John Smith")`
 
 ### Phase 2: Dynamic Block Rendering
 
@@ -185,9 +238,9 @@ UI mockup:
 Person roles in sources provide the foundation for inheritance chain visualization:
 
 1. Estate inventory source captures:
-   - `principals: ["[[Decedent]]"]`
+   - `principals: ["[[John Smith Sr.|John Smith Sr. (Decedent)]]"]`
    - `enslaved_individuals: ["[[Mary]]", "[[Peter]]"]`
-   - `family: ["[[Heir A]] (received Mary)", "[[Heir B]] (received Peter)"]`
+   - `family: ["[[Heir A|Heir A (received Mary)]]", "[[Heir B|Heir B (received Peter)]]"]`
 
 2. Inheritance tracking (#123) can then:
    - Query sources for inheritance events
