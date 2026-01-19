@@ -51,7 +51,7 @@ import { EventService } from './src/events/services/event-service';
 import { CreateEventModal } from './src/events/ui/create-event-modal';
 import { isPlaceNote, isSourceNote, isEventNote, isMapNote, isSchemaNote, isUniverseNote, isPersonNote } from './src/utils/note-type-detection';
 import { GeocodingService } from './src/maps/services/geocoding-service';
-import { TimelineProcessor, RelationshipsProcessor, MediaProcessor } from './src/dynamic-content';
+import { TimelineProcessor, RelationshipsProcessor, MediaProcessor, SourceRolesProcessor } from './src/dynamic-content';
 import { UniverseService, EditUniverseModal, UniverseWizardModal } from './src/universes';
 import { RecentFilesService, RecentEntityType } from './src/core/recent-files-service';
 import { registerCustomIcons } from './src/ui/lucide-icons';
@@ -391,6 +391,13 @@ export default class CanvasRootsPlugin extends Plugin {
 		this.registerMarkdownCodeBlockProcessor(
 			'canvas-roots-media', // Legacy compatibility
 			(source, el, ctx) => mediaProcessor.process(source, el, ctx)
+		);
+
+		// Source roles processor (#219)
+		const sourceRolesProcessor = new SourceRolesProcessor(this);
+		this.registerMarkdownCodeBlockProcessor(
+			'charted-roots-source-roles',
+			(source, el, ctx) => sourceRolesProcessor.process(source, el, ctx)
 		);
 
 		// Add ribbon icon for control center
@@ -1799,6 +1806,16 @@ export default class CanvasRootsPlugin extends Plugin {
 										});
 								});
 
+								// Add source roles block (#219)
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Add source roles block')
+										.setIcon('users')
+										.onClick(async () => {
+											await this.insertSourceRolesBlock(file);
+										});
+								});
+
 								submenu.addSeparator();
 
 								// Add essential properties submenu
@@ -1882,6 +1899,15 @@ export default class CanvasRootsPlugin extends Plugin {
 									.onClick(() => {
 										const modal = new ControlCenterModal(this.app, this);
 										modal.openToTab('sources');
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Charted Roots: Add source roles block')
+									.setIcon('users')
+									.onClick(async () => {
+										await this.insertSourceRolesBlock(file);
 									});
 							});
 
@@ -7325,6 +7351,41 @@ export default class CanvasRootsPlugin extends Plugin {
 			}
 			console.error('Error inserting dynamic blocks:', error);
 			new Notice('Failed to add dynamic blocks');
+		}
+	}
+
+	/**
+	 * Insert a source roles dynamic block into a source note (#219)
+	 * Adds the block at the end of the note content
+	 */
+	private async insertSourceRolesBlock(file: TFile): Promise<void> {
+		try {
+			const content = await this.app.vault.read(file);
+
+			// Check if already has source roles block
+			if (content.includes('```charted-roots-source-roles')) {
+				new Notice('Source roles block already exists in this note');
+				return;
+			}
+
+			// Build the block (self-referencing - no source parameter needed)
+			const blockLines = [
+				'',
+				'```charted-roots-source-roles',
+				'```',
+				''
+			];
+
+			// Append to end of file
+			const newContent = content.trimEnd() + '\n' + blockLines.join('\n');
+			await this.app.vault.modify(file, newContent);
+
+			new Notice('Source roles block added');
+
+		} catch (error: unknown) {
+			const message = error instanceof Error ? error.message : String(error);
+			console.error('Error inserting source roles block:', error);
+			new Notice(`Failed to add source roles block: ${message}`);
 		}
 	}
 
