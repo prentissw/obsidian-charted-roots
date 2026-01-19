@@ -3422,6 +3422,11 @@ export class FamilyChartView extends ItemView {
 				.onClick(() => this.toggleDeathDates());
 		});
 
+		menu.addItem((item) => {
+			item.setTitle(`${this.nameDisplayMode === 'split' ? '✓ ' : ''}Split given/surname`)
+				.onClick(() => this.toggleNameDisplayMode());
+		});
+
 		menu.addSeparator();
 
 		menu.addItem((item) => {
@@ -3833,6 +3838,20 @@ export class FamilyChartView extends ItemView {
 		this.showDeathDates = !this.showDeathDates;
 		this.updateCardDisplay();
 		new Notice(`Death dates ${this.showDeathDates ? 'shown' : 'hidden'}`);
+	}
+
+	/**
+	 * Toggle name display mode between full and split (#90)
+	 */
+	private toggleNameDisplayMode(): void {
+		this.nameDisplayMode = this.nameDisplayMode === 'full' ? 'split' : 'full';
+		// Need to re-initialize chart to re-transform person data with new name extraction
+		if (this.f3Chart && this.rootPersonId) {
+			this.initializeChart();
+		}
+		new Notice(`Name display: ${this.nameDisplayMode === 'split' ? 'given/surname on separate lines' : 'full name on single line'}`);
+		// Trigger Obsidian to save view state
+		this.app.workspace.requestSaveLayout();
 	}
 
 	/**
