@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Timeline icon baseline alignment** ([#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)): Event type icons in dynamic timeline blocks now align properly with the text baseline instead of appearing slightly above or below the surrounding text.
+
 ---
 
 ## [0.19.15] - 2026-01-18
