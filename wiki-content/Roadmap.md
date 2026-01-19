@@ -128,6 +128,8 @@ See [Research Workflow](Research-Workflow) for usage documentation.
 
 **Status:** Planning
 
+**GitHub Issue:** [#218](https://github.com/banisterious/obsidian-charted-roots/issues/218)
+
 **Related Issue:** [#128](https://github.com/banisterious/obsidian-charted-roots/issues/128) (Web Clipper Integration)
 
 **Summary:** Query multiple place databases (FamilySearch Places, Wikidata, GeoNames, GOV) from a single interface and create properly-formatted place notes with coordinates, hierarchies, and standardized names.

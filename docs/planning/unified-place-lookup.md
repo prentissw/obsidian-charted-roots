@@ -1,6 +1,7 @@
 # Unified Place Lookup System
 
 - **Status:** Planning
+- **GitHub Issue:** [#218](https://github.com/banisterious/obsidian-charted-roots/issues/218)
 - **Related Issues:** [#128](https://github.com/banisterious/obsidian-charted-roots/issues/128) (Web Clipper Integration)
 - **Created:** 2026-01-08
 
