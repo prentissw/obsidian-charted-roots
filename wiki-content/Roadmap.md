@@ -9,8 +9,6 @@ This document outlines planned features for Charted Roots. For completed feature
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
-  - [Multi-Spouse Visual Cues](#multi-spouse-visual-cues) 💡 Low
-  - [Event Type Icons for Visual Views](#event-type-icons-for-visual-views) ✅ Phase 1 Complete
   - [Unified Place Lookup](#unified-place-lookup) 💡 Low
   - [Inheritance & Succession Tracking](#inheritance--succession-tracking) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
@@ -31,6 +29,8 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| v0.19.15 | [Event Type Icons](Release-History#event-type-icons-v01915) | Display Lucide icons for event types in timelines and map popups with configurable display modes |
+| v0.19.14 | [Multi-Spouse Visual Cues](Release-History#multi-spouse-visual-cues-v01914) | Circled spouse numbers (①②③) on family chart edges clarify multi-spouse relationships |
 | v0.19.13 | [GEDCOM Media Import](Release-History#gedcom-media-import-v01913) | Import media references (OBJE records) from GEDCOM files with path resolution and vault validation |
 | v0.19.11 | [Research Workflow Phase 1](Release-History#research-workflow-phase-1-v01911) | GPS-aligned research entity types with Statistics Dashboard integration |
 | v0.19.9 | [DNA Match Tracking](Release-History#dna-match-tracking-v0199) | Opt-in DNA match tracking with person type, fields, bidirectional relationships, and person picker badge |
@@ -119,80 +119,6 @@ See [Research Workflow](Research-Workflow) for usage documentation.
 - See [Research Workflow](Research-Workflow) for usage documentation
 - See [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/research-workflow-integration.md) for detailed specifications
 - Community contributors: @ANYroots (IRN structure, GPS methodology, templates), @wilbry (lightweight approach, unified design)
-
----
-
-### Multi-Spouse Visual Cues
-
-**Priority:** 💡 Low — Clarity for complex family structures
-
-**Status:** ✅ Phase 1 complete | Phase 2 planned
-
-**GitHub Issue:** [#195](https://github.com/banisterious/obsidian-charted-roots/issues/195)
-
-**Summary:** Visual cues in the family chart clarify relationships when a person has multiple spouses, making it clear who the "hub" person is.
-
-**The Problem:** When displaying multi-spouse families in the family chart, the horizontal layout can be ambiguous:
-
-```
-Philomene > Régis > Morven
-```
-
-This makes it look like Régis connects the other two, when actually Philomene is the person with multiple marriages.
-
-**The Solution:** Spouse numbering on connecting edges (①, ② etc.) indicates marriage order. Numbers work in static exports (PNG, SVG, PDF) unlike hover-based solutions.
-
-**Phase 1 (Complete):**
-- ✅ Detect multi-spouse scenarios via `getSpouseNumberForLink()`
-- ✅ Circled numbers (①②③...) on spouse connection edges
-- ✅ Labels positioned in visible gap between cards
-- ✅ Works with "Show kinship labels" toggle
-- ✅ Compatible with PNG/SVG/PDF exports
-
-**Phase 2 (Future):**
-- Marriage date annotations on edges (when available)
-- Dedicated settings toggle for numbering vs dates
-
-See [Multi-Spouse Visual Cues Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/multi-spouse-visual-cues.md) for implementation details.
-
----
-
-### Event Type Icons for Visual Views
-
-**Priority:** 💡 Low — Visual polish for timelines and charts
-
-**Status:** ✅ Phase 1 Complete
-
-**GitHub Issue:** [#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)
-
-**Summary:** Display icons instead of (or alongside) text labels for event types in visual views like timelines, canvas trees, and maps to reduce clutter and improve visual cohesiveness.
-
-**The Problem:** Visual representations currently use text labels for event types, which can add clutter and reduce the visual cohesiveness of the display.
-
-**The Solution:** Add an option to display Lucide icons for event types. Icons are already defined in `EVENT_TYPE_DEFINITIONS` (e.g., birth=`baby`, death=`skull`, marriage=`heart`).
-
-**Display Modes:**
-
-| Mode | Description |
-|------|-------------|
-| `text` | Current behavior: text labels only (default) |
-| `icon` | Icons only, with text in tooltip |
-| `both` | Icon + text label |
-
-**Phase 1 (Complete):**
-- ✅ Global `eventIconMode` setting in Preferences > Canvas & Trees
-- ✅ Person, family, and place timelines (Control Center)
-- ✅ Dynamic timeline block (`canvas-roots-timeline`)
-- ✅ Map popup icons with event type colors
-- ✅ Tooltip on hover in icon-only mode
-- ✅ Fallback calendar icon for custom types without assigned icons
-- ⏭️ Canvas tree event nodes — Not applicable (canvas exports use file embeds)
-
-**Phase 2 (Future):**
-- Per-view override settings
-- Icon size options
-
-See [Event Type Icons Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/event-type-icons.md) for implementation details.
 
 ---
 

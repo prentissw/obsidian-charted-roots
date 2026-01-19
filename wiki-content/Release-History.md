@@ -9,6 +9,8 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.19.x](#v019x)
+  - [Event Type Icons](#event-type-icons-v01915)
+  - [Multi-Spouse Visual Cues](#multi-spouse-visual-cues-v01914)
   - [GEDCOM Media Import](#gedcom-media-import-v01913)
   - [Research Workflow Phase 1](#research-workflow-phase-1-v01910)
   - [DNA Match Tracking](#dna-match-tracking-v0199)
@@ -102,6 +104,62 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.19.x
+
+### Event Type Icons (v0.19.15)
+
+Display Lucide icons for event types in timelines and map popups, reducing visual clutter and improving cohesiveness.
+
+**GitHub Issue:** [#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| Global setting | `eventIconMode` in Preferences > Canvas & Trees |
+| Display modes | `text` (default), `icon` (with tooltip), `both` (icon + text) |
+| Person/family/place timelines | Icons in Control Center timeline views |
+| Dynamic timeline block | Icons in `canvas-roots-timeline` code blocks |
+| Map popup icons | Event type icons with matching colors in map popups |
+| Tooltip support | Hover tooltip shows event type name in icon-only mode |
+| Fallback icon | Calendar icon for custom types without assigned icons |
+
+**Display Modes:**
+
+| Mode | Description |
+|------|-------------|
+| `text` | Current behavior: text labels only (default) |
+| `icon` | Icons only, with text in tooltip |
+| `both` | Icon + text label |
+
+**Note:** Canvas tree event nodes were not applicable since canvas exports use file embeds.
+
+See [Event Type Icons Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/event-type-icons.md) for implementation details.
+
+---
+
+### Multi-Spouse Visual Cues (v0.19.14)
+
+Visual cues in the family chart clarify relationships when a person has multiple spouses, making it clear who the "hub" person is.
+
+**GitHub Issue:** [#195](https://github.com/banisterious/obsidian-charted-roots/issues/195)
+
+**The Problem:** When displaying multi-spouse families in the family chart, the horizontal layout can be ambiguous—making it unclear which person has multiple marriages.
+
+**The Solution:** Spouse numbering on connecting edges (①, ② etc.) indicates marriage order. Numbers work in static exports (PNG, SVG, PDF) unlike hover-based solutions.
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| Multi-spouse detection | `getSpouseNumberForLink()` identifies spouse order |
+| Circled numbers | ①②③... displayed on spouse connection edges |
+| Label positioning | Numbers positioned in visible gap between cards |
+| Kinship toggle integration | Works with "Show kinship labels" toggle |
+| Export compatibility | Labels included in PNG, SVG, and PDF exports |
+
+See [Multi-Spouse Visual Cues Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/multi-spouse-visual-cues.md) for implementation details.
+
+---
 
 ### GEDCOM Media Import (v0.19.13)
 
