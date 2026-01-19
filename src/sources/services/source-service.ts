@@ -231,6 +231,14 @@ export class SourceService {
 		confidence?: SourceConfidence;
 		sourceQuality?: SourceQuality;
 		transcription?: string;
+		// Person roles (#219)
+		principals?: string[];
+		witnesses?: string[];
+		informants?: string[];
+		officials?: string[];
+		enslaved_individuals?: string[];
+		family?: string[];
+		others?: string[];
 	}): Promise<TFile> {
 		// Generate cr_id
 		const crId = generateCrId();
@@ -277,6 +285,18 @@ export class SourceService {
 		}
 		if (data.sourceQuality) {
 			frontmatterLines.push(`source_quality: ${data.sourceQuality}`);
+		}
+
+		// Person role arrays (#219)
+		for (const roleProp of PERSON_ROLE_PROPERTIES) {
+			const roleData = data[roleProp];
+			if (roleData && roleData.length > 0) {
+				// Write as YAML array
+				frontmatterLines.push(`${roleProp}:`);
+				for (const wikilink of roleData) {
+					frontmatterLines.push(`  - "${wikilink.replace(/"/g, '\\"')}"`);
+				}
+			}
 		}
 
 		frontmatterLines.push('---');
@@ -344,6 +364,14 @@ export class SourceService {
 		confidence?: SourceConfidence;
 		sourceQuality?: SourceQuality;
 		media?: string[];
+		// Person roles (#219)
+		principals?: string[];
+		witnesses?: string[];
+		informants?: string[];
+		officials?: string[];
+		enslaved_individuals?: string[];
+		family?: string[];
+		others?: string[];
 	}): Promise<void> {
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			// Update fields
@@ -416,6 +444,16 @@ export class SourceService {
 				frontmatter.media = data.media[0];
 				for (let i = 1; i < data.media.length; i++) {
 					frontmatter[`media_${i + 1}`] = data.media[i];
+				}
+			}
+
+			// Handle person role arrays (#219)
+			for (const roleProp of PERSON_ROLE_PROPERTIES) {
+				const roleData = data[roleProp];
+				if (roleData && roleData.length > 0) {
+					frontmatter[roleProp] = roleData;
+				} else {
+					delete frontmatter[roleProp];
 				}
 			}
 		});
