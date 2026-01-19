@@ -1,6 +1,6 @@
 # Person Roles in Source Notes
 
-- **Status:** In Progress (Phases 1–3 complete)
+- **Status:** Complete (all phases implemented)
 - **GitHub Issue:** [#219](https://github.com/banisterious/obsidian-charted-roots/issues/219)
 - **Discussion:** [#189](https://github.com/banisterious/obsidian-charted-roots/discussions/189)
 - **Related:** [#123](https://github.com/banisterious/obsidian-charted-roots/issues/123) (Inheritance & Succession Tracking)
@@ -214,14 +214,16 @@ UI mockup:
 └─────────────────────────────────────────┘
 ```
 
-### Phase 4: Query Support
+### Phase 4: Query Support ✅
 
 **Effort:** Medium
 **Scope:** Research tools
+**Status:** Complete
 
-- "Sources by Person Role" report in Control Center
-- Filter: "Show sources where [[Person X]] appears as [role]"
-- Cross-reference with #123 inheritance tracking
+- "Sources by Role" report in Control Center
+- Filter by role type (witness, informant, official, etc.)
+- Grouping options: by role, by source, or chronological
+- Shows role details and source quality ratings
 
 ## Files Modified
 
@@ -242,9 +244,10 @@ UI mockup:
 - `src/sources/services/source-service.ts` — Write role properties in createSource/updateSource
 - `styles/entity-create-modals.css` — CSS for person roles list in modal
 
-### Phase 4 (Planned)
-- `src/reports/` — Add sources-by-role report
-- `src/ui/control-center.ts` — Add report to Control Center
+### Phase 4 ✅
+- `src/reports/types/report-types.ts` — Added SourcesByRoleOptions, SourcesByRoleResult, SourceRoleEntry interfaces
+- `src/reports/services/sources-by-role-generator.ts` — New generator for sources-by-role report
+- `src/reports/services/report-generation-service.ts` — Registered generator in orchestration
 
 ## Connection to Inheritance Tracking (#123)
 
@@ -284,9 +287,9 @@ Person roles in sources provide the foundation for inheritance chain visualizati
 - [x] Existing roles preserved when adding new
 
 ### Phase 4
-- [ ] Report shows sources grouped by person
-- [ ] Filter by role type works
-- [ ] Performance acceptable with large datasets
+- [x] Report shows sources grouped by role/source/chronological
+- [x] Filter by role type works
+- [x] Performance acceptable with large datasets
 
 ## Future Considerations
 

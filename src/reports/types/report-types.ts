@@ -16,6 +16,7 @@ export type ReportType =
 	| 'pedigree-chart'
 	| 'descendant-chart'
 	| 'source-summary'
+	| 'sources-by-role'
 	| 'timeline-report'
 	| 'place-summary'
 	| 'media-inventory'
@@ -175,6 +176,24 @@ export interface SourceSummaryOptions extends ReportOptions {
 	showRepositoryInfo: boolean;
 	/** Highlight unsourced facts */
 	highlightGaps: boolean;
+}
+
+/**
+ * Options for Sources by Role report (#219)
+ */
+export interface SourcesByRoleOptions extends ReportOptions {
+	/** CR ID of the person */
+	personCrId: string;
+	/** Role types to include (empty = all roles) */
+	roleFilter: string[];
+	/** Grouping method */
+	groupBy: 'role' | 'source' | 'chronological';
+	/** Show role details (e.g., "Decedent", "Administrator") */
+	showRoleDetails: boolean;
+	/** Show source quality ratings */
+	showSourceQuality: boolean;
+	/** Show repository info */
+	showRepositoryInfo: boolean;
 }
 
 /**
@@ -580,6 +599,39 @@ export interface SourceSummaryResult extends ReportResult {
 }
 
 /**
+ * Role entry for Sources by Role report (#219)
+ */
+export interface SourceRoleEntry {
+	/** Source data */
+	source: SourceEntry;
+	/** Role category */
+	role: string;
+	/** Role label (display name) */
+	roleLabel: string;
+	/** Role details (e.g., "Decedent", "Administrator") */
+	details?: string;
+	/** Source date */
+	date?: string;
+}
+
+/**
+ * Sources by Role result (#219)
+ */
+export interface SourcesByRoleResult extends ReportResult {
+	/** Subject person */
+	person: ReportPerson;
+	/** Summary statistics */
+	summary: {
+		totalSources: number;
+		byRole: Record<string, number>;
+	};
+	/** Entries grouped by role */
+	entriesByRole: Record<string, SourceRoleEntry[]>;
+	/** All entries (for flat/chronological views) */
+	allEntries: SourceRoleEntry[];
+}
+
+/**
  * Timeline entry
  */
 export interface TimelineEntry {
@@ -828,6 +880,15 @@ export const REPORT_METADATA: Record<ReportType, ReportMetadata> = {
 		name: 'Source summary',
 		description: 'All sources for a person, grouped by fact type with quality ratings',
 		icon: 'file-text',
+		category: 'research',
+		requiresPerson: true,
+		entityType: 'person'
+	},
+	'sources-by-role': {
+		type: 'sources-by-role',
+		name: 'Sources by role',
+		description: 'Sources where a person appears as witness, informant, official, etc.',
+		icon: 'users',
 		category: 'research',
 		requiresPerson: true,
 		entityType: 'person'
