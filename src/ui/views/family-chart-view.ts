@@ -3860,6 +3860,51 @@ export class FamilyChartView extends ItemView {
 	}
 
 	/**
+	 * Extract name components from a PersonNode (#90)
+	 * Uses explicit given_name/surnames properties when available,
+	 * falls back to parsing the name field.
+	 *
+	 * In split mode, splits at the last space per user feedback:
+	 * "John William Smith" → firstName="John William", lastName="Smith"
+	 */
+	private extractNameComponents(person: PersonNode): { firstName: string; lastName: string } {
+		let firstName: string;
+		let lastName: string;
+
+		// Use explicit name components if available
+		if (person.givenName) {
+			firstName = person.givenName;
+		} else if (this.nameDisplayMode === 'split') {
+			// Split mode fallback: everything before last space
+			const nameParts = (person.name || '').trim().split(' ');
+			firstName = nameParts.length > 1
+				? nameParts.slice(0, -1).join(' ')
+				: nameParts[0] || '';
+		} else {
+			// Full mode fallback: first word only (current behavior)
+			const nameParts = (person.name || '').trim().split(' ');
+			firstName = nameParts[0] || '';
+		}
+
+		if (person.surnames && person.surnames.length > 0) {
+			// Join all surnames (supports Hispanic/Portuguese naming)
+			lastName = person.surnames.join(' ');
+		} else if (this.nameDisplayMode === 'split') {
+			// Split mode fallback: last word only
+			const nameParts = (person.name || '').trim().split(' ');
+			lastName = nameParts.length > 1
+				? nameParts[nameParts.length - 1]
+				: '';
+		} else {
+			// Full mode fallback: everything after first word (current behavior)
+			const nameParts = (person.name || '').trim().split(' ');
+			lastName = nameParts.slice(1).join(' ');
+		}
+
+		return { firstName, lastName };
+	}
+
+	/**
 	 * Toggle kinship labels display
 	 */
 	private toggleKinshipLabels(): void {
