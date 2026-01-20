@@ -14,6 +14,19 @@
   max-width: 180px;
 }
 
+/* Header action button (e.g., "Look up place") */
+.crc-create-place-modal .crc-header-action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.crc-create-place-modal .crc-header-action svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* Coordinate inputs section */
 .crc-coord-section {
   margin-top: 8px;
@@ -1044,4 +1057,345 @@
 .crc-maps-current {
   font-weight: var(--font-semibold);
   color: var(--text-accent);
+}
+
+/* ==========================================================================
+   PLACE LOOKUP MODAL (#218)
+   ========================================================================== */
+
+.cr-place-lookup-modal {
+  width: 600px;
+  max-width: 90vw;
+}
+
+.cr-place-lookup-modal .modal-content {
+  padding: 0;
+}
+
+/* Search section */
+.cr-lookup-search-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.cr-lookup-search-row .setting-item {
+  border: none;
+  padding: 0;
+}
+
+.cr-lookup-search-row .setting-item-control {
+  display: flex;
+  gap: 8px;
+}
+
+.cr-lookup-search-row input[type="text"] {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Source selection */
+.cr-lookup-sources-section {
+  margin-top: 12px;
+}
+
+.cr-lookup-sources-label {
+  display: block;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.cr-lookup-sources-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cr-lookup-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cr-lookup-source-chip:hover {
+  background: var(--background-modifier-hover);
+}
+
+.cr-lookup-source-chip--selected {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.cr-lookup-source-chip--selected:hover {
+  background: var(--interactive-accent-hover);
+}
+
+.cr-lookup-source-chip--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cr-lookup-source-chip--disabled:hover {
+  background: var(--background-secondary);
+}
+
+.cr-lookup-source-chip-icon {
+  display: flex;
+  align-items: center;
+}
+
+.cr-lookup-source-chip-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Loading state */
+.cr-lookup-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--text-muted);
+}
+
+.cr-lookup-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--background-modifier-border);
+  border-top-color: var(--interactive-accent);
+  border-radius: 50%;
+  animation: cr-lookup-spin 0.8s linear infinite;
+}
+
+@keyframes cr-lookup-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error state */
+.cr-lookup-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 16px;
+  margin: 16px;
+  background: rgba(var(--color-red-rgb), 0.1);
+  border-radius: var(--radius-m);
+  color: var(--text-error);
+}
+
+.cr-lookup-error-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.cr-lookup-error-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Empty state */
+.cr-lookup-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.cr-lookup-empty-icon {
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.cr-lookup-empty-icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.cr-lookup-empty p {
+  margin: 0 0 8px;
+}
+
+.cr-lookup-empty p:last-child {
+  margin-bottom: 0;
+}
+
+/* Results section */
+.cr-lookup-results {
+  padding: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.cr-lookup-results-header {
+  margin-bottom: 12px;
+}
+
+.cr-lookup-results-header h4 {
+  margin: 0;
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+}
+
+.cr-lookup-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Result card */
+.cr-lookup-result-card {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  padding: 12px;
+  background: var(--background-secondary);
+  transition: border-color 0.15s ease;
+}
+
+.cr-lookup-result-card:hover {
+  border-color: var(--interactive-accent);
+}
+
+.cr-lookup-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* Source badge */
+.cr-lookup-source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-s);
+  font-size: 11px;
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.cr-lookup-source-badge-icon {
+  display: flex;
+  align-items: center;
+}
+
+.cr-lookup-source-badge-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.cr-lookup-source-badge--wikidata {
+  background: rgba(153, 0, 0, 0.15);
+  color: #990000;
+}
+
+.cr-lookup-source-badge--geonames {
+  background: rgba(0, 100, 0, 0.15);
+  color: #006400;
+}
+
+.cr-lookup-source-badge--nominatim {
+  background: rgba(0, 0, 139, 0.15);
+  color: #00008b;
+}
+
+/* Dark theme adjustments for source badges */
+.theme-dark .cr-lookup-source-badge--wikidata {
+  background: rgba(255, 100, 100, 0.2);
+  color: #ff9999;
+}
+
+.theme-dark .cr-lookup-source-badge--geonames {
+  background: rgba(100, 200, 100, 0.2);
+  color: #90ee90;
+}
+
+.theme-dark .cr-lookup-source-badge--nominatim {
+  background: rgba(100, 149, 237, 0.2);
+  color: #87cefa;
+}
+
+/* Confidence badge */
+.cr-lookup-confidence-badge {
+  padding: 2px 6px;
+  border-radius: var(--radius-s);
+  font-size: 11px;
+  font-weight: var(--font-medium);
+}
+
+.cr-lookup-confidence--high {
+  background: rgba(var(--color-green-rgb), 0.15);
+  color: var(--color-green);
+}
+
+.cr-lookup-confidence--medium {
+  background: rgba(var(--color-yellow-rgb), 0.15);
+  color: var(--color-yellow);
+}
+
+.cr-lookup-confidence--low {
+  background: rgba(var(--color-orange-rgb), 0.15);
+  color: var(--color-orange);
+}
+
+/* Result name */
+.cr-lookup-result-name {
+  margin-bottom: 8px;
+  font-size: var(--font-ui-medium);
+}
+
+/* Result details */
+.cr-lookup-result-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.cr-lookup-result-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+}
+
+.cr-lookup-detail-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  margin-top: 1px;
+}
+
+.cr-lookup-detail-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Result footer */
+.cr-lookup-result-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Modal footer */
+.cr-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--background-modifier-border);
 }
