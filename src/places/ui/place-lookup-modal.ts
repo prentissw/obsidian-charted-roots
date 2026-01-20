@@ -78,7 +78,8 @@ export class PlaceLookupModal extends Modal {
 
 	// UI state
 	private searchQuery: string = '';
-	private selectedSources: Set<PlaceLookupSource> = new Set(['wikidata', 'geonames', 'nominatim']);
+	// Only wikidata and nominatim selected by default; geonames requires username
+	private selectedSources: Set<PlaceLookupSource> = new Set(['wikidata', 'nominatim']);
 	private results: PlaceLookupResult[] = [];
 	private isLoading: boolean = false;
 	private errorMessage?: string;
@@ -99,57 +100,59 @@ export class PlaceLookupModal extends Modal {
 		if (options?.initialQuery) {
 			this.searchQuery = options.initialQuery;
 		}
+
+		// Add geonames to selected sources if it's enabled (has username)
+		if (options?.settings?.geonamesUsername) {
+			this.selectedSources.add('geonames');
+		}
 	}
 
 	onOpen() {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.addClass('cr-place-lookup-modal');
 
-		// Header
-		const header = contentEl.createDiv({ cls: 'cr-modal-header' });
-		const titleContainer = header.createDiv({ cls: 'cr-modal-title' });
-		const icon = titleContainer.createSpan({ cls: 'cr-modal-icon' });
-		setIcon(icon, 'search');
+		// Add modal class to modalEl for proper sizing (like other create modals)
+		this.modalEl.addClass('crc-place-lookup-modal');
+
+		// Header (using crc- prefix to match other modals)
+		const header = contentEl.createDiv({ cls: 'crc-modal-header' });
+		const titleContainer = header.createDiv({ cls: 'crc-modal-title' });
+		setIcon(titleContainer.createSpan(), 'search');
 		titleContainer.appendText('Look up place');
 
-		// Search section
-		const searchSection = contentEl.createDiv({ cls: 'cr-lookup-search-section' });
+		// Form container (using crc-form for consistent styling)
+		const form = contentEl.createDiv({ cls: 'crc-form' });
 
-		// Search input with button
-		const searchRow = searchSection.createDiv({ cls: 'cr-lookup-search-row' });
-
-		const searchSetting = new Setting(searchRow)
+		// Search input with button - use standard Setting pattern
+		new Setting(form)
 			.setName('Place name')
-			.setDesc('Enter a place name to search');
+			.setDesc('Enter a place name to search')
+			.addText(text => {
+				this.searchInputEl = text.inputEl;
+				text
+					.setPlaceholder('e.g., London, Springfield IL, München')
+					.setValue(this.searchQuery)
+					.onChange(value => {
+						this.searchQuery = value;
+					});
 
-		searchSetting.addText(text => {
-			this.searchInputEl = text.inputEl;
-			text
-				.setPlaceholder('e.g., London, Springfield IL, München')
-				.setValue(this.searchQuery)
-				.onChange(value => {
-					this.searchQuery = value;
+				// Search on Enter
+				text.inputEl.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						void this.performSearch();
+					}
 				});
-
-			// Search on Enter
-			text.inputEl.addEventListener('keydown', (e) => {
-				if (e.key === 'Enter') {
-					e.preventDefault();
-					void this.performSearch();
-				}
+			})
+			.addButton(btn => {
+				btn
+					.setButtonText('Search')
+					.setCta()
+					.onClick(() => void this.performSearch());
 			});
-		});
-
-		searchSetting.addButton(btn => {
-			btn
-				.setButtonText('Search')
-				.setCta()
-				.onClick(() => void this.performSearch());
-		});
 
 		// Source selection
-		const sourcesSection = searchSection.createDiv({ cls: 'cr-lookup-sources-section' });
+		const sourcesSection = form.createDiv({ cls: 'cr-lookup-sources-section' });
 		sourcesSection.createEl('label', { text: 'Sources', cls: 'cr-lookup-sources-label' });
 
 		const sourcesRow = sourcesSection.createDiv({ cls: 'cr-lookup-sources-row' });
@@ -160,9 +163,10 @@ export class PlaceLookupModal extends Modal {
 		for (const source of availableSources) {
 			const info = SOURCE_INFO[source];
 			const isEnabled = this.isSourceEnabled(source);
+			const isSelected = this.selectedSources.has(source) && isEnabled;
 
 			const sourceChip = sourcesRow.createDiv({
-				cls: `cr-lookup-source-chip ${this.selectedSources.has(source) ? 'cr-lookup-source-chip--selected' : ''} ${!isEnabled ? 'cr-lookup-source-chip--disabled' : ''}`
+				cls: `cr-lookup-source-chip${isSelected ? ' cr-lookup-source-chip--selected' : ''}${!isEnabled ? ' cr-lookup-source-chip--disabled' : ''}`
 			});
 
 			const chipIcon = sourceChip.createSpan({ cls: 'cr-lookup-source-chip-icon' });
@@ -182,7 +186,7 @@ export class PlaceLookupModal extends Modal {
 
 		// Loading indicator
 		this.loadingEl = contentEl.createDiv({ cls: 'cr-lookup-loading cr-hidden' });
-		const spinner = this.loadingEl.createDiv({ cls: 'cr-lookup-spinner' });
+		this.loadingEl.createDiv({ cls: 'cr-lookup-spinner' });
 		this.loadingEl.createSpan({ text: 'Searching...' });
 
 		// Error message

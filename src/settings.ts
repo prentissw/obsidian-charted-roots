@@ -303,8 +303,6 @@ export interface CanvasRootsSettings {
 	/** Accept DMS coordinate format in place creation modal */
 	enableDMSCoordinates: boolean;
 	// Place lookup settings (#218)
-	/** Enable unified place lookup from external sources */
-	enablePlaceLookup: boolean;
 	/** GeoNames username for API access (free registration at geonames.org) */
 	geonamesUsername: string;
 	// Custom relationship types
@@ -714,7 +712,6 @@ export const DEFAULT_SETTINGS: CanvasRootsSettings = {
 	hiddenPlaceTypeCategories: [],           // Hidden/deleted built-in place type categories
 	enableDMSCoordinates: false,             // Opt-in: accept DMS coordinate format
 	// Place lookup settings (#218)
-	enablePlaceLookup: false,                // Opt-in: enable unified place lookup
 	geonamesUsername: '',                    // GeoNames username (required for GeoNames API)
 	// Custom relationship types
 	customRelationshipTypes: [],   // User-defined relationship types (built-ins are always available)
@@ -1484,36 +1481,23 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 		placesContent.createEl('h4', { text: 'Place lookup', cls: 'cr-subsection-title' });
 
 		new Setting(placesContent)
-			.setName('Enable place lookup')
-			.setDesc('Look up place information from Wikidata, GeoNames, and OpenStreetMap')
-			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.enablePlaceLookup)
+			.setName('GeoNames username')
+			.setDesc('Optional. Enables GeoNames as an additional lookup source. Register free at geonames.org')
+			.addText(text => text
+				.setPlaceholder('your-username')
+				.setValue(this.plugin.settings.geonamesUsername)
 				.onChange(async (value) => {
-					this.plugin.settings.enablePlaceLookup = value;
+					this.plugin.settings.geonamesUsername = value.trim();
 					await this.plugin.saveSettings();
-					this.display(); // Refresh to show/hide GeoNames username
 				}));
 
-		if (this.plugin.settings.enablePlaceLookup) {
-			new Setting(placesContent)
-				.setName('GeoNames username')
-				.setDesc('Required for GeoNames lookups. Register free at geonames.org')
-				.addText(text => text
-					.setPlaceholder('your-username')
-					.setValue(this.plugin.settings.geonamesUsername)
-					.onChange(async (value) => {
-						this.plugin.settings.geonamesUsername = value.trim();
-						await this.plugin.saveSettings();
-					}));
-
-			// Info note about place lookup
-			const lookupNote = placesContent.createDiv({ cls: 'cr-info-box cr-info-box--muted' });
-			const lookupIcon = lookupNote.createSpan({ cls: 'cr-info-box-icon' });
-			setIcon(lookupIcon, 'info');
-			lookupNote.createSpan({
-				text: 'Wikidata and OpenStreetMap work without registration. GeoNames requires a free account for API access.'
-			});
-		}
+		// Info note about place lookup
+		const lookupNote = placesContent.createDiv({ cls: 'cr-info-box cr-info-box--muted' });
+		const lookupIcon = lookupNote.createSpan({ cls: 'cr-info-box-icon' });
+		setIcon(lookupIcon, 'info');
+		lookupNote.createSpan({
+			text: 'Place lookup uses Wikidata and OpenStreetMap by default. Add a GeoNames username for additional results.'
+		});
 
 		// Info note about imports
 		const importNote = placesContent.createDiv({ cls: 'cr-info-box cr-info-box--muted' });

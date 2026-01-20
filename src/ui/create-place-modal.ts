@@ -532,8 +532,8 @@ export class CreatePlaceModal extends Modal {
 		titleContainer.appendChild(icon);
 		titleContainer.appendText(this.editMode ? 'Edit place note' : 'Create place note');
 
-		// Add "Look up" button in header (only in create mode when enabled)
-		if (!this.editMode && this.settings?.enablePlaceLookup) {
+		// Add "Look up" button in header (only in create mode)
+		if (!this.editMode) {
 			const lookupBtn = header.createEl('button', {
 				text: 'Look up place',
 				cls: 'crc-btn crc-btn--secondary crc-header-action'

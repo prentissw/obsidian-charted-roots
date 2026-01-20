@@ -1063,34 +1063,16 @@
    PLACE LOOKUP MODAL (#218)
    ========================================================================== */
 
-.cr-place-lookup-modal {
-  width: 600px;
-  max-width: 90vw;
+/* Modal sizing - applied to modalEl like other create modals */
+.crc-place-lookup-modal {
+  max-width: 650px;
+  width: 650px;
 }
 
-.cr-place-lookup-modal .modal-content {
-  padding: 0;
-}
-
-/* Search section */
-.cr-lookup-search-section {
-  padding: 16px;
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.cr-lookup-search-row .setting-item {
-  border: none;
-  padding: 0;
-}
-
-.cr-lookup-search-row .setting-item-control {
-  display: flex;
-  gap: 8px;
-}
-
-.cr-lookup-search-row input[type="text"] {
-  flex: 1;
-  min-width: 200px;
+.crc-place-lookup-modal .modal-content {
+  padding: 24px;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 /* Source selection */
@@ -1114,18 +1096,20 @@
 .cr-lookup-source-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: 6px;
+  padding: 6px 12px;
   border-radius: var(--radius-m);
-  border: 1px solid var(--background-modifier-border);
+  border: 2px solid var(--background-modifier-border);
   background: var(--background-secondary);
   font-size: var(--font-ui-small);
   cursor: pointer;
   transition: all 0.15s ease;
+  user-select: none;
 }
 
-.cr-lookup-source-chip:hover {
+.cr-lookup-source-chip:hover:not(.cr-lookup-source-chip--disabled) {
   background: var(--background-modifier-hover);
+  border-color: var(--text-muted);
 }
 
 .cr-lookup-source-chip--selected {
@@ -1136,15 +1120,32 @@
 
 .cr-lookup-source-chip--selected:hover {
   background: var(--interactive-accent-hover);
+  border-color: var(--interactive-accent-hover);
 }
 
-.cr-lookup-source-chip--disabled {
-  opacity: 0.5;
+.cr-lookup-source-chip--selected .cr-lookup-source-chip-icon svg {
+  color: var(--text-on-accent);
+}
+
+/* Disabled state - must override selected state */
+.cr-lookup-source-chip--disabled,
+.cr-lookup-source-chip--disabled.cr-lookup-source-chip--selected {
+  opacity: 0.4;
   cursor: not-allowed;
+  border-style: dashed;
+  background: var(--background-secondary);
+  border-color: var(--background-modifier-border);
+  color: var(--text-muted);
 }
 
-.cr-lookup-source-chip--disabled:hover {
+.cr-lookup-source-chip--disabled:hover,
+.cr-lookup-source-chip--disabled.cr-lookup-source-chip--selected:hover {
   background: var(--background-secondary);
+  border-color: var(--background-modifier-border);
+}
+
+.cr-lookup-source-chip--disabled .cr-lookup-source-chip-icon svg {
+  color: var(--text-muted);
 }
 
 .cr-lookup-source-chip-icon {
@@ -1207,9 +1208,12 @@
 
 /* Empty state */
 .cr-lookup-empty {
-  padding: 32px 16px;
+  padding: 32px 24px;
   text-align: center;
   color: var(--text-muted);
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .cr-lookup-empty-icon {

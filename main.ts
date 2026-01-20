@@ -855,10 +855,6 @@ export default class CanvasRootsPlugin extends Plugin {
 			id: 'lookup-place',
 			name: 'Look up place',
 			callback: () => {
-				if (!this.settings.enablePlaceLookup) {
-					new Notice('Place lookup is disabled. Enable it in Settings → Places → Place lookup');
-					return;
-				}
 				new PlaceLookupModal(this.app, {
 					settings: this.settings,
 					onSelect: (result) => {

@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Unified place lookup** ([#218](https://github.com/banisterious/obsidian-charted-roots/issues/218)): Look up place information from external geographic databases when creating place notes.
+  - Search Wikidata, GeoNames, and OpenStreetMap/Nominatim for place data
+  - Auto-populate coordinates, place type, and administrative hierarchy
+  - Source selection chips to choose which databases to query
+  - "Look up place" button in Create Place modal header
+  - Command palette command "Look up place" for standalone searches
+  - Rate limiting respects API usage policies (1 req/sec for Nominatim/GeoNames)
+  - GeoNames requires free username registration; Wikidata and OpenStreetMap work immediately
+
 ### Fixed
 
 - **Crash with nested YAML in frontmatter** ([#221](https://github.com/banisterious/obsidian-charted-roots/issues/221)): Plugin no longer crashes with `value.startsWith is not a function` when frontmatter contains nested objects in relationship fields (e.g., legacy formats with `Father: { Name: "[[...]]", Born: ... }`). Non-string values are now gracefully skipped.
