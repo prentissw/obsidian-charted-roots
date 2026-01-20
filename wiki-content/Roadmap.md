@@ -9,7 +9,7 @@ This document outlines planned features for Charted Roots. For completed feature
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
-  - [Unified Place Lookup](#unified-place-lookup) 💡 Low
+  - [Unified Place Lookup](#unified-place-lookup) 💡 Low ✅ Phase 1-2 complete
   - [Inheritance & Succession Tracking](#inheritance--succession-tracking) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
@@ -127,7 +127,7 @@ See [Research Workflow](Research-Workflow) for usage documentation.
 
 **Priority:** 💡 Low — Streamlined place creation from external databases
 
-**Status:** Planning
+**Status:** ✅ Phase 1-2 complete | Phases 3-4 planned
 
 **GitHub Issue:** [#218](https://github.com/banisterious/obsidian-charted-roots/issues/218)
 
@@ -140,30 +140,41 @@ See [Research Workflow](Research-Workflow) for usage documentation.
 **The Solution:** A unified lookup service integrated into the Create Place modal and command palette that queries multiple sources in parallel, displays results, and auto-populates place form fields.
 
 **Key Features:**
-- "Lookup" button in Create Place modal
+- "Look up place" button in Create Place modal header
 - Multi-source search with side-by-side comparison
+- Source selection chips (toggle Wikidata, GeoNames, OpenStreetMap)
+- Command palette command for standalone lookups
 - Automatic parent hierarchy creation (Phase 3)
 - Bulk place standardization for existing notes (Phase 4)
-- Source-specific IDs stored as properties (`wikidata_id`, `geonames_id`, etc.)
 
 **Data Sources:**
 
-| Source | Best For | Phase |
-|--------|----------|-------|
-| Wikidata | Well-known places, multilingual research | 1 |
-| GeoNames | Modern geography, worldwide coverage | 1 |
-| Nominatim | Geocoding, address lookup | 1 |
-| FamilySearch Places | U.S. genealogy, historical jurisdictions | 3 (requires OAuth) |
-| GOV | German/European historical boundaries | 3 (needs API research) |
+| Source | Best For | Status |
+|--------|----------|--------|
+| Wikidata | Well-known places, multilingual research | ✅ Phase 1 |
+| GeoNames | Modern geography, worldwide coverage | ✅ Phase 1 (requires free username) |
+| Nominatim/OSM | Geocoding, address lookup | ✅ Phase 1 |
+| FamilySearch Places | U.S. genealogy, historical jurisdictions | Phase 3 (requires OAuth) |
+| GOV | German/European historical boundaries | Phase 3 (needs API research) |
 
 **Phased Approach:**
 
-| Phase | Feature |
-|-------|---------|
-| 1 | Core lookup service (Wikidata, GeoNames, Nominatim) with rate limiting |
-| 2 | UI integration (modal, command palette), duplicate detection |
-| 3 | FamilySearch (OAuth), GOV, parent hierarchy creation, historical dates |
-| 4 | Bulk standardization, place authority control, caching |
+| Phase | Feature | Status |
+|-------|---------|--------|
+| 1 | Core lookup service (Wikidata, GeoNames, Nominatim) with rate limiting | ✅ Complete |
+| 2 | UI integration (modal, command palette) | ✅ Complete |
+| 3 | FamilySearch (OAuth), GOV, parent hierarchy creation, historical dates | Planned |
+| 4 | Bulk standardization, place authority control, duplicate detection | Planned |
+
+**Phase 1-2 — Complete:**
+- PlaceLookupService with Wikidata, GeoNames, and Nominatim integration
+- Rate limiting (1 req/sec for Nominatim/GeoNames, 500ms for Wikidata)
+- Place type mapping (GeoNames fcode → Charted Roots, Wikidata P31 → Charted Roots)
+- PlaceLookupModal with source selection chips and result cards
+- "Look up place" button in Create Place modal header
+- "Look up place" command palette command
+- Auto-populate coordinates, place type, and parent place from results
+- GeoNames username configuration in Settings → Places
 
 See [Unified Place Lookup Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/unified-place-lookup.md) for implementation details.
 

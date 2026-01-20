@@ -1,6 +1,6 @@
 # Unified Place Lookup System
 
-- **Status:** Planning
+- **Status:** In Progress (Phase 2 complete)
 - **GitHub Issue:** [#218](https://github.com/banisterious/obsidian-charted-roots/issues/218)
 - **Related Issues:** [#128](https://github.com/banisterious/obsidian-charted-roots/issues/128) (Web Clipper Integration)
 - **Created:** 2026-01-08
@@ -746,36 +746,24 @@ export interface CanvasRootsSettings {
 
     // Place Lookup Settings
     geonamesUsername?: string;
-    enablePlaceLookup: boolean; // Default: true
 }
 
-// In SettingsTab.display():
-
-containerEl.createEl('h2', { text: 'Place Lookup' });
-
-new Setting(containerEl)
-    .setName('Enable place lookup')
-    .setDesc('Allow looking up places from external sources')
-    .addToggle(toggle => toggle
-        .setValue(this.plugin.settings.enablePlaceLookup)
-        .onChange(async value => {
-            this.plugin.settings.enablePlaceLookup = value;
-            await this.plugin.saveSettings();
-        })
-    );
+// In SettingsTab.display() under Places section:
 
 new Setting(containerEl)
     .setName('GeoNames username')
-    .setDesc('Your GeoNames username (required for GeoNames lookups). Get one free at geonames.org')
+    .setDesc('Optional. Enables GeoNames as an additional lookup source. Register free at geonames.org')
     .addText(text => text
-        .setPlaceholder('your_username')
+        .setPlaceholder('your-username')
         .setValue(this.plugin.settings.geonamesUsername || '')
         .onChange(async value => {
-            this.plugin.settings.geonamesUsername = value;
+            this.plugin.settings.geonamesUsername = value.trim();
             await this.plugin.saveSettings();
         })
     );
 ```
+
+Note: The enable/disable toggle was removed - place lookup is always available. Wikidata and OpenStreetMap/Nominatim work immediately; GeoNames requires a free username registration.
 
 ### 5. Command Palette Integration
 
@@ -1218,23 +1206,22 @@ Create new wiki page: **Place Lookup**
    - ✅ GeoNames fcode → Charted Roots place_type
    - ✅ Wikidata P31 → Charted Roots place_type
 5. ✅ Add settings for place lookup
-   - ✅ Enable/disable toggle
-   - ✅ GeoNames username field
+   - ✅ GeoNames username field (enable/disable toggle removed - feature always available)
 6. Add basic unit tests for service
 
 ### Phase 2: UI Integration
 
-1. Implement PlaceLookupModal
-   - Search input and source selection
-   - Result display with source indicators
-   - "Use this place" button
-2. Integrate with Create Place modal
-   - Add "Lookup" button
-   - Wire up result population
-3. Add command palette command
-   - Standalone place lookup
-   - Direct place creation from result
-4. Duplicate detection before creation
+1. ✅ Implement PlaceLookupModal
+   - ✅ Search input and source selection
+   - ✅ Result display with source indicators
+   - ✅ "Use this place" button
+2. ✅ Integrate with Create Place modal
+   - ✅ Add "Look up place" button in header
+   - ✅ Wire up result population
+3. ✅ Add command palette command
+   - ✅ Standalone place lookup
+   - ✅ Direct place creation from result
+4. Duplicate detection before creation (deferred to Phase 4)
    - Search vault for places with similar names
    - Search by coordinates proximity
    - Prompt user if potential duplicate found
