@@ -133,37 +133,37 @@ See [Research Workflow](Research-Workflow) for usage documentation.
 
 **Related Issue:** [#128](https://github.com/banisterious/obsidian-charted-roots/issues/128) (Web Clipper Integration)
 
-**Summary:** Query multiple place databases (FamilySearch Places, Wikidata, GeoNames, GOV) from a single interface and create properly-formatted place notes with coordinates, hierarchies, and standardized names.
+**Summary:** Query multiple place databases (Wikidata, GeoNames, Nominatim) from a single interface and create properly-formatted place notes with coordinates, hierarchies, and standardized names.
 
 **The Problem:** Creating accurate place notes requires manual research across multiple sources to obtain standardized names, coordinates, historical jurisdictions, and parent-child relationships. This is time-consuming and error-prone.
 
-**The Solution:** A unified lookup service integrated into the Create Place modal and command palette that queries multiple sources in parallel, displays results with confidence scores, and auto-populates place form fields.
+**The Solution:** A unified lookup service integrated into the Create Place modal and command palette that queries multiple sources in parallel, displays results, and auto-populates place form fields.
 
 **Key Features:**
 - "Lookup" button in Create Place modal
 - Multi-source search with side-by-side comparison
-- Automatic parent hierarchy creation
-- Bulk place standardization for existing notes
-- Source-specific IDs stored as properties (`familysearch_place_id`, `wikidata_id`, etc.)
+- Automatic parent hierarchy creation (Phase 3)
+- Bulk place standardization for existing notes (Phase 4)
+- Source-specific IDs stored as properties (`wikidata_id`, `geonames_id`, etc.)
 
 **Data Sources:**
 
-| Source | Best For |
-|--------|----------|
-| FamilySearch Places | U.S. genealogy, historical jurisdictions |
-| Wikidata | Well-known places, multilingual research |
-| GeoNames | Modern geography, worldwide coverage |
-| GOV | German/European historical boundaries |
-| Nominatim | Geocoding historical names |
+| Source | Best For | Phase |
+|--------|----------|-------|
+| Wikidata | Well-known places, multilingual research | 1 |
+| GeoNames | Modern geography, worldwide coverage | 1 |
+| Nominatim | Geocoding, address lookup | 1 |
+| FamilySearch Places | U.S. genealogy, historical jurisdictions | 3 (requires OAuth) |
+| GOV | German/European historical boundaries | 3 (needs API research) |
 
 **Phased Approach:**
 
 | Phase | Feature |
 |-------|---------|
-| 1 | Core lookup service (FamilySearch, Wikidata, GeoNames) |
-| 2 | UI integration (modal, command palette) |
-| 3 | Parent hierarchy creation, bulk standardization |
-| 4 | GOV/Nominatim, historical date support |
+| 1 | Core lookup service (Wikidata, GeoNames, Nominatim) with rate limiting |
+| 2 | UI integration (modal, command palette), duplicate detection |
+| 3 | FamilySearch (OAuth), GOV, parent hierarchy creation, historical dates |
+| 4 | Bulk standardization, place authority control, caching |
 
 See [Unified Place Lookup Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/unified-place-lookup.md) for implementation details.
 
