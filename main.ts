@@ -39,6 +39,7 @@ import { TemplateFilterService } from './src/core/template-filter';
 import { PersonIndexService } from './src/core/person-index-service';
 import { SplitWizardModal } from './src/ui/split-wizard-modal';
 import { CreatePlaceModal } from './src/ui/create-place-modal';
+import { PlaceLookupModal } from './src/places/ui/place-lookup-modal';
 import { CreatePersonModal } from './src/ui/create-person-modal';
 import { CreateMapWizardModal } from './src/ui/create-map-wizard-modal';
 import type { SpouseMetadata } from './src/core/person-note-writer';
@@ -845,6 +846,37 @@ export default class CanvasRootsPlugin extends Plugin {
 					placeGraph: this.createPlaceGraphService(),
 					settings: this.settings,
 					plugin: this
+				}).open();
+			}
+		});
+
+		// Add command: Look up Place (#218)
+		this.addCommand({
+			id: 'lookup-place',
+			name: 'Look up place',
+			callback: () => {
+				if (!this.settings.enablePlaceLookup) {
+					new Notice('Place lookup is disabled. Enable it in Settings → Places → Place lookup');
+					return;
+				}
+				new PlaceLookupModal(this.app, {
+					settings: this.settings,
+					onSelect: (result) => {
+						// Open Create Place modal with the selected result pre-populated
+						new CreatePlaceModal(this.app, {
+							directory: this.settings.placesFolder || '',
+							initialName: result.standardizedName,
+							initialPlaceType: result.placeType as any,
+							familyGraph: this.createFamilyGraphService(),
+							placeGraph: this.createPlaceGraphService(),
+							settings: this.settings,
+							plugin: this,
+							prefilledCoordinates: result.coordinates ? {
+								lat: result.coordinates.lat,
+								lng: result.coordinates.lng
+							} : undefined
+						}).open();
+					}
 				}).open();
 			}
 		});
