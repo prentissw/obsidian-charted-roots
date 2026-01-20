@@ -1207,19 +1207,19 @@ Create new wiki page: **Place Lookup**
 ### Phase 1: Core Lookup Service
 
 1. ✅ Create planning document
-2. Implement PlaceLookupService with three sources:
-   - Wikidata lookup (no auth required)
-   - GeoNames lookup (requires free username)
-   - Nominatim/OSM lookup (no auth, rate limited)
-3. Implement rate limiting
-   - Nominatim: 1 request/second max
-   - Configurable delay per source
-4. Add place type mapping table
-   - GeoNames fcode → Charted Roots place_type
-   - Wikidata P31 → Charted Roots place_type
-5. Add settings for place lookup
-   - Enable/disable toggle
-   - GeoNames username field
+2. ✅ Implement PlaceLookupService with three sources:
+   - ✅ Wikidata lookup (no auth required)
+   - ✅ GeoNames lookup (requires free username)
+   - ✅ Nominatim/OSM lookup (no auth, rate limited)
+3. ✅ Implement rate limiting
+   - ✅ Nominatim: 1 request/second max
+   - ✅ Configurable delay per source
+4. ✅ Add place type mapping table
+   - ✅ GeoNames fcode → Charted Roots place_type
+   - ✅ Wikidata P31 → Charted Roots place_type
+5. ✅ Add settings for place lookup
+   - ✅ Enable/disable toggle
+   - ✅ GeoNames username field
 6. Add basic unit tests for service
 
 ### Phase 2: UI Integration
