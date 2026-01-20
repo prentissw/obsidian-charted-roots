@@ -12,6 +12,11 @@ Charted Roots provides tools for managing genealogical sources and evidence, hel
   - [Source Note Properties](#source-note-properties)
   - [Source Types](#source-types)
 - [Linking Sources to People](#linking-sources-to-people)
+- [Person Roles in Sources](#person-roles-in-sources)
+  - [Role Categories](#role-categories)
+  - [Adding Roles via YAML](#adding-roles-via-yaml)
+  - [Adding Roles via Modal](#adding-roles-via-modal)
+  - [Querying by Role](#querying-by-role)
 - [Source Indicators on Trees](#source-indicators-on-trees)
   - [Enabling Source Indicators](#enabling-source-indicators)
   - [How Indicators Appear](#how-indicators-appear)
@@ -180,6 +185,81 @@ source_type: census
 ```
 
 Charted Roots uses Obsidian's `resolvedLinks` to detect these connections, so any valid wikilink from a source to a person note will be counted.
+
+## Person Roles in Sources
+
+Genealogical source documents often name multiple people in different capacities—a death certificate names the deceased, informant, spouse, parents, and officials. Person roles let you track these relationships to support FAN (Friends, Associates, Neighbors) network research and assess information quality.
+
+### Role Categories
+
+Charted Roots recognizes seven canonical role categories:
+
+| Role Property | Description | Examples |
+|---------------|-------------|----------|
+| `principals` | Subject(s) of the document | Deceased, testator, groom/bride |
+| `witnesses` | Named witnesses | Signing witnesses, event witnesses |
+| `informants` | Person providing information | Death certificate informant |
+| `officials` | Authority figures | Clerks, judges, officiants, physicians |
+| `enslaved_individuals` | Persons listed as property | Named in wills, inventories, appraisements |
+| `family` | Family members of principals | Named relatives |
+| `others` | Catch-all | Any role not fitting above |
+
+### Adding Roles via YAML
+
+Role entries use wikilink syntax with optional display text for role details:
+
+```yaml
+---
+cr_type: source
+source_type: probate
+title: "Estate Inventory of John Smith Sr."
+date: 1817-03-15
+
+principals:
+  - "[[John Smith Sr.|John Smith Sr. (Decedent)]]"
+officials:
+  - "[[Thomas Brown|Thomas Brown (Administrator)]]"
+  - "[[James Wilson|James Wilson (Appraiser)]]"
+enslaved_individuals:
+  - "[[Mary]]"
+  - "[[Peter]]"
+family:
+  - "[[John Smith Jr.|John Smith Jr. (Heir)]]"
+---
+```
+
+The format is `"[[Link Target|Display Name (Role Details)]]"`. The role details in parentheses are optional and extracted for display in reports.
+
+### Adding Roles via Modal
+
+When creating or editing a source note via the Create/Edit Source modal:
+
+1. Expand the **Person roles** section
+2. Click **Add person**
+3. Select a person from the picker
+4. Choose a role category
+5. Optionally add role details (e.g., "Administrator", "Heir")
+6. Click **Add**
+
+The modal writes the role to the appropriate frontmatter array automatically.
+
+### Querying by Role
+
+**DataView example** — Find all sources where a person was a witness:
+
+```dataview
+TABLE title, date
+FROM "Sources"
+WHERE contains(witnesses, "[[John Smith]]")
+```
+
+**Bases filter** — In an Obsidian Base, filter sources by role:
+- Filter: `witnesses` contains `[[John Smith]]`
+- Or use formula: `contains(witnesses, "John Smith")`
+
+**Sources by Role report** — Generate a report from the Control Center showing all sources where a person appears by role. See [Statistics & Reports](Statistics-And-Reports#sources-by-role) for details.
+
+**Dynamic block** — Display roles in a source note using the `charted-roots-source-roles` block. See [Dynamic Note Content](Dynamic-Note-Content#source-roles-block) for details.
 
 ## Source Indicators on Trees
 

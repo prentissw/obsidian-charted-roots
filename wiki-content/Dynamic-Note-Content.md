@@ -11,6 +11,7 @@ Charted Roots can render live, computed content directly within person notes usi
   - [Timeline Block](#timeline-block)
   - [Relationships Block](#relationships-block)
   - [Media Block](#media-block)
+  - [Source Roles Block](#source-roles-block)
 - [Rendered Output](#rendered-output)
 - [Freeze to Markdown](#freeze-to-markdown)
 - [Inserting Blocks](#inserting-blocks)
@@ -154,6 +155,45 @@ When `editable: true` is set:
 - First item becomes the thumbnail (shown on Family Chart nodes)
 - Frontmatter is updated automatically when you drop
 - Gallery has a dashed border to indicate edit mode
+
+### Source Roles Block
+
+The `charted-roots-source-roles` block displays a table of people and their roles in a source document.
+
+~~~markdown
+```charted-roots-source-roles
+source: "[[Estate Inventory of John Smith Sr.]]"
+```
+~~~
+
+**What it displays:**
+- All people listed in the source's role properties (`principals`, `witnesses`, `informants`, etc.)
+- Role category and label for each person
+- Role details (e.g., "Decedent", "Administrator") when present
+- Clickable wikilinks to person notes
+
+**Configuration options:**
+
+| Option | Values | Description |
+|--------|--------|-------------|
+| `source` | wikilink | Source note to display roles from (default: current note) |
+
+**Rendered output:**
+
+| Role | Person | Details |
+|------|--------|---------|
+| Principal | [[John Smith Sr.]] | Decedent |
+| Official | [[Thomas Brown]] | Administrator |
+| Enslaved Individual | [[Mary]] | — |
+
+**Inserting the block:**
+
+1. **Context menu:** Right-click on a source note and select **Charted Roots > Add source roles block**
+2. **Manual:** Add the code block to any note, specifying the source
+
+When inserted via context menu, the `source` parameter is pre-filled with the current note's wikilink.
+
+**Note:** This block is designed for source notes (`cr_type: source`) that have role properties defined. See [Person Roles in Sources](Evidence-And-Sources#person-roles-in-sources) for details on setting up role properties.
 
 ## Rendered Output
 

@@ -221,7 +221,32 @@ See [Frontmatter Reference](Frontmatter-Reference#research-level) for details on
 | Report | Description |
 |--------|-------------|
 | **Source Summary** | All sources cited for a person, grouped by fact type with quality ratings and gap analysis |
+| **Sources by Role** | All sources where a person appears as witness, informant, official, or other role |
 | **Media Inventory** | Media files with linked entities, orphaned file detection, coverage gaps |
+
+#### Sources by Role
+
+The Sources by Role report shows all sources where a selected person appears in any role—not just as the subject, but also as a witness, informant, official, family member, or other named person.
+
+**Use cases:**
+- **FAN research**: Build Friends, Associates, and Neighbors networks by finding where people appear together
+- **Information quality**: Identify who provided information on death certificates and other records
+- **Enslaved ancestor research**: Track individuals through probate records, wills, and inventories
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| **Person** | The person to search for across all sources |
+| **Role filter** | Limit to specific roles (e.g., only witnesses) |
+| **Group by** | Organize results by role, by source, or chronologically |
+| **Show role details** | Include details like "Decedent", "Administrator" |
+| **Show source quality** | Include quality ratings (primary/secondary/derivative) |
+| **Show repository** | Include repository information |
+
+**Output:** A markdown report with a summary of sources by role and detailed tables.
+
+See [Person Roles in Sources](Evidence-And-Sources#person-roles-in-sources) for details on setting up role properties on source notes.
 
 ### Timeline Reports
 

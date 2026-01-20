@@ -52,7 +52,7 @@ Based on outputMethod:
 | Category | Reports |
 |----------|---------|
 | **Genealogical** | Family Group Sheet, Individual Summary, Ahnentafel, Register Report, Pedigree Chart, Descendant Chart |
-| **Research** | Source Summary, Gaps Report, Media Inventory |
+| **Research** | Source Summary, Sources by Role, Gaps Report, Media Inventory |
 | **Timeline** | Timeline Report |
 | **Geographic** | Place Summary |
 | **Summary** | Universe Overview, Collection Overview |
@@ -154,6 +154,7 @@ const metadata = REPORT_METADATA['ahnentafel'];
 │   ├── pedigree-chart-generator.ts
 │   ├── descendant-chart-generator.ts
 │   ├── source-summary-generator.ts
+│   ├── sources-by-role-generator.ts
 │   ├── timeline-generator.ts
 │   ├── place-summary-generator.ts
 │   ├── media-inventory-generator.ts

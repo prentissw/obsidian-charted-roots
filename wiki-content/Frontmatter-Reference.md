@@ -640,6 +640,41 @@ media:
 |----------|------|-------------|---------|
 | `citation_override` | `string` | Manual citation text (overrides auto-generated) | See example below |
 
+### Person Roles
+
+Track the roles that people play in a source document—useful for FAN research and assessing information quality.
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `principals` | `string[]` | Subject(s) of the document | `["[[John Smith Sr.\|John Smith Sr. (Decedent)]]"]` |
+| `witnesses` | `string[]` | Named witnesses | `["[[Thomas Brown]]"]` |
+| `informants` | `string[]` | Person providing information | `["[[Jane Smith\|Jane Smith (Daughter)]]"]` |
+| `officials` | `string[]` | Authority figures | `["[[James Wilson\|James Wilson (Appraiser)]]"]` |
+| `enslaved_individuals` | `string[]` | Persons listed as property | `["[[Mary]]", "[[Peter]]"]` |
+| `family` | `string[]` | Family members of principals | `["[[John Smith Jr.\|John Smith Jr. (Heir)]]"]` |
+| `others` | `string[]` | Any role not fitting above | `["[[Robert Davis\|Robert Davis (Neighbor)]]"]` |
+
+**Format:** Each entry is a wikilink with optional display text containing role details in parentheses:
+
+```yaml
+principals:
+  - "[[John Smith Sr.|John Smith Sr. (Decedent)]]"
+officials:
+  - "[[Thomas Brown|Thomas Brown (Administrator)]]"
+  - "[[James Wilson|James Wilson (Appraiser)]]"
+enslaved_individuals:
+  - "[[Mary]]"
+  - "[[Peter]]"
+```
+
+Role properties are optional on any source type but are most useful for:
+- `probate` — Wills, estate inventories, appraisements
+- `vital_record` — Birth, death, marriage certificates
+- `court_record` — Legal proceedings
+- `church_record` — Baptism, marriage, burial records
+
+See [Person Roles in Sources](Evidence-And-Sources#person-roles-in-sources) for full documentation.
+
 ---
 
 ## Linking Sources to Person and Event Notes

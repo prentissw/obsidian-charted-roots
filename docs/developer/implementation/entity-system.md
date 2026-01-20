@@ -224,9 +224,27 @@ source_date_accessed: [date string]
 # Media
 media: [wikilink | wikilink[]]
 confidence: high | medium | low | unknown
+
+# Person roles (optional, for FAN research)
+principals: [wikilink[]]       # Subject(s) of the document
+witnesses: [wikilink[]]        # Named witnesses
+informants: [wikilink[]]       # Person providing information
+officials: [wikilink[]]        # Authority figures
+enslaved_individuals: [wikilink[]]  # Persons listed as property
+family: [wikilink[]]           # Family members of principals
+others: [wikilink[]]           # Catch-all for other roles
 ```
 
 **Source types (15 built-in):** vital_record, obituary, census, church_record, court_record, land_deed, probate, military, immigration, photo, correspondence, newspaper, oral_history, custom
+
+**Person role properties:**
+
+Role entries use wikilink syntax with optional display text for details: `"[[Person|Person (Role Details)]]"`. The role category comes from the array name, and details are extracted from parentheses in the display text.
+
+Defined in `src/sources/types/source-types.ts`:
+- `PERSON_ROLE_PROPERTIES` — Array of role property names
+- `PERSON_ROLE_LABELS` — Display labels for each role
+- `parsePersonRoleEntries()` — Parses wikilinks and extracts details
 
 ### Organization Note Structure
 
