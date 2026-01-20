@@ -16,6 +16,8 @@ import type { CustomMapConfig } from '../maps/types/map-types';
 import type CanvasRootsPlugin from '../../main';
 import { ModalStatePersistence, renderResumePromptBanner } from './modal-state-persistence';
 import { parseLatitude, parseLongitude, isDMSFormat } from '../utils/coordinate-converter';
+import { PlaceLookupModal } from '../places/ui/place-lookup-modal';
+import type { PlaceLookupResult } from '../places/services/place-lookup-service';
 
 /**
  * Map option for the maps multi-select
@@ -529,6 +531,19 @@ export class CreatePlaceModal extends Modal {
 		const icon = createLucideIcon('map-pin', 24);
 		titleContainer.appendChild(icon);
 		titleContainer.appendText(this.editMode ? 'Edit place note' : 'Create place note');
+
+		// Add "Look up" button in header (only in create mode when enabled)
+		if (!this.editMode && this.settings?.enablePlaceLookup) {
+			const lookupBtn = header.createEl('button', {
+				text: 'Look up place',
+				cls: 'crc-btn crc-btn--secondary crc-header-action'
+			});
+			const lookupIcon = createLucideIcon('search', 16);
+			lookupBtn.prepend(lookupIcon);
+			lookupBtn.addEventListener('click', () => {
+				this.openPlaceLookupModal();
+			});
+		}
 
 		// Check for persisted state (only in create mode)
 		if (this.persistence && !this.editMode) {
@@ -1786,5 +1801,102 @@ export class CreatePlaceModal extends Modal {
 			new Notice(`Failed to move file: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			return null;
 		}
+	}
+
+	/**
+	 * Open the place lookup modal and populate form with selected result
+	 */
+	private openPlaceLookupModal(): void {
+		const modal = new PlaceLookupModal(this.app, {
+			initialQuery: this.placeData.name || '',
+			settings: this.settings,
+			onSelect: (result) => {
+				this.populateFromLookupResult(result);
+			}
+		});
+		modal.open();
+	}
+
+	/**
+	 * Populate form fields from a place lookup result
+	 */
+	private populateFromLookupResult(result: PlaceLookupResult): void {
+		// Update name
+		this.placeData.name = result.standardizedName;
+
+		// Update place type if provided
+		if (result.placeType) {
+			this.placeData.placeType = result.placeType;
+			// Update type dropdown if exists
+			if (this.typeDropdownEl) {
+				const isKnownType = KNOWN_PLACE_TYPES.includes(result.placeType as typeof KNOWN_PLACE_TYPES[number]);
+				if (isKnownType) {
+					this.typeDropdownEl.value = result.placeType;
+					if (this.customTypeInputEl) {
+						this.customTypeInputEl.addClass('cr-hidden');
+					}
+				} else {
+					this.typeDropdownEl.value = '__custom__';
+					if (this.customTypeInputEl) {
+						this.customTypeInputEl.removeClass('cr-hidden');
+						this.customTypeInputEl.value = result.placeType;
+					}
+				}
+			}
+		}
+
+		// Update coordinates if provided
+		if (result.coordinates) {
+			this.placeData.coordinates = {
+				lat: result.coordinates.lat,
+				long: result.coordinates.lng
+			};
+
+			// Update coordinate inputs
+			if (this.latInputEl) {
+				this.latInputEl.value = result.coordinates.lat.toFixed(6);
+			}
+			if (this.longInputEl) {
+				this.longInputEl.value = result.coordinates.lng.toFixed(6);
+			}
+		}
+
+		// Update parent place if provided
+		if (result.parentPlace) {
+			this.placeData.parentPlace = result.parentPlace;
+			this.placeData.parentPlaceId = undefined; // Clear ID since it's a text value
+
+			// Try to find matching parent in dropdown
+			if (this.parentDropdownEl) {
+				const matchingOption = this.allParentOptions.find(
+					opt => opt.name.toLowerCase() === result.parentPlace?.toLowerCase()
+				);
+				if (matchingOption) {
+					this.parentDropdownEl.value = matchingOption.id;
+					this.placeData.parentPlaceId = matchingOption.id;
+					this.placeData.parentPlace = matchingOption.name;
+				} else {
+					// Set to custom entry
+					this.parentDropdownEl.value = '__custom__';
+					this.pendingParentPlace = result.parentPlace;
+				}
+			}
+		}
+
+		// Store external ID in metadata (can be used for wikidata_id, geonames_id, etc.)
+		if (result.externalId) {
+			// The external ID format includes the source prefix, e.g., "Q84" for Wikidata
+			// We'll store this so it can be written to frontmatter later
+			// For now, just log it
+			console.debug('Place lookup external ID:', result.source, result.externalId);
+		}
+
+		// Show success message
+		new Notice(`Populated from ${result.source}: ${result.standardizedName}`);
+
+		// Re-render the form to show updated values
+		const { contentEl } = this;
+		contentEl.empty();
+		this.onOpen();
 	}
 }
