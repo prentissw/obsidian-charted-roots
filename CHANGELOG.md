@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.19.16] - 2026-01-19
+
 ### Added
 
 - **Person roles in sources** ([#219](https://github.com/banisterious/obsidian-charted-roots/issues/219)): Track the roles people play in source documents (principal, witness, informant, official, etc.) to support FAN network research and information quality assessment.
