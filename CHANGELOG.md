@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Crash with nested YAML in frontmatter** ([#221](https://github.com/banisterious/obsidian-charted-roots/issues/221)): Plugin no longer crashes with `value.startsWith is not a function` when frontmatter contains nested objects in relationship fields (e.g., legacy formats with `Father: { Name: "[[...]]", Born: ... }`). Non-string values are now gracefully skipped.
+
 ---
 
 ## [0.19.16] - 2026-01-19

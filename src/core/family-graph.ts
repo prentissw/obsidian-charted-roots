@@ -1792,8 +1792,8 @@ export class FamilyGraphService {
 	 * Valid Charted Roots cr_ids have format: xxx-123-xxx-123
 	 * (3 lowercase letters, 3 digits, 3 lowercase letters, 3 digits)
 	 */
-	private isUnresolvedGrampsHandle(value: string | undefined): boolean {
-		if (!value) return false;
+	private isUnresolvedGrampsHandle(value: unknown): boolean {
+		if (!value || typeof value !== 'string') return false;
 
 		// Gramps handles start with underscore
 		if (!value.startsWith('_')) return false;
@@ -1822,9 +1822,10 @@ export class FamilyGraphService {
 
 	/**
 	 * Filter out unresolved Gramps handles from an array of cr_ids.
+	 * Also filters out non-string values (e.g., objects from legacy nested YAML).
 	 */
-	private filterGrampsHandles(values: string[]): string[] {
-		return values.filter(v => !this.isUnresolvedGrampsHandle(v));
+	private filterGrampsHandles(values: unknown[]): string[] {
+		return values.filter((v): v is string => typeof v === 'string' && !this.isUnresolvedGrampsHandle(v));
 	}
 
 	/**
@@ -1838,7 +1839,7 @@ export class FamilyGraphService {
 		// Prefer _id field
 		if (idValue) {
 			const ids = Array.isArray(idValue) ? idValue : [idValue];
-			result.push(...ids.filter(id => id));
+			result.push(...ids.filter((id): id is string => typeof id === 'string' && !!id));
 		} else if (wikilinkValue) {
 			// Fallback to wikilink field
 			const values = Array.isArray(wikilinkValue) ? wikilinkValue : [wikilinkValue];
