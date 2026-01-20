@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.19.17] - 2026-01-20
+
 ### Added
 
 - **Unified place lookup** ([#218](https://github.com/banisterious/obsidian-charted-roots/issues/218)): Look up place information from external geographic databases when creating place notes.
