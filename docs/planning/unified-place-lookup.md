@@ -88,10 +88,17 @@ import { Logger } from '../logger';
 const logger = new Logger('PlaceLookupService');
 
 /**
+ * Supported place lookup sources
+ * Phase 1: wikidata, geonames, nominatim
+ * Phase 3: familysearch, gov (require additional implementation)
+ */
+export type PlaceLookupSource = 'wikidata' | 'geonames' | 'nominatim' | 'familysearch' | 'gov';
+
+/**
  * Result from a place lookup query
  */
 export interface PlaceLookupResult {
-    source: 'familysearch' | 'wikidata' | 'geonames' | 'gov' | 'nominatim';
+    source: PlaceLookupSource;
     standardizedName: string;
     coordinates?: { lat: number; lng: number };
     placeType?: string;
@@ -107,8 +114,8 @@ export interface PlaceLookupResult {
  * Options for place lookup
  */
 export interface PlaceLookupOptions {
-    sources?: Array<'familysearch' | 'wikidata' | 'geonames' | 'gov' | 'nominatim'>;
-    historicalDate?: string; // YYYY-MM-DD format for time-aware lookups
+    sources?: PlaceLookupSource[];
+    historicalDate?: string; // YYYY-MM-DD format for time-aware lookups (Phase 3)
     countryCode?: string; // ISO 3166-1 alpha-2 for GeoNames
     maxResults?: number; // Max results per source
 }
@@ -130,7 +137,8 @@ export class PlaceLookupService {
         placeName: string,
         options: PlaceLookupOptions = {}
     ): Promise<PlaceLookupResult[]> {
-        const sources = options.sources || ['familysearch', 'wikidata', 'geonames'];
+        // Phase 1 default sources (no complex auth required)
+        const sources = options.sources || ['wikidata', 'geonames', 'nominatim'];
         const results: PlaceLookupResult[] = [];
 
         // Query all sources in parallel
@@ -167,11 +175,22 @@ export class PlaceLookupService {
 
     /**
      * Look up place in FamilySearch Places API
+     * NOTE: Phase 3 - Requires OAuth 2.0 authentication (not implemented in Phase 1)
+     * FamilySearch API requires user login and token management
      */
     private async lookupFamilySearch(
         placeName: string,
         options: PlaceLookupOptions
     ): Promise<PlaceLookupResult[]> {
+        // TODO Phase 3: Implement OAuth 2.0 flow
+        // - Redirect user to FamilySearch login
+        // - Handle OAuth callback
+        // - Store and refresh access tokens
+        // - Add Authorization header to requests
+        logger.warn('familysearch-not-implemented', 'FamilySearch lookup requires OAuth (Phase 3)');
+        return [];
+
+        /* Phase 3 implementation:
         try {
             let url = `https://api.familysearch.org/platform/places/search?name=${encodeURIComponent(placeName)}`;
 
@@ -183,7 +202,8 @@ export class PlaceLookupService {
                 url,
                 method: 'GET',
                 headers: {
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${this.accessToken}` // Requires OAuth
                 }
             });
 
@@ -247,6 +267,7 @@ export class PlaceLookupService {
             logger.error('familysearch-lookup-failed', `FamilySearch lookup failed: ${error}`);
             return [];
         }
+        */
     }
 
     /**
@@ -403,28 +424,20 @@ export class PlaceLookupService {
     }
 
     /**
-     * Look up place in GOV (German/European)
+     * Look up place in GOV (Genealogisches Ortsverzeichnis - German/European)
+     * NOTE: Phase 3 - Requires API research and implementation
+     * GOV has historical jurisdiction data valuable for European genealogy
      */
     private async lookupGOV(
         placeName: string,
         options: PlaceLookupOptions
     ): Promise<PlaceLookupResult[]> {
-        try {
-            // GOV API endpoint
-            const url = `http://gov.genealogy.net/search/query?query=${encodeURIComponent(placeName)}`;
-
-            const response = await requestUrl({ url });
-            const data = response.json;
-
-            // GOV API response parsing would go here
-            // This is a simplified implementation
-            logger.info('gov-lookup', 'GOV lookup implementation needed');
-
-            return [];
-        } catch (error) {
-            logger.error('gov-lookup-failed', `GOV lookup failed: ${error}`);
-            return [];
-        }
+        // TODO Phase 3: Research GOV API structure and implement
+        // - Understand API response format
+        // - Map GOV place types to Charted Roots types
+        // - Handle historical jurisdiction data
+        logger.warn('gov-not-implemented', 'GOV lookup requires API research (Phase 3)');
+        return [];
     }
 
     /**
@@ -532,8 +545,8 @@ export class PlaceLookupModal extends Modal {
                 });
             });
 
-        // Source selection
-        const sources: Array<'familysearch' | 'wikidata' | 'geonames'> = ['familysearch', 'wikidata', 'geonames'];
+        // Source selection (Phase 1 sources)
+        const sources: PlaceLookupSource[] = ['wikidata', 'geonames', 'nominatim'];
         new Setting(contentEl)
             .setName('Sources')
             .setDesc('Select which sources to query')
@@ -848,7 +861,101 @@ GeoNames:
 GOV:
 - `gov_id`: GOV identifier
 
-### 7. Automatic Parent Place Creation
+### 7. Place Type Mapping
+
+Different sources use different vocabularies for place types. This mapping normalizes them to Charted Roots `place_type` values.
+
+**GeoNames Feature Codes → Charted Roots:**
+
+| GeoNames fcode | Charted Roots place_type |
+|----------------|--------------------------|
+| PCLI | country |
+| ADM1 | state |
+| ADM2 | county |
+| ADM3, ADM4 | district |
+| PPL, PPLA, PPLA2, PPLA3, PPLA4 | city |
+| PPLC | city (capital) |
+| PPLL | village |
+| PPLX | neighborhood |
+| RGN | region |
+| ISL | island |
+| MT, MTS, PK | mountain |
+| LK, LKNI | lake |
+| STM | river |
+| CHN | channel |
+| SEA, OCN | sea |
+| CSTL | castle |
+| CH | church |
+| CMTY | cemetery |
+| HSP | hospital |
+| SCH, UNIV | school |
+| (other) | other |
+
+**Wikidata P31 (instance of) → Charted Roots:**
+
+| Wikidata Q-ID | Label | Charted Roots place_type |
+|---------------|-------|--------------------------|
+| Q6256 | country | country |
+| Q7275 | state | state |
+| Q28575 | province | state |
+| Q180673 | county | county |
+| Q515 | city | city |
+| Q1549591 | big city | city |
+| Q532 | village | village |
+| Q5084 | hamlet | village |
+| Q123705 | neighborhood | neighborhood |
+| Q82794 | region | region |
+| Q23442 | island | island |
+| Q8502 | mountain | mountain |
+| Q23397 | lake | lake |
+| Q4022 | river | river |
+| Q39614 | cemetery | cemetery |
+| Q16970 | church | church |
+| (other) | - | other |
+
+### 8. Rate Limiting
+
+To respect API usage policies and avoid being blocked:
+
+**Nominatim (OpenStreetMap):**
+- Limit: 1 request per second (strict)
+- Implementation: Queue requests with 1000ms delay
+- User-Agent header required
+
+**GeoNames:**
+- Free tier: 1000 requests/day, 1 request/second recommended
+- Implementation: Queue with 1000ms delay
+- Requires username registration
+
+**Wikidata:**
+- More permissive, but still rate limit to be a good citizen
+- Implementation: Queue with 500ms delay
+
+**Implementation approach:**
+```typescript
+class RateLimiter {
+    private lastRequestTime: Map<string, number> = new Map();
+    private delayMs: Map<string, number> = new Map([
+        ['nominatim', 1000],
+        ['geonames', 1000],
+        ['wikidata', 500],
+    ]);
+
+    async throttle(source: string): Promise<void> {
+        const delay = this.delayMs.get(source) || 500;
+        const lastTime = this.lastRequestTime.get(source) || 0;
+        const elapsed = Date.now() - lastTime;
+
+        if (elapsed < delay) {
+            await sleep(delay - elapsed);
+        }
+
+        this.lastRequestTime.set(source, Date.now());
+    }
+}
+```
+
+### 9. Automatic Parent Place Creation
 
 When a lookup result includes parent place information, the plugin should:
 
@@ -1085,26 +1192,41 @@ Create new wiki page: **Place Lookup**
    - Create separate place notes for different time periods?
    - **Recommendation**: Document in note content, single place note with timeline
 
+5. **FamilySearch Authentication**: FamilySearch requires OAuth 2.0 with user login flow. This adds significant complexity.
+   - **Decision**: Defer FamilySearch to Phase 3+ after core sources are stable
+   - Revisit when OAuth flow can be properly implemented
+
+6. **GOV API Structure**: GOV API needs more research to understand response format and capabilities.
+   - **Decision**: Defer GOV to Phase 3+ pending API research
+
+7. **Localization**: Current implementation assumes English place names and labels.
+   - **Decision**: English-only for Phase 1, multilingual support in future phases
+
 ## Implementation Roadmap
 
-### Phase 1: Core Lookup Service (v0.19.0)
+### Phase 1: Core Lookup Service
 
 1. ✅ Create planning document
-2. Implement PlaceLookupService
-   - FamilySearch Places lookup method
-   - Wikidata lookup method
-   - GeoNames lookup method (requires username)
-   - Stub methods for GOV and Nominatim
-3. Add settings for place lookup
+2. Implement PlaceLookupService with three sources:
+   - Wikidata lookup (no auth required)
+   - GeoNames lookup (requires free username)
+   - Nominatim/OSM lookup (no auth, rate limited)
+3. Implement rate limiting
+   - Nominatim: 1 request/second max
+   - Configurable delay per source
+4. Add place type mapping table
+   - GeoNames fcode → Charted Roots place_type
+   - Wikidata P31 → Charted Roots place_type
+5. Add settings for place lookup
    - Enable/disable toggle
    - GeoNames username field
-4. Add basic unit tests for service
+6. Add basic unit tests for service
 
-### Phase 2: UI Integration (v0.19.0 or v0.20.0)
+### Phase 2: UI Integration
 
 1. Implement PlaceLookupModal
    - Search input and source selection
-   - Result display with confidence scores
+   - Result display with source indicators
    - "Use this place" button
 2. Integrate with Create Place modal
    - Add "Lookup" button
@@ -1112,37 +1234,47 @@ Create new wiki page: **Place Lookup**
 3. Add command palette command
    - Standalone place lookup
    - Direct place creation from result
+4. Duplicate detection before creation
+   - Search vault for places with similar names
+   - Search by coordinates proximity
+   - Prompt user if potential duplicate found
 
-### Phase 3: Advanced Features (v0.20.0+)
+### Phase 3: FamilySearch & Advanced Features
 
-1. Automatic parent place creation
+1. FamilySearch Places integration
+   - Implement OAuth 2.0 authentication flow
+   - Store/refresh tokens securely
+   - Handle auth errors gracefully
+2. GOV (Genealogisches Ortsverzeichnis) integration
+   - Research API structure and capabilities
+   - Implement lookup method
+3. Automatic parent place creation
    - Parent detection in lookup results
    - Recursive hierarchy building
-   - Duplicate prevention
-2. Bulk place standardization tool
-   - Scan for places without coordinates
-   - Batch lookup interface
-   - Preview and apply changes
-3. Place name authority control
-   - Fuzzy matching on place creation
-   - Merge duplicate places
 4. Historical date support
    - Date picker in lookup modal
    - FamilySearch temporal queries
 
-### Phase 4: Polish and Documentation (v0.20.0+)
+### Phase 4: Bulk Tools & Polish
 
-1. Complete GOV and Nominatim implementations
-2. Add comprehensive error handling
-3. Implement session caching
-4. Write user documentation wiki page
-5. Create demo video
+1. Bulk place standardization tool
+   - Scan for places without coordinates
+   - Batch lookup interface
+   - Preview and apply changes
+2. Place name authority control
+   - Fuzzy matching on place creation
+   - Merge duplicate places tool
+3. Session caching for API responses
+4. Comprehensive error handling and user feedback
+5. Write user documentation wiki page
 6. Gather user feedback
 
 ## Next Steps
 
 1. ✅ Create planning document (this file)
 2. ✅ Document place data source research in [docs/research/place-data-sources.md](../research/place-data-sources.md)
-3. Get user feedback on native approach vs. Web Clipper
-4. Create GitHub issue for tracking
-5. Begin Phase 1 implementation
+3. ✅ Create GitHub issue for tracking ([#218](https://github.com/banisterious/obsidian-charted-roots/issues/218))
+4. Begin Phase 1 implementation
+   - Start with Wikidata (simplest API, no auth)
+   - Add GeoNames (requires username but straightforward)
+   - Add Nominatim last (rate limiting implementation needed)
