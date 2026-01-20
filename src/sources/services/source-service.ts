@@ -13,7 +13,9 @@ import {
 	SourceQuality,
 	SourceTypeDefinition,
 	getAllSourceTypes,
-	getSourceType
+	getSourceType,
+	PERSON_ROLE_PROPERTIES,
+	PersonRoleProperty
 } from '../types/source-types';
 import { getSourceTemplate, applyTemplatePlaceholders } from '../types/source-templates';
 import { generateCrId } from '../../core/uuid';
@@ -229,6 +231,14 @@ export class SourceService {
 		confidence?: SourceConfidence;
 		sourceQuality?: SourceQuality;
 		transcription?: string;
+		// Person roles (#219)
+		principals?: string[];
+		witnesses?: string[];
+		informants?: string[];
+		officials?: string[];
+		enslaved_individuals?: string[];
+		family?: string[];
+		others?: string[];
 	}): Promise<TFile> {
 		// Generate cr_id
 		const crId = generateCrId();
@@ -275,6 +285,18 @@ export class SourceService {
 		}
 		if (data.sourceQuality) {
 			frontmatterLines.push(`source_quality: ${data.sourceQuality}`);
+		}
+
+		// Person role arrays (#219)
+		for (const roleProp of PERSON_ROLE_PROPERTIES) {
+			const roleData = data[roleProp];
+			if (roleData && roleData.length > 0) {
+				// Write as YAML array
+				frontmatterLines.push(`${roleProp}:`);
+				for (const wikilink of roleData) {
+					frontmatterLines.push(`  - "${wikilink.replace(/"/g, '\\"')}"`);
+				}
+			}
 		}
 
 		frontmatterLines.push('---');
@@ -342,6 +364,14 @@ export class SourceService {
 		confidence?: SourceConfidence;
 		sourceQuality?: SourceQuality;
 		media?: string[];
+		// Person roles (#219)
+		principals?: string[];
+		witnesses?: string[];
+		informants?: string[];
+		officials?: string[];
+		enslaved_individuals?: string[];
+		family?: string[];
+		others?: string[];
 	}): Promise<void> {
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			// Update fields
@@ -416,6 +446,16 @@ export class SourceService {
 					frontmatter[`media_${i + 1}`] = data.media[i];
 				}
 			}
+
+			// Handle person role arrays (#219)
+			for (const roleProp of PERSON_ROLE_PROPERTIES) {
+				const roleData = data[roleProp];
+				if (roleData && roleData.length > 0) {
+					frontmatter[roleProp] = roleData;
+				} else {
+					delete frontmatter[roleProp];
+				}
+			}
 		});
 
 		// Invalidate cache
@@ -488,6 +528,21 @@ export class SourceService {
 			}
 		}
 
+		// Parse person role arrays (#219)
+		const roleArrays: Partial<Record<PersonRoleProperty, string[]>> = {};
+		for (const prop of PERSON_ROLE_PROPERTIES) {
+			const value = frontmatter[prop];
+			if (value) {
+				if (Array.isArray(value)) {
+					// Filter to only string entries
+					roleArrays[prop] = value.filter((item): item is string => typeof item === 'string');
+				} else if (typeof value === 'string') {
+					// Single value - wrap in array
+					roleArrays[prop] = [value];
+				}
+			}
+		}
+
 		return {
 			filePath: file.path,
 			crId,
@@ -503,7 +558,9 @@ export class SourceService {
 			media,
 			confidence,
 			citationOverride: frontmatter.citation_override ? fmToString(frontmatter.citation_override) : undefined,
-			sourceQuality
+			sourceQuality,
+			// Person roles (#219)
+			...roleArrays
 		};
 	}
 

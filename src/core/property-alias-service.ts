@@ -138,7 +138,15 @@ export const CANONICAL_SOURCE_PROPERTIES = [
 	'citation_detail',
 	'gramps_handle',
 	'gramps_id',
-	'gramps_media_refs'
+	'gramps_media_refs',
+	// Person roles (#219)
+	'principals',
+	'witnesses',
+	'informants',
+	'officials',
+	'enslaved_individuals',
+	'family',
+	'others'
 ] as const;
 
 export type CanonicalSourceProperty = typeof CANONICAL_SOURCE_PROPERTIES[number];
@@ -254,6 +262,14 @@ export const CANONICAL_PROPERTY_LABELS: Record<string, string> = {
 	gramps_handle: 'Gramps handle',
 	gramps_id: 'Gramps ID',
 	gramps_media_refs: 'Gramps media refs',
+	// Person roles in sources (#219)
+	principals: 'Principals',
+	witnesses: 'Witnesses',
+	informants: 'Informants',
+	officials: 'Officials',
+	enslaved_individuals: 'Enslaved individuals',
+	family: 'Family',
+	others: 'Others',
 	// Universe properties
 	genre: 'Genre',
 	status: 'Status',

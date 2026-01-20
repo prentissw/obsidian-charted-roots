@@ -217,6 +217,73 @@ export interface SourceTypeDefinition {
 }
 
 /**
+ * Person role property names for source notes (#219)
+ * Each role is an array of wikilinks with optional display text containing details.
+ * Example: `["[[John Smith|John Smith (Witness)]]"]`
+ */
+export type PersonRoleProperty =
+	| 'principals'
+	| 'witnesses'
+	| 'informants'
+	| 'officials'
+	| 'enslaved_individuals'
+	| 'family'
+	| 'others';
+
+/**
+ * All person role property names
+ */
+export const PERSON_ROLE_PROPERTIES: PersonRoleProperty[] = [
+	'principals',
+	'witnesses',
+	'informants',
+	'officials',
+	'enslaved_individuals',
+	'family',
+	'others'
+];
+
+/**
+ * Human-readable labels for person role properties
+ */
+export const PERSON_ROLE_LABELS: Record<PersonRoleProperty, string> = {
+	principals: 'Principals',
+	witnesses: 'Witnesses',
+	informants: 'Informants',
+	officials: 'Officials',
+	enslaved_individuals: 'Enslaved individuals',
+	family: 'Family',
+	others: 'Others'
+};
+
+/**
+ * Descriptions for person role properties
+ */
+export const PERSON_ROLE_DESCRIPTIONS: Record<PersonRoleProperty, string> = {
+	principals: 'Subject(s) of the document (deceased, testator, groom/bride)',
+	witnesses: 'Named witnesses to events or document signing',
+	informants: 'Person providing information (affects quality assessment)',
+	officials: 'Clerks, judges, officiants, physicians, undertakers',
+	enslaved_individuals: 'Persons listed as property in wills, inventories',
+	family: 'Family members named in relation to principals',
+	others: 'Any role not fitting above categories'
+};
+
+/**
+ * Parsed person role entry
+ */
+export interface ParsedPersonRole {
+	/** Link target (file path or note name) */
+	linkTarget: string;
+	/** Display name (may differ from link target) */
+	displayName: string;
+	/** Optional role details extracted from display text */
+	details?: string;
+	/** Original raw value from frontmatter */
+	raw: string;
+}
+
+/**
  * Source note data extracted from frontmatter
  */
 export interface SourceNote {
@@ -251,6 +318,22 @@ export interface SourceNote {
 	 * If not explicitly set, inferred from sourceType via getDefaultSourceQuality()
 	 */
 	sourceQuality?: SourceQuality;
+
+	// Person roles (#219)
+	/** Subject(s) of the document */
+	principals?: string[];
+	/** Named witnesses */
+	witnesses?: string[];
+	/** Person(s) providing information */
+	informants?: string[];
+	/** Authority figures (clerks, judges, etc.) */
+	officials?: string[];
+	/** Persons listed as property */
+	enslaved_individuals?: string[];
+	/** Family members of principals */
+	family?: string[];
+	/** Other roles not fitting above categories */
+	others?: string[];
 }
 
 /**
@@ -716,4 +799,97 @@ export function getSourceTypesByCategoryWithCustomizations(
 	}
 
 	return grouped;
+}
+
+/**
+ * Parse a person role entry from frontmatter (#219)
+ *
+ * Handles wikilink syntax: `[[Link Target]]` or `[[Link Target|Display Text]]`
+ * Extracts optional details from parentheses in display text.
+ *
+ * @param raw The raw string value from frontmatter
+ * @returns Parsed role entry or null if not a valid wikilink
+ */
+export function parsePersonRoleEntry(raw: string): ParsedPersonRole | null {
+	if (!raw || typeof raw !== 'string') return null;
+
+	// Match wikilink with optional alias: [[target]] or [[target|display]]
+	const wikilinkMatch = raw.match(/^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/);
+	if (!wikilinkMatch) return null;
+
+	const linkTarget = wikilinkMatch[1].trim();
+	const displayText = wikilinkMatch[2]?.trim();
+
+	// If no display text, use link target as display name
+	if (!displayText) {
+		return {
+			linkTarget,
+			displayName: linkTarget,
+			raw
+		};
+	}
+
+	// Try to extract details from parentheses in display text
+	// Pattern: "Name (Details)" -> displayName="Name", details="Details"
+	const detailsMatch = displayText.match(/^(.+?)\s*\(([^)]+)\)$/);
+	if (detailsMatch) {
+		return {
+			linkTarget,
+			displayName: detailsMatch[1].trim(),
+			details: detailsMatch[2].trim(),
+			raw
+		};
+	}
+
+	// No parenthetical details, use full display text as name
+	return {
+		linkTarget,
+		displayName: displayText,
+		raw
+	};
+}
+
+/**
+ * Parse all person role entries from an array
+ *
+ * @param entries Array of raw strings from frontmatter
+ * @returns Array of parsed entries (invalid entries filtered out)
+ */
+export function parsePersonRoleEntries(entries: string[] | undefined): ParsedPersonRole[] {
+	if (!entries || !Array.isArray(entries)) return [];
+	return entries
+		.map(parsePersonRoleEntry)
+		.filter((entry): entry is ParsedPersonRole => entry !== null);
+}
+
+/**
+ * Get all person roles from a source note as parsed entries
+ *
+ * @param source The source note
+ * @returns Map of role property to parsed entries
+ */
+export function getAllPersonRoles(source: SourceNote): Map<PersonRoleProperty, ParsedPersonRole[]> {
+	const roles = new Map<PersonRoleProperty, ParsedPersonRole[]>();
+
+	for (const prop of PERSON_ROLE_PROPERTIES) {
+		const entries = source[prop];
+		if (entries && entries.length > 0) {
+			const parsed = parsePersonRoleEntries(entries);
+			if (parsed.length > 0) {
+				roles.set(prop, parsed);
+			}
+		}
+	}
+
+	return roles;
+}
+
+/**
+ * Check if a source note has any person roles defined
+ */
+export function hasPersonRoles(source: SourceNote): boolean {
+	return PERSON_ROLE_PROPERTIES.some(prop => {
+		const entries = source[prop];
+		return entries && entries.length > 0;
+	});
 }

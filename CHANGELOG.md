@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Person roles in sources** ([#219](https://github.com/banisterious/obsidian-charted-roots/issues/219)): Track the roles people play in source documents (principal, witness, informant, official, etc.) to support FAN network research and information quality assessment.
+  - Seven canonical role categories: `principals`, `witnesses`, `informants`, `officials`, `enslaved_individuals`, `family`, `others`
+  - Inline YAML notation: `"[[Person|Person (Role details)]]"` for readability
+  - Dynamic block `charted-roots-source-roles` renders a role table with person links
+  - Right-click context menu on source notes to insert the roles block
+  - Modal UI in Create/Edit Source to assign roles when linking people
+  - New "Sources by role" report in Control Center showing all sources where a person appears, with grouping by role, source, or chronological order
+
 ### Fixed
 
 - **Timeline icon baseline alignment** ([#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)): Event type icons in dynamic timeline blocks now align properly with the text baseline instead of appearing slightly above or below the surrounding text.

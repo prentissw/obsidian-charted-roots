@@ -16,3 +16,6 @@ export { RelationshipsRenderer } from './renderers/relationships-renderer';
 
 export { MediaProcessor } from './processors/media-processor';
 export { MediaRenderer } from './renderers/media-renderer';
+
+export { SourceRolesProcessor } from './processors/source-roles-processor';
+export { SourceRolesRenderer } from './renderers/source-roles-renderer';

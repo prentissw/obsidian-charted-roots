@@ -18,6 +18,7 @@ import type {
 	PedigreeChartOptions,
 	DescendantChartOptions,
 	SourceSummaryOptions,
+	SourcesByRoleOptions,
 	TimelineReportOptions,
 	PlaceSummaryOptions,
 	MediaInventoryOptions,
@@ -32,6 +33,7 @@ import { RegisterReportGenerator } from './register-report-generator';
 import { PedigreeChartGenerator } from './pedigree-chart-generator';
 import { DescendantChartGenerator } from './descendant-chart-generator';
 import { SourceSummaryGenerator } from './source-summary-generator';
+import { SourcesByRoleGenerator } from './sources-by-role-generator';
 import { TimelineGenerator } from './timeline-generator';
 import { PlaceSummaryGenerator } from './place-summary-generator';
 import { MediaInventoryGenerator } from './media-inventory-generator';
@@ -57,6 +59,7 @@ export class ReportGenerationService {
 	private pedigreeChartGenerator: PedigreeChartGenerator;
 	private descendantChartGenerator: DescendantChartGenerator;
 	private sourceSummaryGenerator: SourceSummaryGenerator;
+	private sourcesByRoleGenerator: SourcesByRoleGenerator;
 	private timelineGenerator: TimelineGenerator;
 	private placeSummaryGenerator: PlaceSummaryGenerator;
 	private mediaInventoryGenerator: MediaInventoryGenerator;
@@ -76,6 +79,7 @@ export class ReportGenerationService {
 		this.pedigreeChartGenerator = new PedigreeChartGenerator(app, settings);
 		this.descendantChartGenerator = new DescendantChartGenerator(app, settings);
 		this.sourceSummaryGenerator = new SourceSummaryGenerator(app, settings);
+		this.sourcesByRoleGenerator = new SourcesByRoleGenerator(app, settings);
 		this.timelineGenerator = new TimelineGenerator(app, settings);
 		this.placeSummaryGenerator = new PlaceSummaryGenerator(app, settings);
 		this.mediaInventoryGenerator = new MediaInventoryGenerator(app, settings);
@@ -88,7 +92,7 @@ export class ReportGenerationService {
 	 */
 	async generateReport(
 		type: ReportType,
-		options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions | RegisterReportOptions | PedigreeChartOptions | DescendantChartOptions | SourceSummaryOptions | TimelineReportOptions | PlaceSummaryOptions | MediaInventoryOptions | UniverseOverviewOptions | CollectionOverviewOptions
+		options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions | RegisterReportOptions | PedigreeChartOptions | DescendantChartOptions | SourceSummaryOptions | SourcesByRoleOptions | TimelineReportOptions | PlaceSummaryOptions | MediaInventoryOptions | UniverseOverviewOptions | CollectionOverviewOptions
 	): Promise<ReportResult> {
 		logger.info('generate', `Generating ${type} report`);
 
@@ -118,6 +122,9 @@ export class ReportGenerationService {
 				break;
 			case 'source-summary':
 				result = await this.sourceSummaryGenerator.generate(options as SourceSummaryOptions);
+				break;
+			case 'sources-by-role':
+				result = await this.sourcesByRoleGenerator.generate(options as SourcesByRoleOptions);
 				break;
 			case 'timeline-report':
 				result = await this.timelineGenerator.generate(options as TimelineReportOptions);

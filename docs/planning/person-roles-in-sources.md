@@ -1,6 +1,6 @@
 # Person Roles in Source Notes
 
-- **Status:** Planning
+- **Status:** Complete (all phases implemented)
 - **GitHub Issue:** [#219](https://github.com/banisterious/obsidian-charted-roots/issues/219)
 - **Discussion:** [#189](https://github.com/banisterious/obsidian-charted-roots/discussions/189)
 - **Related:** [#123](https://github.com/banisterious/obsidian-charted-roots/issues/123) (Inheritance & Succession Tracking)
@@ -118,10 +118,11 @@ To extract details from display text:
 
 ## Implementation Phases
 
-### Phase 1: Property Recognition
+### Phase 1: Property Recognition ✅
 
 **Effort:** Low
 **Scope:** Read-only recognition
+**Status:** Complete
 
 - Add role properties to SourceNote interface
 - Parse role entries in source note reader
@@ -153,10 +154,11 @@ In an Obsidian Base, filter sources by role:
 - Filter: `witnesses` contains `[[John Smith]]`
 - Or use formula: `contains(witnesses, "John Smith")`
 
-### Phase 2: Dynamic Block Rendering
+### Phase 2: Dynamic Block Rendering ✅
 
 **Effort:** Medium
 **Scope:** Visualization
+**Status:** Complete
 
 Add `charted-roots-source-roles` dynamic block:
 
@@ -175,10 +177,17 @@ Renders as a formatted table:
 | Enslaved Individual | [[Mary]] | — |
 | ... | ... | ... |
 
-### Phase 3: Modal UI Integration
+**Discoverability:** Add right-click context menu action on source notes:
+- Menu item: "Add source roles block" (or similar)
+- Only shown when right-clicking on a source note (cr_type: source)
+- Inserts the dynamic block at cursor position or end of note
+- Pre-populates `source` parameter with current note's wikilink
+
+### Phase 3: Modal UI Integration ✅
 
 **Effort:** Medium-High
 **Scope:** Data entry
+**Status:** Complete
 
 When linking a person to a source (e.g., via person picker or source linking modal):
 
@@ -205,33 +214,40 @@ UI mockup:
 └─────────────────────────────────────────┘
 ```
 
-### Phase 4: Query Support
+### Phase 4: Query Support ✅
 
 **Effort:** Medium
 **Scope:** Research tools
+**Status:** Complete
 
-- "Sources by Person Role" report in Control Center
-- Filter: "Show sources where [[Person X]] appears as [role]"
-- Cross-reference with #123 inheritance tracking
+- "Sources by Role" report in Control Center
+- Filter by role type (witness, informant, official, etc.)
+- Grouping options: by role, by source, or chronological
+- Shows role details and source quality ratings
 
-## Files to Modify
+## Files Modified
 
-### Phase 1
-- `src/sources/types/source-types.ts` — Add role properties to SourceNote
-- `src/sources/services/source-note-reader.ts` — Parse role arrays
-- `src/constants/property-definitions.ts` — Register role properties
+### Phase 1 ✅
+- `src/sources/types/source-types.ts` — Added role properties to SourceNote, PERSON_ROLE_PROPERTIES constant, labels/descriptions
+- `src/sources/services/source-service.ts` — Parse role arrays in parseSourceNote()
 
-### Phase 2
-- `src/dynamic-content/renderers/` — Add source-roles-renderer.ts
-- `src/dynamic-content/dynamic-content-processor.ts` — Register block type
+### Phase 2 ✅
+- `src/dynamic-content/processors/source-roles-processor.ts` — New processor for `charted-roots-source-roles` block
+- `src/dynamic-content/renderers/source-roles-renderer.ts` — Renders role table with person links
+- `src/dynamic-content/types.ts` — Extended DynamicBlockType enum
+- `src/dynamic-content/index.ts` — Export new components
+- `src/main.ts` — Register processor and add context menu action
+- `styles/dynamic-content.css` — CSS for source roles table
 
-### Phase 3
-- `src/ui/` — Add or extend modal for role assignment
-- `src/sources/services/source-note-writer.ts` — Write role properties
+### Phase 3 ✅
+- `src/sources/ui/create-source-modal.ts` — Added inline-expand section for person roles, person picker integration, role selection modal
+- `src/sources/services/source-service.ts` — Write role properties in createSource/updateSource
+- `styles/entity-create-modals.css` — CSS for person roles list in modal
 
-### Phase 4
-- `src/reports/` — Add sources-by-role report
-- `src/ui/control-center.ts` — Add report to Control Center
+### Phase 4 ✅
+- `src/reports/types/report-types.ts` — Added SourcesByRoleOptions, SourcesByRoleResult, SourceRoleEntry interfaces
+- `src/reports/services/sources-by-role-generator.ts` — New generator for sources-by-role report
+- `src/reports/services/report-generation-service.ts` — Registered generator in orchestration
 
 ## Connection to Inheritance Tracking (#123)
 
@@ -250,27 +266,30 @@ Person roles in sources provide the foundation for inheritance chain visualizati
 ## Testing Checklist
 
 ### Phase 1
-- [ ] Role properties parsed correctly from frontmatter
-- [ ] Empty/missing role arrays handled gracefully
-- [ ] Inline details extracted correctly
-- [ ] Works with Bases/DataView queries
+- [x] Role properties parsed correctly from frontmatter
+- [x] Empty/missing role arrays handled gracefully
+- [x] Inline details extracted correctly
+- [x] Works with Bases/DataView queries
 
 ### Phase 2
-- [ ] Dynamic block renders role table
-- [ ] Handles sources with no roles
-- [ ] Handles sources with many roles
-- [ ] Details column shows "—" when empty
+- [x] Dynamic block renders role table
+- [x] Handles sources with no roles
+- [x] Handles sources with many roles
+- [x] Details column shows "—" when empty
+- [x] Right-click menu shows "Add source roles block" on source notes
+- [x] Menu item hidden on non-source notes
+- [x] Block inserted with correct source wikilink
 
 ### Phase 3
-- [ ] Modal shows role options
-- [ ] Selected role written to correct array
-- [ ] Details appended in parenthetical format
-- [ ] Existing roles preserved when adding new
+- [x] Modal shows role options
+- [x] Selected role written to correct array
+- [x] Details appended in parenthetical format
+- [x] Existing roles preserved when adding new
 
 ### Phase 4
-- [ ] Report shows sources grouped by person
-- [ ] Filter by role type works
-- [ ] Performance acceptable with large datasets
+- [x] Report shows sources grouped by role/source/chronological
+- [x] Filter by role type works
+- [x] Performance acceptable with large datasets
 
 ## Future Considerations
 
