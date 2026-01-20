@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.19.x](#v019x)
+  - [Person Roles in Sources](#person-roles-in-sources-v01916)
   - [Event Type Icons](#event-type-icons-v01915)
   - [Multi-Spouse Visual Cues](#multi-spouse-visual-cues-v01914)
   - [GEDCOM Media Import](#gedcom-media-import-v01913)
@@ -104,6 +105,69 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.19.x
+
+### Person Roles in Sources (v0.19.16)
+
+Track the roles that people play in source documents (principal, witness, informant, official, etc.) to support FAN network research, information quality assessment, and enslaved ancestor research.
+
+**GitHub Issue:** [#219](https://github.com/banisterious/obsidian-charted-roots/issues/219)
+
+**Discussion:** [#189](https://github.com/banisterious/obsidian-charted-roots/discussions/189)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| Role properties | Seven canonical role categories in source note frontmatter |
+| Inline notation | `"[[Person\|Person (Role details)]]"` format for readability |
+| Dynamic block | `charted-roots-source-roles` renders role table with person links |
+| Context menu | Right-click on source notes to insert roles block |
+| Modal UI | Assign roles when linking people to sources via Create/Edit Source modal |
+| Sources by Role report | Control Center report showing all sources where a person appears by role |
+
+**Role Categories:**
+
+| Role | Use Case |
+|------|----------|
+| `principals` | Subject(s) of the document (deceased, testator, groom/bride) |
+| `witnesses` | Named witnesses to events or document signing |
+| `informants` | Person providing information (affects quality assessment) |
+| `officials` | Clerks, judges, officiants, physicians, undertakers |
+| `enslaved_individuals` | Persons listed as property in wills, inventories |
+| `family` | Family members named in relation to principals |
+| `others` | Catch-all for roles not fitting above categories |
+
+**YAML Example:**
+
+```yaml
+principals:
+  - "[[John Smith Sr.|John Smith Sr. (Decedent)]]"
+officials:
+  - "[[Thomas Brown|Thomas Brown (Administrator)]]"
+enslaved_individuals:
+  - "[[Mary]]"
+  - "[[Peter]]"
+```
+
+**Dynamic Block:**
+
+````markdown
+```charted-roots-source-roles
+source: "[[Estate Inventory of John Smith Sr.]]"
+```
+````
+
+**Sources by Role Report Options:**
+
+- Filter by role type (witness, informant, official, etc.)
+- Grouping: by role, by source, or chronological
+- Show role details and source quality ratings
+
+See [Person Roles in Sources Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/person-roles-in-sources.md) for implementation details.
+
+Community contributors: @ANYroots (original proposal, use cases, terminology), @wilbry (simplified role categories)
+
+---
 
 ### Event Type Icons (v0.19.15)
 
