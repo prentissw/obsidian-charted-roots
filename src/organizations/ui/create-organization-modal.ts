@@ -7,7 +7,7 @@
 import { App, Modal, Setting, Notice, TFile } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import type { OrganizationType, OrganizationInfo } from '../types/organization-types';
-import { DEFAULT_ORGANIZATION_TYPES } from '../constants/organization-types';
+import { getAllOrganizationTypes } from '../constants/organization-types';
 import { OrganizationService } from '../services/organization-service';
 import { ModalStatePersistence, renderResumePromptBanner } from '../../ui/modal-state-persistence';
 
@@ -139,11 +139,12 @@ export class CreateOrganizationModal extends Modal {
 				.onChange(value => this.name = value));
 
 		// Organization type
+		const allOrgTypes = getAllOrganizationTypes(this.plugin.settings.customOrganizationTypes || []);
 		new Setting(contentEl)
 			.setName('Type')
 			.setDesc('Category of organization')
 			.addDropdown(dropdown => {
-				for (const typeDef of DEFAULT_ORGANIZATION_TYPES) {
+				for (const typeDef of allOrgTypes) {
 					dropdown.addOption(typeDef.id, typeDef.name);
 				}
 				dropdown.setValue(this.orgType);
