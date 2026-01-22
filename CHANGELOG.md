@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Custom organization types not working** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): Organizations with custom types were not appearing in the Control Center, and custom types were missing from the Edit Organization modal dropdown. Both issues are now fixed.
+
 ---
 
 ## [0.19.17] - 2026-01-20
