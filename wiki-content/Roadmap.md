@@ -10,6 +10,7 @@ This document outlines planned features for Charted Roots. For completed feature
 - [Planned Features](#planned-features)
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
   - [Unified Place Lookup](#unified-place-lookup) 💡 Low ✅ Phase 1-2 complete
+  - [Organization Member Management](#organization-member-management) 💡 Low
   - [Inheritance & Succession Tracking](#inheritance--succession-tracking) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
@@ -163,6 +164,29 @@ Export features discussed in #145 are tracked separately:
 - GeoNames username configuration in Settings → Places
 
 See [Unified Place Lookup Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/unified-place-lookup.md) for implementation details.
+
+---
+
+### Organization Member Management
+
+**Priority:** 💡 Low — Bulk management of organization memberships
+
+**Status:** Planning
+
+**GitHub Issue:** [#226](https://github.com/banisterious/obsidian-charted-roots/issues/226)
+
+**Summary:** A dedicated modal for managing organization members with bulk add capability and full membership field editing.
+
+**Key Features:**
+- "Manage members" context menu option from Organization tab
+- Scrollable list of existing members with edit/remove buttons
+- Multi-select person picker for bulk adding members
+- Full membership field set (role, rank, status, date joined, date left)
+- Inline editing for membership details
+
+**Related Enhancement:** Multi-select person picker could also improve Create Family modal for adding multiple children.
+
+See [planning document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/organization-member-management.md) for implementation details.
 
 ---
 
