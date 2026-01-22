@@ -824,6 +824,52 @@ status: in-progress
 
 ---
 
+## Phase 4: Export & Citations
+
+**Status:** Tracked separately
+
+Export and citation features discussed in #145 are tracked as separate GitHub issues rather than in this planning document. This section captures technical findings from the discussion.
+
+### Features (Separate Issues)
+
+| Feature | Description |
+|---------|-------------|
+| Footnote preservation | Parse Obsidian `[^1]` syntax in PDF/ODT exports |
+| Table formatting | pdfmake `dontBreakRows` and `keepWithHeaderRows` options |
+| Research Report export | Export research report markdown as formatted PDF/ODT |
+
+### Technical Findings
+
+**PDF Export (pdfmake):**
+- Runs in browser environment; true page footnotes not feasible
+- Endnotes with internal links (clickable markers) are achievable
+- Table formatting options available: `dontBreakRows`, `keepWithHeaderRows`
+
+**ODT Export:**
+- Preserves footnote structure for Word/LibreOffice to render as page footnotes
+- Works well with Pandoc for post-processing (`Obsidian → ODT → Pandoc → final format`)
+
+**Pandoc Limitation:**
+- Pandoc is a command-line tool; cannot run directly in Obsidian's browser environment
+- ODT export provides viable intermediate format for Pandoc workflows
+
+**EE Auto-Formatting:**
+- Full Evidence Explained auto-formatting is complex ("citation is an art, not a science" — Mills)
+- Current citation service generates basic EE-style citations from source properties
+- `citationOverride` field supports hand-crafted citations for unusual source types
+- EE 4th edition uses 14 templates with building block tables (per @ANYroots)
+
+### User Workflow Context
+
+@ANYroots workflow (from #145 discussion):
+- Creates EE citations manually using Footnotes Shortcut + Tidy Footnotes plugins
+- Uses Zotero child notes with `#EE-citation` tag for historical background sources
+- Key need: footnote preservation in export so manually-crafted citations flow through to PDF/ODT
+
+**Implication:** Footnote preservation is higher priority than EE auto-formatting for serious researchers who craft their own citations.
+
+---
+
 ## Related Documents
 
 - [Evidence & Sources](../../wiki-content/Evidence-And-Sources.md) — Source management and GPS methodology
@@ -837,7 +883,7 @@ status: in-progress
 
 This plan integrates community feedback from #124 and #125 discussions. Key contributors:
 
-- **@ANYroots:** Detailed GPS workflow, IRN structure, template examples
+- **@ANYroots:** Detailed GPS workflow, IRN structure, template examples, export/citation workflow insights
 - **@wilbry:** Lightweight approach, cohesive design philosophy, research journal concept
 - **@banisterious:** Phased implementation, integration with existing features
 

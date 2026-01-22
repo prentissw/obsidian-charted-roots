@@ -72,54 +72,40 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 
 **Summary:** Enable genealogists to manage research workflow using GPS (Genealogical Proof Standard) methodology with support for research projects, reports, individual research notes, and research journals.
 
-**The Problem:** Serious genealogists need to track research progress, document negative findings, maintain research logs, and synthesize analysis across sources. Current Charted Roots focuses on person/event/source entities but lacks structures for research workflow.
-
-**The Solution:** Five GPS-aligned research entity types:
-- **Research Project** — Hub for complex, multi-phase research cases
-- **Research Report** — Living/working document analyzing specific questions
-- **Individual Research Note (IRN)** — Synthesis between reports and person notes
-- **Research Journal** — Optional daily/session tracking across projects
-- **Research Log Entry** — Optional separate notes for queryable research logs
-
-**Phased Approach:**
-
-| Phase | Feature | Status |
-|-------|---------|--------|
-| 1 | Foundation: Entity Recognition & Statistics | ✅ Complete |
-| 2 | Workflow Integration: Tagging & Auto-generation | After Phase 1 feedback |
-| 3 | Advanced Features: Queries & Timeline Views | Future |
-
 **Phase 1 — Foundation (Complete):**
-- Entity type recognition for all five types via `cr_type` or tags
-- Tag detection including `#irn` shorthand for Individual Research Notes
-- Research entities counted in Statistics view with status breakdowns
-- Properties: `status`, `private`, `up`, `related`, `reportTo`, `subject`
-- Works with DataView and Bases for querying
 
-See [Research Workflow](Research-Workflow) for usage documentation.
+See [Research Workflow Phase 1 (v0.19.11)](Release-History#research-workflow-phase-1-v01911) for implementation details.
 
 **Phase 2 — Workflow Integration (Future):**
-- `needs_research` tagging on person/event/place notes
-- IRN auto-generation with refresh capability
-- Breadcrumb navigation showing hierarchy
-- Research log entry form
+
+| Feature | Description |
+|---------|-------------|
+| Needs-research tagging | `needs_research` property on person/event/place notes with Data Quality integration |
+| IRN auto-generation | "Create Person with Research Note" command generates paired person + IRN files |
+| IRN refresh | "Refresh IRN from Sources" command updates auto-generated sections |
+| Breadcrumb navigation | Visual breadcrumb trail at top of research notes following `up` property chain |
+| Research log entry form | Modal for adding structured log entries (date, source, result, notes) |
 
 **Phase 3 — Advanced Features (Future):**
-- Negative findings surfacing across projects
-- Research timeline views
-- Cross-project queries
-- Templates/Bases for research entities
 
-**Key Features:**
-- **Research logs with negative findings** — Document "searched X, found nothing" scenarios per Mills' methodology
-- **Hierarchical organization** — Use `up`/`related` properties for flexible hierarchy (recognized but not enforced)
-- **IRNs separate from person notes** — Analysis/synthesis vs structured facts (GPS methodology)
-- **Integration with existing features** — Statistics dashboard, export privacy
+| Feature | Description |
+|---------|-------------|
+| Negative findings view | Query view surfacing all `result: negative` entries across projects |
+| Research timeline | Visual timeline of research activities with gap detection |
+| Cross-project queries | "Find related research" command on person notes |
+| Templates/Bases | Ready-to-use Bases templates for all research entity types |
+
+**Export & Citations (Separate):**
+
+Export features discussed in #145 are tracked separately:
+- Footnote preservation in PDF/ODT exports
+- Table formatting options
+- Research Report export type
 
 **Documentation:**
-- See [Research Workflow](Research-Workflow) for usage documentation
-- See [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/research-workflow-integration.md) for detailed specifications
-- Community contributors: @ANYroots (IRN structure, GPS methodology, templates), @wilbry (lightweight approach, unified design)
+- [Research Workflow](Research-Workflow) — Usage documentation
+- [Research Workflow Integration Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/research-workflow-integration.md) — Full specifications for Phases 2-3
+- Community contributors: @ANYroots (IRN structure, GPS methodology), @wilbry (lightweight approach, unified design)
 
 ---
 

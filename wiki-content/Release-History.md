@@ -13,7 +13,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
   - [Event Type Icons](#event-type-icons-v01915)
   - [Multi-Spouse Visual Cues](#multi-spouse-visual-cues-v01914)
   - [GEDCOM Media Import](#gedcom-media-import-v01913)
-  - [Research Workflow Phase 1](#research-workflow-phase-1-v01910)
+  - [Research Workflow Phase 1](#research-workflow-phase-1-v01911)
   - [DNA Match Tracking](#dna-match-tracking-v0199)
   - [Name Components](#name-components-v0197)
   - [Per-Map Marker Assignment](#per-map-marker-assignment-v0196)
@@ -260,7 +260,7 @@ media:
 
 ---
 
-### Research Workflow Phase 1 (v0.19.10)
+### Research Workflow Phase 1 (v0.19.11)
 
 GPS-aligned research workflow entity types for managing research projects, reports, individual research notes, and research journals within Obsidian.
 
