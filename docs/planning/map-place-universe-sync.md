@@ -33,6 +33,32 @@ Based on discussion in #223 (@doctorwodka):
 
 ---
 
+## Scope & Constraints
+
+### When Universe Sync Applies
+
+Universe sync only triggers when **all** of the following are true:
+
+1. **Custom map with universe** — The active map is a custom image map with a `universe` property. OpenStreetMap (real world) has no universe, so sync is skipped.
+
+2. **Fictional or historical place** — The place has `place_category: fictional` or `place_category: historical`. Real places (`place_category: real`) are skipped since they exist independently of fictional universes.
+
+### Out of Scope (v1)
+
+| Feature | Rationale |
+|---------|-----------|
+| Undo support | User can manually edit frontmatter if needed. Consider relationship-history tracking in future if requested. |
+| Batch operations | Single-place workflow sufficient for v1. |
+
+### User Feedback
+
+When silently adding a universe to a place (no-universe case), show a brief auto-dismissing notice:
+> Added "Winterfell" to universe "westeros"
+
+This prevents surprise when users later discover the universe property.
+
+---
+
 ## Proposed Solution
 
 ### Logic Flow
@@ -40,8 +66,14 @@ Based on discussion in #223 (@doctorwodka):
 ```
 When adding existing place to map via context menu:
 │
+├─ Map has no universe (e.g., OpenStreetMap)?
+│  └─ Skip universe sync, proceed with link
+│
+├─ Place is real-world (place_category: real)?
+│  └─ Skip universe sync, proceed with link
+│
 ├─ Place has no universe?
-│  └─ Silently add map's universe to place
+│  └─ Silently add map's universe to place, show notice
 │
 ├─ Place has same universe as map?
 │  └─ No action needed
@@ -101,9 +133,11 @@ Places can have:
 
 ## Edge Cases
 
-1. **Place already in multiple universes:** Show which universes, offer same options
-2. **Map has no universe:** Skip universe sync entirely
-3. **User cancels:** Abort the entire link operation (don't add place to map)
+1. **Place already in multiple universes:** Show which universes in dialog, offer same options
+2. **Map has no universe (OpenStreetMap):** Skip universe sync entirely, proceed with link
+3. **Real-world place:** Skip universe sync entirely, proceed with link
+4. **User cancels confirmation:** Abort the entire link operation (don't add place to map)
+5. **Historical place:** Treat same as fictional — historical places can belong to alternate history universes
 
 ---
 
