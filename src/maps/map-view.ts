@@ -758,9 +758,15 @@ export class MapView extends ItemView {
 
 		// Case 1: Place has no universe - silently add map's universe
 		if (placeUniverses.length === 0) {
-			await this.app.fileManager.processFrontMatter(selectedPlace.file, (frontmatter) => {
-				frontmatter.universe = mapUniverse;
-			});
+			try {
+				await this.app.fileManager.processFrontMatter(selectedPlace.file, (frontmatter) => {
+					frontmatter.universe = mapUniverse;
+				});
+			} catch (error) {
+				logger.error('universe-sync', `Failed to update frontmatter: ${error}`);
+				new Notice(`Failed to add universe: ${error instanceof Error ? error.message : 'Unknown error'}`);
+				return true; // Still proceed with linking
+			}
 			new Notice(`Added "${selectedPlace.name}" to universe "${mapUniverse}"`);
 			return true;
 		}
