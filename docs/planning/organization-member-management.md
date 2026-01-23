@@ -183,19 +183,13 @@ member_of:
 
 ---
 
-## Questions
+## Design Decisions
 
-1. **Inline editing vs separate modal?**
-   - Current proposal: Inline editing in member list
-   - Alternative: "Edit membership" opens separate small modal
-
-2. **Batch membership details?**
-   - When adding multiple members, should there be an option to apply same role/rank to all?
-   - Or always require individual editing?
-
-3. **Validation for date_left > date_joined?**
-   - Should we validate date ordering?
-   - Complex with fictional dates—may need to skip validation
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Inline editing vs separate modal? | Inline editing | Keeps workflow fast; users see all members at a glance without extra modal layers |
+| Batch membership details? | Individual editing only | Roles/ranks rarely identical across members; bulk add already saves the tedious selection step |
+| Date validation? | Skip validation | Fictional dates make comparison impossible; trust users with their data |
 
 ---
 
