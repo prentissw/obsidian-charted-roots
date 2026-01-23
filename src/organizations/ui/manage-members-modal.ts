@@ -51,7 +51,7 @@ export class ManageOrganizationMembersModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.addClass('cr-manage-members-modal');
+		this.modalEl.addClass('cr-manage-members-modal');
 
 		this.loadMembers();
 		this.render();
@@ -286,6 +286,9 @@ export class ManageOrganizationMembersModal extends Modal {
 
 			await this.membershipService.addMembership(member.personFile, newMembership);
 
+			// Wait for metadata cache to update
+			await this.waitForCacheUpdate();
+
 			// Reload members
 			this.loadMembers();
 			this.onMembersChanged?.();
@@ -329,6 +332,9 @@ export class ManageOrganizationMembersModal extends Modal {
 	private async removeMember(member: PersonMembership): Promise<void> {
 		try {
 			await this.membershipService.removeMembership(member.personFile, this.organization.crId);
+
+			// Wait for metadata cache to update
+			await this.waitForCacheUpdate();
 
 			// Reload members
 			this.loadMembers();
@@ -383,14 +389,28 @@ export class ManageOrganizationMembersModal extends Modal {
 			}
 		}
 
+		if (addedCount > 0) {
+			new Notice(`Added ${addedCount} member${addedCount === 1 ? '' : 's'} to ${this.organization.name}`);
+		}
+
+		// Wait for metadata cache to update before reloading
+		// Obsidian's cache updates async after file modification
+		await this.waitForCacheUpdate();
+
 		// Reload members
 		this.loadMembers();
 		this.renderMembersList();
 		this.onMembersChanged?.();
+	}
 
-		if (addedCount > 0) {
-			new Notice(`Added ${addedCount} member${addedCount === 1 ? '' : 's'} to ${this.organization.name}`);
-		}
+	/**
+	 * Wait for the metadata cache to update after file modifications
+	 */
+	private waitForCacheUpdate(): Promise<void> {
+		return new Promise(resolve => {
+			// Give Obsidian time to re-index the modified files
+			setTimeout(resolve, 100);
+		});
 	}
 }
 
@@ -433,7 +453,7 @@ class MultiSelectPersonPickerModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.addClass('cr-multi-select-picker-modal');
+		this.modalEl.addClass('cr-multi-select-picker-modal');
 
 		this.loadPeople();
 		this.render();
