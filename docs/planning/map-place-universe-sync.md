@@ -108,7 +108,9 @@ When adding existing place to map via context menu:
 
 ### Location
 
-Modify the map context menu handler in `src/maps/` (exact file TBD based on current structure).
+- **Main logic:** `src/maps/map-view.ts` — `handleUniverseSync()` method in `linkExistingPlaceToCoordinates()` flow
+- **Confirmation modal:** `src/maps/ui/universe-sync-modal.ts`
+- **CSS:** `styles/map-view.css` — `.cr-universe-sync-modal` section
 
 ### Steps
 
