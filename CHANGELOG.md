@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Map-place universe sync** ([#223](https://github.com/banisterious/obsidian-charted-roots/issues/223)): When linking an existing place to a custom map via context menu, the plugin now automatically assigns the map's universe to that place. If the place already belongs to a different universe, a confirmation dialog offers options to add the new universe (for crossover scenarios), replace the existing one, or cancel.
+
 ### Fixed
 
 - **Custom organization types not working** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): Organizations with custom types were not appearing in the Control Center, and custom types were missing from the Edit Organization modal dropdown. Both issues are now fixed.
