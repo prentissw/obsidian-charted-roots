@@ -246,7 +246,7 @@ function renderOrganizationsListCard(
 			// Body
 			const tbody = table.createEl('tbody');
 			for (const org of displayed) {
-				renderOrganizationRow(tbody, org, memberCounts.get(org.crId) ?? 0, plugin, anyHasMembers, showTab, renderTable);
+				renderOrganizationRow(tbody, org, memberCounts.get(org.crId) ?? 0, plugin, anyHasMembers, showTab, renderTable, orgService, membershipService);
 			}
 
 			// Show count and load more button
@@ -300,7 +300,9 @@ function renderOrganizationRow(
 	plugin: CanvasRootsPlugin,
 	showMembers: boolean,
 	showTab: (tabId: string) => void,
-	onRefresh: () => void
+	onRefresh: () => void,
+	orgService: OrganizationService,
+	membershipService: MembershipService
 ): void {
 	const typeDef = getOrganizationType(org.orgType);
 
@@ -356,6 +358,8 @@ function renderOrganizationRow(
 				.onClick(() => {
 					new ManageOrganizationMembersModal(plugin.app, plugin, {
 						organization: org,
+						organizationService: orgService,
+						membershipService: membershipService,
 						onMembersChanged: () => {
 							// Refresh the organizations tab to update member counts
 							showTab('organizations');

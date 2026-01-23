@@ -19,6 +19,8 @@ const logger = getLogger('ManageOrganizationMembersModal');
 
 interface ManageMembersOptions {
 	organization: OrganizationInfo;
+	organizationService: OrganizationService;
+	membershipService: MembershipService;
 	onMembersChanged?: () => void;
 }
 
@@ -41,9 +43,9 @@ export class ManageOrganizationMembersModal extends Modal {
 		this.organization = options.organization;
 		this.onMembersChanged = options.onMembersChanged;
 
-		// Get services
-		this.organizationService = plugin.organizationService!;
-		this.membershipService = plugin.membershipService!;
+		// Get services from options
+		this.organizationService = options.organizationService;
+		this.membershipService = options.membershipService;
 	}
 
 	onOpen(): void {
