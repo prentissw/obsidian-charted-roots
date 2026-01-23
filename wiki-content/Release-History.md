@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.19.x](#v019x)
+  - [Organization Member Management](#organization-member-management)
   - [Person Roles in Sources](#person-roles-in-sources-v01916)
   - [Event Type Icons](#event-type-icons-v01915)
   - [Multi-Spouse Visual Cues](#multi-spouse-visual-cues-v01914)
@@ -105,6 +106,39 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.19.x
+
+### Organization Member Management
+
+Manage organization memberships directly from the Organizations tab or file explorer with a dedicated modal supporting bulk add and inline editing.
+
+**GitHub Issue:** [#226](https://github.com/banisterious/obsidian-charted-roots/issues/226)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| Manage members modal | Dedicated modal for viewing, adding, and editing organization members |
+| Multi-select person picker | Bulk add members with checkbox selection and search |
+| Inline membership editing | Edit role, date joined, and date left directly in the member list |
+| Context menu integration | "Manage members..." option in Organizations tab and file explorer right-click menus |
+| Real-time updates | Member list updates immediately after add/edit/remove operations |
+
+**Access Points:**
+
+- **Organizations tab:** Right-click an organization row → "Manage members..."
+- **File explorer:** Right-click an organization note → Charted Roots → "Manage members..."
+
+**Membership Fields:**
+
+| Field | Description |
+|-------|-------------|
+| Role | Position or title within the organization (e.g., "Lord", "Squire", "Maester") |
+| Date joined | When the person joined the organization (supports fictional dates) |
+| Date left | When the person left; empty means currently active |
+
+See [Organization Member Management Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/organization-member-management.md) for design details.
+
+---
 
 ### Person Roles in Sources (v0.19.16)
 

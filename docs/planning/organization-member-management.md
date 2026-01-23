@@ -2,6 +2,8 @@
 
 Planning document for [#226](https://github.com/banisterious/obsidian-charted-roots/issues/226).
 
+**Status:** ✅ Implemented (Unreleased)
+
 ---
 
 ## Overview

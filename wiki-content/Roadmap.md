@@ -10,7 +10,6 @@ This document outlines planned features for Charted Roots. For completed feature
 - [Planned Features](#planned-features)
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
   - [Unified Place Lookup](#unified-place-lookup) 💡 Low ✅ Phase 1-2 complete
-  - [Organization Member Management](#organization-member-management) 💡 Low
   - [Inheritance & Succession Tracking](#inheritance--succession-tracking) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
@@ -30,6 +29,7 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| Unreleased | [Organization Member Management](Release-History#organization-member-management) | Manage organization memberships via context menu with multi-select person picker and inline editing |
 | v0.19.16 | [Person Roles in Sources](Release-History#person-roles-in-sources-v01916) | Track roles (witness, informant, official, etc.) on source notes with modal UI, dynamic block, and Sources by Role report |
 | v0.19.15 | [Event Type Icons](Release-History#event-type-icons-v01915) | Display Lucide icons for event types in timelines and map popups with configurable display modes |
 | v0.19.14 | [Multi-Spouse Visual Cues](Release-History#multi-spouse-visual-cues-v01914) | Circled spouse numbers (①②③) on family chart edges clarify multi-spouse relationships |
@@ -164,29 +164,6 @@ Export features discussed in #145 are tracked separately:
 - GeoNames username configuration in Settings → Places
 
 See [Unified Place Lookup Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/unified-place-lookup.md) for implementation details.
-
----
-
-### Organization Member Management
-
-**Priority:** 💡 Low — Bulk management of organization memberships
-
-**Status:** Planning
-
-**GitHub Issue:** [#226](https://github.com/banisterious/obsidian-charted-roots/issues/226)
-
-**Summary:** A dedicated modal for managing organization members with bulk add capability and full membership field editing.
-
-**Key Features:**
-- "Manage members" context menu option from Organization tab
-- Scrollable list of existing members with edit/remove buttons
-- Multi-select person picker for bulk adding members
-- Full membership field set (role, rank, status, date joined, date left)
-- Inline editing for membership details
-
-**Related Enhancement:** Multi-select person picker could also improve Create Family modal for adding multiple children.
-
-See [planning document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/organization-member-management.md) for implementation details.
 
 ---
 
