@@ -12,7 +12,9 @@ import { MapController } from './map-controller';
 import { MapDataService } from './map-data-service';
 import { CreatePlaceModal } from '../ui/create-place-modal';
 import { PlacePickerModal, SelectedPlaceInfo } from '../ui/place-picker';
+import { UniverseSyncModal } from './ui/universe-sync-modal';
 import { GeocodingService } from './services/geocoding-service';
+import { PlaceCategory, UNIVERSE_CATEGORIES } from '../models/place';
 import { FolderFilterService } from '../core/folder-filter';
 import { PlaceGraphService } from '../core/place-graph';
 import type {
@@ -671,6 +673,12 @@ export class MapView extends ItemView {
 		const picker = new PlacePickerModal(
 			this.app,
 			async (selectedPlace: SelectedPlaceInfo) => {
+				// Check universe sync before updating coordinates
+				const shouldProceed = await this.handleUniverseSync(selectedPlace);
+				if (!shouldProceed) {
+					return; // User cancelled
+				}
+
 				// Update the place's coordinates
 				const geocodingService = new GeocodingService(this.app);
 
@@ -707,6 +715,94 @@ export class MapView extends ItemView {
 		);
 
 		picker.open();
+	}
+
+	/**
+	 * Handle universe sync when linking an existing place to a map.
+	 * See docs/planning/map-place-universe-sync.md for design details.
+	 *
+	 * @returns true if the operation should proceed, false if cancelled
+	 */
+	private async handleUniverseSync(selectedPlace: SelectedPlaceInfo): Promise<boolean> {
+		// Get the map's universe (null for OpenStreetMap)
+		const mapUniverse = this.mapController?.getActiveMapUniverse();
+
+		// Skip universe sync if map has no universe (OpenStreetMap/real world)
+		if (!mapUniverse) {
+			return true;
+		}
+
+		// Get the place's category and universe from frontmatter
+		const cache = this.app.metadataCache.getFileCache(selectedPlace.file);
+		const placeCategory = (cache?.frontmatter?.place_category || 'real') as PlaceCategory;
+		const placeUniverse = cache?.frontmatter?.universe;
+
+		// Skip universe sync for real-world places
+		// Real places exist independently of fictional universes
+		if (placeCategory === 'real') {
+			return true;
+		}
+
+		// Check if place category supports universe assignment
+		// UNIVERSE_CATEGORIES includes: fictional, mythological, legendary
+		// We also include 'historical' for alternate history scenarios
+		const supportsUniverse = UNIVERSE_CATEGORIES.includes(placeCategory) || placeCategory === 'historical';
+		if (!supportsUniverse) {
+			return true;
+		}
+
+		// Normalize place universe to array for comparison
+		const placeUniverses: string[] = Array.isArray(placeUniverse)
+			? placeUniverse
+			: placeUniverse ? [placeUniverse] : [];
+
+		// Case 1: Place has no universe - silently add map's universe
+		if (placeUniverses.length === 0) {
+			await this.app.fileManager.processFrontMatter(selectedPlace.file, (frontmatter) => {
+				frontmatter.universe = mapUniverse;
+			});
+			new Notice(`Added "${selectedPlace.name}" to universe "${mapUniverse}"`);
+			return true;
+		}
+
+		// Case 2: Place already has the map's universe - no action needed
+		if (placeUniverses.includes(mapUniverse)) {
+			return true;
+		}
+
+		// Case 3: Place has a different universe - show confirmation dialog
+		const modal = new UniverseSyncModal(this.app, {
+			placeName: selectedPlace.name,
+			placeUniverses,
+			mapUniverse
+		});
+
+		const result = await modal.prompt();
+
+		switch (result.action) {
+			case 'add':
+				// Append the map's universe to the place's universe list
+				await this.app.fileManager.processFrontMatter(selectedPlace.file, (frontmatter) => {
+					const currentUniverses = Array.isArray(frontmatter.universe)
+						? frontmatter.universe
+						: frontmatter.universe ? [frontmatter.universe] : [];
+					frontmatter.universe = [...currentUniverses, mapUniverse];
+				});
+				new Notice(`Added universe "${mapUniverse}" to "${selectedPlace.name}"`);
+				return true;
+
+			case 'replace':
+				// Replace with the map's universe
+				await this.app.fileManager.processFrontMatter(selectedPlace.file, (frontmatter) => {
+					frontmatter.universe = mapUniverse;
+				});
+				new Notice(`Replaced universe for "${selectedPlace.name}" with "${mapUniverse}"`);
+				return true;
+
+			case 'cancel':
+			default:
+				return false;
+		}
 	}
 
 	/**
