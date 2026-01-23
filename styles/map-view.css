@@ -1942,3 +1942,31 @@ input[type="text"]::-webkit-input-placeholder {
     display: none;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Universe Sync Modal
+   Confirmation dialog for universe mismatch when linking places to maps.
+   -------------------------------------------------------------------------- */
+
+.cr-universe-sync-modal .modal-content {
+  padding: var(--size-4-4);
+}
+
+.cr-universe-sync-modal h2 {
+  margin-top: 0;
+  margin-bottom: var(--size-4-3);
+}
+
+.cr-universe-sync-modal p {
+  margin-bottom: var(--size-4-3);
+  line-height: 1.5;
+}
+
+.cr-universe-sync-buttons .setting-item {
+  border-top: none;
+  padding-top: var(--size-4-2);
+}
+
+.cr-universe-sync-buttons .setting-item-control {
+  gap: var(--size-4-2);
+}
