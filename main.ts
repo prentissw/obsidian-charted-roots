@@ -3180,7 +3180,7 @@ export default class CanvasRootsPlugin extends Plugin {
 											const orgService = createOrganizationService(this);
 											const org = orgService.getOrganizationByFile(file);
 											if (org) {
-												new CreateOrganizationModal(this.app, this, orgService, {
+												new CreateOrganizationModal(this.app, this, {
 													onSuccess: () => {},
 													editOrg: org,
 													editFile: file
@@ -3238,11 +3238,11 @@ export default class CanvasRootsPlugin extends Plugin {
 										const orgService = createOrganizationService(this);
 										const org = orgService.getOrganizationByFile(file);
 										if (org) {
-											new CreateOrganizationModal(this.app, this, orgService, {
-													onSuccess: () => {},
-													editOrg: org,
-													editFile: file
-												}).open();
+											new CreateOrganizationModal(this.app, this, {
+												onSuccess: () => {},
+												editOrg: org,
+												editFile: file
+											}).open();
 										} else {
 											new Notice('Could not load organization');
 										}

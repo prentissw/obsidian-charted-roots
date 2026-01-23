@@ -291,6 +291,10 @@ export function getAllOrganizationTypes(
 /**
  * Check if a string is a valid organization type ID
  */
-export function isValidOrganizationType(typeId: string): typeId is OrganizationType {
-	return BUILT_IN_ORGANIZATION_TYPES.some(t => t.id === typeId);
+export function isValidOrganizationType(
+	typeId: string,
+	customTypes: OrganizationTypeDefinition[] = []
+): typeId is OrganizationType {
+	return BUILT_IN_ORGANIZATION_TYPES.some(t => t.id === typeId) ||
+		customTypes.some(t => t.id === typeId);
 }

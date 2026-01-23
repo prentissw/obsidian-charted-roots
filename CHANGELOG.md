@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Edit organization context menu** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): Added "Edit organization..." action to the right-click context menu in the Organizations tab.
+
+### Fixed
+
+- **Custom organization types fully fixed** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): Complete fix for custom organization types. The previous fix only addressed display; this resolves the root cause where custom types were being replaced with "Other" when loading organization data from notes.
+
+- **File explorer Edit organization action** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): The "Edit organization" context menu action in the file explorer now correctly opens in edit mode instead of create mode.
+
 ---
 
 ## [0.19.18] - 2026-01-23

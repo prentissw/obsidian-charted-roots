@@ -425,7 +425,8 @@ export class OrganizationService {
 
 		// Must have a valid org_type
 		const orgType = fm.org_type || 'custom';
-		if (!isValidOrganizationType(orgType)) {
+		const customTypes = this.plugin.settings.customOrganizationTypes || [];
+		if (!isValidOrganizationType(orgType, customTypes)) {
 			logger.warn('extractOrganizationInfo', `Invalid org_type "${orgType}" in ${file.path}`);
 		}
 
@@ -445,7 +446,7 @@ export class OrganizationService {
 			file,
 			crId: fm.cr_id,
 			name: typeof fm.name === 'string' ? fm.name : file.basename,
-			orgType: isValidOrganizationType(orgType) ? orgType : 'custom',
+			orgType: isValidOrganizationType(orgType, customTypes) ? orgType : 'custom',
 			parentOrg,
 			parentOrgLink: fm.parent_org,
 			founded: fm.founded,

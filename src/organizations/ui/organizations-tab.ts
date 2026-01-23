@@ -304,7 +304,11 @@ function renderOrganizationRow(
 	orgService: OrganizationService,
 	membershipService: MembershipService
 ): void {
-	const typeDef = getOrganizationType(org.orgType);
+	const typeDef = getOrganizationType(
+		org.orgType,
+		plugin.settings.customOrganizationTypes || [],
+		plugin.settings.organizationTypeCustomizations
+	);
 
 	const row = tbody.createEl('tr', { cls: 'cr-org-row' });
 
@@ -327,6 +331,23 @@ function renderOrganizationRow(
 		if (!(org.file instanceof TFile)) return;
 
 		const menu = new Menu();
+
+		menu.addItem((item) => {
+			item
+				.setTitle('Edit organization...')
+				.setIcon('pencil')
+				.onClick(() => {
+					new CreateOrganizationModal(plugin.app, plugin, {
+						onSuccess: () => {
+							showTab('organizations');
+						},
+						editOrg: org,
+						editFile: org.file
+					}).open();
+				});
+		});
+
+		menu.addSeparator();
 
 		menu.addItem((item) => {
 			item
