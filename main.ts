@@ -50,7 +50,7 @@ import { AddRelationshipModal } from './src/ui/add-relationship-modal';
 import { SourcePickerModal, SourceService, CreateSourceModal, CitationGeneratorModal, EvidenceService, ProofSummaryService } from './src/sources';
 import { EventService } from './src/events/services/event-service';
 import { CreateEventModal } from './src/events/ui/create-event-modal';
-import { isPlaceNote, isSourceNote, isEventNote, isMapNote, isSchemaNote, isUniverseNote, isPersonNote } from './src/utils/note-type-detection';
+import { isPlaceNote, isSourceNote, isEventNote, isMapNote, isSchemaNote, isUniverseNote, isPersonNote, isOrganizationNote } from './src/utils/note-type-detection';
 import { GeocodingService } from './src/maps/services/geocoding-service';
 import { TimelineProcessor, RelationshipsProcessor, MediaProcessor, SourceRolesProcessor } from './src/dynamic-content';
 import { UniverseService, EditUniverseModal, UniverseWizardModal } from './src/universes';
@@ -1343,6 +1343,7 @@ export default class CanvasRootsPlugin extends Plugin {
 					const isSchema = isSchemaNote(fm, cache, detectionSettings);
 					const isEvent = isEventNote(fm, cache, detectionSettings);
 					const isUniverse = isUniverseNote(fm, cache, detectionSettings);
+					const isOrg = isOrganizationNote(fm, cache, detectionSettings);
 
 					// Also check if file is in maps folder (for notes not yet typed as map)
 					const mapsFolder = this.settings.mapsFolder;
@@ -1977,7 +1978,7 @@ export default class CanvasRootsPlugin extends Plugin {
 						}
 					}
 					// Person notes with cr_id get full person options
-					else if (hasCrId && !isPlace && !isSource && !isEvent && !isUniverse) {
+					else if (hasCrId && !isPlace && !isSource && !isEvent && !isUniverse && !isOrg) {
 						menu.addSeparator();
 
 						if (useSubmenu) {
@@ -3153,6 +3154,131 @@ export default class CanvasRootsPlugin extends Plugin {
 											await this.app.fileManager.trashFile(file);
 											new Notice(`Deleted event: ${eventTitle}`);
 										}
+									});
+							});
+						}
+					}
+					// Organization notes with cr_id get organization-specific options
+					else if (hasCrId && isOrg) {
+						menu.addSeparator();
+
+						if (useSubmenu) {
+							menu.addItem((item) => {
+								const submenu: Menu = item
+									.setTitle('Charted Roots')
+									.setIcon('building')
+									.setSubmenu();
+
+								// Edit organization
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Edit organization')
+										.setIcon('edit')
+										.onClick(async () => {
+											const { CreateOrganizationModal } = await import('./src/organizations/ui/create-organization-modal');
+											const { createOrganizationService } = await import('./src/organizations/services/organization-service');
+											const orgService = createOrganizationService(this);
+											const org = orgService.getOrganizationByFile(file);
+											if (org) {
+												new CreateOrganizationModal(this.app, this, orgService, {
+													onSuccess: () => {},
+													editOrg: org,
+													editFile: file
+												}).open();
+											} else {
+												new Notice('Could not load organization');
+											}
+										});
+								});
+
+								// Manage members
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Manage members...')
+										.setIcon('users')
+										.onClick(async () => {
+											const { ManageOrganizationMembersModal } = await import('./src/organizations/ui/manage-members-modal');
+											const { createOrganizationService } = await import('./src/organizations/services/organization-service');
+											const { createMembershipService } = await import('./src/organizations/services/membership-service');
+											const orgService = createOrganizationService(this);
+											const membershipService = createMembershipService(this, orgService);
+											const org = orgService.getOrganizationByFile(file);
+											if (org) {
+												new ManageOrganizationMembersModal(this.app, this, {
+													organization: org,
+													organizationService: orgService,
+													membershipService: membershipService
+												}).open();
+											} else {
+												new Notice('Could not load organization');
+											}
+										});
+								});
+
+								// Open in Organizations tab
+								submenu.addItem((subItem) => {
+									subItem
+										.setTitle('Open in Organizations tab')
+										.setIcon('table')
+										.onClick(() => {
+											const modal = new ControlCenterModal(this.app, this);
+											modal.openToTab('organizations');
+										});
+								});
+							});
+						} else {
+							// Mobile: flat menu
+							menu.addItem((item) => {
+								item
+									.setTitle('Charted Roots: Edit organization')
+									.setIcon('edit')
+									.onClick(async () => {
+										const { CreateOrganizationModal } = await import('./src/organizations/ui/create-organization-modal');
+										const { createOrganizationService } = await import('./src/organizations/services/organization-service');
+										const orgService = createOrganizationService(this);
+										const org = orgService.getOrganizationByFile(file);
+										if (org) {
+											new CreateOrganizationModal(this.app, this, orgService, {
+													onSuccess: () => {},
+													editOrg: org,
+													editFile: file
+												}).open();
+										} else {
+											new Notice('Could not load organization');
+										}
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Charted Roots: Manage members...')
+									.setIcon('users')
+									.onClick(async () => {
+										const { ManageOrganizationMembersModal } = await import('./src/organizations/ui/manage-members-modal');
+										const { createOrganizationService } = await import('./src/organizations/services/organization-service');
+										const { createMembershipService } = await import('./src/organizations/services/membership-service');
+										const orgService = createOrganizationService(this);
+										const membershipService = createMembershipService(this, orgService);
+										const org = orgService.getOrganizationByFile(file);
+										if (org) {
+											new ManageOrganizationMembersModal(this.app, this, {
+												organization: org,
+												organizationService: orgService,
+												membershipService: membershipService
+											}).open();
+										} else {
+											new Notice('Could not load organization');
+										}
+									});
+							});
+
+							menu.addItem((item) => {
+								item
+									.setTitle('Charted Roots: Open in Organizations tab')
+									.setIcon('table')
+									.onClick(() => {
+										const modal = new ControlCenterModal(this.app, this);
+										modal.openToTab('organizations');
 									});
 							});
 						}
