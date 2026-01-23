@@ -235,3 +235,289 @@
 }
 
 /* .cr-modal-buttons defined in base.css */
+
+/* ==========================================================================
+   Manage Members Modal
+   ========================================================================== */
+
+.cr-manage-members-modal {
+  width: 600px;
+  max-width: 90vw;
+}
+
+.cr-manage-members-modal .modal-content {
+  padding: var(--size-4-4);
+}
+
+.cr-manage-members-header {
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-manage-members-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.cr-manage-members-title-row h2 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.cr-manage-members-title-row svg {
+  color: var(--text-muted);
+}
+
+.cr-manage-members-add-btn {
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-manage-members-section-title {
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: var(--size-4-2);
+}
+
+.cr-manage-members-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+}
+
+.cr-manage-members-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--size-4-8);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.cr-manage-members-empty svg {
+  color: var(--text-faint);
+  margin-bottom: var(--size-4-2);
+}
+
+.cr-manage-members-empty p {
+  margin: var(--size-4-1) 0;
+}
+
+/* Member card */
+.cr-manage-members-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--size-4-3) var(--size-4-4);
+  border-bottom: 1px solid var(--background-modifier-border-hover);
+  transition: background-color 0.15s ease;
+}
+
+.cr-manage-members-card:last-child {
+  border-bottom: none;
+}
+
+.cr-manage-members-card:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.cr-manage-members-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cr-manage-members-card-name {
+  font-weight: 500;
+  color: var(--text-normal);
+  margin-bottom: var(--size-4-1);
+}
+
+.cr-manage-members-card-details {
+  font-size: 0.85em;
+}
+
+.cr-manage-members-card-actions {
+  display: flex;
+  gap: var(--size-4-1);
+  margin-left: var(--size-4-2);
+}
+
+/* Edit mode */
+.cr-manage-members-card--editing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--size-4-3);
+  background-color: var(--background-secondary);
+}
+
+.cr-manage-members-card--editing:hover {
+  background-color: var(--background-secondary);
+}
+
+.cr-manage-members-edit-name {
+  font-weight: 500;
+  color: var(--text-normal);
+  padding-bottom: var(--size-4-2);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.cr-manage-members-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+}
+
+.cr-manage-members-edit-row {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.cr-manage-members-edit-row label {
+  width: 80px;
+  font-size: 0.85em;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.cr-manage-members-edit-row input {
+  flex: 1;
+}
+
+.cr-manage-members-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--size-4-2);
+  margin-top: var(--size-4-2);
+}
+
+.cr-manage-members-footer {
+  margin-top: var(--size-4-4);
+  padding-top: var(--size-4-3);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.cr-manage-members-footer .setting-item {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* ==========================================================================
+   Multi-Select Person Picker Modal
+   ========================================================================== */
+
+.cr-multi-select-picker-modal {
+  width: 500px;
+  max-width: 90vw;
+}
+
+.cr-multi-select-picker-modal .modal-content {
+  padding: var(--size-4-4);
+}
+
+.cr-multi-select-header {
+  margin-bottom: var(--size-4-3);
+}
+
+.cr-multi-select-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  font-size: 1.1em;
+  font-weight: 500;
+}
+
+.cr-multi-select-title-row svg {
+  color: var(--text-muted);
+}
+
+.cr-multi-select-search {
+  margin-bottom: var(--size-4-3);
+}
+
+.cr-multi-select-search input {
+  width: 100%;
+}
+
+.cr-multi-select-results {
+  max-height: 350px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  margin-bottom: var(--size-4-3);
+}
+
+.cr-multi-select-empty {
+  padding: var(--size-4-6);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.cr-multi-select-row {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-3);
+  padding: var(--size-4-2) var(--size-4-3);
+  cursor: pointer;
+  border-bottom: 1px solid var(--background-modifier-border-hover);
+  transition: background-color 0.15s ease;
+}
+
+.cr-multi-select-row:last-child {
+  border-bottom: none;
+}
+
+.cr-multi-select-row:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.cr-multi-select-row--selected {
+  background-color: var(--background-modifier-active-hover);
+}
+
+.cr-multi-select-row--selected:hover {
+  background-color: var(--background-modifier-active-hover);
+}
+
+.cr-multi-select-checkbox {
+  flex-shrink: 0;
+}
+
+.cr-multi-select-person-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cr-multi-select-person-name {
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+.cr-multi-select-person-dates {
+  font-size: 0.85em;
+  margin-left: var(--size-4-2);
+}
+
+.cr-multi-select-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-3);
+}
+
+.cr-multi-select-count {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-multi-select-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}

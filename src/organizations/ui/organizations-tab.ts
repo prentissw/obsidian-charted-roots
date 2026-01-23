@@ -14,6 +14,7 @@ import { MembershipService } from '../services/membership-service';
 import type { OrganizationInfo } from '../types/organization-types';
 import { getOrganizationType, DEFAULT_ORGANIZATION_TYPES, getAllOrganizationTypes } from '../constants/organization-types';
 import { CreateOrganizationModal } from './create-organization-modal';
+import { ManageOrganizationMembersModal } from './manage-members-modal';
 import { TemplateSnippetsModal } from '../../ui/template-snippets-modal';
 import { renderOrganizationTypeManagerCard } from './organization-type-manager-card';
 
@@ -342,6 +343,24 @@ function renderOrganizationRow(
 				.onClick(async () => {
 					await plugin.trackRecentFile(org.file, 'organization');
 					void plugin.app.workspace.getLeaf('tab').openFile(org.file);
+				});
+		});
+
+		menu.addSeparator();
+
+		// Member management
+		menu.addItem((item) => {
+			item
+				.setTitle('Manage members...')
+				.setIcon('users')
+				.onClick(() => {
+					new ManageOrganizationMembersModal(plugin.app, plugin, {
+						organization: org,
+						onMembersChanged: () => {
+							// Refresh the organizations tab to update member counts
+							showTab('organizations');
+						}
+					}).open();
 				});
 		});
 
