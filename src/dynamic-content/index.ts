@@ -19,3 +19,6 @@ export { MediaRenderer } from './renderers/media-renderer';
 
 export { SourceRolesProcessor } from './processors/source-roles-processor';
 export { SourceRolesRenderer } from './renderers/source-roles-renderer';
+
+export { TransfersProcessor } from './processors/transfers-processor';
+export { TransfersRenderer } from './renderers/transfers-renderer';

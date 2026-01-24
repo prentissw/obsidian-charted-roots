@@ -2,7 +2,7 @@
 
 Planning document for [#123](https://github.com/banisterious/obsidian-charted-roots/issues/123).
 
-**Status:** Design finalized (2026-01-22) — Ready for documentation phase
+**Status:** Implementation complete (Phases 2-4) — Documentation pending
 
 ---
 
@@ -136,10 +136,10 @@ Query transfer events by participant, sorted by date.
 
 ## Implementation Phases
 
-### Phase 1: Documentation (Current)
+### Phase 1: Documentation
 
 **Effort:** Low — Documentation only
-**Status:** Ready to implement
+**Status:** Pending
 
 - Add "Ownership & Transfer Tracking" section to wiki
 - Document property patterns (`property_of`, `held_at`, `appraised_value`)
@@ -147,33 +147,34 @@ Query transfer events by participant, sorted by date.
 - Provide example Bases views for querying ownership
 - DataView query examples for transfer chains
 
-### Phase 2: Property Aliases (Optional)
+### Phase 2: Property Aliases ✓
 
 **Effort:** Low
-**Gating:** User request
+**Status:** Complete
 
 Register property aliases so properties appear in person/place forms:
 - `property_of` → Person picker
 - `held_at` → Place picker
 - `appraised_value` → Number field
 
-### Phase 3: Transfer Event Type (Future)
+### Phase 3: Transfer Event Type ✓
 
 **Effort:** Medium
-**Gating:** User feedback from Phase 1
+**Status:** Complete
 
 - Add `transfer` as a recognized event type with dedicated form fields
 - Dropdown for transfer_type (inheritance, purchase, gift, etc.)
 - Validation and autocomplete
 
-### Phase 4: Visualization (Future)
+### Phase 4: Transfer History Block ✓
 
-**Effort:** Higher
-**Gating:** Demonstrated need
+**Effort:** Medium
+**Status:** Complete
 
-- Ownership chain visualization (timeline or graph)
-- Integration with family chart (show ownership edges)
-- Transfer history panel on person notes
+- `charted-roots-transfers` code block for person notes
+- Shows chronological list of transfer events
+- Auto-updates when events change
+- Freeze to markdown and copy features
 
 ---
 
