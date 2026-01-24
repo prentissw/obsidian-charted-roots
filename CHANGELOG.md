@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Edit organization context menu** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): Added "Edit organization..." action to the right-click context menu in the Organizations tab.
 
+- **PDF table formatting options** ([#228](https://github.com/banisterious/obsidian-charted-roots/issues/228)): Added two new PDF export options to improve table readability across page breaks:
+  - "Keep table rows together" prevents rows from breaking across pages
+  - "Repeat table headers" shows the header row again when a table continues on a new page
+
 ### Fixed
 
 - **Custom organization types fully fixed** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): Complete fix for custom organization types. The previous fix only addressed display; this resolves the root cause where custom types were being replaced with "Other" when loading organization data from notes.
