@@ -63,7 +63,11 @@ export const CANONICAL_PERSON_PROPERTIES = [
 	'relationships',
 	// External IDs (for import round-trip)
 	'external_id',
-	'external_id_source'
+	'external_id_source',
+	// Ownership/transfer tracking (#123)
+	'property_of',
+	'held_at',
+	'appraised_value'
 ] as const;
 
 export type CanonicalPersonProperty = typeof CANONICAL_PERSON_PROPERTIES[number];
@@ -115,7 +119,9 @@ export const CANONICAL_PLACE_PROPERTIES = [
 	'parent_place',
 	'coordinates',
 	'universe',
-	'collection'
+	'collection',
+	// Ownership tracking (#123)
+	'property_of'
 ] as const;
 
 export type CanonicalPlaceProperty = typeof CANONICAL_PLACE_PROPERTIES[number];
@@ -602,6 +608,28 @@ export const PERSON_PROPERTY_METADATA: PropertyMetadata[] = [
 		description: 'Source of the external ID (e.g., "gedcom", "gramps", "familysearch")',
 		category: 'person',
 		commonAliases: ['id_source', 'import_source']
+	},
+	// Ownership/transfer tracking (#123)
+	{
+		canonical: 'property_of',
+		label: 'Property of',
+		description: 'Link to the person who owns or holds rights over this person (e.g., enslaver, guardian)',
+		category: 'person',
+		commonAliases: ['owned_by', 'enslaved_by', 'held_by', 'guardian']
+	},
+	{
+		canonical: 'held_at',
+		label: 'Held at',
+		description: 'Link to the place where this person is held or resides under ownership',
+		category: 'person',
+		commonAliases: ['location', 'residence', 'plantation', 'estate']
+	},
+	{
+		canonical: 'appraised_value',
+		label: 'Appraised value',
+		description: 'Monetary value assigned to this person in historical records',
+		category: 'person',
+		commonAliases: ['value', 'worth', 'price', 'valuation']
 	}
 ];
 
@@ -818,6 +846,14 @@ export const PLACE_PROPERTY_METADATA: PropertyMetadata[] = [
 		description: 'Collection or dataset this place belongs to',
 		category: 'place',
 		commonAliases: ['dataset', 'group']
+	},
+	// Ownership tracking (#123)
+	{
+		canonical: 'property_of',
+		label: 'Property of',
+		description: 'Link to the person who owns this place (e.g., plantation owner, estate holder)',
+		category: 'place',
+		commonAliases: ['owned_by', 'owner', 'held_by']
 	}
 ];
 
