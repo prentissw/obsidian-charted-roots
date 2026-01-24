@@ -53,6 +53,7 @@ import {
 	MediaInventoryResult,
 	UniverseOverviewResult,
 	CollectionOverviewResult,
+	ResearchReportExportResult,
 	TimelineExportFormat,
 	TimelineLayoutStyle,
 	TimelineColorScheme
@@ -75,7 +76,8 @@ type SpecificReportResult =
 	| PlaceSummaryResult
 	| MediaInventoryResult
 	| UniverseOverviewResult
-	| CollectionOverviewResult;
+	| CollectionOverviewResult
+	| ResearchReportExportResult;
 
 /**
  * Output format types
@@ -165,6 +167,8 @@ interface WizardFormData {
 		universeName?: string;
 		collectionId?: string;
 		collectionName?: string;
+		notePath?: string;
+		noteName?: string;
 	};
 	outputFormat: OutputFormat;
 	filename: string;
@@ -577,6 +581,11 @@ export class ReportWizardModal extends Modal {
 		section.createEl('h3', { text: 'Subject', cls: 'cr-report-section-title' });
 
 		if (!reportMeta.requiresPerson) {
+			// Special case for research-report-export: needs a note picker
+			if (this.formData.reportType === 'research-report-export') {
+				this.renderNotePickerSection(section);
+				return;
+			}
 			// No subject needed
 			section.createDiv({
 				cls: 'cr-report-no-subject',
@@ -614,6 +623,86 @@ export class ReportWizardModal extends Modal {
 		pickerButton.addEventListener('click', () => {
 			void this.openSubjectPicker(reportMeta.entityType);
 		});
+	}
+
+	// ========== RESEARCH REPORT NOTE PICKER ==========
+
+	/**
+	 * Render note picker section for research report export
+	 */
+	private renderNotePickerSection(container: HTMLElement): void {
+		const pickerContainer = container.createDiv({ cls: 'cr-report-note-picker' });
+
+		// Description
+		pickerContainer.createDiv({
+			cls: 'cr-report-note-picker-desc',
+			text: 'Select a research report note to export:'
+		});
+
+		// Selected note display or picker button
+		const pickerRow = pickerContainer.createDiv({ cls: 'cr-report-subject-picker' });
+
+		const noteName = this.formData.subject.noteName;
+		const placeholder = 'Select research report...';
+
+		const pickerButton = pickerRow.createEl('button', {
+			cls: 'cr-report-subject-button',
+			text: noteName || placeholder
+		});
+
+		if (noteName) {
+			pickerButton.addClass('cr-report-subject-button--selected');
+		}
+
+		// Icon
+		const icon = createLucideIcon('file-text', 16);
+		pickerButton.insertBefore(icon, pickerButton.firstChild);
+
+		pickerButton.addEventListener('click', () => {
+			void this.openResearchReportPicker();
+		});
+	}
+
+	/**
+	 * Open research report note picker modal
+	 */
+	private async openResearchReportPicker(): Promise<void> {
+		// Find all notes with cr_type: research_report
+		const researchReports: { path: string; name: string }[] = [];
+
+		for (const file of this.app.vault.getMarkdownFiles()) {
+			const cache = this.app.metadataCache.getFileCache(file);
+			const frontmatter = cache?.frontmatter;
+			if (frontmatter?.cr_type === 'research_report') {
+				researchReports.push({
+					path: file.path,
+					name: frontmatter.title || file.basename
+				});
+			}
+		}
+
+		if (researchReports.length === 0) {
+			new Notice('No research report notes found. Create a note with cr_type: research_report in frontmatter.');
+			return;
+		}
+
+		// Sort by name
+		researchReports.sort((a, b) => a.name.localeCompare(b.name));
+
+		// Create a simple picker modal
+		const picker = new ResearchReportPickerModal(
+			this.app,
+			researchReports,
+			(selected) => {
+				this.formData.subject = {
+					notePath: selected.path,
+					noteName: selected.name
+				};
+				this.updateFilename();
+				this.renderCurrentStep();
+			}
+		);
+		picker.open();
 	}
 
 	// ========== INLINE PERSON PICKER ==========
@@ -1021,6 +1110,12 @@ export class ReportWizardModal extends Modal {
 		if (!this.formData.reportType) return false;
 
 		const reportMeta = REPORT_METADATA[this.formData.reportType];
+
+		// Special case for research-report-export: requires a note selection
+		if (this.formData.reportType === 'research-report-export') {
+			return !!this.formData.subject.notePath;
+		}
+
 		if (!reportMeta.requiresPerson) return true;
 
 		const { subject } = this.formData;
@@ -2343,20 +2438,26 @@ export class ReportWizardModal extends Modal {
 
 		// Add subject based on report type
 		const reportMeta = REPORT_METADATA[this.formData.reportType!];
-		switch (reportMeta.entityType) {
-			case 'person':
-				options.personCrId = this.formData.subject.personCrId;
-				options.rootPersonCrId = this.formData.subject.personCrId;
-				break;
-			case 'place':
-				options.placeCrId = this.formData.subject.placeCrId;
-				break;
-			case 'universe':
-				options.universeCrId = this.formData.subject.universeCrId;
-				break;
-			case 'collection':
-				options.collectionId = this.formData.subject.collectionId;
-				break;
+
+		// Special case for research-report-export
+		if (this.formData.reportType === 'research-report-export') {
+			options.notePath = this.formData.subject.notePath;
+		} else {
+			switch (reportMeta.entityType) {
+				case 'person':
+					options.personCrId = this.formData.subject.personCrId;
+					options.rootPersonCrId = this.formData.subject.personCrId;
+					break;
+				case 'place':
+					options.placeCrId = this.formData.subject.placeCrId;
+					break;
+				case 'universe':
+					options.universeCrId = this.formData.subject.universeCrId;
+					break;
+				case 'collection':
+					options.collectionId = this.formData.subject.collectionId;
+					break;
+			}
 		}
 
 		// Add report-specific options
@@ -2522,6 +2623,13 @@ export class ReportWizardModal extends Modal {
 			case 'collection-overview':
 				await this.pdfRenderer.renderCollectionOverview(result as CollectionOverviewResult, pdfOptions);
 				break;
+			case 'research-report-export':
+				await this.pdfRenderer.renderResearchReport(
+					result as ResearchReportExportResult,
+					result.content,
+					pdfOptions
+				);
+				break;
 			default:
 				throw new Error(`PDF rendering not supported for report type: ${this.formData.reportType}`);
 		}
@@ -2542,5 +2650,99 @@ export class ReportWizardModal extends Modal {
 
 		const blob = await this.odtGenerator.generate(result.content, odtOptions);
 		OdtGenerator.download(blob, `${this.formData.filename}.odt`);
+	}
+}
+
+/**
+ * Simple picker modal for research report notes
+ */
+class ResearchReportPickerModal extends Modal {
+	private reports: { path: string; name: string }[];
+	private onSelect: (report: { path: string; name: string }) => void;
+	private searchQuery: string = '';
+	private filteredReports: { path: string; name: string }[] = [];
+	private listContainer?: HTMLElement;
+
+	constructor(
+		app: import('obsidian').App,
+		reports: { path: string; name: string }[],
+		onSelect: (report: { path: string; name: string }) => void
+	) {
+		super(app);
+		this.reports = reports;
+		this.filteredReports = [...reports];
+		this.onSelect = onSelect;
+	}
+
+	onOpen(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.addClass('cr-research-report-picker');
+
+		// Header
+		const header = contentEl.createDiv({ cls: 'cr-report-picker-header' });
+		header.createEl('h3', { text: 'Select research report' });
+
+		// Search
+		const searchRow = contentEl.createDiv({ cls: 'cr-report-picker-search' });
+		const searchInput = searchRow.createEl('input', {
+			type: 'text',
+			placeholder: 'Search reports...',
+			cls: 'cr-report-picker-search-input'
+		});
+		searchInput.addEventListener('input', (e) => {
+			this.searchQuery = (e.target as HTMLInputElement).value.toLowerCase();
+			this.filterReports();
+			this.renderList();
+		});
+
+		// List container
+		this.listContainer = contentEl.createDiv({ cls: 'cr-report-picker-list' });
+		this.renderList();
+	}
+
+	private filterReports(): void {
+		if (!this.searchQuery) {
+			this.filteredReports = [...this.reports];
+			return;
+		}
+		this.filteredReports = this.reports.filter(r =>
+			r.name.toLowerCase().includes(this.searchQuery) ||
+			r.path.toLowerCase().includes(this.searchQuery)
+		);
+	}
+
+	private renderList(): void {
+		if (!this.listContainer) return;
+		this.listContainer.empty();
+
+		if (this.filteredReports.length === 0) {
+			this.listContainer.createDiv({
+				cls: 'cr-report-picker-empty',
+				text: this.searchQuery ? 'No matching reports found' : 'No research reports available'
+			});
+			return;
+		}
+
+		for (const report of this.filteredReports) {
+			const item = this.listContainer.createDiv({ cls: 'cr-report-picker-item' });
+
+			const icon = createLucideIcon('file-text', 16);
+			item.appendChild(icon);
+
+			const textContainer = item.createDiv({ cls: 'cr-report-picker-item-text' });
+			textContainer.createDiv({ cls: 'cr-report-picker-item-name', text: report.name });
+			textContainer.createDiv({ cls: 'cr-report-picker-item-path', text: report.path });
+
+			item.addEventListener('click', () => {
+				this.onSelect(report);
+				this.close();
+			});
+		}
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
 	}
 }
