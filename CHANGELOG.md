@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Custom organization types not shown in statistics** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): Organizations with custom types now appear in the Organizations tab statistics breakdown.
+
+- **Icon-only mode removed event verb from timeline sentences** ([#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)): In dynamic block timelines (`charted-roots-timeline`), icon-only mode now correctly keeps the event type verb in the sentence (e.g., "🎂 1850 — Born in Springfield" instead of "🎂 1850 — in Springfield").
+
+---
+
 ## [0.19.19] - 2026-01-24
 
 ### Added
