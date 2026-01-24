@@ -90,6 +90,7 @@ import type {
 	MediaInventoryResult,
 	UniverseOverviewResult,
 	CollectionOverviewResult,
+	ResearchReportExportResult,
 	ReportPerson
 } from '../types/report-types';
 import type {
@@ -2245,5 +2246,324 @@ export class PdfReportRenderer {
 			case 'hourglass': return 'Hourglass Chart';
 			case 'fan': return 'Fan Chart';
 		}
+	}
+
+	/**
+	 * Render Research Report Export to PDF
+	 *
+	 * Takes a markdown research report note and renders it as a formatted PDF.
+	 * Unlike other report types, this processes free-form markdown rather than
+	 * structured data.
+	 */
+	async renderResearchReport(
+		result: ResearchReportExportResult,
+		markdown: string,
+		options: PdfOptions = DEFAULT_PDF_OPTIONS
+	): Promise<void> {
+		await this.ensurePdfMake();
+		this.currentOptions = options;
+		this.resetFootnotes();
+
+		const defaultFont = this.getDefaultFont(options.fontStyle);
+		const defaultTitle = result.noteTitle;
+		const defaultSubtitle = '';
+
+		// Apply custom title based on scope
+		const scope = options.customTitleScope || 'both';
+		const coverTitle = (scope === 'cover' || scope === 'both') ? (options.customTitle || defaultTitle) : defaultTitle;
+		const headerTitle = (scope === 'headers' || scope === 'both') ? (options.customTitle || defaultTitle) : defaultTitle;
+		const subtitle = options.customSubtitle || defaultSubtitle;
+
+		const content: Content[] = [];
+
+		// Cover page (if enabled)
+		if (options.includeCoverPage) {
+			content.push(...this.buildCoverPage(coverTitle, subtitle || undefined, options.logoDataUrl, options.coverNotes, options.dateFormat));
+		}
+
+		// Title (only if no cover page, since cover already has title)
+		if (!options.includeCoverPage) {
+			content.push({ text: coverTitle, style: 'title' });
+			if (subtitle) {
+				content.push({ text: subtitle, style: 'subtitle' });
+			}
+		}
+
+		// Convert markdown to pdfmake content
+		content.push(...this.markdownToPdfContent(markdown));
+
+		// Add endnotes section if there are any footnotes
+		content.push(...this.buildEndnotesSection());
+
+		const docDefinition: TDocumentDefinitions = {
+			pageSize: options.pageSize,
+			pageMargins: [40, 60, 40, 60],
+			defaultStyle: {
+				font: defaultFont,
+				fontSize: 10
+			},
+			header: this.createHeader(headerTitle),
+			footer: this.createFooter(options.dateFormat),
+			content,
+			styles: this.getStyles(options.fontStyle)
+		};
+
+		const filename = result.suggestedFilename || `${result.noteTitle.replace(/\s+/g, '-')}.pdf`;
+		this.pdfMake.createPdf(docDefinition).download(filename);
+
+		new Notice('PDF downloaded');
+	}
+
+	/**
+	 * Convert markdown text to pdfmake content array
+	 *
+	 * Handles:
+	 * - Headings (H1-H3)
+	 * - Paragraphs
+	 * - Bullet lists
+	 * - Numbered lists
+	 * - Bold/italic inline formatting
+	 * - Tables
+	 * - Footnote markers (converted to superscript references)
+	 */
+	private markdownToPdfContent(markdown: string): Content[] {
+		const content: Content[] = [];
+		const lines = markdown.split('\n');
+
+		let i = 0;
+		while (i < lines.length) {
+			const line = lines[i];
+
+			// Skip empty lines
+			if (!line.trim()) {
+				i++;
+				continue;
+			}
+
+			// Headings
+			if (line.startsWith('### ')) {
+				content.push({
+					text: this.processInlineFormatting(line.slice(4)),
+					fontSize: 12,
+					bold: true,
+					margin: [0, 12, 0, 6]
+				});
+				i++;
+				continue;
+			}
+			if (line.startsWith('## ')) {
+				content.push({
+					text: this.processInlineFormatting(line.slice(3)),
+					fontSize: 14,
+					bold: true,
+					margin: [0, 16, 0, 8]
+				});
+				i++;
+				continue;
+			}
+			if (line.startsWith('# ')) {
+				content.push({
+					text: this.processInlineFormatting(line.slice(2)),
+					fontSize: 18,
+					bold: true,
+					margin: [0, 20, 0, 10]
+				});
+				i++;
+				continue;
+			}
+
+			// Tables (collect consecutive table lines)
+			if (line.startsWith('|')) {
+				const tableLines: string[] = [];
+				while (i < lines.length && lines[i].startsWith('|')) {
+					tableLines.push(lines[i]);
+					i++;
+				}
+				const tableContent = this.parseMarkdownTable(tableLines);
+				if (tableContent) {
+					content.push(tableContent);
+				}
+				continue;
+			}
+
+			// Bullet lists (collect consecutive bullet items)
+			if (line.match(/^[-*]\s+/)) {
+				const listItems: string[] = [];
+				while (i < lines.length && lines[i].match(/^[-*]\s+/)) {
+					listItems.push(lines[i].replace(/^[-*]\s+/, ''));
+					i++;
+				}
+				content.push({
+					ul: listItems.map(item => this.processInlineFormatting(item)),
+					margin: [0, 4, 0, 8]
+				});
+				continue;
+			}
+
+			// Numbered lists (collect consecutive numbered items)
+			if (line.match(/^\d+\.\s+/)) {
+				const listItems: string[] = [];
+				while (i < lines.length && lines[i].match(/^\d+\.\s+/)) {
+					listItems.push(lines[i].replace(/^\d+\.\s+/, ''));
+					i++;
+				}
+				content.push({
+					ol: listItems.map(item => this.processInlineFormatting(item)),
+					margin: [0, 4, 0, 8]
+				});
+				continue;
+			}
+
+			// Horizontal rule
+			if (line.match(/^---+$/) || line.match(/^\*\*\*+$/) || line.match(/^___+$/)) {
+				content.push({
+					canvas: [
+						{
+							type: 'line',
+							x1: 0,
+							y1: 0,
+							x2: 515,
+							y2: 0,
+							lineWidth: 0.5,
+							lineColor: COLORS.separatorLine
+						}
+					],
+					margin: [0, 10, 0, 10]
+				});
+				i++;
+				continue;
+			}
+
+			// Block quotes
+			if (line.startsWith('>')) {
+				const quoteLines: string[] = [];
+				while (i < lines.length && lines[i].startsWith('>')) {
+					quoteLines.push(lines[i].replace(/^>\s*/, ''));
+					i++;
+				}
+				content.push({
+					text: quoteLines.map(ql => this.processInlineFormatting(ql)).join('\n'),
+					italics: true,
+					color: COLORS.secondaryText,
+					margin: [20, 4, 20, 8]
+				});
+				continue;
+			}
+
+			// Regular paragraph
+			content.push({
+				text: this.processInlineFormatting(line),
+				margin: [0, 0, 0, 8]
+			});
+			i++;
+		}
+
+		return content;
+	}
+
+	/**
+	 * Process inline markdown formatting (bold, italic, footnotes)
+	 *
+	 * Returns either a simple string or pdfmake text array for rich formatting.
+	 */
+	private processInlineFormatting(text: string): Content {
+		// First process footnotes
+		const withFootnotes = this.processFootnotes(text);
+
+		// If processFootnotes returned a complex structure, we need to handle it differently
+		if (typeof withFootnotes !== 'string') {
+			// Already has inline formatting from footnotes, return as-is
+			// Note: This means bold/italic won't be processed for footnoted text
+			// A more complete implementation would merge both
+			return withFootnotes;
+		}
+
+		// Process bold and italic
+		const segments: Content[] = [];
+		let remaining = withFootnotes as string;
+
+		// Pattern for **bold**, *italic*, ***bold italic***
+		const pattern = /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|\*(.+?)\*)/g;
+		let lastIndex = 0;
+		let match: RegExpExecArray | null;
+
+		while ((match = pattern.exec(remaining)) !== null) {
+			// Add text before this match
+			if (match.index > lastIndex) {
+				segments.push(remaining.slice(lastIndex, match.index));
+			}
+
+			if (match[2]) {
+				// ***bold italic***
+				segments.push({ text: match[2], bold: true, italics: true });
+			} else if (match[3]) {
+				// **bold**
+				segments.push({ text: match[3], bold: true });
+			} else if (match[4]) {
+				// *italic*
+				segments.push({ text: match[4], italics: true });
+			}
+
+			lastIndex = match.index + match[0].length;
+		}
+
+		// Add remaining text
+		if (lastIndex < remaining.length) {
+			segments.push(remaining.slice(lastIndex));
+		}
+
+		// If only one segment and it's a string, return it directly
+		if (segments.length === 0) {
+			return remaining;
+		}
+		if (segments.length === 1 && typeof segments[0] === 'string') {
+			return segments[0];
+		}
+
+		return { text: segments };
+	}
+
+	/**
+	 * Parse markdown table into pdfmake table content
+	 */
+	private parseMarkdownTable(lines: string[]): Content | null {
+		if (lines.length < 2) return null;
+
+		// Parse header row
+		const headerLine = lines[0];
+		const headers = this.parseTableRow(headerLine);
+		if (headers.length === 0) return null;
+
+		// Skip separator line (---|---|---)
+		const dataStartIndex = lines[1].includes('-') ? 2 : 1;
+
+		// Parse data rows
+		const rows: string[][] = [];
+		for (let i = dataStartIndex; i < lines.length; i++) {
+			const row = this.parseTableRow(lines[i]);
+			if (row.length > 0) {
+				// Pad row to match header count
+				while (row.length < headers.length) {
+					row.push('');
+				}
+				rows.push(row.slice(0, headers.length));
+			}
+		}
+
+		if (rows.length === 0) return null;
+
+		return this.buildDataTable(
+			headers,
+			rows.map(row => row.map(cell => this.processInlineFormatting(cell)))
+		);
+	}
+
+	/**
+	 * Parse a single markdown table row
+	 */
+	private parseTableRow(line: string): string[] {
+		// Remove leading/trailing pipes and split by pipe
+		const trimmed = line.replace(/^\||\|$/g, '');
+		return trimmed.split('|').map(cell => cell.trim());
 	}
 }
