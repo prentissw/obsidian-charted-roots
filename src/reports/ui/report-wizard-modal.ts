@@ -110,7 +110,7 @@ const WIZARD_CATEGORIES: CategoryInfo[] = [
 		category: 'research',
 		name: 'Research',
 		icon: 'search',
-		reportCount: 3
+		reportCount: 4
 	},
 	{
 		category: 'timeline',

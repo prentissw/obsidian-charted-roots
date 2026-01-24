@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - ODT exports render true document footnotes using `<text:note>` elements
   - PDF exports collect footnotes as endnotes in a "Notes" section at the document end
 
+- **Research report export** ([#229](https://github.com/banisterious/obsidian-charted-roots/issues/229)): Export markdown research report notes as formatted PDF or ODT documents. Unlike other reports that generate content from structured data, this takes an existing markdown note (identified by `cr_type: research_report` frontmatter) and renders it with professional formatting:
+  - Converts markdown headings, lists, tables, and inline formatting
+  - Preserves footnotes (endnotes in PDF, document notes in ODT)
+  - Supports cover pages and custom titles
+  - Available in Report Wizard under the "Research" category
+
 ### Fixed
 
 - **Custom organization types fully fixed** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): Complete fix for custom organization types. The previous fix only addressed display; this resolves the root cause where custom types were being replaced with "Other" when loading organization data from notes.
