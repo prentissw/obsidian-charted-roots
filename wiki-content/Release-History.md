@@ -255,7 +255,7 @@ Visual cues in the family chart clarify relationships when a person has multiple
 | Kinship toggle integration | Works with "Show kinship labels" toggle |
 | Export compatibility | Labels included in PNG, SVG, and PDF exports |
 
-See [Multi-Spouse Visual Cues Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/multi-spouse-visual-cues.md) for implementation details.
+See [Multi-Spouse Visual Cues Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/archive/multi-spouse-visual-cues.md) for implementation details.
 
 ---
 
@@ -393,7 +393,7 @@ Opt-in DNA match tracking for genetic genealogists, enabling recording of key DN
 
 **Documentation:**
 
-- [DNA Match Tracking Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/dna-match-tracking.md)
+- [DNA Match Tracking Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/archive/dna-match-tracking.md)
 
 ---
 
@@ -940,7 +940,7 @@ Lightweight DNA match tracking for genetic genealogy workflows.
 
 **Future Phases:**
 
-Phase 2-4 (planned) will add UI support for DNA Match person subtype, DNA relationship type, and visualization/reports. See [DNA Match Tracking Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/dna-match-tracking.md) for details.
+Phase 2-4 (planned) will add UI support for DNA Match person subtype, DNA relationship type, and visualization/reports. See [DNA Match Tracking Planning](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/archive/dna-match-tracking.md) for details.
 
 ---
 
