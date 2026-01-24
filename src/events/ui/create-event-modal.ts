@@ -43,6 +43,7 @@ interface EventFormData {
 	universe: string;
 	dateSystem: string;
 	timeline: string;
+	transferType: string;
 }
 
 /**
@@ -74,6 +75,7 @@ export class CreateEventModal extends Modal {
 	private universe = '';
 	private dateSystem = '';
 	private timeline = '';
+	private transferType = '';
 
 	// State persistence
 	private plugin?: CanvasRootsPlugin;
@@ -131,6 +133,7 @@ export class CreateEventModal extends Modal {
 			this.universe = event.universe || '';
 			this.dateSystem = event.dateSystem || '';
 			this.timeline = event.timeline?.replace(/^\[\[/, '').replace(/\]\]$/, '') || '';
+			this.transferType = event.transferType || '';
 		} else {
 			// Create mode
 			if (options?.initialPerson) {
@@ -364,6 +367,30 @@ export class CreateEventModal extends Modal {
 					}));
 		}
 
+		// Transfer section (for transfer events)
+		if (this.eventType === 'transfer') {
+			const transferSection = form.createDiv({ cls: 'crc-event-transfer-section' });
+			transferSection.createEl('h4', { text: 'Transfer details', cls: 'crc-section-header' });
+
+			new Setting(transferSection)
+				.setName('Transfer type')
+				.setDesc('Type of ownership or status transfer')
+				.addDropdown(dropdown => {
+					dropdown.addOption('', 'Select type...');
+					dropdown.addOption('inheritance', 'Inheritance (via will/probate)');
+					dropdown.addOption('purchase', 'Purchase (sale transaction)');
+					dropdown.addOption('gift', 'Gift (transfer without payment)');
+					dropdown.addOption('hire', 'Hire (temporary transfer)');
+					dropdown.addOption('seizure', 'Seizure (court-ordered, debt)');
+					dropdown.addOption('birth', 'Birth (born into ownership)');
+					dropdown.addOption('relocation', 'Relocation (move, same owner)');
+					dropdown.setValue(this.transferType);
+					dropdown.onChange(value => {
+						this.transferType = value;
+					});
+				});
+		}
+
 		// Buttons
 		const buttonContainer = contentEl.createDiv({ cls: 'crc-modal-buttons' });
 
@@ -420,7 +447,8 @@ export class CreateEventModal extends Modal {
 			isCanonical: this.isCanonical,
 			universe: this.universe,
 			dateSystem: this.dateSystem,
-			timeline: this.timeline
+			timeline: this.timeline,
+			transferType: this.transferType
 		};
 	}
 
@@ -442,6 +470,7 @@ export class CreateEventModal extends Modal {
 		this.universe = formData.universe || '';
 		this.dateSystem = formData.dateSystem || '';
 		this.timeline = formData.timeline || '';
+		this.transferType = formData.transferType || '';
 	}
 
 	/**
@@ -687,6 +716,9 @@ export class CreateEventModal extends Modal {
 			if (this.dateSystem) {
 				data.dateSystem = this.dateSystem;
 			}
+			if (this.transferType) {
+				data.transferType = this.transferType;
+			}
 
 			const file = await this.eventService.createEvent(data);
 
@@ -793,6 +825,12 @@ export class CreateEventModal extends Modal {
 					frontmatter.date_system = this.dateSystem;
 				} else {
 					delete frontmatter.date_system;
+				}
+
+				if (this.transferType) {
+					frontmatter.transfer_type = this.transferType;
+				} else {
+					delete frontmatter.transfer_type;
 				}
 
 				// Note: cr_id, before, after, sources, sort_order, and any custom

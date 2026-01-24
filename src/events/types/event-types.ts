@@ -68,7 +68,8 @@ export const EXTENDED_EVENT_TYPES = [
 	'burial',
 	'baptism',
 	'confirmation',
-	'ordination'
+	'ordination',
+	'transfer'
 ] as const;
 
 /**
@@ -243,6 +244,15 @@ export const EVENT_TYPE_DEFINITIONS: EventTypeDefinition[] = [
 		category: 'life',
 		isBuiltIn: true
 	},
+	{
+		id: 'transfer',
+		name: 'Transfer',
+		description: 'Transfer of ownership, property, or status (inheritance, sale, gift, etc.)',
+		icon: 'arrow-right-left',
+		color: '#f97316',
+		category: 'life',
+		isBuiltIn: true
+	},
 
 	// Narrative events (for storytelling and worldbuilding)
 	{
@@ -399,6 +409,8 @@ export interface EventNote {
 	groups?: string[];
 	/** Media files linked to this event (wikilinks) */
 	media?: string[];
+	/** For transfer events: type of transfer (inheritance, purchase, gift, hire, seizure, birth, relocation) */
+	transferType?: string;
 }
 
 /**
@@ -423,6 +435,8 @@ export interface CreateEventData {
 	after?: string[];
 	timeline?: string;
 	groups?: string[];
+	/** For transfer events: inheritance, purchase, gift, hire, seizure, birth, relocation */
+	transferType?: string;
 }
 
 /**

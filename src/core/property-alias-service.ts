@@ -103,7 +103,9 @@ export const CANONICAL_EVENT_PROPERTIES = [
 	'after',
 	'timeline',
 	// Groups/factions
-	'groups'
+	'groups',
+	// Transfer events (#123)
+	'transfer_type'
 ] as const;
 
 export type CanonicalEventProperty = typeof CANONICAL_EVENT_PROPERTIES[number];
@@ -784,6 +786,14 @@ export const EVENT_PROPERTY_METADATA: PropertyMetadata[] = [
 		description: 'Organizations or factions involved',
 		category: 'event',
 		commonAliases: ['organizations', 'factions', 'parties']
+	},
+	// Transfer events (#123)
+	{
+		canonical: 'transfer_type',
+		label: 'Transfer type',
+		description: 'Type of transfer (inheritance, purchase, gift, hire, seizure, birth, relocation)',
+		category: 'event',
+		commonAliases: ['transfer_kind', 'transaction_type']
 	}
 ];
 

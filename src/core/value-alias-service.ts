@@ -29,6 +29,7 @@ export const CANONICAL_EVENT_TYPES = [
 	'baptism',
 	'confirmation',
 	'ordination',
+	'transfer',
 	'custom'
 ] as const;
 
@@ -125,6 +126,7 @@ export const EVENT_TYPE_LABELS: Record<CanonicalEventType, string> = {
 	baptism: 'Baptism',
 	confirmation: 'Confirmation',
 	ordination: 'Ordination',
+	transfer: 'Transfer',
 	custom: 'Custom'
 };
 

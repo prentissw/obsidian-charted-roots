@@ -526,6 +526,9 @@ export class EventService {
 				frontmatterLines.push(`  - "${g.replace(/"/g, '\\"')}"`);
 			}
 		}
+		if (data.transferType) {
+			frontmatterLines.push(`${prop('transfer_type')}: ${data.transferType}`);
+		}
 
 		frontmatterLines.push('---');
 
@@ -738,6 +741,7 @@ export class EventService {
 		const timelineValue = resolveProperty(frontmatter, 'timeline', aliases);
 		const groupsValue = resolveProperty(frontmatter, 'groups', aliases);
 		const mediaValue = resolveProperty(frontmatter, 'media', aliases);
+		const transferTypeValue = resolveProperty(frontmatter, 'transfer_type', aliases);
 
 		// Check for Calendarium fc-* fields when integration is enabled
 		if (this.settings.syncCalendariumEvents && this.settings.calendariumIntegration !== 'off') {
@@ -798,7 +802,8 @@ export class EventService {
 			timeline: timelineValue ? fmToString(timelineValue) : undefined,
 			sortOrder: typeof frontmatter.sort_order === 'number' ? frontmatter.sort_order : undefined,
 			groups: fmToStringArray(groupsValue),
-			media: media.length > 0 ? media : undefined
+			media: media.length > 0 ? media : undefined,
+			transferType: transferTypeValue ? fmToString(transferTypeValue) : undefined
 		};
 	}
 
