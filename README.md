@@ -117,8 +117,8 @@
 | **Extended Statistics** | Longevity analysis, family size patterns, marriage patterns, migration flows, timeline density |
 | **Visual Tree Charts** | Printable PDF tree diagrams: Pedigree, Descendant, Hourglass, and Fan Chart with custom icons |
 | **Genealogical Reports** | Family Group Sheet, Individual Summary, Ahnentafel, Gaps Report, Register Report, Pedigree/Descendant Charts |
-| **Extended Reports** | Source Summary, Timeline Report, Place Summary, Media Inventory, Universe Overview, Collection Overview |
-| **PDF & ODT Export** | All 17 report types exportable as styled PDFs or editable ODT files with customizable cover pages, logos, and date formats |
+| **Extended Reports** | Source Summary, Timeline Report, Place Summary, Media Inventory, Universe Overview, Collection Overview, Research Report Export |
+| **PDF & ODT Export** | All 18 report types exportable as styled PDFs or editable ODT files with customizable cover pages, logos, and date formats |
 
 ### [Evidence & Sources](https://github.com/banisterious/obsidian-charted-roots/wiki/Evidence-And-Sources)
 
