@@ -217,8 +217,8 @@ export interface OrganizationHierarchyNode {
 export interface OrganizationStats {
 	/** Total number of organizations */
 	total: number;
-	/** Count by organization type */
-	byType: Record<OrganizationType, number>;
+	/** Count by organization type (includes custom types) */
+	byType: Record<string, number>;
 	/** Number of people with memberships */
 	peopleWithMemberships: number;
 	/** Total membership count (a person can have multiple) */

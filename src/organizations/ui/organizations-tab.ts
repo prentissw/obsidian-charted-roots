@@ -532,8 +532,9 @@ function renderOrganizationStatsCard(
 		breakdown.createEl('h4', { text: 'By type', cls: 'cr-subsection-heading' });
 
 		const typeList = breakdown.createDiv({ cls: 'cr-type-breakdown-list' });
-		for (const typeDef of DEFAULT_ORGANIZATION_TYPES) {
-			const count = (stats.byType as Record<string, number>)[typeDef.id] || 0;
+		const allTypes = getAllOrganizationTypes(plugin.settings.customOrganizationTypes || []);
+		for (const typeDef of allTypes) {
+			const count = stats.byType[typeDef.id] || 0;
 			if (count === 0) continue;
 
 			const row = typeList.createDiv({ cls: 'cr-type-breakdown-row' });

@@ -200,19 +200,12 @@ export class OrganizationService {
 		this.ensureCacheLoaded();
 		const orgs = Array.from(this.organizationCache.values());
 
-		const byType: Record<OrganizationType, number> = {
-			noble_house: 0,
-			guild: 0,
-			corporation: 0,
-			military: 0,
-			religious: 0,
-			political: 0,
-			educational: 0,
-			custom: 0
-		};
+		// Build type counts dynamically to support custom types
+		const byType: Record<string, number> = {};
 
 		for (const org of orgs) {
-			byType[org.orgType]++;
+			const typeId = org.orgType;
+			byType[typeId] = (byType[typeId] || 0) + 1;
 		}
 
 		// TODO: Calculate membership stats from MembershipService
