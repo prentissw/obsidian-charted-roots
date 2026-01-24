@@ -116,6 +116,10 @@ export interface PdfOptions {
 	coverNotes?: string;
 	/** Date format preference: 'mdy' (Month-Day-Year), 'dmy' (Day-Month-Year), 'ymd' (Year-Month-Day) */
 	dateFormat?: 'mdy' | 'dmy' | 'ymd';
+	/** Prevent table rows from breaking across pages (pdfmake dontBreakRows) */
+	tableKeepRowsTogether?: boolean;
+	/** Repeat table header row on continuation pages (pdfmake keepWithHeaderRows) */
+	tableRepeatHeaders?: boolean;
 }
 
 /**
@@ -124,7 +128,9 @@ export interface PdfOptions {
 const DEFAULT_PDF_OPTIONS: PdfOptions = {
 	pageSize: 'A4',
 	fontStyle: 'serif',
-	includeCoverPage: false
+	includeCoverPage: false,
+	tableKeepRowsTogether: true,
+	tableRepeatHeaders: true
 };
 
 /**
@@ -328,11 +334,17 @@ export class PdfReportRenderer {
 
 	/**
 	 * Build a columnar data table with zebra striping
+	 *
+	 * @param headers - Column header labels
+	 * @param rows - Table row data
+	 * @param widths - Optional column widths
+	 * @param tableOptions - Optional table formatting options
 	 */
 	private buildDataTable(
 		headers: string[],
 		rows: string[][],
-		widths?: (string | number)[]
+		widths?: (string | number)[],
+		tableOptions?: { keepRowsTogether?: boolean; repeatHeaders?: boolean }
 	): Content {
 		if (rows.length === 0) {
 			return { text: 'None recorded.', style: 'note', margin: [0, 0, 0, 10] };
@@ -340,10 +352,18 @@ export class PdfReportRenderer {
 
 		const tableWidths = widths || headers.map(() => '*');
 
+		// Apply table formatting options (default to true for better PDF readability)
+		const keepRowsTogether = tableOptions?.keepRowsTogether ?? true;
+		const repeatHeaders = tableOptions?.repeatHeaders ?? true;
+
 		return {
 			table: {
 				headerRows: 1,
 				widths: tableWidths,
+				// Repeat header row on continuation pages
+				keepWithHeaderRows: repeatHeaders ? 1 : 0,
+				// Prevent rows from breaking across pages
+				dontBreakRows: keepRowsTogether,
 				body: [
 					headers.map(h => ({ text: h, style: 'tableHeader' })),
 					...rows.map((row, index) =>
