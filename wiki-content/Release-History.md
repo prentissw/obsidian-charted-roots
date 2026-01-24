@@ -9,6 +9,7 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ## Table of Contents
 
 - [v0.19.x](#v019x)
+  - [Inheritance & Succession Tracking](#inheritance--succession-tracking)
   - [Organization Member Management](#organization-member-management)
   - [Person Roles in Sources](#person-roles-in-sources-v01916)
   - [Event Type Icons](#event-type-icons-v01915)
@@ -106,6 +107,46 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 ---
 
 ## v0.19.x
+
+### Inheritance & Succession Tracking
+
+Track ownership changes, property transfers, and succession relationships through the existing event system with a new `transfer` event type and dedicated UI.
+
+**GitHub Issue:** [#123](https://github.com/banisterious/obsidian-charted-roots/issues/123)
+
+**Features Implemented:**
+
+| Feature | Description |
+|---------|-------------|
+| Transfer event type | New event type for ownership transfers, property inheritance, and succession |
+| Transfer history block | `charted-roots-transfers` dynamic block shows transfer timeline for any entity |
+| Context menu integration | Right-click person/place/organization notes to insert transfer history |
+| Property aliases | `previous_owner`, `new_owner`, `transferred_to`, `inherited_from` map to canonical fields |
+
+**Use Cases:**
+
+| Scenario | How to Model |
+|----------|--------------|
+| Property inheritance | Transfer event with `previous_owner` (decedent) and `new_owner` (heir) |
+| Enslaved ancestor tracking | Transfer events linking to probate/sale sources |
+| Title succession | Transfer event with `position` field for the title/role |
+| Worldbuilding succession | Chain of transfer events for thrones, lordships, etc. |
+
+**YAML Example:**
+
+```yaml
+type: transfer
+date: 1845-03-15
+previous_owner: "[[John Smith Sr.]]"
+new_owner: "[[John Smith Jr.]]"
+subject: "[[Smith Family Farm]]"
+source: "[[Probate Record 1845]]"
+notes: "Inherited upon father's death"
+```
+
+See [Inheritance & Succession Tracking Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/inheritance-succession-tracking.md) for design details.
+
+---
 
 ### Organization Member Management
 

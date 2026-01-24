@@ -10,7 +10,6 @@ This document outlines planned features for Charted Roots. For completed feature
 - [Planned Features](#planned-features)
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
   - [Unified Place Lookup](#unified-place-lookup) 💡 Low ✅ Phase 1-2 complete
-  - [Inheritance & Succession Tracking](#inheritance--succession-tracking) 💡 Low
   - [Calendarium Integration](#calendarium-integration) 💡 Low
   - [Transcript Nodes & Oral History](#transcript-nodes--oral-history) 💡 Low
 - [Future Considerations](#future-considerations)
@@ -29,23 +28,13 @@ For the complete list of implemented features, see [Release History](Release-His
 
 | Version | Feature | Summary |
 |:-------:|---------|---------|
+| Unreleased | [Inheritance & Succession Tracking](Release-History#inheritance--succession-tracking) | Track ownership changes, property transfers, and succession through event notes with dedicated UI |
 | Unreleased | [Organization Member Management](Release-History#organization-member-management) | Manage organization memberships via context menu with multi-select person picker and inline editing |
 | v0.19.16 | [Person Roles in Sources](Release-History#person-roles-in-sources-v01916) | Track roles (witness, informant, official, etc.) on source notes with modal UI, dynamic block, and Sources by Role report |
 | v0.19.15 | [Event Type Icons](Release-History#event-type-icons-v01915) | Display Lucide icons for event types in timelines and map popups with configurable display modes |
 | v0.19.14 | [Multi-Spouse Visual Cues](Release-History#multi-spouse-visual-cues-v01914) | Circled spouse numbers (①②③) on family chart edges clarify multi-spouse relationships |
 | v0.19.13 | [GEDCOM Media Import](Release-History#gedcom-media-import-v01913) | Import media references (OBJE records) from GEDCOM files with path resolution and vault validation |
 | v0.19.11 | [Research Workflow Phase 1](Release-History#research-workflow-phase-1-v01911) | GPS-aligned research entity types with Statistics Dashboard integration |
-| v0.19.9 | [DNA Match Tracking](Release-History#dna-match-tracking-v0199) | Opt-in DNA match tracking with person type, fields, bidirectional relationships, and person picker badge |
-| v0.19.7 | [Name Components](Release-History#name-components-v0197) | Explicit surname properties for multi-surname cultures and maiden/married name tracking |
-| v0.19.6 | [Per-Map Marker Assignment](Release-History#per-map-marker-assignment-v0196) | Restrict places to specific custom maps within a universe |
-| v0.19.5 | [GEDCOM Notes Support](Release-History#gedcom-notes-support-v0195) | Import GEDCOM NOTE tags with optional separate note files |
-| v0.19.5 | [Timeline Event Description Display](Release-History#timeline-event-description-display-v0195) | All event types show description when available (except birth/death) |
-| v0.19.5 | [Romantic Relationship Label Preference](Release-History#romantic-relationship-label-preference-v0195) | UI preference to display "Spouse" or "Partner" terminology |
-| v0.19.3 | [Place Category Folder Mapping](Release-History#place-category-folder-mapping-v0193) | Automatic organization of places into category-based subfolders |
-| v0.19.2 | [Partial Date Support](Release-History#partial-date-support-v0192) | GEDCOM import preserves date precision (year-only, month+year, qualifiers, ranges) |
-| v0.19.0 | [Plugin Rename](Release-History#plugin-rename-canvas-roots--charted-roots-v0190) | Renamed from Canvas Roots to Charted Roots with automatic vault migration |
-| v0.18.32 | [Automatic Wikilink Resolution](Release-History#automatic-wikilink-resolution-v01832) | Resolve `[[Person Name]]` wikilinks to cr_id values in relationship fields |
-| v0.18.28 | [MyHeritage GEDCOM Import Compatibility](Release-History#myheritage-gedcom-import-compatibility-v01828) | Auto-detect and fix MyHeritage GEDCOM exports (BOM, double-encoded entities, `<br>` tags) |
 
 See [Release History](Release-History) for earlier releases.
 
@@ -164,31 +153,6 @@ Export features discussed in #145 are tracked separately:
 - GeoNames username configuration in Settings → Places
 
 See [Unified Place Lookup Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/unified-place-lookup.md) for implementation details.
-
----
-
-### Inheritance & Succession Tracking
-
-**Priority:** 💡 Low — Track inheritance chains for genealogical research and worldbuilding
-
-**Status:** Planning
-
-**GitHub Issue:** [#123](https://github.com/banisterious/obsidian-charted-roots/issues/123)
-
-**Summary:** Track inheritance and succession relationships for both genealogical research and fictional worldbuilding.
-
-**Genealogical use cases:**
-- Tracking enslaved ancestors through inheritance chains (probate records, estate divisions)
-- Following property/person transfers across generations
-- Linking inheritance events to source documents
-
-**Worldbuilding use cases:**
-- Line of succession calculator
-- Title/position inheritance rules
-- Regnal numbering
-- Heir designation and succession events
-
-**Proposed minimal approach:** Custom relationship types (`inherited_from`, `succeeded`) plus event notes, queryable via Bases. See [planning document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/inheritance-succession-tracking.md) for details.
 
 ---
 
