@@ -75,6 +75,7 @@ interface VfsFontsModule {
 	default?: { pdfMake?: { vfs: { [file: string]: string } } };
 	vfs?: { [file: string]: string };
 }
+import { parseFootnotes, replaceFootnoteMarkers } from '../utils/footnote-parser';
 import type {
 	FamilyGroupSheetResult,
 	IndividualSummaryResult,
@@ -161,6 +162,13 @@ export class PdfReportRenderer {
 
 	/** Current options for the active render operation */
 	private currentOptions: PdfOptions = DEFAULT_PDF_OPTIONS;
+
+	/** Footnote definitions collected during rendering (id → content) */
+	private footnotes: Map<string, string> = new Map();
+	/** Ordered list of footnote IDs as they appear */
+	private footnoteOrder: string[] = new Set<string>() as unknown as string[];
+	/** Counter for footnote numbering in current document */
+	private footnoteCounter: number = 0;
 
 	/**
 	 * Get the pdfmake instance. Must call ensurePdfMake() first.
@@ -341,12 +349,12 @@ export class PdfReportRenderer {
 	 * Uses table formatting options from currentOptions (set by render methods)
 	 *
 	 * @param headers - Column header labels
-	 * @param rows - Table row data
+	 * @param rows - Table row data (can be strings or Content for rich formatting like footnotes)
 	 * @param widths - Optional column widths
 	 */
 	private buildDataTable(
 		headers: string[],
-		rows: string[][],
+		rows: (string | Content)[][],
 		widths?: (string | number)[]
 	): Content {
 		if (rows.length === 0) {
@@ -370,11 +378,15 @@ export class PdfReportRenderer {
 				body: [
 					headers.map(h => ({ text: h, style: 'tableHeader' })),
 					...rows.map((row, index) =>
-						row.map(cell => ({
-							text: cell,
-							style: 'tableCell',
-							fillColor: index % 2 === 1 ? COLORS.alternatingRow : undefined
-						}))
+						row.map(cell => {
+							// Handle both string and Content cell values
+							const cellContent = typeof cell === 'string' ? { text: cell } : cell;
+							return {
+								...cellContent,
+								style: 'tableCell',
+								fillColor: index % 2 === 1 ? COLORS.alternatingRow : undefined
+							};
+						})
 					)
 				]
 			},
@@ -435,6 +447,117 @@ export class PdfReportRenderer {
 	private stripWikilinks(text: string | undefined): string {
 		if (!text) return '';
 		return text.replace(/\[\[([^\]]+)\]\]/g, '$1');
+	}
+
+	/**
+	 * Reset footnote collection for a new document
+	 */
+	private resetFootnotes(): void {
+		this.footnotes = new Map();
+		this.footnoteOrder = [];
+		this.footnoteCounter = 0;
+	}
+
+	/**
+	 * Process text that may contain footnotes.
+	 * Extracts definitions, collects them, and returns content with superscript refs.
+	 *
+	 * @param text - Text that may contain footnote markers and definitions
+	 * @returns pdfmake content array with superscript footnote references
+	 */
+	private processFootnotes(text: string | undefined): Content {
+		if (!text) return '';
+
+		// Parse footnotes from the text
+		const parsed = parseFootnotes(text);
+
+		// Merge any new definitions into our collection
+		for (const [id, content] of parsed.footnotes) {
+			if (!this.footnotes.has(id)) {
+				this.footnotes.set(id, content);
+			}
+		}
+
+		// Build content with superscript footnote references
+		const textContent = parsed.textWithoutDefinitions;
+
+		// If no footnote markers, return plain text
+		if (!textContent.includes('[^')) {
+			return textContent;
+		}
+
+		// Replace footnote markers with superscript references
+		// We need to build an array of text segments
+		const segments: Content[] = [];
+		let lastIndex = 0;
+		const pattern = /\[\^([^\]]+)\]/g;
+		let match: RegExpExecArray | null;
+
+		while ((match = pattern.exec(textContent)) !== null) {
+			// Add text before this match
+			if (match.index > lastIndex) {
+				segments.push(textContent.slice(lastIndex, match.index));
+			}
+
+			const id = match[1];
+			// Only add superscript if we have a definition
+			if (this.footnotes.has(id)) {
+				// Track order of appearance
+				if (!this.footnoteOrder.includes(id)) {
+					this.footnoteOrder.push(id);
+				}
+				const refNumber = this.footnoteOrder.indexOf(id) + 1;
+				segments.push({
+					text: String(refNumber),
+					sup: true,
+					fontSize: 7,
+					color: COLORS.tertiaryText
+				});
+			} else {
+				// No definition - leave marker as-is
+				segments.push(match[0]);
+			}
+
+			lastIndex = match.index + match[0].length;
+		}
+
+		// Add remaining text
+		if (lastIndex < textContent.length) {
+			segments.push(textContent.slice(lastIndex));
+		}
+
+		// If only one segment and it's a string, return it directly
+		if (segments.length === 1 && typeof segments[0] === 'string') {
+			return segments[0];
+		}
+
+		return { text: segments };
+	}
+
+	/**
+	 * Build the endnotes section if there are any footnotes
+	 */
+	private buildEndnotesSection(): Content[] {
+		if (this.footnoteOrder.length === 0) {
+			return [];
+		}
+
+		const content: Content[] = [];
+		content.push(this.buildSectionHeader('Notes'));
+
+		for (let i = 0; i < this.footnoteOrder.length; i++) {
+			const id = this.footnoteOrder[i];
+			const noteContent = this.footnotes.get(id) || '';
+			content.push({
+				text: [
+					{ text: `${i + 1}. `, bold: true, fontSize: 9 },
+					{ text: noteContent, fontSize: 9 }
+				],
+				margin: [0, 2, 0, 2]
+			});
+		}
+
+		return content;
 	}
 
 	/**
@@ -808,6 +931,7 @@ export class PdfReportRenderer {
 	): Promise<void> {
 		await this.ensurePdfMake();
 		this.currentOptions = options;
+		this.resetFootnotes();
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Individual Summary';
@@ -843,7 +967,7 @@ export class PdfReportRenderer {
 			{ label: 'Occupation', value: result.person.occupation || '' }
 		]));
 
-		// Events
+		// Events (with footnote support in descriptions)
 		if (result.events.length > 0) {
 			content.push(this.buildSectionHeader('Life Events'));
 			content.push(this.buildDataTable(
@@ -852,11 +976,14 @@ export class PdfReportRenderer {
 					event.type,
 					event.date || '',
 					this.stripWikilinks(event.place),
-					event.description || ''
+					this.processFootnotes(event.description)
 				]),
 				[80, 80, '*', '*']
 			));
 		}
+
+		// Add endnotes section if there are any footnotes
+		content.push(...this.buildEndnotesSection());
 
 		const docDefinition: TDocumentDefinitions = {
 			pageSize: options.pageSize,
