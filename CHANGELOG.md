@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Membership data corruption when editing** ([#226](https://github.com/banisterious/obsidian-charted-roots/issues/226)): Fixed frontmatter corruption that occurred when editing organization memberships. Editing a member's role or dates no longer creates orphaned entries, duplicates, or malformed YAML arrays.
 
+- **Media lightbox causing mode switch** ([#232](https://github.com/banisterious/obsidian-charted-roots/issues/232)): Fixed an issue where clicking images in `canvas-roots-media` code blocks would switch the note from Reading mode to Source/Edit mode. The lightbox now restores Reading mode when closed.
+
 ---
 
 ## [0.19.18] - 2026-01-23

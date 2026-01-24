@@ -5,11 +5,12 @@
  * lightbox viewing and filtering capabilities.
  */
 
-import { App, TFile, setIcon, Modal } from 'obsidian';
+import { App, TFile, setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import { SourceService } from '../services/source-service';
 import type { SourceNote } from '../types/source-types';
 import { getSourceType } from '../types/source-types';
+import { openGalleryLightbox, type LightboxItem } from '../../ui/media-lightbox-modal';
 
 /**
  * Supported image extensions for thumbnails
@@ -376,6 +377,7 @@ function renderPlaceholder(container: HTMLElement, iconName: string): void {
 
 /**
  * Open media lightbox for viewing images
+ * Uses the shared lightbox modal component
  */
 function openMediaLightbox(
 	plugin: CanvasRootsPlugin,
@@ -390,130 +392,12 @@ function openMediaLightbox(
 
 	if (currentIndex === -1 || imageItems.length === 0) return;
 
-	new MediaLightboxModal(plugin.app, plugin, imageItems, currentIndex).open();
-}
+	// Convert to LightboxItem format with source subtitle
+	const lightboxItems: LightboxItem[] = imageItems.map(item => ({
+		file: item.file!,
+		displayName: item.displayName,
+		subtitle: `Source: ${item.source.title}`
+	}));
 
-/**
- * Modal for viewing media in a lightbox
- */
-class MediaLightboxModal extends Modal {
-	private plugin: CanvasRootsPlugin;
-	private items: MediaItem[];
-	private currentIndex: number;
-	private imageContainer: HTMLElement | null = null;
-	private captionEl: HTMLElement | null = null;
-	private counterEl: HTMLElement | null = null;
-
-	constructor(app: App, plugin: CanvasRootsPlugin, items: MediaItem[], startIndex: number) {
-		super(app);
-		this.plugin = plugin;
-		this.items = items;
-		this.currentIndex = startIndex;
-	}
-
-	onOpen(): void {
-		const { contentEl } = this;
-		contentEl.empty();
-		contentEl.addClass('cr-media-lightbox');
-
-		// Close button
-		const closeBtn = contentEl.createDiv({ cls: 'cr-media-lightbox-close' });
-		setIcon(closeBtn, 'x');
-		closeBtn.addEventListener('click', () => this.close());
-
-		// Navigation (if multiple images)
-		if (this.items.length > 1) {
-			// Previous button
-			const prevBtn = contentEl.createDiv({ cls: 'cr-media-lightbox-nav cr-media-lightbox-prev' });
-			setIcon(prevBtn, 'chevron-left');
-			prevBtn.addEventListener('click', (e) => {
-				e.stopPropagation();
-				this.navigate(-1);
-			});
-
-			// Next button
-			const nextBtn = contentEl.createDiv({ cls: 'cr-media-lightbox-nav cr-media-lightbox-next' });
-			setIcon(nextBtn, 'chevron-right');
-			nextBtn.addEventListener('click', (e) => {
-				e.stopPropagation();
-				this.navigate(1);
-			});
-		}
-
-		// Image container
-		this.imageContainer = contentEl.createDiv({ cls: 'cr-media-lightbox-image-container' });
-
-		// Footer with caption and counter
-		const footer = contentEl.createDiv({ cls: 'cr-media-lightbox-footer' });
-		this.captionEl = footer.createDiv({ cls: 'cr-media-lightbox-caption' });
-		this.counterEl = footer.createDiv({ cls: 'cr-media-lightbox-counter' });
-
-		// Render current image
-		this.renderCurrentImage();
-
-		// Keyboard navigation
-		this.scope.register([], 'ArrowLeft', () => {
-			this.navigate(-1);
-			return false;
-		});
-		this.scope.register([], 'ArrowRight', () => {
-			this.navigate(1);
-			return false;
-		});
-		this.scope.register([], 'Escape', () => {
-			this.close();
-			return false;
-		});
-
-		// Click outside to close
-		contentEl.addEventListener('click', (e) => {
-			if (e.target === contentEl || e.target === this.imageContainer) {
-				this.close();
-			}
-		});
-	}
-
-	private navigate(direction: number): void {
-		const newIndex = this.currentIndex + direction;
-		if (newIndex >= 0 && newIndex < this.items.length) {
-			this.currentIndex = newIndex;
-			this.renderCurrentImage();
-		}
-	}
-
-	private renderCurrentImage(): void {
-		if (!this.imageContainer || !this.captionEl || !this.counterEl) return;
-
-		const item = this.items[this.currentIndex];
-		if (!item.file) return;
-
-		// Clear container
-		this.imageContainer.empty();
-
-		// Load image
-		const imgUrl = this.app.vault.getResourcePath(item.file);
-		this.imageContainer.createEl('img', {
-			cls: 'cr-media-lightbox-image',
-			attr: {
-				src: imgUrl,
-				alt: item.displayName
-			}
-		});
-
-		// Update caption
-		this.captionEl.empty();
-		this.captionEl.createDiv({ cls: 'cr-media-lightbox-filename', text: item.displayName });
-		this.captionEl.createDiv({
-			cls: 'cr-media-lightbox-source',
-			text: `Source: ${item.source.title}`
-		});
-
-		// Update counter
-		this.counterEl.textContent = `${this.currentIndex + 1} / ${this.items.length}`;
-	}
-
-	onClose(): void {
-		const { contentEl } = this;
-		contentEl.empty();
-	}
+	openGalleryLightbox(plugin.app, lightboxItems, currentIndex);
 }

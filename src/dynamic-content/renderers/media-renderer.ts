@@ -10,6 +10,7 @@ import type CanvasRootsPlugin from '../../../main';
 import type { DynamicBlockContext, DynamicBlockConfig } from '../services/dynamic-content-service';
 import type { DynamicContentService } from '../services/dynamic-content-service';
 import { extractWikilinkPath } from '../../utils/wikilink-resolver';
+import { openGalleryLightbox, type LightboxItem } from '../../ui/media-lightbox-modal';
 
 /**
  * Media item extracted from frontmatter
@@ -367,14 +368,25 @@ export class MediaRenderer {
 			const resourcePath = this.plugin.app.vault.getResourcePath(item.file);
 			img.src = resourcePath;
 
-			// Add click handler to open in default viewer
+			// Add click handler to open in lightbox
+			// Using lightbox keeps the note in reading mode (fixes issue #232)
+			// Use capture phase and stopImmediatePropagation to intercept before Obsidian
+			// Also handle mousedown to prevent Obsidian's edit mode trigger
 			// In editable mode, use double-click to avoid conflicts with drag
 			const clickEvent = this.isEditable ? 'dblclick' : 'click';
-			itemEl.addEventListener(clickEvent, () => {
-				if (item.file) {
-					void this.plugin.app.workspace.openLinkText(item.path, '', false);
-				}
-			});
+
+			// Prevent mousedown from triggering edit mode
+			// preventDefault() stops the focus change that causes the mode switch
+			itemEl.addEventListener('mousedown', (e) => {
+				e.preventDefault();
+				e.stopImmediatePropagation();
+			}, { capture: true });
+
+			itemEl.addEventListener(clickEvent, (e) => {
+				e.stopImmediatePropagation();
+				e.preventDefault();
+				this.openImageLightbox(index);
+			}, { capture: true });
 
 			// Add thumbnail badge if applicable
 			if (item.isThumbnail) {
@@ -583,6 +595,33 @@ export class MediaRenderer {
 				delete fm.media;
 			}
 		});
+	}
+
+	/**
+	 * Open the image lightbox for the given item index
+	 * Filters to only images with files and finds the correct index
+	 */
+	private openImageLightbox(clickedIndex: number): void {
+		// Filter to only images with resolved files
+		const imageItems = this.currentItems.filter(item => item.isImage && item.file);
+
+		if (imageItems.length === 0) return;
+
+		// Find the clicked item in the filtered list
+		const clickedItem = this.currentItems[clickedIndex];
+		const lightboxIndex = imageItems.findIndex(item =>
+			item.file?.path === clickedItem.file?.path
+		);
+
+		if (lightboxIndex === -1) return;
+
+		// Convert to LightboxItem format
+		const lightboxItems: LightboxItem[] = imageItems.map(item => ({
+			file: item.file!,
+			displayName: item.file!.basename
+		}));
+
+		openGalleryLightbox(this.plugin.app, lightboxItems, lightboxIndex);
 	}
 
 	/**
