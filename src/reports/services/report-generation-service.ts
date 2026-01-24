@@ -23,7 +23,8 @@ import type {
 	PlaceSummaryOptions,
 	MediaInventoryOptions,
 	UniverseOverviewOptions,
-	CollectionOverviewOptions
+	CollectionOverviewOptions,
+	ResearchReportExportOptions
 } from '../types/report-types';
 import { FamilyGroupSheetGenerator } from './family-group-sheet-generator';
 import { IndividualSummaryGenerator } from './individual-summary-generator';
@@ -39,6 +40,7 @@ import { PlaceSummaryGenerator } from './place-summary-generator';
 import { MediaInventoryGenerator } from './media-inventory-generator';
 import { UniverseOverviewGenerator } from './universe-overview-generator';
 import { CollectionOverviewGenerator } from './collection-overview-generator';
+import { ResearchReportExportGenerator } from './research-report-export-generator';
 import { getLogger } from '../../core/logging';
 
 const logger = getLogger('ReportGenerationService');
@@ -65,6 +67,7 @@ export class ReportGenerationService {
 	private mediaInventoryGenerator: MediaInventoryGenerator;
 	private universeOverviewGenerator: UniverseOverviewGenerator;
 	private collectionOverviewGenerator: CollectionOverviewGenerator;
+	private researchReportExportGenerator: ResearchReportExportGenerator;
 
 	constructor(app: App, settings: CanvasRootsSettings) {
 		this.app = app;
@@ -85,6 +88,7 @@ export class ReportGenerationService {
 		this.mediaInventoryGenerator = new MediaInventoryGenerator(app, settings);
 		this.universeOverviewGenerator = new UniverseOverviewGenerator(app, settings);
 		this.collectionOverviewGenerator = new CollectionOverviewGenerator(app, settings);
+		this.researchReportExportGenerator = new ResearchReportExportGenerator(app, settings);
 	}
 
 	/**
@@ -92,7 +96,7 @@ export class ReportGenerationService {
 	 */
 	async generateReport(
 		type: ReportType,
-		options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions | RegisterReportOptions | PedigreeChartOptions | DescendantChartOptions | SourceSummaryOptions | SourcesByRoleOptions | TimelineReportOptions | PlaceSummaryOptions | MediaInventoryOptions | UniverseOverviewOptions | CollectionOverviewOptions
+		options: FamilyGroupSheetOptions | IndividualSummaryOptions | AhnentafelOptions | GapsReportOptions | RegisterReportOptions | PedigreeChartOptions | DescendantChartOptions | SourceSummaryOptions | SourcesByRoleOptions | TimelineReportOptions | PlaceSummaryOptions | MediaInventoryOptions | UniverseOverviewOptions | CollectionOverviewOptions | ResearchReportExportOptions
 	): Promise<ReportResult> {
 		logger.info('generate', `Generating ${type} report`);
 
@@ -140,6 +144,9 @@ export class ReportGenerationService {
 				break;
 			case 'collection-overview':
 				result = await this.collectionOverviewGenerator.generate(options as CollectionOverviewOptions);
+				break;
+			case 'research-report-export':
+				result = await this.researchReportExportGenerator.generate(options as ResearchReportExportOptions);
 				break;
 			default:
 				return {
