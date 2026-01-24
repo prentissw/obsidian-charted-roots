@@ -180,39 +180,32 @@ export class MembershipService {
 	 * Add a membership to a person's note using flat parallel arrays
 	 */
 	async addMembership(personFile: TFile, membership: MembershipData): Promise<void> {
-		const cache = this.app.metadataCache.getFileCache(personFile);
-		if (!cache?.frontmatter) {
-			throw new Error('Person file has no frontmatter');
-		}
+		await this.app.fileManager.processFrontMatter(personFile, (frontmatter) => {
+			// Get existing flat arrays or initialize empty
+			const orgs: string[] = Array.isArray(frontmatter.membership_orgs) ? [...frontmatter.membership_orgs] : [];
+			const orgIds: string[] = Array.isArray(frontmatter.membership_org_ids) ? [...frontmatter.membership_org_ids] : [];
+			const roles: string[] = Array.isArray(frontmatter.membership_roles) ? [...frontmatter.membership_roles] : [];
+			const fromDates: string[] = Array.isArray(frontmatter.membership_from_dates) ? [...frontmatter.membership_from_dates] : [];
+			const toDates: string[] = Array.isArray(frontmatter.membership_to_dates) ? [...frontmatter.membership_to_dates] : [];
+			const notes: string[] = Array.isArray(frontmatter.membership_notes) ? [...frontmatter.membership_notes] : [];
 
-		let content = await this.app.vault.read(personFile);
-		const fm = cache.frontmatter;
+			// Add new membership to each array
+			orgs.push(membership.org);
+			orgIds.push(membership.org_id || '');
+			roles.push(membership.role || '');
+			fromDates.push(membership.from || '');
+			toDates.push(membership.to || '');
+			notes.push(membership.notes || '');
 
-		// Get existing flat arrays or initialize empty
-		const orgs: string[] = Array.isArray(fm.membership_orgs) ? [...fm.membership_orgs] : [];
-		const orgIds: string[] = Array.isArray(fm.membership_org_ids) ? [...fm.membership_org_ids] : [];
-		const roles: string[] = Array.isArray(fm.membership_roles) ? [...fm.membership_roles] : [];
-		const fromDates: string[] = Array.isArray(fm.membership_from_dates) ? [...fm.membership_from_dates] : [];
-		const toDates: string[] = Array.isArray(fm.membership_to_dates) ? [...fm.membership_to_dates] : [];
-		const notes: string[] = Array.isArray(fm.membership_notes) ? [...fm.membership_notes] : [];
+			// Update all flat arrays
+			frontmatter.membership_orgs = orgs;
+			frontmatter.membership_org_ids = orgIds;
+			frontmatter.membership_roles = roles;
+			frontmatter.membership_from_dates = fromDates;
+			frontmatter.membership_to_dates = toDates;
+			frontmatter.membership_notes = notes;
+		});
 
-		// Add new membership to each array
-		orgs.push(membership.org);
-		orgIds.push(membership.org_id || '');
-		roles.push(membership.role || '');
-		fromDates.push(membership.from || '');
-		toDates.push(membership.to || '');
-		notes.push(membership.notes || '');
-
-		// Update all flat arrays
-		content = this.updateFrontmatterField(content, 'membership_orgs', orgs);
-		content = this.updateFrontmatterField(content, 'membership_org_ids', orgIds);
-		content = this.updateFrontmatterField(content, 'membership_roles', roles);
-		content = this.updateFrontmatterField(content, 'membership_from_dates', fromDates);
-		content = this.updateFrontmatterField(content, 'membership_to_dates', toDates);
-		content = this.updateFrontmatterField(content, 'membership_notes', notes);
-
-		await this.app.vault.modify(personFile, content);
 		logger.info('addMembership', `Added membership to ${personFile.basename}`);
 	}
 
@@ -225,86 +218,77 @@ export class MembershipService {
 	 * - Simple single membership (house/organization)
 	 */
 	async removeMembership(personFile: TFile, orgCrId: string): Promise<void> {
-		const cache = this.app.metadataCache.getFileCache(personFile);
-		if (!cache?.frontmatter) {
-			return;
-		}
+		await this.app.fileManager.processFrontMatter(personFile, (frontmatter) => {
+			// Check flat parallel arrays first (new format)
+			if (Array.isArray(frontmatter.membership_org_ids)) {
+				const orgIds = frontmatter.membership_org_ids as string[];
+				const indexToRemove = orgIds.findIndex(id => id === orgCrId);
 
-		let content = await this.app.vault.read(personFile);
-		const fm = cache.frontmatter;
+				if (indexToRemove !== -1) {
+					// Remove from all parallel arrays at the same index
+					const orgs: string[] = Array.isArray(frontmatter.membership_orgs) ? [...frontmatter.membership_orgs] : [];
+					const roles: string[] = Array.isArray(frontmatter.membership_roles) ? [...frontmatter.membership_roles] : [];
+					const fromDates: string[] = Array.isArray(frontmatter.membership_from_dates) ? [...frontmatter.membership_from_dates] : [];
+					const toDates: string[] = Array.isArray(frontmatter.membership_to_dates) ? [...frontmatter.membership_to_dates] : [];
+					const notes: string[] = Array.isArray(frontmatter.membership_notes) ? [...frontmatter.membership_notes] : [];
+					const newOrgIds = [...orgIds];
 
-		// Check flat parallel arrays first (new format)
-		if (Array.isArray(fm.membership_org_ids)) {
-			const orgIds = fm.membership_org_ids as string[];
-			const indexToRemove = orgIds.findIndex(id => id === orgCrId);
+					orgs.splice(indexToRemove, 1);
+					newOrgIds.splice(indexToRemove, 1);
+					roles.splice(indexToRemove, 1);
+					fromDates.splice(indexToRemove, 1);
+					toDates.splice(indexToRemove, 1);
+					notes.splice(indexToRemove, 1);
 
-			if (indexToRemove !== -1) {
-				// Remove from all parallel arrays at the same index
-				const orgs: string[] = Array.isArray(fm.membership_orgs) ? [...fm.membership_orgs] : [];
-				const roles: string[] = Array.isArray(fm.membership_roles) ? [...fm.membership_roles] : [];
-				const fromDates: string[] = Array.isArray(fm.membership_from_dates) ? [...fm.membership_from_dates] : [];
-				const toDates: string[] = Array.isArray(fm.membership_to_dates) ? [...fm.membership_to_dates] : [];
-				const notes: string[] = Array.isArray(fm.membership_notes) ? [...fm.membership_notes] : [];
-				const newOrgIds = [...orgIds];
+					// Update all arrays (or remove if empty)
+					if (orgs.length === 0) {
+						delete frontmatter.membership_orgs;
+						delete frontmatter.membership_org_ids;
+						delete frontmatter.membership_roles;
+						delete frontmatter.membership_from_dates;
+						delete frontmatter.membership_to_dates;
+						delete frontmatter.membership_notes;
+					} else {
+						frontmatter.membership_orgs = orgs;
+						frontmatter.membership_org_ids = newOrgIds;
+						frontmatter.membership_roles = roles;
+						frontmatter.membership_from_dates = fromDates;
+						frontmatter.membership_to_dates = toDates;
+						frontmatter.membership_notes = notes;
+					}
 
-				orgs.splice(indexToRemove, 1);
-				newOrgIds.splice(indexToRemove, 1);
-				roles.splice(indexToRemove, 1);
-				fromDates.splice(indexToRemove, 1);
-				toDates.splice(indexToRemove, 1);
-				notes.splice(indexToRemove, 1);
-
-				// Update all arrays (or remove if empty)
-				if (orgs.length === 0) {
-					content = this.removeFrontmatterField(content, 'membership_orgs');
-					content = this.removeFrontmatterField(content, 'membership_org_ids');
-					content = this.removeFrontmatterField(content, 'membership_roles');
-					content = this.removeFrontmatterField(content, 'membership_from_dates');
-					content = this.removeFrontmatterField(content, 'membership_to_dates');
-					content = this.removeFrontmatterField(content, 'membership_notes');
-				} else {
-					content = this.updateFrontmatterField(content, 'membership_orgs', orgs);
-					content = this.updateFrontmatterField(content, 'membership_org_ids', newOrgIds);
-					content = this.updateFrontmatterField(content, 'membership_roles', roles);
-					content = this.updateFrontmatterField(content, 'membership_from_dates', fromDates);
-					content = this.updateFrontmatterField(content, 'membership_to_dates', toDates);
-					content = this.updateFrontmatterField(content, 'membership_notes', notes);
+					logger.info('removeMembership', `Removed membership from ${personFile.basename}`);
+					return;
 				}
-
-				await this.app.vault.modify(personFile, content);
-				logger.info('removeMembership', `Removed membership from ${personFile.basename}`);
-				return;
 			}
-		}
 
-		// Check legacy nested memberships array
-		if (Array.isArray(fm.memberships)) {
-			const filteredMemberships = fm.memberships.filter(
-				(m: MembershipData) => m.org_id !== orgCrId
-			);
+			// Check legacy nested memberships array
+			if (Array.isArray(frontmatter.memberships)) {
+				const filteredMemberships = frontmatter.memberships.filter(
+					(m: MembershipData) => m.org_id !== orgCrId
+				);
 
-			if (filteredMemberships.length !== fm.memberships.length) {
-				if (filteredMemberships.length === 0) {
-					content = this.removeFrontmatterField(content, 'memberships');
-				} else {
-					content = this.updateFrontmatterField(content, 'memberships', filteredMemberships);
+				if (filteredMemberships.length !== frontmatter.memberships.length) {
+					if (filteredMemberships.length === 0) {
+						delete frontmatter.memberships;
+					} else {
+						frontmatter.memberships = filteredMemberships;
+					}
+					logger.info('removeMembership', `Removed membership from ${personFile.basename}`);
+					return;
 				}
-				await this.app.vault.modify(personFile, content);
-				logger.info('removeMembership', `Removed membership from ${personFile.basename}`);
-				return;
 			}
-		}
 
-		// Check simple membership format
-		if (fm.house_id === orgCrId || fm.organization_id === orgCrId) {
-			content = this.removeFrontmatterField(content, 'house');
-			content = this.removeFrontmatterField(content, 'house_id');
-			content = this.removeFrontmatterField(content, 'organization');
-			content = this.removeFrontmatterField(content, 'organization_id');
-			content = this.removeFrontmatterField(content, 'role');
-			await this.app.vault.modify(personFile, content);
-			logger.info('removeMembership', `Removed simple membership from ${personFile.basename}`);
-		}
+			// Check simple membership format
+			if (frontmatter.house_id === orgCrId || frontmatter.organization_id === orgCrId) {
+				delete frontmatter.house;
+				delete frontmatter.house_id;
+				delete frontmatter.organization;
+				delete frontmatter.organization_id;
+				delete frontmatter.role;
+				logger.info('removeMembership', `Removed simple membership from ${personFile.basename}`);
+			}
+		});
 	}
 
 	/**
@@ -399,138 +383,6 @@ export class MembershipService {
 
 		const cache = this.app.metadataCache.getFileCache(linkedFile);
 		return cache?.frontmatter?.cr_id;
-	}
-
-	/**
-	 * Update a frontmatter field in the content
-	 */
-	private updateFrontmatterField(content: string, field: string, value: unknown): string {
-		const yamlValue = this.toYaml(value, 0);
-		const fieldLine = `${field}: ${yamlValue}`;
-
-		// Find frontmatter bounds
-		const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
-		if (!fmMatch) {
-			return content;
-		}
-
-		const fmContent = fmMatch[1];
-		const fmLines = fmContent.split('\n');
-
-		// Find and replace the field, or add it
-		let found = false;
-		const newLines = fmLines.map(line => {
-			if (line.startsWith(`${field}:`)) {
-				found = true;
-				return fieldLine;
-			}
-			return line;
-		});
-
-		if (!found) {
-			newLines.push(fieldLine);
-		}
-
-		const newFm = `---\n${newLines.join('\n')}\n---`;
-		return content.replace(/^---\n[\s\S]*?\n---/, newFm);
-	}
-
-	/**
-	 * Remove a frontmatter field from the content
-	 */
-	private removeFrontmatterField(content: string, field: string): string {
-		const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
-		if (!fmMatch) {
-			return content;
-		}
-
-		const fmContent = fmMatch[1];
-		const fmLines = fmContent.split('\n');
-		const newLines = fmLines.filter(line => !line.startsWith(`${field}:`));
-
-		const newFm = `---\n${newLines.join('\n')}\n---`;
-		return content.replace(/^---\n[\s\S]*?\n---/, newFm);
-	}
-
-	/**
-	 * Convert a value to YAML format
-	 */
-	private toYaml(value: unknown, indent: number): string {
-		const spaces = '  '.repeat(indent);
-
-		if (value === null || value === undefined) {
-			return 'null';
-		}
-
-		if (typeof value === 'string') {
-			if (value.includes('\n') || value.includes(':') || value.includes('#')) {
-				return `"${value.replace(/"/g, '\\"')}"`;
-			}
-			return value;
-		}
-
-		if (typeof value === 'number' || typeof value === 'boolean') {
-			return String(value);
-		}
-
-		if (Array.isArray(value)) {
-			if (value.length === 0) {
-				return '[]';
-			}
-			return '\n' + value.map(item => {
-				// For objects in arrays, inline the first property with the hyphen
-				if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
-					const entries = Object.entries(item);
-					if (entries.length === 0) {
-						return `${spaces}- {}`;
-					}
-					const [firstKey, firstVal] = entries[0];
-					const firstLine = `${spaces}- ${firstKey}: ${this.toYamlValue(firstVal)}`;
-					if (entries.length === 1) {
-						return firstLine;
-					}
-					// Remaining properties indented under the first
-					const restLines = entries.slice(1)
-						.map(([k, v]) => `${spaces}  ${k}: ${this.toYamlValue(v)}`)
-						.join('\n');
-					return `${firstLine}\n${restLines}`;
-				}
-				return `${spaces}- ${this.toYaml(item, indent + 1)}`;
-			}).join('\n');
-		}
-
-		if (typeof value === 'object' && value !== null) {
-			const entries = Object.entries(value);
-			if (entries.length === 0) {
-				return '{}';
-			}
-			return '\n' + entries
-				.map(([k, v]) => `${spaces}${k}: ${this.toYaml(v, indent + 1)}`)
-				.join('\n');
-		}
-
-		// At this point, value is a primitive (symbol, bigint, etc.)
-		return String(value as symbol | bigint);
-	}
-
-	/**
-	 * Convert a simple value to YAML (for use in array item objects)
-	 */
-	private toYamlValue(value: unknown): string {
-		if (value === null || value === undefined) {
-			return 'null';
-		}
-		if (typeof value === 'string') {
-			if (value.includes('\n') || value.includes(':') || value.includes('#')) {
-				return `"${value.replace(/"/g, '\\"')}"`;
-			}
-			return value;
-		}
-		if (typeof value === 'number' || typeof value === 'boolean') {
-			return String(value);
-		}
-		// For complex nested values, fall back to toYaml
-		return this.toYaml(value, 0);
 	}
 }
 
