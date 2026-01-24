@@ -2,6 +2,8 @@
 
 Planning document for [#123](https://github.com/banisterious/obsidian-charted-roots/issues/123).
 
+**Status:** Design finalized (2026-01-22) — Ready for documentation phase
+
 ---
 
 ## Overview
@@ -9,8 +11,9 @@ Planning document for [#123](https://github.com/banisterious/obsidian-charted-ro
 Track inheritance and succession relationships—applicable to both genealogical research (estate/property inheritance, enslaved ancestor tracking) and fictional worldbuilding (titles, thrones, positions).
 
 **Design Philosophy:**
-- Start with a minimal approach using existing infrastructure (custom relationships, events, property aliases)
-- Validate with user feedback before building dedicated UI/visualization
+- Start with a minimal approach using existing infrastructure (custom properties + events)
+- Keep person/place notes simple and queryable
+- Use event notes for transfer history and details
 - Support both genealogical and worldbuilding use cases with the same underlying model
 
 ---
@@ -19,19 +22,20 @@ Track inheritance and succession relationships—applicable to both genealogical
 
 ### Genealogical Research
 
-**Primary:** Tracking enslaved ancestors through inheritance chains.
+**Primary:** Tracking enslaved ancestors through ownership chains.
 
 When a slaveholder died, enslaved people were often divided among heirs via probate. Researchers need to:
-- Track which heir received which enslaved person
-- Follow chains forward through subsequent generations
+- Track current/final ownership (`property_of`)
+- Follow chains forward through transfer events
 - Determine whether enslaved people came from paternal or maternal estates
 - Link to source documents (wills, probate records, estate inventories)
+- Track location (which plantation/property someone was held at)
 
 **Example:**
 - John Smith Sr. dies 1817 → Estate divided among children
 - John Smith Jr. inherits "Mary" and her children
 - John Smith Jr. dies 1842 → His heirs inherit Mary's descendants
-- Researcher needs to trace this chain to find family connections
+- Researcher traces this chain via transfer events
 
 ### Fictional Worldbuilding
 
@@ -43,128 +47,154 @@ Track succession of titles, thrones, and positions:
 
 ---
 
-## Proposed Approach
+## Agreed Design
 
-### Phase 1: Minimal (Custom Relationships + Events)
+### Person/Place Notes (Simple, Queryable)
 
-**Effort:** Low — Documentation and examples only
-**Gating:** None
-
-Use existing Charted Roots features to model inheritance:
-
-#### Relationship Properties
-
-Add to person notes using property aliases:
+Keep person and place notes flat with properties for current state only:
 
 ```yaml
-# On heir's note
-inherited_from: "[[John Smith Sr.]]"
-inheritance_date: 1817
-inheritance_source: "[[Smith Estate Probate 1817]]"
+# On enslaved person's note
+cr_type: person
+property_of: "[[John Smith Jr.]]"    # Current/final owner
+held_at: "[[Smith Plantation]]"       # Current/final location
+appraised_value: 150                  # From estate records (optional)
 
-# For titles/positions (worldbuilding)
-succeeded: "[[King Henry VII]]"
-title: "King of England"
-reign_start: 1509
-reign_end: 1547
+# On place note (plantation)
+cr_type: place
+property_of: "[[John Smith Jr.]]"     # Owner of the property
 ```
 
-#### Event Notes
+**Key properties:**
 
-Create event notes for inheritance/succession events:
+| Property | Type | Description |
+|----------|------|-------------|
+| `property_of` | wikilink | Current/final owner (works for both people and places) |
+| `held_at` | wikilink | Current/final location (link to place note) |
+| `appraised_value` | number | Value from estate records |
+
+### Event Notes (Transfer History)
+
+Full transfer details live on event notes, not person notes:
 
 ```yaml
 cr_type: event
-event_type: inheritance  # or: succession, probate, estate_division
+event_type: transfer              # Generic transfer event
 event_date: 1817-03-15
+transfer_type: inheritance        # inheritance, purchase, gift, hire, seizure, birth
 participants:
-  - "[[John Smith Sr.]]"   # decedent
-  - "[[John Smith Jr.]]"   # heir
-  - "[[Mary (enslaved)]]"  # inherited person/property
-sources:
-  - "[[Chester County Probate Book A, p. 47]]"
+  - "[[Mary (enslaved)]]"         # Person/property being transferred
+  - "[[John Smith Sr.]]"          # Previous owner (decedent for inheritance)
+  - "[[William Smith]]"           # New owner (heir)
+transfer_source: "[[Chester County Probate Book A, p. 47]]"
 description: "Estate division per will of John Smith Sr."
 ```
 
-#### Documentation
+**Transfer types:**
 
-- Add "Inheritance Tracking" section to wiki
-- Provide example Bases views for querying inheritance chains
-- DataView query examples for succession lines
+| Type | Description |
+|------|-------------|
+| `inheritance` | Transfer at death via will/probate |
+| `purchase` | Sale transaction |
+| `gift` | Transfer without payment |
+| `hire` | Temporary transfer (hiring out) |
+| `seizure` | Court-ordered transfer, debt collection |
+| `birth` | Born into ownership |
+| `relocation` | Move to different location (same owner) |
 
-### Phase 2: Enhanced Event Types (Future)
+### Location Tracking
+
+- `held_at` on person note for current/final location
+- `relocation` transfer events for tracking moves over time
+
+```yaml
+# Relocation event
+cr_type: event
+event_type: transfer
+transfer_type: relocation
+event_date: 1825
+participants:
+  - "[[Mary (enslaved)]]"
+held_at: "[[River Farm]]"         # New location
+previous_location: "[[Smith Plantation]]"
+```
+
+### Querying
+
+**Find all people owned by someone:**
+```
+property_of = [[John Smith Jr.]]
+```
+
+**Find all transfer events for a person:**
+Filter events where participants includes the person.
+
+**Reconstruct ownership chain:**
+Query transfer events by participant, sorted by date.
+
+---
+
+## Implementation Phases
+
+### Phase 1: Documentation (Current)
+
+**Effort:** Low — Documentation only
+**Status:** Ready to implement
+
+- Add "Ownership & Transfer Tracking" section to wiki
+- Document property patterns (`property_of`, `held_at`, `appraised_value`)
+- Document transfer event structure
+- Provide example Bases views for querying ownership
+- DataView query examples for transfer chains
+
+### Phase 2: Property Aliases (Optional)
+
+**Effort:** Low
+**Gating:** User request
+
+Register property aliases so properties appear in person/place forms:
+- `property_of` → Person picker
+- `held_at` → Place picker
+- `appraised_value` → Number field
+
+### Phase 3: Transfer Event Type (Future)
 
 **Effort:** Medium
 **Gating:** User feedback from Phase 1
 
-- Add `inheritance` and `succession` as recognized event types
-- Event form fields for decedent, heirs, inherited items
-- Validation that inheritance events link to death events
+- Add `transfer` as a recognized event type with dedicated form fields
+- Dropdown for transfer_type (inheritance, purchase, gift, etc.)
+- Validation and autocomplete
 
-### Phase 3: Visualization (Future)
+### Phase 4: Visualization (Future)
 
 **Effort:** Higher
 **Gating:** Demonstrated need
 
-- Inheritance chain visualization (vertical timeline or graph)
-- Succession line calculator
-- Integration with family chart (show inheritance edges)
+- Ownership chain visualization (timeline or graph)
+- Integration with family chart (show ownership edges)
+- Transfer history panel on person notes
 
 ---
 
-## Schema Design
+## Resolved Questions
 
-### Relationship Types
+These questions were answered through discussion on #123:
 
-| Relationship | Inverse | Use Case |
-|-------------|---------|----------|
-| `inherited_from` | `inherited_by` | Property/person inheritance |
-| `succeeded` | `succeeded_by` | Title/position succession |
-| `heir_to` | `heir` | Designated heir relationship |
+1. **Minimal approach first?** Yes — custom properties + event notes meet immediate needs. Dedicated UI can come later if needed.
 
-### Event Types
+2. **Unified vs separate properties?** Unified `transfer_type` approach preferred over separate `inherited_from`/`purchased_from` properties (avoids 18+ new properties).
 
-| Type | Description |
-|------|-------------|
-| `inheritance` | Transfer of property/people at death |
-| `succession` | Transfer of title/position |
-| `probate` | Legal processing of estate |
-| `estate_division` | Formal division among heirs |
+3. **Person note complexity?** Keep person notes simple (`property_of`, `held_at`) — transfer history lives on event notes.
 
-### Properties
+4. **Property tracking for places?** Yes — `property_of` works for both enslaved people and places (plantations), with `cr_type` distinguishing them.
 
-For person notes (heirs):
-```yaml
-inherited_from: wikilink[]     # Who they inherited from
-inheritance_date: date         # When inheritance occurred
-inheritance_source: wikilink   # Source document
-```
-
-For person notes (titles/worldbuilding):
-```yaml
-title: string                  # Title held
-succeeded: wikilink            # Previous holder
-succeeded_by: wikilink         # Next holder
-reign_start: date
-reign_end: date
-regnal_number: number          # e.g., 8 for Henry VIII
-```
-
----
-
-## Questions for Community
-
-1. **Minimal approach first?** Would custom relationships + event notes meet your immediate needs, or is dedicated UI required?
-
-2. **Inheritance vs succession:** Should these be treated as the same concept with different labels, or as distinct features?
-
-3. **Visualization priority:** How important is chain visualization vs. just being able to query/filter in Bases?
-
-4. **Scope for enslaved ancestor research:** Are there specific fields or relationships beyond `inherited_from` that would help?
+5. **Location changes?** `held_at` for current state, `relocation` events for moves over time.
 
 ---
 
 ## Related
 
-- [Inheritance & Succession Tracking](../../wiki-content/Roadmap.md#inheritance--succession-tracking) — Roadmap entry
-- Discussion: https://github.com/banisterious/obsidian-canvas-roots/discussions/93#discussioncomment-15394738
+- [Roadmap entry](https://github.com/banisterious/obsidian-charted-roots/wiki/Roadmap#inheritance--succession-tracking)
+- [Original discussion](https://github.com/banisterious/obsidian-canvas-roots/discussions/93#discussioncomment-15394738)
+- Issue #123 comments for full design discussion
