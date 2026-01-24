@@ -183,6 +183,8 @@ interface WizardFormData {
 	pdfCoverTitle: string;
 	pdfCoverSubtitle: string;
 	pdfCoverNotes: string;
+	pdfTableKeepRowsTogether: boolean;
+	pdfTableRepeatHeaders: boolean;
 
 	// Step 3: ODT Options
 	odtIncludeCoverPage: boolean;
@@ -313,6 +315,8 @@ export class ReportWizardModal extends Modal {
 			pdfCoverTitle: '',
 			pdfCoverSubtitle: '',
 			pdfCoverNotes: '',
+			pdfTableKeepRowsTogether: true,
+			pdfTableRepeatHeaders: true,
 
 			// ODT options
 			odtIncludeCoverPage: false,
@@ -1966,6 +1970,28 @@ export class ReportWizardModal extends Modal {
 				this.formData.pdfCoverNotes = (e.target as HTMLTextAreaElement).value;
 			});
 		}
+
+		// Table formatting options
+		const tableSection = container.createDiv({ cls: 'cr-report-section' });
+		tableSection.createEl('h4', { text: 'Table formatting', cls: 'cr-report-subsection-title' });
+
+		this.renderToggleOption(
+			tableSection,
+			'Keep table rows together',
+			this.formData.pdfTableKeepRowsTogether,
+			(value) => {
+				this.formData.pdfTableKeepRowsTogether = value;
+			}
+		);
+
+		this.renderToggleOption(
+			tableSection,
+			'Repeat table headers',
+			this.formData.pdfTableRepeatHeaders,
+			(value) => {
+				this.formData.pdfTableRepeatHeaders = value;
+			}
+		);
 	}
 
 	/**
@@ -2450,7 +2476,9 @@ export class ReportWizardModal extends Modal {
 			includeCoverPage: this.formData.pdfIncludeCoverPage,
 			customTitle: this.formData.pdfCoverTitle || undefined,
 			customSubtitle: this.formData.pdfCoverSubtitle || undefined,
-			coverNotes: this.formData.pdfCoverNotes || undefined
+			coverNotes: this.formData.pdfCoverNotes || undefined,
+			tableKeepRowsTogether: this.formData.pdfTableKeepRowsTogether,
+			tableRepeatHeaders: this.formData.pdfTableRepeatHeaders
 		};
 
 		// Use appropriate renderer based on report type

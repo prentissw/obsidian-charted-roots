@@ -159,6 +159,9 @@ const COLORS = {
 export class PdfReportRenderer {
 	private _pdfMake: PdfMakeInstance | null = null;
 
+	/** Current options for the active render operation */
+	private currentOptions: PdfOptions = DEFAULT_PDF_OPTIONS;
+
 	/**
 	 * Get the pdfmake instance. Must call ensurePdfMake() first.
 	 * @throws Error if pdfmake is not initialized
@@ -335,16 +338,16 @@ export class PdfReportRenderer {
 	/**
 	 * Build a columnar data table with zebra striping
 	 *
+	 * Uses table formatting options from currentOptions (set by render methods)
+	 *
 	 * @param headers - Column header labels
 	 * @param rows - Table row data
 	 * @param widths - Optional column widths
-	 * @param tableOptions - Optional table formatting options
 	 */
 	private buildDataTable(
 		headers: string[],
 		rows: string[][],
-		widths?: (string | number)[],
-		tableOptions?: { keepRowsTogether?: boolean; repeatHeaders?: boolean }
+		widths?: (string | number)[]
 	): Content {
 		if (rows.length === 0) {
 			return { text: 'None recorded.', style: 'note', margin: [0, 0, 0, 10] };
@@ -352,9 +355,9 @@ export class PdfReportRenderer {
 
 		const tableWidths = widths || headers.map(() => '*');
 
-		// Apply table formatting options (default to true for better PDF readability)
-		const keepRowsTogether = tableOptions?.keepRowsTogether ?? true;
-		const repeatHeaders = tableOptions?.repeatHeaders ?? true;
+		// Apply table formatting options from current render options
+		const keepRowsTogether = this.currentOptions.tableKeepRowsTogether ?? true;
+		const repeatHeaders = this.currentOptions.tableRepeatHeaders ?? true;
 
 		return {
 			table: {
@@ -613,6 +616,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Family Group Sheet';
@@ -716,6 +720,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Ahnentafel Report';
@@ -802,6 +807,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Individual Summary';
@@ -879,6 +885,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Data Quality Report';
@@ -982,6 +989,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Register Report';
@@ -1088,6 +1096,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultTitle = 'Pedigree Chart';
 		const defaultSubtitle = `Ancestors of ${result.rootPerson.name}`;
@@ -1145,6 +1154,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Descendant Chart';
@@ -1239,6 +1249,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Source Summary';
@@ -1343,6 +1354,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Timeline Report';
@@ -1433,6 +1445,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Place Summary';
@@ -1563,6 +1576,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Media Inventory';
@@ -1688,6 +1702,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Universe Overview';
@@ -1814,6 +1829,7 @@ export class PdfReportRenderer {
 		options: PdfOptions = DEFAULT_PDF_OPTIONS
 	): Promise<void> {
 		await this.ensurePdfMake();
+		this.currentOptions = options;
 
 		const defaultFont = this.getDefaultFont(options.fontStyle);
 		const defaultTitle = 'Collection Overview';
