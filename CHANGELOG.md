@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **File explorer Edit organization action** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): The "Edit organization" context menu action in the file explorer now correctly opens in edit mode instead of create mode.
 
+- **Membership data corruption when editing** ([#226](https://github.com/banisterious/obsidian-charted-roots/issues/226)): Fixed frontmatter corruption that occurred when editing organization memberships. Editing a member's role or dates no longer creates orphaned entries, duplicates, or malformed YAML arrays.
+
 ---
 
 ## [0.19.18] - 2026-01-23
