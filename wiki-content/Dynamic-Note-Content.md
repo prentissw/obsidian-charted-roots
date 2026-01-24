@@ -12,6 +12,7 @@ Charted Roots can render live, computed content directly within person notes usi
   - [Relationships Block](#relationships-block)
   - [Media Block](#media-block)
   - [Source Roles Block](#source-roles-block)
+  - [Transfers Block](#transfers-block)
 - [Rendered Output](#rendered-output)
 - [Freeze to Markdown](#freeze-to-markdown)
 - [Inserting Blocks](#inserting-blocks)
@@ -194,6 +195,59 @@ source: "[[Estate Inventory of John Smith Sr.]]"
 When inserted via context menu, the `source` parameter is pre-filled with the current note's wikilink.
 
 **Note:** This block is designed for source notes (`cr_type: source`) that have role properties defined. See [Person Roles in Sources](Evidence-And-Sources#person-roles-in-sources) for details on setting up role properties.
+
+### Transfers Block
+
+The `charted-roots-transfers` block displays a chronological list of transfer events for a person. This is useful for tracking ownership changes in genealogical research (e.g., enslaved ancestor tracking) or succession in worldbuilding.
+
+~~~markdown
+```charted-roots-transfers
+sort: chronological
+```
+~~~
+
+**What it displays:**
+- All transfer events linked to this person
+- Transfer type (inheritance, purchase, gift, hire, seizure, birth, relocation)
+- Date and event title with clickable wikilink
+- Location (if recorded)
+- Other participants in the transfer
+
+**Configuration options:**
+
+| Option | Values | Description |
+|--------|--------|-------------|
+| `sort` | `chronological`, `reverse` | Event order (default: chronological) |
+| `limit` | number | Maximum events to display |
+| `title` | string | Custom header text (default: "Transfer history") |
+
+**Example with options:**
+
+~~~markdown
+```charted-roots-transfers
+sort: reverse
+limit: 10
+title: Ownership history
+```
+~~~
+
+**Transfer types:**
+
+| Type | Label | Description |
+|------|-------|-------------|
+| `inheritance` | Inherited | Transfer at death via will/probate |
+| `purchase` | Purchased | Sale transaction |
+| `gift` | Gift | Transfer without payment |
+| `hire` | Hired out | Temporary transfer (hiring out) |
+| `seizure` | Seized | Court-ordered transfer, debt collection |
+| `birth` | Born into | Born into ownership |
+| `relocation` | Relocated | Move to different location (same owner) |
+
+**Use cases:**
+- **Genealogical research:** Track enslaved ancestors through ownership chains, estate divisions, and probate records
+- **Worldbuilding:** Track succession of titles, thrones, and positions
+
+**Related:** Transfer events require creating event notes with `event_type: transfer` and `transfer_type` property. See [Events & Timelines](Events-And-Timelines#event-types) for details on creating transfer events.
 
 ## Rendered Output
 

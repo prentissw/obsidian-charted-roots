@@ -2,7 +2,7 @@
 
 Planning document for [#123](https://github.com/banisterious/obsidian-charted-roots/issues/123).
 
-**Status:** Implementation complete (Phases 2-4) — Documentation pending
+**Status:** Complete
 
 ---
 
@@ -136,16 +136,15 @@ Query transfer events by participant, sorted by date.
 
 ## Implementation Phases
 
-### Phase 1: Documentation
+### Phase 1: Documentation ✓
 
 **Effort:** Low — Documentation only
-**Status:** Pending
+**Status:** Complete
 
-- Add "Ownership & Transfer Tracking" section to wiki
-- Document property patterns (`property_of`, `held_at`, `appraised_value`)
-- Document transfer event structure
-- Provide example Bases views for querying ownership
-- DataView query examples for transfer chains
+- Added transfer event type to Events-And-Timelines.md
+- Added Transfers Block section to Dynamic-Note-Content.md
+- Documented ownership properties (`property_of`, `held_at`, `appraised_value`) in Frontmatter-Reference.md
+- Documented transfer event properties including `transfer_type`
 
 ### Phase 2: Property Aliases ✓
 

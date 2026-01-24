@@ -368,6 +368,32 @@ events:
     description: "BA in History"
 ```
 
+### Ownership & Transfer Tracking
+
+For genealogical research involving enslaved ancestors or property tracking, person notes can include ownership properties:
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `property_of` | `string` | Current/final owner (wikilink) | `"[[John Smith Jr.]]"` |
+| `held_at` | `string` | Current/final location (wikilink to place note) | `"[[Smith Plantation]]"` |
+| `appraised_value` | `number` | Value from estate records | `150` |
+
+**Example:**
+
+```yaml
+cr_type: person
+cr_id: person_mary_enslaved
+name: Mary
+property_of: "[[John Smith Jr.]]"
+held_at: "[[Smith Plantation]]"
+appraised_value: 150
+```
+
+**Notes:**
+- These properties represent the current/final state; use transfer events for historical ownership changes
+- The `charted-roots-transfers` code block can display chronological transfer history
+- See [Dynamic Note Content](Dynamic-Note-Content#transfers-block) for transfer history visualization
+
 ### Fact-Level Source Tracking (Research Tools)
 
 When the "Enable fact-level source tracking" setting is enabled, person notes can include detailed source citations for specific facts. This aligns with the Genealogical Proof Standard (GPS) methodology.
@@ -512,6 +538,22 @@ historical_names:
 | `collection` | `string` | User-defined grouping (shared with person notes) | `"Smith Family"` |
 
 The `collection` property allows places to be grouped with related person notes. For example, a "Smith Family" collection could include both the Smith family members and the places associated with them.
+
+### Ownership
+
+For tracking property ownership (useful for plantation research, estate records):
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `property_of` | `string` | Owner of this place (wikilink) | `"[[John Smith Jr.]]"` |
+
+**Example:**
+
+```yaml
+cr_type: place
+name: Smith Plantation
+property_of: "[[John Smith Jr.]]"
+```
 
 ### Media Files
 
@@ -1336,9 +1378,48 @@ Charted Roots includes built-in event types organized by category. Custom types 
 | Category | Event Types |
 |----------|-------------|
 | Core (vital) | `birth`, `death`, `marriage`, `divorce` |
-| Extended (life) | `residence`, `occupation`, `military`, `immigration`, `education`, `burial`, `baptism`, `confirmation`, `ordination` |
+| Extended (life) | `residence`, `occupation`, `military`, `immigration`, `education`, `burial`, `baptism`, `confirmation`, `ordination`, `transfer` |
 | Narrative | `anecdote`, `lore_event`, `plot_point`, `flashback`, `foreshadowing`, `backstory`, `climax`, `resolution` |
 | Custom | `custom` (or user-defined types) |
+
+### Transfer Events
+
+Transfer events track changes in ownership, property, or status. When `event_type` is `transfer`, an additional property specifies the type of transfer:
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `transfer_type` | `string` | Type of transfer | `"inheritance"`, `"purchase"`, `"gift"` |
+
+**Transfer Types:**
+
+| Type | Description |
+|------|-------------|
+| `inheritance` | Transfer at death via will/probate |
+| `purchase` | Sale transaction |
+| `gift` | Transfer without payment |
+| `hire` | Temporary transfer (hiring out) |
+| `seizure` | Court-ordered transfer, debt collection |
+| `birth` | Born into ownership |
+| `relocation` | Move to different location (same owner) |
+
+**Example transfer event:**
+
+```yaml
+cr_type: event
+cr_id: evt_transfer_1817
+title: Estate Division of John Smith Sr.
+event_type: transfer
+transfer_type: inheritance
+date: "1817-03-15"
+persons:
+  - "[[Mary (enslaved)]]"
+  - "[[John Smith Sr.]]"
+  - "[[William Smith]]"
+place: "[[Chester County Courthouse]]"
+sources:
+  - "[[Chester County Probate Book A, p. 47]]"
+description: "Estate division per will of John Smith Sr."
+```
 
 ### Date Information
 

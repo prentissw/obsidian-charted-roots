@@ -124,6 +124,7 @@ Charted Roots includes 22 built-in event types across four categories:
 | `baptism` | droplets | sky | Baptism or christening |
 | `confirmation` | star | purple | Religious confirmation |
 | `ordination` | book-open | indigo | Religious ordination |
+| `transfer` | arrow-right-left | orange | Transfer of ownership or property (inheritance, sale, gift) |
 
 **Narrative Events** (for storytelling):
 | Type | Icon | Color | Description |
