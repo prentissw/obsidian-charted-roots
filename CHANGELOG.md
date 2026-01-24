@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - "Keep table rows together" prevents rows from breaking across pages
   - "Repeat table headers" shows the header row again when a table continues on a new page
 
+- **Footnote preservation in exports** ([#227](https://github.com/banisterious/obsidian-charted-roots/issues/227)): Obsidian reference-style footnotes (`[^1]` markers with `[^1]: content` definitions) are now preserved when exporting reports:
+  - ODT exports render true document footnotes using `<text:note>` elements
+  - PDF exports collect footnotes as endnotes in a "Notes" section at the document end
+
 ### Fixed
 
 - **Custom organization types fully fixed** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): Complete fix for custom organization types. The previous fix only addressed display; this resolves the root cause where custom types were being replaced with "Other" when loading organization data from notes.
