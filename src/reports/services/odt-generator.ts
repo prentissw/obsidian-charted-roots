@@ -7,6 +7,7 @@
 
 import JSZip from 'jszip';
 import { getLogger } from '../../core/logging';
+import { parseFootnotes, replaceFootnoteMarkers } from '../utils/footnote-parser';
 
 const logger = getLogger('OdtGenerator');
 
@@ -40,6 +41,10 @@ export interface OdtExportOptions {
  */
 export class OdtGenerator {
 	private zip: JSZip;
+	/** Footnote definitions collected from markdown */
+	private footnotes: Map<string, string> = new Map();
+	/** Counter for footnote numbering */
+	private footnoteCounter: number = 0;
 
 	constructor() {
 		this.zip = new JSZip();
@@ -185,6 +190,12 @@ export class OdtGenerator {
     <!-- Page break style -->
     <style:style style:name="Page_20_Break" style:display-name="Page Break" style:family="paragraph">
       <style:paragraph-properties fo:break-after="page"/>
+    </style:style>
+
+    <!-- Footnote paragraph style -->
+    <style:style style:name="Footnote" style:family="paragraph" style:class="extra">
+      <style:paragraph-properties fo:margin-top="0cm" fo:margin-bottom="0.1cm"/>
+      <style:text-properties fo:font-size="9pt"/>
     </style:style>
   </office:styles>
 </office:document-styles>`;
@@ -337,7 +348,12 @@ ${coverPage}${imageContent}${bodyContent}
 	 * Convert markdown content to ODT XML
 	 */
 	private markdownToOdtContent(markdown: string): string {
-		const lines = markdown.split('\n');
+		// Parse and extract footnotes from markdown
+		const parsed = parseFootnotes(markdown);
+		this.footnotes = parsed.footnotes;
+		this.footnoteCounter = 0;
+
+		const lines = parsed.textWithoutDefinitions.split('\n');
 		const result: string[] = [];
 		let inList = false;
 		let tableCounter = 0;
@@ -611,6 +627,20 @@ ${coverPage}${imageContent}${bodyContent}
 			const pattern = new RegExp(`\\b(${label})(:?)\\b`, 'g');
 			result = result.replace(pattern, '<text:span text:style-name="SmallCaps">$1</text:span>$2');
 		}
+
+		// Process footnote markers [^id] and replace with ODT footnote elements
+		result = replaceFootnoteMarkers(result, (id) => {
+			const content = this.footnotes.get(id);
+			if (!content) {
+				// No definition found - leave marker as-is (escaped)
+				return `[^${id}]`;
+			}
+			this.footnoteCounter++;
+			const noteId = `ftn${this.footnoteCounter}`;
+			// Process inline formatting in footnote content (escape first)
+			const escapedContent = this.escapeXml(content);
+			return `<text:note text:note-class="footnote" text:id="${noteId}"><text:note-citation>${this.footnoteCounter}</text:note-citation><text:note-body><text:p text:style-name="Footnote">${escapedContent}</text:p></text:note-body></text:note>`;
+		});
 
 		return result;
 	}
