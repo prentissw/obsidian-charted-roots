@@ -203,7 +203,6 @@ export class TimelineRenderer {
 		const settings = this.service.getSettings();
 		const iconMode = settings.eventIconMode || 'text';
 		const showIcon = iconMode === 'icon' || iconMode === 'both';
-		const showText = iconMode === 'text' || iconMode === 'both';
 
 		const list = contentEl.createEl('ul', { cls: 'cr-timeline__list' });
 
@@ -235,19 +234,15 @@ export class TimelineRenderer {
 			// Separator
 			li.createSpan({ cls: 'cr-timeline__separator', text: ' — ' });
 
-			// Determine display text (#157)
+			// Determine display text (#157, #184)
 			// Show "Type: description" for most event types when description exists
-			// Birth/death events always show title (e.g., "Birth of John Smith")
+			// Birth/death events always show title (e.g., "Born", "Died")
+			// Always include type label in timelines - icon-only mode still needs
+			// the verb for sentence structure (icon replaces the badge, not the verb)
 			let displayText = entry.title;
 			if (entry.description && !TITLE_ONLY_TYPES.includes(entry.type)) {
-				// In icon-only mode, still show type label since we don't have text label
-				if (showText) {
-					const typeLabel = entry.type.charAt(0).toUpperCase() + entry.type.slice(1);
-					displayText = `${typeLabel}: ${entry.description}`;
-				} else {
-					// Icon-only mode - description without type prefix
-					displayText = entry.description;
-				}
+				const typeLabel = entry.type.charAt(0).toUpperCase() + entry.type.slice(1);
+				displayText = `${typeLabel}: ${entry.description}`;
 			}
 
 			// Event title with optional link
