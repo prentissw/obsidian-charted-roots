@@ -26,7 +26,9 @@ export type ReportType =
 	| 'pedigree-tree-pdf'
 	| 'descendant-tree-pdf'
 	| 'hourglass-tree-pdf'
-	| 'fan-chart-pdf';
+	| 'fan-chart-pdf'
+	// Research document export
+	| 'research-report-export';
 
 /**
  * Report categories for UI organization
@@ -369,6 +371,16 @@ export interface CollectionOverviewOptions extends ReportOptions {
 	sortMembersBy: 'birth_date' | 'name' | 'death_date';
 	/** Max members in list */
 	maxMembers: number;
+}
+
+/**
+ * Options for Research Report Export
+ */
+export interface ResearchReportExportOptions extends ReportOptions {
+	/** Path to the markdown note to export */
+	notePath: string;
+	/** Optional custom title (overrides note title) */
+	customTitle?: string;
 }
 
 /**
@@ -800,6 +812,18 @@ export interface CollectionOverviewResult extends ReportResult {
 }
 
 /**
+ * Research Report Export result
+ */
+export interface ResearchReportExportResult extends ReportResult {
+	/** Title extracted from note frontmatter or filename */
+	noteTitle: string;
+	/** Word count of the content */
+	wordCount: number;
+	/** Number of footnotes found */
+	footnoteCount: number;
+}
+
+/**
  * Report metadata for display
  */
 export interface ReportMetadata {
@@ -906,6 +930,14 @@ export const REPORT_METADATA: Record<ReportType, ReportMetadata> = {
 		name: 'Media inventory',
 		description: 'Audit media files, find orphans and coverage gaps',
 		icon: 'image',
+		category: 'research',
+		requiresPerson: false
+	},
+	'research-report-export': {
+		type: 'research-report-export',
+		name: 'Research report export',
+		description: 'Export a research report note as PDF or ODT',
+		icon: 'file-text',
 		category: 'research',
 		requiresPerson: false
 	},
