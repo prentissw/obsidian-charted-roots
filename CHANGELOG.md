@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Event icon display mode option names** ([#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)): Renamed setting options for clarity: "Text label", "Icon (with tooltip)", and "Icon with label".
+
 ### Fixed
 
 - **Custom organization types not shown in statistics** ([#225](https://github.com/banisterious/obsidian-charted-roots/issues/225)): Organizations with custom types now appear in the Organizations tab statistics breakdown.
