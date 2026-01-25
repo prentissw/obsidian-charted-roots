@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Gramps import using wrong birth/death dates** ([#233](https://github.com/banisterious/obsidian-charted-roots/issues/233)): When importing from Gramps, if a person appeared in multiple birth events (their own birth plus others' births where they were a parent or witness), the wrong date could be imported. Now correctly preserves the person's own birth/death data.
+
 ---
 
 ## [0.19.20] - 2026-01-24
