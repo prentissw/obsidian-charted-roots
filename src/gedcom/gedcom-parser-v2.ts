@@ -762,9 +762,12 @@ export class GedcomParserV2 {
 						}
 
 						// Also update core dates on individual for compatibility
-						if (currentEvent.tag === 'BIRT') {
+						// Only set if not already set - first event is typically the principal one (#233)
+						// Later events where this person has a different role (e.g., parent, witness)
+						// should not overwrite the person's own birth/death date
+						if (currentEvent.tag === 'BIRT' && !individual.birthDate) {
 							individual.birthDate = value;
-						} else if (currentEvent.tag === 'DEAT') {
+						} else if (currentEvent.tag === 'DEAT' && !individual.deathDate) {
 							individual.deathDate = value;
 						}
 						break;
@@ -773,9 +776,10 @@ export class GedcomParserV2 {
 					case 'PLAC':
 						currentEvent.place = value;
 						// Also update core places on individual for compatibility
-						if (currentEvent.tag === 'BIRT') {
+						// Only set if not already set - first event is typically the principal one (#233)
+						if (currentEvent.tag === 'BIRT' && !individual.birthPlace) {
 							individual.birthPlace = value;
-						} else if (currentEvent.tag === 'DEAT') {
+						} else if (currentEvent.tag === 'DEAT' && !individual.deathPlace) {
 							individual.deathPlace = value;
 						}
 						break;
