@@ -287,7 +287,7 @@ export class ManageOrganizationMembersModal extends Modal {
 			await this.membershipService.addMembership(member.personFile, newMembership);
 
 			// Wait for metadata cache to update
-			await this.waitForCacheUpdate();
+			await this.waitForCacheUpdate(member.personFile);
 
 			// Reload members
 			this.loadMembers();
@@ -334,7 +334,7 @@ export class ManageOrganizationMembersModal extends Modal {
 			await this.membershipService.removeMembership(member.personFile, this.organization.crId);
 
 			// Wait for metadata cache to update
-			await this.waitForCacheUpdate();
+			await this.waitForCacheUpdate(member.personFile);
 
 			// Reload members
 			this.loadMembers();
@@ -374,6 +374,7 @@ export class ManageOrganizationMembersModal extends Modal {
 	 */
 	private async addSelectedMembers(people: PersonInfo[]): Promise<void> {
 		let addedCount = 0;
+		const addedFiles: TFile[] = [];
 
 		for (const person of people) {
 			try {
@@ -383,6 +384,7 @@ export class ManageOrganizationMembersModal extends Modal {
 				};
 
 				await this.membershipService.addMembership(person.file, membership);
+				addedFiles.push(person.file);
 				addedCount++;
 			} catch (error) {
 				logger.error('addSelectedMembers', `Failed to add ${person.name}: ${error}`);
@@ -393,9 +395,8 @@ export class ManageOrganizationMembersModal extends Modal {
 			new Notice(`Added ${addedCount} member${addedCount === 1 ? '' : 's'} to ${this.organization.name}`);
 		}
 
-		// Wait for metadata cache to update before reloading
-		// Obsidian's cache updates async after file modification
-		await this.waitForCacheUpdate();
+		// Wait for metadata cache to update for all modified files
+		await this.waitForFilesCache(addedFiles);
 
 		// Reload members
 		this.loadMembers();
@@ -404,13 +405,39 @@ export class ManageOrganizationMembersModal extends Modal {
 	}
 
 	/**
-	 * Wait for the metadata cache to update after file modifications
+	 * Wait for the metadata cache to update after file modifications.
+	 * Uses Obsidian's metadata cache events with a fallback timeout.
 	 */
-	private waitForCacheUpdate(): Promise<void> {
+	private waitForCacheUpdate(file: TFile): Promise<void> {
 		return new Promise(resolve => {
-			// Give Obsidian time to re-index the modified files
-			setTimeout(resolve, 100);
+			const timeout = setTimeout(() => {
+				// Fallback if event doesn't fire within 500ms
+				this.app.metadataCache.off('changed', handler);
+				resolve();
+			}, 500);
+
+			const handler = (changedFile: TFile) => {
+				if (changedFile.path === file.path) {
+					clearTimeout(timeout);
+					this.app.metadataCache.off('changed', handler);
+					// Small additional delay to ensure cache is fully updated
+					setTimeout(resolve, 50);
+				}
+			};
+
+			this.app.metadataCache.on('changed', handler);
 		});
+	}
+
+	/**
+	 * Wait for metadata cache to update for multiple files.
+	 */
+	private async waitForFilesCache(files: TFile[]): Promise<void> {
+		if (files.length === 0) return;
+
+		// Wait for all files in parallel with a global timeout
+		const promises = files.map(file => this.waitForCacheUpdate(file));
+		await Promise.all(promises);
 	}
 }
 
