@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.19.20] - 2026-01-24
+
 ### Changed
 
 - **Event icon display mode option names** ([#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)): Renamed setting options for clarity: "Text label", "Icon (with tooltip)", and "Icon with label".
