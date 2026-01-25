@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Icon-only mode removed event verb from timeline sentences** ([#184](https://github.com/banisterious/obsidian-charted-roots/issues/184)): In dynamic block timelines (`charted-roots-timeline`), icon-only mode now correctly keeps the event type verb in the sentence (e.g., "🎂 1850 — Born in Springfield" instead of "🎂 1850 — in Springfield").
 
+- **Members disappearing after edit in Manage Members modal** ([#226](https://github.com/banisterious/obsidian-charted-roots/issues/226)): Improved cache synchronization to properly wait for Obsidian's metadata cache to update before refreshing the member list. Previously used an arbitrary 100ms delay which was insufficient on some systems.
+
 ---
 
 ## [0.19.19] - 2026-01-24
