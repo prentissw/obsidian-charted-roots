@@ -1276,9 +1276,9 @@ export class CanvasRootsSettingTab extends PluginSettingTab {
 			.setName('Event type display')
 			.setDesc('How to show event types in timelines, canvas event nodes, and maps')
 			.addDropdown(dropdown => dropdown
-				.addOption('text', 'Text only')
-				.addOption('icon', 'Icon only (with tooltip)')
-				.addOption('both', 'Icon and text')
+				.addOption('text', 'Text label')
+				.addOption('icon', 'Icon (with tooltip)')
+				.addOption('both', 'Icon with label')
 				.setValue(this.plugin.settings.eventIconMode)
 				.onChange(async (value) => {
 					this.plugin.settings.eventIconMode = value as EventIconMode;
