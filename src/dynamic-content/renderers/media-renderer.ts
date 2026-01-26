@@ -5,7 +5,7 @@
  * Creates a styled grid of thumbnails from the note's `media` frontmatter property.
  */
 
-import { MarkdownRenderChild, TFile, Notice, setIcon, setTooltip } from 'obsidian';
+import { MarkdownRenderChild, TFile, Notice, setIcon, setTooltip, Menu } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import type { DynamicBlockContext, DynamicBlockConfig } from '../services/dynamic-content-service';
 import type { DynamicContentService } from '../services/dynamic-content-service';
@@ -387,6 +387,38 @@ export class MediaRenderer {
 				e.preventDefault();
 				this.openImageLightbox(index);
 			}, { capture: true });
+
+			// Add right-click context menu for editing metadata (#234)
+			itemEl.addEventListener('contextmenu', (e) => {
+				e.preventDefault();
+				const menu = new Menu();
+
+				menu.addItem((menuItem) => {
+					menuItem
+						.setTitle('Open in Obsidian')
+						.setIcon('image')
+						.onClick(() => {
+							if (item.file) {
+								// Use openLinkText to trigger Obsidian's native file handling
+								// This enables compatibility with plugins like "Image Metadata"
+								void this.plugin.app.workspace.openLinkText(item.path, '', false);
+							}
+						});
+				});
+
+				menu.addItem((menuItem) => {
+					menuItem
+						.setTitle('Open in new tab')
+						.setIcon('file-plus')
+						.onClick(() => {
+							if (item.file) {
+								void this.plugin.app.workspace.getLeaf('tab').openFile(item.file);
+							}
+						});
+				});
+
+				menu.showAtMouseEvent(e);
+			});
 
 			// Add thumbnail badge if applicable
 			if (item.isThumbnail) {
