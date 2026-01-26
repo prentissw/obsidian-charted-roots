@@ -418,7 +418,7 @@ export class ExtractEventsModal extends Modal {
 					eventType: event.eventType,
 					datePrecision: event.datePrecision,
 					confidence: this.defaultConfidence,
-					sources: [`[[${this.sourceFile.basename}]]`]
+					sources: [`[[${this.source.title}]]`]
 				};
 
 				if (event.date.trim()) {
