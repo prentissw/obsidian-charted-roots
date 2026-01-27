@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Drag-to-reorder broken in editable media blocks** ([#236](https://github.com/banisterious/obsidian-charted-roots/issues/236)): In `canvas-roots-media` blocks with `editable: true`, dragging images to reorder them stopped working after the lightbox fix in v0.19.19. Drag-and-drop now works correctly again.
+
 ---
 
 ## [0.19.21] - 2026-01-26
