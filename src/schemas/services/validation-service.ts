@@ -7,6 +7,7 @@
 import { TFile } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import { getLogger } from '../../core/logging';
+import { isPersonNote } from '../../utils/note-type-detection';
 import { SchemaService } from './schema-service';
 import { FACT_KEYS } from '../../sources';
 import type {
@@ -98,11 +99,12 @@ export class ValidationService {
 		onProgress?.({ phase: 'scanning', current: 0, total: allFiles.length });
 
 		const personFiles: TFile[] = [];
+		const noteTypeSettings = this.plugin.settings.noteTypeDetection;
 		for (let i = 0; i < allFiles.length; i++) {
 			const file = allFiles[i];
 			const cache = this.plugin.app.metadataCache.getFileCache(file);
 
-			if (cache?.frontmatter?.cr_id && !cache.frontmatter.type) {
+			if (cache?.frontmatter && isPersonNote(cache.frontmatter, cache, noteTypeSettings)) {
 				personFiles.push(file);
 			}
 
