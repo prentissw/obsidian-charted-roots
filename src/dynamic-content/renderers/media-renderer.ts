@@ -377,10 +377,13 @@ export class MediaRenderer {
 
 			// Prevent mousedown from triggering edit mode
 			// preventDefault() stops the focus change that causes the mode switch
-			itemEl.addEventListener('mousedown', (e) => {
-				e.preventDefault();
-				e.stopImmediatePropagation();
-			}, { capture: true });
+			// In editable mode, allow mousedown through so drag-to-reorder works (#236)
+			if (!this.isEditable) {
+				itemEl.addEventListener('mousedown', (e) => {
+					e.preventDefault();
+					e.stopImmediatePropagation();
+				}, { capture: true });
+			}
 
 			itemEl.addEventListener(clickEvent, (e) => {
 				e.stopImmediatePropagation();
