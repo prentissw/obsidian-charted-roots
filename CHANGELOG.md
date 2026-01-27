@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.19.21] - 2026-01-26
+
 ### Added
 
 - **Media gallery context menu** ([#234](https://github.com/banisterious/obsidian-charted-roots/issues/234)): Right-click images in `canvas-roots-media` blocks to access "Open in Obsidian" (enables compatibility with plugins like Image Metadata) and "Open in new tab" options.
