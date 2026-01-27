@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Drag-to-reorder broken in editable media blocks** ([#236](https://github.com/banisterious/obsidian-charted-roots/issues/236)): In `canvas-roots-media` blocks with `editable: true`, dragging images to reorder them stopped working after the lightbox fix in v0.19.19. Drag-and-drop now works correctly again.
 
+- **Schema validation including non-person notes** ([#237](https://github.com/banisterious/obsidian-charted-roots/issues/237)): When using the "All people" scope, schema validation was incorrectly including events, sources, places, and other entity types that use `cr_type` instead of the deprecated `type` property. Now uses proper note type detection to validate only person notes.
+
 ---
 
 ## [0.19.21] - 2026-01-26
