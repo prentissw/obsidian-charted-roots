@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Avatars not showing on family chart** ([#238](https://github.com/banisterious/obsidian-charted-roots/issues/238)): Media references in frontmatter that were stored as Obsidian Link objects or nested arrays (from unquoted wikilinks in YAML) were silently dropped when resolving avatars. The family chart, place graph, and organization service now handle all media property formats consistently with the media code block renderer.
+
 ---
 
 ## [0.19.22] - 2026-01-28
