@@ -13,6 +13,7 @@ import { FolderFilterService } from './folder-filter';
 import { PersonIndexService } from './person-index-service';
 import type { CanvasRootsSettings, ValueAliasSettings } from '../settings';
 import { CANONICAL_GENDERS, BUILTIN_SYNONYMS } from './value-alias-service';
+import { parseMediaRefs } from './media-service';
 import { isSourceNote, isEventNote, isPlaceNote, isOrganizationNote, isProofSummaryNote, isUniverseNote } from '../utils/note-type-detection';
 import type { RawRelationship, FamilyGraphMapping } from '../relationships/types/relationship-types';
 import { getRelationshipType, getAllRelationshipTypesWithCustomizations } from '../relationships/constants/default-relationship-types';
@@ -1726,25 +1727,11 @@ export class FamilyGraphService {
 
 	/**
 	 * Parse media array from frontmatter.
-	 * Expects YAML array format:
-	 *   media:
-	 *     - "[[file1.jpg]]"
-	 *     - "[[file2.jpg]]"
+	 * Handles all YAML/Obsidian formats: string arrays, Link objects,
+	 * nested arrays (from unquoted wikilinks), and single values.
 	 */
 	private parseMediaProperty(fm: Record<string, unknown>): string[] {
-		if (!fm.media) return [];
-
-		// Handle array format
-		if (Array.isArray(fm.media)) {
-			return fm.media.filter((item): item is string => typeof item === 'string');
-		}
-
-		// Single value - wrap in array
-		if (typeof fm.media === 'string') {
-			return [fm.media];
-		}
-
-		return [];
+		return parseMediaRefs(fm.media);
 	}
 
 	/**

@@ -15,6 +15,7 @@ import type {
 } from '../types/organization-types';
 import { isValidOrganizationType } from '../constants/organization-types';
 import { getLogger } from '../../core/logging';
+import { parseMediaRefs } from '../../core/media-service';
 import { isOrganizationNote } from '../../utils/note-type-detection';
 
 const logger = getLogger('OrganizationService');
@@ -459,19 +460,7 @@ export class OrganizationService {
 	 *     - "[[file2.jpg]]"
 	 */
 	private parseMediaProperty(fm: Record<string, unknown>): string[] {
-		if (!fm.media) return [];
-
-		// Handle array format
-		if (Array.isArray(fm.media)) {
-			return fm.media.filter((item): item is string => typeof item === 'string');
-		}
-
-		// Single value - wrap in array
-		if (typeof fm.media === 'string') {
-			return [fm.media];
-		}
-
-		return [];
+		return parseMediaRefs(fm.media);
 	}
 
 	/**

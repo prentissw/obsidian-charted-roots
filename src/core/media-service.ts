@@ -76,6 +76,74 @@ export interface EntityMedia {
 }
 
 /**
+ * Normalize a single media item from frontmatter to a wikilink string.
+ * Handles the various formats Obsidian/YAML can produce:
+ *   - String: "[[file.jpg]]" → "[[file.jpg]]"
+ *   - Link object: { link: "file.jpg" } → "[[file.jpg]]"
+ *   - Nested array: [["file.jpg"]] → "[[file.jpg]]" (YAML parses unquoted [[]] as nested array)
+ */
+export function normalizeMediaRef(item: unknown): string | null {
+	if (typeof item === 'string') {
+		return item;
+	}
+
+	// Obsidian Link object (unquoted wikilinks parsed by metadata cache)
+	if (typeof item === 'object' && item !== null && 'link' in item) {
+		const link = (item as { link: unknown }).link;
+		if (typeof link === 'string') {
+			return `[[${link}]]`;
+		}
+	}
+
+	// Nested array from YAML parsing unquoted [[filename]] as [["filename"]]
+	if (Array.isArray(item)) {
+		let unwrapped: unknown = item;
+		while (Array.isArray(unwrapped) && unwrapped.length > 0) {
+			unwrapped = unwrapped[0];
+		}
+		if (typeof unwrapped === 'string') {
+			// Unwrapped string may or may not have brackets
+			return unwrapped.startsWith('[[') ? unwrapped : `[[${unwrapped}]]`;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Parse a media property value from frontmatter into an array of wikilink strings.
+ * Handles all formats: string arrays, Link objects, nested arrays, and single values.
+ */
+export function parseMediaRefs(mediaValue: unknown): string[] {
+	if (!mediaValue) return [];
+
+	// Single string value
+	if (typeof mediaValue === 'string') {
+		return [mediaValue];
+	}
+
+	// Array of items (most common)
+	if (Array.isArray(mediaValue)) {
+		const results: string[] = [];
+		for (const item of mediaValue) {
+			const normalized = normalizeMediaRef(item);
+			if (normalized) {
+				results.push(normalized);
+			}
+		}
+		return results;
+	}
+
+	// Single Link object
+	const normalized = normalizeMediaRef(mediaValue);
+	if (normalized) {
+		return [normalized];
+	}
+
+	return [];
+}
+
+/**
  * Service for entity-agnostic media operations
  */
 export class MediaService {
@@ -86,27 +154,11 @@ export class MediaService {
 
 	/**
 	 * Parse media array from frontmatter.
-	 * Expects YAML array format:
-	 *   media:
-	 *     - "[[file1.jpg]]"
-	 *     - "[[file2.jpg]]"
-	 *
-	 * Also handles single value for backwards compatibility.
+	 * Handles all YAML/Obsidian formats: string arrays, Link objects,
+	 * nested arrays (from unquoted wikilinks), and single values.
 	 */
 	parseMediaProperty(frontmatter: Record<string, unknown>): string[] {
-		if (!frontmatter.media) return [];
-
-		// Handle array format
-		if (Array.isArray(frontmatter.media)) {
-			return frontmatter.media.filter((item): item is string => typeof item === 'string');
-		}
-
-		// Single value - wrap in array
-		if (typeof frontmatter.media === 'string') {
-			return [frontmatter.media];
-		}
-
-		return [];
+		return parseMediaRefs(frontmatter.media);
 	}
 
 	/**

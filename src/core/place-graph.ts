@@ -24,6 +24,7 @@ import { FolderFilterService } from './folder-filter';
 import type { CanvasRootsSettings, ValueAliasSettings } from '../settings';
 import { getPlaceFolderForCategory } from '../settings';
 import { CANONICAL_PLACE_CATEGORIES, type CanonicalPlaceCategory } from './value-alias-service';
+import { parseMediaRefs } from './media-service';
 import { isPlaceNote, isPersonNote } from '../utils/note-type-detection';
 
 const logger = getLogger('PlaceGraph');
@@ -1223,25 +1224,11 @@ export class PlaceGraphService {
 
 	/**
 	 * Parse media array from frontmatter.
-	 * Expects YAML array format:
-	 *   media:
-	 *     - "[[file1.jpg]]"
-	 *     - "[[file2.jpg]]"
+	 * Handles all YAML/Obsidian formats: string arrays, Link objects,
+	 * nested arrays (from unquoted wikilinks), and single values.
 	 */
 	private parseMediaProperty(fm: Record<string, unknown>): string[] {
-		if (!fm.media) return [];
-
-		// Handle array format
-		if (Array.isArray(fm.media)) {
-			return fm.media.filter((item): item is string => typeof item === 'string');
-		}
-
-		// Single value - wrap in array
-		if (typeof fm.media === 'string') {
-			return [fm.media];
-		}
-
-		return [];
+		return parseMediaRefs(fm.media);
 	}
 
 	/**
