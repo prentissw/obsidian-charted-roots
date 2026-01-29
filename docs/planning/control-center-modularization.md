@@ -157,11 +157,36 @@ Ordered by complexity (simplest first):
 - Extract `ConfirmationDialog` to `shared/confirmation-dialog.ts`
 - Move existing extracted tabs (`dashboard-tab.ts`, `places-tab.ts`) into `tabs/` directory
 
+### Consolidation of Already-Extracted Tabs
+
+Six tabs are already partially extracted (delegating to external render functions). These need to be moved into the `src/ui/tabs/` directory for consistency:
+
+- `dashboard-tab.ts` — move from `src/ui/`
+- `places-tab.ts` — move from `src/ui/`
+- Events, Sources, Organizations, Relationships — consolidate external renderers into `src/ui/tabs/`
+
+### State Migration
+
+Tab-specific state currently stored as class properties on the modal (e.g., `personListFilter`, `personListSort`, `universeListFilter`) needs to move into the extracted components. Options:
+
+- **Local component state** — each render function manages its own state via closures or a simple state object passed by the host
+- **Plugin settings** — persist filter/sort preferences across sessions (needed for Phase 2 ItemViews via `getState()`/`setState()`)
+
+### Verification
+
+Each extraction is a pure refactor — no user-facing behavior should change. After extracting each tab:
+
+1. Open the Control Center and navigate to the extracted tab
+2. Verify all UI elements render correctly
+3. Test interactive features (filters, sorts, context menus, modals launched from the tab)
+4. Verify cross-tab navigation still works (e.g., Data Quality → People)
+5. Run `npm run build` to confirm no type errors
+
 ---
 
 ## Phase 2: ItemView Migration
 
-**Goal:** Each tab component becomes an independent `ItemView` that can be docked, pinned, and used alongside notes. The Control Center modal is either retired or becomes a lightweight launcher.
+**Goal:** Each tab component becomes an independent `ItemView` that can be docked, pinned, and used alongside notes. The Control Center modal remains available as an alternative interface.
 
 ### ItemView Pattern
 
