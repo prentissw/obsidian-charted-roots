@@ -8,6 +8,7 @@ This document outlines planned features for Charted Roots. For completed feature
 
 - [Completed Features](#completed-features)
 - [Planned Features](#planned-features)
+  - [Control Center Modularization](#control-center-modularization) 📋 Medium
   - [GPS Research Workflow Integration](#gps-research-workflow-integration) 📋 Medium
   - [Unified Place Lookup](#unified-place-lookup) 💡 Low ✅ Phase 1-2 complete
   - [Calendarium Integration](#calendarium-integration) 💡 Low
@@ -49,6 +50,36 @@ Features are prioritized to complete the data lifecycle: **import → enhance �
 | ⚡ High | Core workflow | Completes essential data portability |
 | 📋 Medium | User value | Highly requested sharing/output features |
 | 💡 Low | Specialized | Advanced use cases, niche workflows |
+
+---
+
+### Control Center Modularization
+
+**Priority:** 📋 Medium — Persistent, dockable views for extended work sessions
+
+**Status:** 📋 Planning
+
+**GitHub Discussion:** [#239](https://github.com/banisterious/obsidian-charted-roots/discussions/239)
+
+**Summary:** Break the Control Center modal (~13,760 lines, 16 tabs) into independent, dockable workspace views — one per entity/workflow — matching the existing pattern used by the Statistics dashboard, Family Chart, and Map views.
+
+**The Problem:** The Control Center is a modal overlay with fixed dimensions that closes on outside click. This works for quick actions but is limiting for extended sessions like relationship management, data quality review, or bulk operations.
+
+**The Solution:** A two-phase refactoring:
+
+| Phase | Goal | Description |
+|-------|------|-------------|
+| 1 | Component extraction | Extract each tab into its own file, sharing a common rendering interface. The modal remains the host — no user-facing changes. |
+| 2 | ItemView migration | Each extracted component becomes a standalone `ItemView` that can be docked, pinned, and used alongside notes. |
+
+**Key Design Decisions:**
+- The Control Center modal is **not deprecated** — both the modal and ItemViews share the same extracted components, so there is no maintenance overhead from supporting both
+- Transient wizard-style workflows (imports, exports, tree generation) remain as modals
+- Each ItemView is independently dockable, so users can have People open in one pane and Places in another simultaneously
+
+**Planned ItemViews:** People, Events, Places, Sources, Organizations, Universes, Collections, Data Quality, Schemas, Relationships, Trees & Reports, Maps
+
+See [Control Center Modularization Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/control-center-modularization.md) for full specifications.
 
 ---
 
