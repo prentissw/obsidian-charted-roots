@@ -140,6 +140,369 @@ let personListSort: 'name-asc' | 'name-desc' | 'birth-asc' | 'birth-desc' | 'dea
 const PERSON_LIST_PAGE_SIZE = 100;
 
 // ---------------------------------------------------------------------------
+// Shared list renderer (used by dockable ItemView)
+// ---------------------------------------------------------------------------
+
+/**
+ * Filter options for the people list
+ */
+export type PersonListFilter = 'all' | 'has-dates' | 'missing-dates' | 'unlinked-places' | 'living';
+
+/**
+ * Sort options for the people list
+ */
+export type PersonListSort = 'name-asc' | 'name-desc' | 'birth-asc' | 'birth-desc' | 'death-asc' | 'death-desc';
+
+/**
+ * Options for rendering the people list.
+ * Used by both the modal card and the dockable ItemView.
+ */
+export interface PeopleListOptions {
+	container: HTMLElement;
+	plugin: CanvasRootsPlugin;
+	/** Initial filter state for restoration */
+	initialFilter?: PersonListFilter;
+	/** Initial sort state for restoration */
+	initialSort?: PersonListSort;
+	/** Initial search text for restoration */
+	initialSearch?: string;
+	/** Callback invoked when filter/sort/search state changes (for persistence) */
+	onStateChange?: (filter: PersonListFilter, sort: PersonListSort, search: string) => void;
+}
+
+/**
+ * Render a simplified people list with filter/sort/search/pagination.
+ * Used by the dockable PeopleView. The modal uses its own loadPersonList()
+ * which includes row-click-to-edit and interactive badges.
+ */
+export function renderPeopleList(options: PeopleListOptions): void {
+	const { container, plugin, onStateChange } = options;
+	const app = plugin.app;
+	container.empty();
+
+	// Local state (closure-scoped, not module-level)
+	let currentFilter: PersonListFilter = options.initialFilter ?? 'all';
+	let currentSort: PersonListSort = options.initialSort ?? 'name-asc';
+	let currentSearch: string = options.initialSearch ?? '';
+
+	// Load person data
+	const familyGraph = plugin.createFamilyGraphService();
+	familyGraph.ensureCacheLoaded();
+	const people = familyGraph.getAllPeople();
+
+	if (people.length === 0) {
+		container.createEl('p', {
+			text: 'No person notes found. Create person notes with a cr_id in frontmatter.',
+			cls: 'crc-text--muted'
+		});
+		return;
+	}
+
+	// Map to display items
+	interface ListItem {
+		crId: string;
+		name: string;
+		birthDate?: string;
+		deathDate?: string;
+		birthPlace?: PlaceInfo;
+		deathPlace?: PlaceInfo;
+		burialPlace?: PlaceInfo;
+		file: TFile;
+		mediaCount: number;
+	}
+
+	const items: ListItem[] = people.map(p => {
+		const cache = app.metadataCache.getFileCache(p.file);
+		const fm = cache?.frontmatter || {};
+		return {
+			crId: p.crId,
+			name: p.name,
+			birthDate: p.birthDate,
+			deathDate: p.deathDate,
+			birthPlace: extractPlaceInfo(fm.birth_place),
+			deathPlace: extractPlaceInfo(fm.death_place),
+			burialPlace: extractPlaceInfo(fm.burial_place),
+			file: p.file,
+			mediaCount: p.media?.length || 0
+		};
+	});
+
+	// Controls row
+	const controlsRow = container.createDiv({ cls: 'crc-person-controls' });
+
+	// Filter dropdown
+	const filterSelect = controlsRow.createEl('select', { cls: 'dropdown' });
+	const filterOptions: { value: PersonListFilter; label: string }[] = [
+		{ value: 'all', label: 'All people' },
+		{ value: 'has-dates', label: 'Has dates' },
+		{ value: 'missing-dates', label: 'Missing dates' },
+		{ value: 'unlinked-places', label: 'Unlinked places' },
+		{ value: 'living', label: 'Living (no death)' }
+	];
+	for (const opt of filterOptions) {
+		filterSelect.createEl('option', { text: opt.label, value: opt.value });
+	}
+	filterSelect.value = currentFilter;
+
+	// Sort dropdown
+	const sortSelect = controlsRow.createEl('select', { cls: 'dropdown' });
+	const sortOptions: { value: PersonListSort; label: string }[] = [
+		{ value: 'name-asc', label: 'Name (A\u2013Z)' },
+		{ value: 'name-desc', label: 'Name (Z\u2013A)' },
+		{ value: 'birth-asc', label: 'Birth (oldest)' },
+		{ value: 'birth-desc', label: 'Birth (newest)' },
+		{ value: 'death-asc', label: 'Death (oldest)' },
+		{ value: 'death-desc', label: 'Death (newest)' }
+	];
+	for (const opt of sortOptions) {
+		sortSelect.createEl('option', { text: opt.label, value: opt.value });
+	}
+	sortSelect.value = currentSort;
+
+	// Search input
+	const searchInput = controlsRow.createEl('input', {
+		cls: 'crc-filter-input',
+		attr: {
+			type: 'text',
+			placeholder: `Search ${items.length} people...`
+		}
+	});
+	if (currentSearch) {
+		searchInput.value = currentSearch;
+	}
+
+	// List container
+	const listContainer = container.createDiv({ cls: 'crc-person-list' });
+
+	// Helper: check for unlinked places
+	const hasUnlinkedPlaces = (p: ListItem): boolean => {
+		return (p.birthPlace != null && !p.birthPlace.isLinked) ||
+			(p.deathPlace != null && !p.deathPlace.isLinked) ||
+			(p.burialPlace != null && !p.burialPlace.isLinked) || false;
+	};
+
+	// Apply filter, sort, search, and render
+	const applyFiltersAndRender = () => {
+		const query = currentSearch.toLowerCase();
+
+		let filtered = items.filter(p =>
+			p.name.toLowerCase().includes(query) ||
+			(p.birthDate && p.birthDate.includes(query)) ||
+			(p.deathDate && p.deathDate.includes(query))
+		);
+
+		switch (currentFilter) {
+			case 'has-dates':
+				filtered = filtered.filter(p => p.birthDate || p.deathDate);
+				break;
+			case 'missing-dates':
+				filtered = filtered.filter(p => !p.birthDate && !p.deathDate);
+				break;
+			case 'unlinked-places':
+				filtered = filtered.filter(hasUnlinkedPlaces);
+				break;
+			case 'living':
+				filtered = filtered.filter(p => p.birthDate && !p.deathDate);
+				break;
+		}
+
+		filtered.sort((a, b) => {
+			switch (currentSort) {
+				case 'name-asc':
+					return a.name.localeCompare(b.name);
+				case 'name-desc':
+					return b.name.localeCompare(a.name);
+				case 'birth-asc':
+					return (a.birthDate || '9999').localeCompare(b.birthDate || '9999');
+				case 'birth-desc':
+					return (b.birthDate || '0000').localeCompare(a.birthDate || '0000');
+				case 'death-asc':
+					return (a.deathDate || '9999').localeCompare(b.deathDate || '9999');
+				case 'death-desc':
+					return (b.deathDate || '0000').localeCompare(a.deathDate || '0000');
+				default:
+					return 0;
+			}
+		});
+
+		renderListItems(listContainer, filtered);
+	};
+
+	// Render the table with pagination
+	const renderListItems = (target: HTMLElement, people: ListItem[]) => {
+		target.empty();
+
+		if (people.length === 0) {
+			target.createEl('p', {
+				text: 'No matching people found.',
+				cls: 'crc-text--muted'
+			});
+			return;
+		}
+
+		const table = target.createEl('table', { cls: 'crc-person-table' });
+		const thead = table.createEl('thead');
+		const headerRow = thead.createEl('tr');
+		headerRow.createEl('th', { text: 'Name', cls: 'crc-person-table__th' });
+		headerRow.createEl('th', { text: 'Born', cls: 'crc-person-table__th' });
+		headerRow.createEl('th', { text: 'Died', cls: 'crc-person-table__th' });
+		headerRow.createEl('th', { text: 'Media', cls: 'crc-person-table__th crc-person-table__th--center' });
+		headerRow.createEl('th', { text: '', cls: 'crc-person-table__th crc-person-table__th--icon' });
+
+		const tbody = table.createEl('tbody');
+		let renderedCount = 0;
+
+		const renderBatch = (startFrom: number, limit: number): number => {
+			let rendered = 0;
+			for (let i = startFrom; i < people.length && rendered < limit; i++) {
+				renderSimpleRow(tbody, people[i]);
+				rendered++;
+			}
+			return rendered;
+		};
+
+		renderedCount = renderBatch(0, PERSON_LIST_PAGE_SIZE);
+
+		if (renderedCount < people.length) {
+			const loadMoreContainer = target.createDiv({ cls: 'crc-load-more-container' });
+			const loadMoreBtn = loadMoreContainer.createEl('button', {
+				cls: 'crc-btn crc-btn--secondary',
+				text: `Load more (${renderedCount} of ${people.length} shown)`
+			});
+
+			loadMoreBtn.addEventListener('click', () => {
+				const newRendered = renderBatch(renderedCount, PERSON_LIST_PAGE_SIZE);
+				renderedCount += newRendered;
+
+				if (renderedCount >= people.length) {
+					loadMoreContainer.remove();
+				} else {
+					loadMoreBtn.setText(`Load more (${renderedCount} of ${people.length} shown)`);
+				}
+			});
+		}
+	};
+
+	// Render a simplified table row (no row-click-to-edit, no interactive badges)
+	const renderSimpleRow = (tbody: HTMLElement, person: ListItem) => {
+		const row = tbody.createEl('tr', { cls: 'crc-person-table__row crc-person-table__row--browse' });
+
+		// Name
+		row.createEl('td', {
+			text: person.name,
+			cls: 'crc-person-table__td crc-person-table__td--name'
+		});
+
+		// Born
+		row.createEl('td', {
+			text: person.birthDate ? formatDisplayDate(person.birthDate) : '\u2014',
+			cls: 'crc-person-table__td crc-person-table__td--date'
+		});
+
+		// Died
+		row.createEl('td', {
+			text: person.deathDate ? formatDisplayDate(person.deathDate) : '\u2014',
+			cls: 'crc-person-table__td crc-person-table__td--date'
+		});
+
+		// Media count (read-only)
+		const mediaCell = row.createEl('td', {
+			cls: 'crc-person-table__td crc-person-table__td--media'
+		});
+		if (person.mediaCount > 0) {
+			const mediaBadge = mediaCell.createEl('span', {
+				cls: 'crc-person-list-badge crc-person-list-badge--media',
+				attr: { title: `${person.mediaCount} media file${person.mediaCount !== 1 ? 's' : ''}` }
+			});
+			const mediaIcon = createLucideIcon('image', 12);
+			mediaBadge.appendChild(mediaIcon);
+			mediaBadge.appendText(person.mediaCount.toString());
+		} else {
+			mediaCell.createEl('span', { text: '\u2014', cls: 'crc-text-muted' });
+		}
+
+		// Actions: open note button
+		const actionsCell = row.createEl('td', { cls: 'crc-person-table__td crc-person-table__td--actions' });
+		const openBtn = actionsCell.createEl('button', {
+			cls: 'crc-person-table__open-btn clickable-icon',
+			attr: { 'aria-label': 'Open note' }
+		});
+		const fileIcon = createLucideIcon('file-text', 14);
+		openBtn.appendChild(fileIcon);
+		openBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			void (async () => {
+				await plugin.trackRecentFile(person.file, 'person');
+				void app.workspace.getLeaf(false).openFile(person.file);
+			})();
+		});
+
+		// Context menu
+		row.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+			const menu = new Menu();
+
+			menu.addItem((item) => {
+				item.setTitle('Open note')
+					.setIcon('file')
+					.onClick(() => {
+						void (async () => {
+							await plugin.trackRecentFile(person.file, 'person');
+							void app.workspace.getLeaf(false).openFile(person.file);
+						})();
+					});
+			});
+
+			menu.addItem((item) => {
+				item.setTitle('Open in new tab')
+					.setIcon('file-plus')
+					.onClick(() => {
+						void (async () => {
+							await plugin.trackRecentFile(person.file, 'person');
+							void app.workspace.getLeaf('tab').openFile(person.file);
+						})();
+					});
+			});
+
+			menu.addItem((item) => {
+				item.setTitle('Open in new window')
+					.setIcon('picture-in-picture-2')
+					.onClick(() => {
+						void (async () => {
+							await plugin.trackRecentFile(person.file, 'person');
+							void app.workspace.getLeaf('window').openFile(person.file);
+						})();
+					});
+			});
+
+			menu.showAtMouseEvent(e);
+		});
+	};
+
+	// Event handlers
+	searchInput.addEventListener('input', () => {
+		currentSearch = searchInput.value;
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+		applyFiltersAndRender();
+	});
+
+	filterSelect.addEventListener('change', () => {
+		currentFilter = filterSelect.value as PersonListFilter;
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+		applyFiltersAndRender();
+	});
+
+	sortSelect.addEventListener('change', () => {
+		currentSort = sortSelect.value as PersonListSort;
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+		applyFiltersAndRender();
+	});
+
+	// Initial render
+	applyFiltersAndRender();
+}
+
+// ---------------------------------------------------------------------------
 // Main entry point
 // ---------------------------------------------------------------------------
 
