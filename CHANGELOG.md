@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Dockable sidebar views for all entity tabs** ([#240](https://github.com/banisterious/obsidian-charted-roots/discussions/240)): Every entity browsing tab in the Control Center can now be opened as a persistent, dockable workspace view in the sidebar. Views include filter/sort/search controls, context menus, and auto-refresh on vault changes. State (filters, search, sort) persists across sessions.
+  - **People** — filterable/sortable person list with expandable details
+  - **Places** — place notes with category badges and coordinates
+  - **Events** — timeline table with type/person/date filters
+  - **Sources** — sources list with type and confidence badges
+  - **Organizations** — organizations with type badges and member counts
+  - **Relationships** — relationship table with type/category filters
+  - **Universes** — universe list with status badges and entity counts
+  - **Collections** — browse mode switcher (all people / detected families / user collections)
+  - **Data quality** — read-only dashboard with research gaps, source conflicts, and auto-running vault-wide analysis with quality score, completeness metrics, and filterable issues
+
+- **Dock buttons on Control Center cards** ([#240](https://github.com/banisterious/obsidian-charted-roots/discussions/240)): Hovering over a dockable card header reveals a sidebar icon that opens (or focuses) the corresponding dockable view. The modal stays open so users can dock multiple views in one session.
+
+- **Relationships tab enhancements** ([#240](https://github.com/banisterious/obsidian-charted-roots/discussions/240)): The Relationships tab now has filter dropdowns (by type, category, person), sort options, pagination with load-more, and context menus on rows.
+
 ### Fixed
 
 - **Avatars not showing on family chart** ([#238](https://github.com/banisterious/obsidian-charted-roots/issues/238)): Media references in frontmatter that were stored as Obsidian Link objects or nested arrays (from unquoted wikilinks in YAML) were silently dropped when resolving avatars. The family chart, place graph, and organization service now handle all media property formats consistently with the media code block renderer.

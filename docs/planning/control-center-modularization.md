@@ -2,7 +2,7 @@
 
 Planning document for [#239](https://github.com/banisterious/obsidian-charted-roots/discussions/239).
 
-**Status:** ✅ Phase 1 complete | 📋 Phase 2 planning
+**Status:** ✅ Phase 1 complete | ✅ Phase 2 complete
 
 ---
 
@@ -186,9 +186,11 @@ Each extraction is a pure refactor — no user-facing behavior should change. Af
 
 ---
 
-## Phase 2: ItemView Migration
+## Phase 2: ItemView Migration ✅
 
 **Goal:** Create dockable workspace views for entity browsing. Each dockable view contains a **focused subset** of its modal tab — the entity list with filter/sort/search — not a 1:1 clone of the full tab. Actions, batch operations, configuration, statistics, and type managers stay modal-only.
+
+**Result:** 9 dockable ItemViews created (8 entity list views + 1 data quality dashboard). Each view follows a 3-commit pattern: (1) add exported `render*List()`/`render*Dashboard()` function + types, (2) create ItemView class + register in main.ts + CSS, (3) add dock button to card header. All views support state persistence, auto-refresh on vault changes, and single-instance activation.
 
 ### Design Principles
 
@@ -207,28 +209,29 @@ Each dockable card in the Control Center modal gets a small dock button in its c
 - **Already docked:** Focuses the existing view instance (single-instance)
 - **Default placement:** Right sidebar via `getRightLeaf(false)` — entity lists are reference panels used alongside notes, matching Obsidian's Outline/Backlinks convention. Users can drag to the main area if they want more space.
 
-### Dockable Views (8 total)
+### Dockable Views (9 total)
 
-| Tab | Dockable card | Content in dockable view |
-|-----|--------------|--------------------------|
-| **People** | People list | Filter/sort/search table with expandable details, context menus |
-| **Places** | Place notes list | Filter/sort/search table with category badges, coordinates, context menus |
-| **Events** | Timeline table | Type/person/search filters, sortable table, context menus |
-| **Sources** | Sources list | Filter/sort table with type/confidence badges, context menus |
-| **Organizations** | Organizations list | Filter/sort table with type badges, member counts, context menus |
-| **Relationships** | Relationships table | Table with type badges, filter/sort (to be added — currently missing) |
-| **Universes** | Universe list | Filter/sort/search table with status badges, entity counts, context menus |
-| **Collections** | Browse card | Mode switcher (all people / detected families / user collections) + corresponding list |
+| Tab | Dockable card | View class | Content in dockable view |
+|-----|--------------|------------|--------------------------|
+| **People** | People list | `PeopleView` | Filter/sort/search table with expandable details, context menus |
+| **Places** | Place notes list | `PlacesView` | Filter/sort/search table with category badges, coordinates, context menus |
+| **Events** | Timeline table | `EventsView` | Type/person/search filters, sortable table, context menus |
+| **Sources** | Sources list | `SourcesView` | Filter/sort table with type/confidence badges, context menus |
+| **Organizations** | Organizations list | `OrganizationsView` | Filter/sort table with type badges, member counts, context menus |
+| **Relationships** | Relationships table | `RelationshipsView` | Table with type badges, filter/sort, context menus |
+| **Universes** | Universe list | `UniversesView` | Filter/sort/search table with status badges, entity counts, context menus |
+| **Collections** | Browse card | `CollectionsView` | Mode switcher (all people / detected families / user collections) + corresponding list |
+| **Data Quality** | Vault-wide analysis | `DataQualityView` | Read-only dashboard: research gaps, source conflicts, auto-running vault-wide analysis with quality score, completeness bars, and filterable/searchable issues |
 
 ### Modal-Only Tabs (no dockable view)
 
 | Tab | Reason |
 |-----|--------|
-| **Data Quality** | Entirely tooling — analysis, batch operations, diagnostics. No browsable entity list. |
 | **Schemas** | Configuration and validation tooling. No browsable entity list. |
 | **Trees & Reports** | Wizard launchers, configuration, export actions. No browsable entity list. |
 | **Maps** | Already has a dedicated full ItemView (`map-view.ts`). Modal tab is for management. |
 | **Dashboard** | Navigation hub and overview. No entity list. |
+| **Preferences** | Deprecated — settings consolidated into Plugin Settings (#176). |
 
 ### Relationships Tab Enhancement
 
@@ -315,5 +318,10 @@ Same order as Phase 1 extraction. Each tab can be migrated independently once it
 ## Open Questions
 
 1. **Workspace layout presets** — Should we provide a "Control Center layout" command that opens all views in a predefined arrangement?
-2. **Auto-refresh** — Should entity views auto-refresh when vault files change (like Statistics does), or require manual refresh?
+2. ~~**Auto-refresh** — Should entity views auto-refresh when vault files change (like Statistics does), or require manual refresh?~~ **Resolved:** All dockable views auto-refresh on vault changes (debounced 2s).
 3. **Navigation hub** — Should Dashboard become a lightweight "home" view that links to all other views?
+
+## Future Work
+
+- **Remove deprecated Preferences tab** — `renderPreferencesTab()` and its helpers can be deleted. Two exported functions (`renderCanvasLayoutCard`, `renderCanvasStylingCard`) are still imported by trees-tab.ts and need relocation first. CSS file (`preferences.css`) must be kept as Plugin Settings uses its classes.
+- **Preferences tab cleanup** tracked separately from this modularization effort.
