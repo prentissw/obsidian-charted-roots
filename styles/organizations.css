@@ -521,3 +521,40 @@
   display: flex;
   gap: var(--size-4-2);
 }
+
+/* ==========================================================================
+   Organizations Dockable View
+   ========================================================================== */
+
+.cr-organizations-view {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.cr-ov-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-ov-title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.cr-ov-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.cr-ov-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Browse-only organization rows have default cursor (no row-click-to-edit) */
+.cr-org-row--browse {
+  cursor: default;
+}

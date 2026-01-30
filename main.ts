@@ -37,6 +37,7 @@ import { RelationshipsView, VIEW_TYPE_RELATIONSHIPS } from './src/relationships/
 import { PeopleView, VIEW_TYPE_PEOPLE } from './src/ui/views/people-view';
 import { EventsView, VIEW_TYPE_EVENTS } from './src/dates/ui/events-view';
 import { PlacesView, VIEW_TYPE_PLACES } from './src/ui/views/places-view';
+import { OrganizationsView, VIEW_TYPE_ORGANIZATIONS } from './src/organizations/ui/organizations-view';
 import { TreePreviewRenderer } from './src/ui/tree-preview';
 import { FolderFilterService } from './src/core/folder-filter';
 import { TemplateFilterService } from './src/core/template-filter';
@@ -369,6 +370,12 @@ export default class CanvasRootsPlugin extends Plugin {
 			(leaf) => new PlacesView(leaf, this)
 		);
 
+		// Register organizations view
+		this.registerView(
+			VIEW_TYPE_ORGANIZATIONS,
+			(leaf) => new OrganizationsView(leaf, this)
+		);
+
 		// Register migration notice view (for upgrade notifications)
 		this.registerView(
 			VIEW_TYPE_MIGRATION_NOTICE,
@@ -502,6 +509,15 @@ export default class CanvasRootsPlugin extends Plugin {
 			name: 'Open places',
 			callback: () => {
 				void this.activatePlacesView();
+			}
+		});
+
+		// Add command: Open Organizations view
+		this.addCommand({
+			id: 'open-organizations-view',
+			name: 'Open organizations',
+			callback: () => {
+				void this.activateOrganizationsView();
 			}
 		});
 
@@ -8688,6 +8704,28 @@ export default class CanvasRootsPlugin extends Plugin {
 		if (leaf) {
 			await leaf.setViewState({
 				type: VIEW_TYPE_PLACES,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	/**
+	 * Open or focus the Organizations dockable view in the right sidebar
+	 */
+	async activateOrganizationsView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_ORGANIZATIONS);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_ORGANIZATIONS,
 				active: true
 			});
 			void workspace.revealLeaf(leaf);
