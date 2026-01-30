@@ -5,13 +5,24 @@
  * collection overview canvas generation, and analytics.
  */
 
-import { Notice, Setting, TFile, normalizePath } from 'obsidian';
+import { Menu, Notice, Setting, TFile, normalizePath, setIcon } from 'obsidian';
 import type { App } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
 import type { LucideIconName } from './lucide-icons';
 import { CanvasGenerator, CanvasData } from '../core/canvas-generator';
 import { ensureFolderExists } from '../core/canvas-utils';
 import { getErrorMessage } from '../core/error-utils';
+import type { PersonNode } from '../core/family-graph';
+
+export type CollectionBrowseMode = 'all' | 'families' | 'collections';
+
+export interface CollectionsListOptions {
+	container: HTMLElement;
+	plugin: CanvasRootsPlugin;
+	initialMode?: CollectionBrowseMode;
+	initialSearch?: string;
+	onStateChange?: (mode: CollectionBrowseMode, search: string) => void;
+}
 
 export interface CollectionsTabOptions {
 	container: HTMLElement;
@@ -471,4 +482,294 @@ function loadAnalyticsData(container: HTMLElement, plugin: CanvasRootsPlugin): v
 			cls: 'crc-error-text'
 		});
 	}
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Dockable Collections List — standalone renderer for the sidebar ItemView
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Render a browsable collections list for the dockable sidebar view.
+ * Uses closure-scoped state so it operates independently of the modal tab.
+ */
+export function renderCollectionsList(options: CollectionsListOptions): void {
+	const {
+		container,
+		plugin,
+		initialMode = 'families',
+		initialSearch = '',
+		onStateChange
+	} = options;
+
+	const app = plugin.app;
+
+	// Closure-scoped state
+	let currentMode: CollectionBrowseMode = initialMode;
+	let currentSearch = initialSearch;
+	let displayLimit = 25;
+
+	// Load data via graph service
+	const graphService = plugin.createFamilyGraphService();
+
+	container.empty();
+
+	// Controls row
+	const controlsRow = container.createDiv({ cls: 'crc-person-controls' });
+
+	// Mode dropdown
+	const modeSelect = controlsRow.createEl('select', { cls: 'dropdown' });
+	const modeOptions: { value: CollectionBrowseMode; label: string }[] = [
+		{ value: 'all', label: 'All people' },
+		{ value: 'families', label: 'Detected families' },
+		{ value: 'collections', label: 'My collections' }
+	];
+	modeOptions.forEach(opt => {
+		const option = modeSelect.createEl('option', { text: opt.label, value: opt.value });
+		if (opt.value === currentMode) option.selected = true;
+	});
+
+	// Search input
+	const searchInput = controlsRow.createEl('input', {
+		cls: 'crc-filter-input',
+		attr: {
+			type: 'text',
+			placeholder: 'Search...'
+		}
+	});
+	if (currentSearch) searchInput.value = currentSearch;
+	// Hide search for "all" mode (just shows a count)
+	if (currentMode === 'all') searchInput.style.display = 'none';
+
+	// List container
+	const listContainer = container.createDiv({ cls: 'crc-person-list' });
+
+	const renderContent = () => {
+		listContainer.empty();
+		const query = currentSearch.toLowerCase();
+
+		if (currentMode === 'all') {
+			// All people — just show count
+			searchInput.style.display = 'none';
+			graphService.getTotalPeopleCount();
+			const allPeople = graphService.getAllPeople();
+
+			listContainer.createEl('p', {
+				cls: 'crc-text--muted',
+				text: `Found ${allPeople.length} ${allPeople.length === 1 ? 'person' : 'people'} in your vault.`
+			});
+
+		} else if (currentMode === 'families') {
+			// Detected families — paginated table
+			searchInput.style.display = '';
+			searchInput.placeholder = 'Search families...';
+
+			const components = graphService.findAllFamilyComponents();
+
+			// Filter by search query
+			let filtered = components;
+			if (query) {
+				filtered = components.filter((c, i) => {
+					const familyName = (c.collectionName || `Family ${i + 1}`).toLowerCase();
+					const repName = c.representative.name.toLowerCase();
+					return familyName.includes(query) || repName.includes(query);
+				});
+			}
+
+			if (filtered.length === 0) {
+				listContainer.createEl('p', {
+					text: query ? 'No matching families found.' : 'No families found. Add some person notes to get started.',
+					cls: 'crc-text--muted'
+				});
+				return;
+			}
+
+			// Table
+			const table = listContainer.createEl('table', { cls: 'crc-person-table' });
+			const thead = table.createEl('thead');
+			const headerRow = thead.createEl('tr');
+			headerRow.createEl('th', { text: 'Family name', cls: 'crc-person-table__th' });
+			headerRow.createEl('th', { text: 'Size', cls: 'crc-person-table__th' });
+			headerRow.createEl('th', { text: 'Representative', cls: 'crc-person-table__th' });
+			headerRow.createEl('th', { text: '', cls: 'crc-person-table__th crc-person-table__th--icon' });
+
+			const tbody = table.createEl('tbody');
+
+			const visible = filtered.slice(0, displayLimit);
+			visible.forEach((component, index) => {
+				renderBrowseFamilyRow(tbody, component, index, app);
+			});
+
+			// Footer
+			if (filtered.length > 1 || filtered.length > displayLimit) {
+				const footer = listContainer.createDiv({ cls: 'crc-place-table-footer crc-mt-2' });
+
+				footer.createEl('span', {
+					cls: 'crc-text-muted crc-text-small',
+					text: `Showing ${visible.length} of ${filtered.length} ${filtered.length !== 1 ? 'families' : 'family'}`
+				});
+
+				if (filtered.length > displayLimit) {
+					const remaining = filtered.length - displayLimit;
+					const loadMoreBtn = footer.createEl('button', {
+						text: `Load more (${remaining} remaining)`,
+						cls: 'crc-btn crc-btn--secondary crc-btn--full-width crc-mt-3'
+					});
+					loadMoreBtn.addEventListener('click', () => {
+						displayLimit += 25;
+						renderContent();
+					});
+				}
+			}
+
+		} else if (currentMode === 'collections') {
+			// User collections — simple list
+			searchInput.style.display = '';
+			searchInput.placeholder = 'Search collections...';
+
+			const collections = graphService.getUserCollections();
+
+			// Filter by search query
+			let filtered = collections;
+			if (query) {
+				filtered = collections.filter(c =>
+					c.name.toLowerCase().includes(query)
+				);
+			}
+
+			if (filtered.length === 0) {
+				listContainer.createEl('p', {
+					cls: 'crc-text--muted',
+					text: query
+						? 'No matching collections found.'
+						: 'No collections yet. Right-click a person note and select "Set collection" to create one.'
+				});
+				return;
+			}
+
+			filtered.forEach(collection => {
+				const collectionItem = listContainer.createDiv({ cls: 'crc-collection-item' });
+
+				const collectionHeader = collectionItem.createDiv({ cls: 'crc-collection-header' });
+				collectionHeader.createEl('strong', { text: `${collection.name} ` });
+				collectionHeader.createEl('span', {
+					cls: 'crc-badge',
+					text: `${collection.size} ${collection.size === 1 ? 'person' : 'people'}`
+				});
+			});
+
+			// Cross-collection connections
+			if (collections.length >= 2) {
+				const connections = graphService.detectCollectionConnections();
+
+				if (connections.length > 0) {
+					listContainer.createEl('h4', {
+						text: `Collection connections (${connections.length})`,
+						cls: 'crc-mt-4 crc-mb-2'
+					});
+
+					connections.forEach(connection => {
+						const connectionItem = listContainer.createDiv({ cls: 'crc-collection-item' });
+
+						const connectionHeader = connectionItem.createDiv({ cls: 'crc-collection-header' });
+						connectionHeader.createEl('strong', {
+							text: `${connection.fromCollection} \u2194 ${connection.toCollection} `
+						});
+						connectionHeader.createEl('span', {
+							cls: 'crc-badge',
+							text: `${connection.relationshipCount} ${connection.relationshipCount === 1 ? 'link' : 'links'}`
+						});
+
+						const bridgeInfo = connectionItem.createDiv({ cls: 'crc-text--muted' });
+						const bridgeNames = connection.bridgePeople.map(p => p.name).slice(0, 3).join(', ');
+						const remainingCount = connection.bridgePeople.length - 3;
+						bridgeInfo.textContent = `Bridge people: ${bridgeNames}${remainingCount > 0 ? ` +${remainingCount} more` : ''}`;
+					});
+				}
+			}
+		}
+	};
+
+	// Event handlers
+	modeSelect.addEventListener('change', () => {
+		currentMode = modeSelect.value as CollectionBrowseMode;
+		currentSearch = '';
+		searchInput.value = '';
+		displayLimit = 25;
+		onStateChange?.(currentMode, currentSearch);
+		renderContent();
+	});
+	searchInput.addEventListener('input', () => {
+		currentSearch = searchInput.value;
+		displayLimit = 25;
+		onStateChange?.(currentMode, currentSearch);
+		renderContent();
+	});
+
+	// Initial render
+	renderContent();
+}
+
+/**
+ * Render a family row for the browse-only dockable view.
+ * No click-to-edit, simplified context menu (open note only).
+ */
+function renderBrowseFamilyRow(
+	tbody: HTMLElement,
+	component: { representative: PersonNode; size: number; people: PersonNode[]; collectionName?: string },
+	index: number,
+	app: App
+): void {
+	const row = tbody.createEl('tr', { cls: 'crc-person-table__row cr-collection-row--browse' });
+
+	// Family name cell
+	const nameCell = row.createEl('td', { cls: 'crc-person-table__td crc-person-table__td--name' });
+	const familyName = component.collectionName || `Family ${index + 1}`;
+	nameCell.createEl('strong', { text: familyName });
+
+	// Size cell
+	const sizeCell = row.createEl('td', { cls: 'crc-person-table__td' });
+	sizeCell.createEl('span', {
+		cls: 'crc-badge',
+		text: `${component.size} ${component.size === 1 ? 'person' : 'people'}`
+	});
+
+	// Representative cell
+	const repCell = row.createEl('td', { cls: 'crc-person-table__td' });
+	repCell.textContent = component.representative.name;
+
+	// Actions cell
+	const actionsCell = row.createEl('td', { cls: 'crc-person-table__td crc-person-table__td--actions' });
+	const openBtn = actionsCell.createEl('button', {
+		cls: 'crc-person-table__open-btn clickable-icon',
+		attr: { 'aria-label': 'Open note' }
+	});
+	setIcon(openBtn, 'file-text');
+	openBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		void app.workspace.getLeaf(false).openFile(component.representative.file);
+	});
+
+	// Context menu — open note only
+	row.addEventListener('contextmenu', (e) => {
+		e.preventDefault();
+		const menu = new Menu();
+
+		menu.addItem(item => {
+			item.setTitle('Open note');
+			item.setIcon('file-text');
+			item.onClick(() => {
+				void app.workspace.getLeaf(false).openFile(component.representative.file);
+			});
+		});
+
+		menu.addItem(item => {
+			item.setTitle('Open in new tab');
+			item.setIcon('file-plus');
+			item.onClick(() => {
+				void app.workspace.getLeaf('tab').openFile(component.representative.file);
+			});
+		});
+
+		menu.showAtMouseEvent(e);
+	});
 }
