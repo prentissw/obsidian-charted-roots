@@ -2793,3 +2793,39 @@ body:has(.cr-media-linker) .suggestion-container {
   justify-content: flex-end;
   gap: var(--size-4-2);
 }
+
+/* ==========================================================================
+   Sources Dockable View
+   ========================================================================== */
+
+.cr-sources-view {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.cr-sv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-sv-title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.cr-sv-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.cr-sv-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.cr-source-row--browse {
+  cursor: default;
+}
