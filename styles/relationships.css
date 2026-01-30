@@ -507,3 +507,35 @@
 .crc-toggle-inline label {
   cursor: pointer;
 }
+
+/* ==========================================================================
+   Relationship Controls (Filter/Sort)
+   ========================================================================== */
+
+.crc-relationship-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.crc-relationship-controls .crc-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+/* Summary row */
+.crc-relationship-summary-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.crc-relationship-stat {
+  font-size: 0.9em;
+}
