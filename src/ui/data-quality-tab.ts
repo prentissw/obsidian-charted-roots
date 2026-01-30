@@ -62,6 +62,20 @@ export interface DataQualityTabOptions {
 }
 
 // ---------------------------------------------------------------------------
+// Dockable view types
+// ---------------------------------------------------------------------------
+
+export type DataQualityFilter = 'all' | 'errors' | 'warnings' | 'info';
+
+export interface DataQualityDashboardOptions {
+	container: HTMLElement;
+	plugin: CanvasRootsPlugin;
+	initialFilter?: DataQualityFilter;
+	initialSearch?: string;
+	onStateChange?: (filter: DataQualityFilter, search: string) => void;
+}
+
+// ---------------------------------------------------------------------------
 // Main entry point
 // ---------------------------------------------------------------------------
 
@@ -1181,6 +1195,313 @@ function formatCategoryName(category: IssueCategory): string {
 		legacy_membership: 'Legacy membership',
 	};
 	return names[category] || category;
+}
+
+// ---------------------------------------------------------------------------
+// Dockable dashboard renderer
+// ---------------------------------------------------------------------------
+
+/**
+ * Render a read-only Data Quality dashboard for the dockable view.
+ *
+ * Shows Research Gaps, Source Conflicts, and Vault-wide Analysis results.
+ * Management features (batch ops, wizards, data tools) remain modal-only.
+ */
+export function renderDataQualityDashboard(options: DataQualityDashboardOptions): void {
+	const { container, plugin } = options;
+	const app = plugin.app;
+	container.empty();
+
+	let currentFilter: DataQualityFilter = options.initialFilter ?? 'all';
+	let currentSearch = options.initialSearch ?? '';
+
+	const notifyStateChange = (): void => {
+		options.onStateChange?.(currentFilter, currentSearch);
+	};
+
+	// --- Section 1: Research Gaps (conditional) ---
+	if (plugin.settings.trackFactSourcing) {
+		const gapsSection = container.createDiv({ cls: 'cr-dqv-section' });
+		gapsSection.createEl('h3', { text: 'Research gaps', cls: 'cr-dqv-section-title' });
+
+		const evidenceService = new EvidenceService(app, plugin.settings);
+		const gaps = evidenceService.getResearchGaps(10);
+
+		if (gaps.totalPeopleTracked === 0 && gaps.totalPeopleUntracked > 0) {
+			const emptyState = gapsSection.createDiv({ cls: 'crc-empty-state crc-compact' });
+			setIcon(emptyState.createSpan({ cls: 'crc-empty-icon' }), 'file-search');
+			emptyState.createEl('p', {
+				text: 'No fact-level source tracking data found. Add sourced_* properties to your person notes to track research coverage.'
+			});
+		} else {
+			// Summary stats
+			const statsRow = gapsSection.createDiv({ cls: 'crc-schema-summary-row' });
+
+			const trackedStat = statsRow.createDiv({ cls: 'crc-schema-stat' });
+			setIcon(trackedStat.createSpan({ cls: 'crc-schema-stat-icon' }), 'users');
+			trackedStat.createSpan({
+				text: `${gaps.totalPeopleTracked} tracked`,
+				cls: 'crc-schema-stat-text'
+			});
+
+			const totalUnsourced = Object.values(gaps.unsourcedByFact).reduce((a, b) => a + b, 0);
+			const unsourcedStat = statsRow.createDiv({ cls: 'crc-schema-stat crc-schema-stat-warning' });
+			setIcon(unsourcedStat.createSpan({ cls: 'crc-schema-stat-icon' }), 'alert-triangle');
+			unsourcedStat.createSpan({
+				text: `${totalUnsourced} unsourced facts`,
+				cls: 'crc-schema-stat-text'
+			});
+
+			const totalWeakly = Object.values(gaps.weaklySourcedByFact).reduce((a, b) => a + b, 0);
+			const weaklyStat = statsRow.createDiv({ cls: 'crc-schema-stat crc-schema-stat-info' });
+			setIcon(weaklyStat.createSpan({ cls: 'crc-schema-stat-icon' }), 'info');
+			weaklyStat.createSpan({
+				text: `${totalWeakly} weakly sourced`,
+				cls: 'crc-schema-stat-text'
+			});
+
+			// Breakdown and lowest coverage
+			renderResearchGapsBreakdown(gapsSection, gaps, 'all');
+			renderLowestCoveragePeople(gapsSection, gaps.lowestCoverage, evidenceService, 'all', app);
+		}
+
+		// --- Section 2: Source Conflicts (conditional, same gate) ---
+		const conflictsSection = container.createDiv({ cls: 'cr-dqv-section' });
+		conflictsSection.createEl('h3', { text: 'Source conflicts', cls: 'cr-dqv-section-title' });
+
+		const proofService = new ProofSummaryService(app, plugin.settings);
+		if (plugin.personIndex) {
+			proofService.setPersonIndex(plugin.personIndex);
+		}
+		const conflictedProofs = proofService.getProofsByStatus('conflicted');
+		const allProofs = proofService.getAllProofs();
+
+		// Summary
+		const conflictStatsRow = conflictsSection.createDiv({ cls: 'crc-schema-summary-row' });
+
+		const conflictStat = conflictStatsRow.createDiv({
+			cls: `crc-schema-stat ${conflictedProofs.length > 0 ? 'crc-schema-stat-warning' : ''}`
+		});
+		setIcon(conflictStat.createSpan({ cls: 'crc-schema-stat-icon' }),
+			conflictedProofs.length > 0 ? 'alert-triangle' : 'check');
+		conflictStat.createSpan({
+			text: `${conflictedProofs.length} unresolved conflict${conflictedProofs.length !== 1 ? 's' : ''}`,
+			cls: 'crc-schema-stat-text'
+		});
+
+		const proofStat = conflictStatsRow.createDiv({ cls: 'crc-schema-stat' });
+		setIcon(proofStat.createSpan({ cls: 'crc-schema-stat-icon' }), 'scale');
+		proofStat.createSpan({
+			text: `${allProofs.length} proof summar${allProofs.length !== 1 ? 'ies' : 'y'}`,
+			cls: 'crc-schema-stat-text'
+		});
+
+		if (conflictedProofs.length === 0) {
+			const successState = conflictsSection.createDiv({ cls: 'crc-dq-no-issues' });
+			setIcon(successState.createDiv({ cls: 'crc-dq-no-issues-icon' }), 'check');
+			successState.createSpan({ text: 'No unresolved source conflicts' });
+		} else {
+			const conflictList = conflictsSection.createDiv({ cls: 'crc-conflicts-list' });
+			for (const proof of conflictedProofs) {
+				renderConflictItem(conflictList, proof, app);
+			}
+		}
+	}
+
+	// --- Section 3: Vault-wide Analysis (always shown, auto-run) ---
+	const analysisSection = container.createDiv({ cls: 'cr-dqv-section' });
+	analysisSection.createEl('h3', { text: 'Vault-wide analysis', cls: 'cr-dqv-section-title' });
+
+	const resultsContainer = analysisSection.createDiv({ cls: 'crc-data-quality-results' });
+
+	// Auto-run analysis
+	const loadingEl = resultsContainer.createDiv({ cls: 'crc-loading' });
+	loadingEl.createSpan({ text: 'Analyzing data quality...' });
+
+	const familyGraph = new FamilyGraphService(app);
+	const folderFilter = new FolderFilterService(plugin.settings);
+	familyGraph.setFolderFilter(folderFilter);
+	familyGraph.setPropertyAliases(plugin.settings.propertyAliases);
+	familyGraph.setValueAliases(plugin.settings.valueAliases);
+
+	const dataQualityService = new DataQualityService(
+		app,
+		plugin.settings,
+		familyGraph,
+		folderFilter,
+		plugin
+	);
+	if (plugin.personIndex) {
+		dataQualityService.setPersonIndex(plugin.personIndex);
+	}
+
+	const report = dataQualityService.analyze({ scope: 'all' });
+	resultsContainer.empty();
+
+	const { summary, issues } = report;
+
+	// Quality score
+	const summaryDiv = resultsContainer.createDiv({ cls: 'crc-dq-summary' });
+	const scoreEl = summaryDiv.createDiv({ cls: 'crc-dq-score' });
+	const scoreValue = scoreEl.createDiv({ cls: 'crc-dq-score-value' });
+	scoreValue.setText(String(summary.qualityScore));
+
+	if (summary.qualityScore >= 80) {
+		scoreValue.addClass('crc-dq-score--good');
+	} else if (summary.qualityScore >= 50) {
+		scoreValue.addClass('crc-dq-score--warning');
+	} else {
+		scoreValue.addClass('crc-dq-score--poor');
+	}
+
+	scoreEl.createDiv({ cls: 'crc-dq-score-label', text: 'Quality score' });
+
+	// Stats grid
+	const statsGrid = summaryDiv.createDiv({ cls: 'crc-dq-stats-grid' });
+	renderDqStatCard(statsGrid, 'People analyzed', String(summary.totalPeople), 'users');
+	renderDqStatCard(statsGrid, 'Total issues', String(summary.totalIssues), 'alert-circle');
+	renderDqStatCard(statsGrid, 'Errors', String(summary.bySeverity.error), 'alert-triangle');
+	renderDqStatCard(statsGrid, 'Warnings', String(summary.bySeverity.warning), 'alert-circle');
+
+	// Completeness metrics
+	const completenessDiv = resultsContainer.createDiv({ cls: 'crc-section' });
+	completenessDiv.createEl('h3', { text: 'Data completeness' });
+
+	const completenessGrid = completenessDiv.createDiv({ cls: 'crc-dq-completeness-grid' });
+	const total = summary.totalPeople || 1;
+	renderCompletenessBar(completenessGrid, 'Birth date', summary.completeness.withBirthDate, total);
+	renderCompletenessBar(completenessGrid, 'Death date', summary.completeness.withDeathDate, total);
+	renderCompletenessBar(completenessGrid, 'Gender', summary.completeness.withGender, total);
+	renderCompletenessBar(completenessGrid, 'Both parents', summary.completeness.withBothParents, total);
+	renderCompletenessBar(completenessGrid, 'At least one parent', summary.completeness.withAtLeastOneParent, total);
+	renderCompletenessBar(completenessGrid, 'Has spouse', summary.completeness.withSpouse, total);
+	renderCompletenessBar(completenessGrid, 'Has children', summary.completeness.withChildren, total);
+
+	// Issues section
+	if (issues.length > 0) {
+		const issuesDiv = resultsContainer.createDiv({ cls: 'crc-section' });
+		issuesDiv.createEl('h3', { text: 'Issues found' });
+
+		// Filter row: severity filter + search
+		const filterRow = issuesDiv.createDiv({ cls: 'crc-dq-filter-row' });
+
+		const severitySelect = filterRow.createEl('select', { cls: 'dropdown crc-filter-select' });
+		severitySelect.createEl('option', { value: 'all', text: 'All severities' });
+		severitySelect.createEl('option', { value: 'errors', text: 'Errors only' });
+		severitySelect.createEl('option', { value: 'warnings', text: 'Warnings only' });
+		severitySelect.createEl('option', { value: 'info', text: 'Info only' });
+		severitySelect.value = currentFilter;
+
+		const searchInput = filterRow.createEl('input', {
+			cls: 'crc-filter-search',
+			type: 'search',
+			placeholder: 'Search issues...',
+			value: currentSearch
+		});
+
+		const issuesList = issuesDiv.createDiv({ cls: 'crc-dq-issues-list' });
+
+		const rerenderIssues = (): void => {
+			issuesList.empty();
+
+			const filtered = issues.filter(issue => {
+				// Severity filter
+				if (currentFilter === 'errors' && issue.severity !== 'error') return false;
+				if (currentFilter === 'warnings' && issue.severity !== 'warning') return false;
+				if (currentFilter === 'info' && issue.severity !== 'info') return false;
+
+				// Search filter
+				if (currentSearch) {
+					const search = currentSearch.toLowerCase();
+					const matchesName = issue.person.name.toLowerCase().includes(search);
+					const matchesMessage = issue.message.toLowerCase().includes(search);
+					if (!matchesName && !matchesMessage) return false;
+				}
+
+				return true;
+			});
+
+			if (filtered.length === 0) {
+				issuesList.createDiv({
+					cls: 'crc-dq-no-matches',
+					text: 'No issues match the selected filters.'
+				});
+				return;
+			}
+
+			issuesList.createDiv({
+				cls: 'crc-dq-issues-count',
+				text: `Showing ${filtered.length} issue${filtered.length === 1 ? '' : 's'}`
+			});
+
+			const displayIssues = filtered.slice(0, 100);
+			for (const issue of displayIssues) {
+				renderDashboardIssueItem(issuesList, issue, app);
+			}
+
+			if (filtered.length > 100) {
+				issuesList.createDiv({
+					cls: 'crc-dq-more-issues',
+					text: `... and ${filtered.length - 100} more issues`
+				});
+			}
+		};
+
+		severitySelect.addEventListener('change', () => {
+			currentFilter = severitySelect.value as DataQualityFilter;
+			notifyStateChange();
+			rerenderIssues();
+		});
+
+		searchInput.addEventListener('input', () => {
+			currentSearch = searchInput.value;
+			notifyStateChange();
+			rerenderIssues();
+		});
+
+		rerenderIssues();
+	} else {
+		const noIssuesEl = resultsContainer.createDiv({ cls: 'crc-dq-no-issues' });
+		setIcon(noIssuesEl.createSpan({ cls: 'crc-dq-no-issues-icon' }), 'check');
+		noIssuesEl.createSpan({ text: 'No issues found! Your data looks great.' });
+	}
+}
+
+/**
+ * Render a single issue item for the dockable dashboard.
+ * Unlike renderIssueItem(), this does not close a modal when clicking a person.
+ */
+function renderDashboardIssueItem(container: HTMLElement, issue: DataQualityIssue, app: App): void {
+	const item = container.createDiv({ cls: `crc-dq-issue crc-dq-issue--${issue.severity}` });
+
+	// Severity icon
+	const iconEl = item.createDiv({ cls: 'crc-dq-issue-icon' });
+	const iconName = issue.severity === 'error' ? 'alert-triangle' :
+		issue.severity === 'warning' ? 'alert-circle' : 'info';
+	setIcon(iconEl, iconName);
+
+	// Content
+	const content = item.createDiv({ cls: 'crc-dq-issue-content' });
+
+	// Person name as clickable link (opens note without closing modal)
+	const personLink = content.createEl('a', {
+		cls: 'crc-dq-issue-person',
+		text: issue.person.name
+	});
+	personLink.addEventListener('click', (e) => {
+		e.preventDefault();
+		const file = issue.person.file;
+		if (file) {
+			void app.workspace.openLinkText(file.path, '', false);
+		}
+	});
+
+	// Issue message
+	content.createDiv({ cls: 'crc-dq-issue-message', text: issue.message });
+
+	// Category badge
+	const badge = item.createDiv({ cls: 'crc-dq-issue-badge' });
+	badge.setText(formatCategoryName(issue.category));
 }
 
 // ---------------------------------------------------------------------------
