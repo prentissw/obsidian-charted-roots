@@ -1,0 +1,46 @@
+/**
+ * Data Quality Dockable View Styles
+ * Styles for the dockable data quality dashboard view
+ */
+
+/* ==========================================================================
+   Data Quality Dockable View
+   ========================================================================== */
+
+.cr-data-quality-view {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.cr-dqv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-dqv-title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.cr-dqv-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.cr-dqv-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.cr-dqv-section {
+  margin-bottom: var(--size-4-6);
+}
+
+.cr-dqv-section-title {
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+  margin: 0 0 var(--size-4-3) 0;
+}

@@ -62,6 +62,7 @@ const CONFIG = {
     'universe-wizard.css', // Universe setup wizard modal
     'universes.css',     // Universes tab and dockable view
     'collections.css',   // Collections tab and dockable view
+    'data-quality-view.css', // Data quality dockable view
     'family-wizard.css', // Family creation wizard modal
     'map-wizard.css',    // Map creation wizard modal
     'preferences.css',   // Preferences tab
