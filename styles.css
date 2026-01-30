@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-charted-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2026-01-30 19:08:58 UTC
+ * - Generated: 2026-01-30 19:12:33 UTC
  * - Components: 41 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -24951,7 +24951,7 @@ input[type="text"]::-webkit-input-placeholder {
    COMPONENT: EVENTS.CSS
    ========================================================================== */
 
-/* Component Size: 1479 lines, 29.99 KB */
+/* Component Size: 1515 lines, 30.63 KB */
 
 /**
  * Events Styles
@@ -26430,6 +26430,42 @@ input[type="text"]::-webkit-input-placeholder {
 
 .crc-deprecation-notice__link:hover {
   color: var(--interactive-accent-hover);
+}
+
+/* ==========================================================================
+   Events Dockable View
+   ========================================================================== */
+
+.cr-events-view {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.cr-ev-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-ev-title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.cr-ev-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.cr-ev-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.crc-timeline-row--browse {
+  cursor: default;
 }
 
 
@@ -37015,11 +37051,11 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2026-01-30 19:08:59 UTC
+ * Build completed: 2026-01-30 19:12:34 UTC
  * Components processed: 41
- * Total lines: 36623
- * Total size: 728.03 KB
- * Build duration: 1.13 seconds
+ * Total lines: 36659
+ * Total size: 728.67 KB
+ * Build duration: 0.99 seconds
  *
  * Component breakdown:
  * - variables.css: 56 lines, 1.61 KB
@@ -37049,7 +37085,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - map-view.css: 1973 lines, 40.2 KB
  * - leaflet-distortable.css: 368 lines, 7.73 KB
  * - date-systems.css: 287 lines, 5.31 KB
- * - events.css: 1479 lines, 29.99 KB
+ * - events.css: 1515 lines, 30.63 KB
  * - timeline-callouts.css: 321 lines, 10.66 KB
  * - organizations.css: 524 lines, 9.69 KB
  * - sources.css: 2796 lines, 56.78 KB

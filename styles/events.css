@@ -1476,3 +1476,39 @@
 .crc-deprecation-notice__link:hover {
   color: var(--interactive-accent-hover);
 }
+
+/* ==========================================================================
+   Events Dockable View
+   ========================================================================== */
+
+.cr-events-view {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.cr-ev-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-ev-title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.cr-ev-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.cr-ev-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.crc-timeline-row--browse {
+  cursor: default;
+}
