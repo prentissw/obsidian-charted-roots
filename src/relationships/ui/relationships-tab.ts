@@ -168,7 +168,6 @@ export function renderRelationshipsList(options: RelationshipsListOptions): void
 
 			// Filter dropdown
 			const filterContainer = controls.createDiv({ cls: 'crc-filter-container' });
-			filterContainer.createEl('label', { text: 'Filter: ', cls: 'crc-text-small crc-text-muted' });
 			const filterSelect = filterContainer.createEl('select', { cls: 'dropdown crc-filter-select' });
 
 			// Build filter options
@@ -230,7 +229,6 @@ export function renderRelationshipsList(options: RelationshipsListOptions): void
 
 			// Sort dropdown
 			const sortContainer = controls.createDiv({ cls: 'crc-filter-container' });
-			sortContainer.createEl('label', { text: 'Sort: ', cls: 'crc-text-small crc-text-muted' });
 			const sortSelect = sortContainer.createEl('select', { cls: 'dropdown crc-filter-select' });
 			sortSelect.createEl('option', { value: 'from_asc', text: 'From A–Z' });
 			sortSelect.createEl('option', { value: 'from_desc', text: 'From Z–A' });
