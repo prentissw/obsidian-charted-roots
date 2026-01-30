@@ -21,12 +21,28 @@ import { renderOrganizationTypeManagerCard } from './organization-type-manager-c
 /**
  * Filter options for organizations list
  */
-type OrgFilter = 'all' | 'has_members' | 'no_members' | `type_${string}`;
+export type OrgListFilter = 'all' | 'has_members' | 'no_members' | `type_${string}`;
 
 /**
  * Sort options for organizations list
  */
-type OrgSort = 'name_asc' | 'name_desc' | 'type' | 'members_desc' | 'members_asc' | 'universe';
+export type OrgListSort = 'name_asc' | 'name_desc' | 'type' | 'members_desc' | 'members_asc' | 'universe';
+
+/**
+ * Options for the standalone organizations list renderer (dockable view)
+ */
+export interface OrganizationsListOptions {
+	container: HTMLElement;
+	plugin: CanvasRootsPlugin;
+	initialFilter?: OrgListFilter;
+	initialSort?: OrgListSort;
+	initialSearch?: string;
+	onStateChange?: (filter: OrgListFilter, sort: OrgListSort, search: string) => void;
+}
+
+// Internal aliases used by the modal renderer
+type OrgFilter = OrgListFilter;
+type OrgSort = OrgListSort;
 
 /**
  * Render the Organizations tab content
@@ -126,7 +142,6 @@ function renderOrganizationsListCard(
 
 		// Filter dropdown
 		const filterContainer = controls.createDiv({ cls: 'crc-filter-container' });
-		filterContainer.createEl('label', { text: 'Filter: ', cls: 'crc-text-small crc-text-muted' });
 		const filterSelect = filterContainer.createEl('select', { cls: 'dropdown crc-filter-select' });
 
 		// Build filter options
@@ -150,7 +165,6 @@ function renderOrganizationsListCard(
 
 		// Sort dropdown
 		const sortContainer = controls.createDiv({ cls: 'crc-filter-container' });
-		sortContainer.createEl('label', { text: 'Sort: ', cls: 'crc-text-small crc-text-muted' });
 		const sortSelect = sortContainer.createEl('select', { cls: 'dropdown crc-filter-select' });
 		sortSelect.createEl('option', { value: 'name_asc', text: 'Name A-Z' });
 		sortSelect.createEl('option', { value: 'name_desc', text: 'Name Z-A' });
@@ -582,4 +596,348 @@ function renderDataToolsCard(
 		);
 
 	container.appendChild(card);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Dockable Organizations List — standalone renderer for the sidebar ItemView
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Render a browsable organizations list for the dockable sidebar view.
+ *
+ * Standalone function with closure-scoped state, independent of the modal's
+ * `renderOrganizationsListCard()`. Provides type/membership filters, sort,
+ * search, pagination, and a simplified table without row-click-to-edit or
+ * media/member management actions.
+ */
+export function renderOrganizationsList(options: OrganizationsListOptions): void {
+	const { container, plugin, onStateChange } = options;
+
+	const orgService = new OrganizationService(plugin);
+	const membershipService = new MembershipService(plugin, orgService);
+
+	// Loading indicator
+	container.empty();
+	container.createEl('p', { text: 'Loading organizations...', cls: 'crc-text--muted' });
+
+	// Load data
+	const allOrgs = orgService.getAllOrganizations();
+
+	container.empty();
+
+	if (allOrgs.length === 0) {
+		const emptyState = container.createDiv({ cls: 'crc-empty-state' });
+		setIcon(emptyState.createSpan({ cls: 'crc-empty-icon' }), 'building');
+		emptyState.createEl('p', { text: 'No organizations found.' });
+		emptyState.createEl('p', {
+			cls: 'crc-text-muted',
+			text: 'Create organization notes with cr_type: organization in frontmatter.'
+		});
+		return;
+	}
+
+	// Pre-compute member counts
+	const memberCounts = new Map<string, number>();
+	for (const org of allOrgs) {
+		memberCounts.set(org.crId, membershipService.getOrganizationMembers(org.crId).length);
+	}
+	const anyHasMembers = Array.from(memberCounts.values()).some(count => count > 0);
+
+	// Closure-scoped state
+	let currentFilter: OrgListFilter = options.initialFilter ?? 'all';
+	let currentSort: OrgListSort = options.initialSort ?? 'name_asc';
+	let currentSearch = options.initialSearch ?? '';
+	let displayLimit = 25;
+
+	// Controls row
+	const controls = container.createDiv({ cls: 'crc-org-controls' });
+
+	// Filter dropdown
+	const filterContainer = controls.createDiv({ cls: 'crc-filter-container' });
+	const filterSelect = filterContainer.createEl('select', { cls: 'dropdown crc-filter-select' });
+
+	filterSelect.createEl('option', { value: 'all', text: 'All organizations' });
+
+	const orgTypes = getAllOrganizationTypes(plugin.settings.customOrganizationTypes || []);
+	if (orgTypes.length > 0) {
+		const typeGroup = filterSelect.createEl('optgroup', { attr: { label: 'By type' } });
+		for (const ot of orgTypes) {
+			typeGroup.createEl('option', { value: `type_${ot.id}`, text: ot.name });
+		}
+	}
+
+	if (anyHasMembers) {
+		const memberGroup = filterSelect.createEl('optgroup', { attr: { label: 'By membership' } });
+		memberGroup.createEl('option', { value: 'has_members', text: 'Has members' });
+		memberGroup.createEl('option', { value: 'no_members', text: 'No members' });
+	}
+
+	filterSelect.value = currentFilter;
+
+	// Sort dropdown
+	const sortContainer = controls.createDiv({ cls: 'crc-filter-container' });
+	const sortSelect = sortContainer.createEl('select', { cls: 'dropdown crc-filter-select' });
+	sortSelect.createEl('option', { value: 'name_asc', text: 'Name A-Z' });
+	sortSelect.createEl('option', { value: 'name_desc', text: 'Name Z-A' });
+	sortSelect.createEl('option', { value: 'type', text: 'Type' });
+	if (anyHasMembers) {
+		sortSelect.createEl('option', { value: 'members_desc', text: 'Members (most)' });
+		sortSelect.createEl('option', { value: 'members_asc', text: 'Members (least)' });
+	}
+	sortSelect.createEl('option', { value: 'universe', text: 'Universe' });
+	sortSelect.value = currentSort;
+
+	// Search input
+	const searchContainer = controls.createDiv({ cls: 'crc-filter-container' });
+	const searchInput = searchContainer.createEl('input', {
+		type: 'search',
+		placeholder: 'Search organizations...',
+		cls: 'crc-filter-search',
+		value: currentSearch
+	});
+
+	// Table container
+	const tableContainer = container.createDiv({ cls: 'crc-org-table-container' });
+
+	// Filter function
+	const filterOrgs = (orgs: OrganizationInfo[]): OrganizationInfo[] => {
+		let filtered = orgs;
+
+		// Apply type/membership filter
+		filtered = filtered.filter(org => {
+			switch (currentFilter) {
+				case 'all':
+					return true;
+				case 'has_members':
+					return (memberCounts.get(org.crId) ?? 0) > 0;
+				case 'no_members':
+					return (memberCounts.get(org.crId) ?? 0) === 0;
+				default:
+					if (currentFilter.startsWith('type_')) {
+						const typeId = currentFilter.replace('type_', '');
+						return org.orgType === typeId;
+					}
+					return true;
+			}
+		});
+
+		// Apply search
+		if (currentSearch.trim()) {
+			const q = currentSearch.trim().toLowerCase();
+			filtered = filtered.filter(org =>
+				org.name.toLowerCase().includes(q) ||
+				(org.universe || '').toLowerCase().includes(q) ||
+				(org.orgType || '').toLowerCase().includes(q)
+			);
+		}
+
+		return filtered;
+	};
+
+	// Sort function
+	const sortOrgs = (orgs: OrganizationInfo[]): OrganizationInfo[] => {
+		return [...orgs].sort((a, b) => {
+			switch (currentSort) {
+				case 'name_asc':
+					return a.name.localeCompare(b.name);
+				case 'name_desc':
+					return b.name.localeCompare(a.name);
+				case 'type':
+					return (a.orgType || '').localeCompare(b.orgType || '');
+				case 'members_desc':
+					return (memberCounts.get(b.crId) ?? 0) - (memberCounts.get(a.crId) ?? 0);
+				case 'members_asc':
+					return (memberCounts.get(a.crId) ?? 0) - (memberCounts.get(b.crId) ?? 0);
+				case 'universe':
+					return (a.universe || '').localeCompare(b.universe || '');
+				default:
+					return 0;
+			}
+		});
+	};
+
+	// Render table
+	const renderTable = () => {
+		tableContainer.empty();
+
+		const filtered = filterOrgs(allOrgs);
+		const sorted = sortOrgs(filtered);
+		const displayed = sorted.slice(0, displayLimit);
+
+		if (filtered.length === 0) {
+			const noResults = tableContainer.createDiv({ cls: 'crc-empty-state' });
+			noResults.createEl('p', { text: 'No organizations match the current filter.' });
+			return;
+		}
+
+		const table = tableContainer.createEl('table', { cls: 'cr-org-table' });
+
+		// Header
+		const thead = table.createEl('thead');
+		const headerRow = thead.createEl('tr');
+		headerRow.createEl('th', { text: 'Name' });
+		headerRow.createEl('th', { text: 'Type' });
+		headerRow.createEl('th', { text: 'Universe' });
+		if (anyHasMembers) {
+			headerRow.createEl('th', { text: 'Members' });
+		}
+		headerRow.createEl('th', { text: 'Media', cls: 'cr-org-th-center' });
+		headerRow.createEl('th', { text: '', cls: 'cr-org-th-actions' });
+
+		// Body
+		const tbody = table.createEl('tbody');
+		for (const org of displayed) {
+			renderBrowseRow(tbody, org, memberCounts.get(org.crId) ?? 0, plugin, anyHasMembers);
+		}
+
+		// Pagination
+		if (filtered.length > displayLimit) {
+			const loadMoreContainer = tableContainer.createDiv({ cls: 'crc-load-more-container' });
+			loadMoreContainer.createSpan({
+				text: `Showing ${displayed.length} of ${filtered.length} organizations`,
+				cls: 'crc-text-muted'
+			});
+			const loadMoreBtn = loadMoreContainer.createEl('button', { cls: 'mod-cta' });
+			loadMoreBtn.textContent = 'Load more';
+			loadMoreBtn.addEventListener('click', () => {
+				displayLimit += 25;
+				renderTable();
+			});
+		} else if (filtered.length > 0) {
+			const countInfo = tableContainer.createDiv({ cls: 'crc-count-info' });
+			countInfo.createSpan({
+				text: `Showing all ${filtered.length} organization${filtered.length !== 1 ? 's' : ''}`,
+				cls: 'crc-text-muted'
+			});
+		}
+	};
+
+	// Event listeners
+	filterSelect.addEventListener('change', () => {
+		currentFilter = filterSelect.value as OrgListFilter;
+		displayLimit = 25;
+		renderTable();
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+	});
+
+	sortSelect.addEventListener('change', () => {
+		currentSort = sortSelect.value as OrgListSort;
+		renderTable();
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+	});
+
+	searchInput.addEventListener('input', () => {
+		currentSearch = searchInput.value;
+		displayLimit = 25;
+		renderTable();
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+	});
+
+	// Initial render
+	renderTable();
+}
+
+/**
+ * Render a simplified organization row for the dockable browse view.
+ * No row-click-to-edit, no media/member management in context menu.
+ */
+function renderBrowseRow(
+	tbody: HTMLTableSectionElement,
+	org: OrganizationInfo,
+	memberCount: number,
+	plugin: CanvasRootsPlugin,
+	showMembers: boolean
+): void {
+	const typeDef = getOrganizationType(
+		org.orgType,
+		plugin.settings.customOrganizationTypes || [],
+		plugin.settings.organizationTypeCustomizations
+	);
+
+	const row = tbody.createEl('tr', { cls: 'cr-org-row cr-org-row--browse' });
+
+	// Context menu — open only
+	row.addEventListener('contextmenu', (e) => {
+		e.preventDefault();
+		if (!(org.file instanceof TFile)) return;
+
+		const menu = new Menu();
+
+		menu.addItem((item) => {
+			item
+				.setTitle('Open note')
+				.setIcon('file')
+				.onClick(async () => {
+					await plugin.trackRecentFile(org.file, 'organization');
+					void plugin.app.workspace.getLeaf(false).openFile(org.file);
+				});
+		});
+
+		menu.addItem((item) => {
+			item
+				.setTitle('Open in new tab')
+				.setIcon('file-plus')
+				.onClick(async () => {
+					await plugin.trackRecentFile(org.file, 'organization');
+					void plugin.app.workspace.getLeaf('tab').openFile(org.file);
+				});
+		});
+
+		menu.showAtMouseEvent(e);
+	});
+
+	// Name cell
+	const nameCell = row.createEl('td', { cls: 'cr-org-cell-name' });
+	nameCell.createSpan({ text: org.name });
+
+	// Type cell with badge
+	const typeCell = row.createEl('td', { cls: 'cr-org-cell-type' });
+	const typeBadge = typeCell.createSpan({ cls: 'cr-org-type-badge' });
+	typeBadge.style.setProperty('background-color', typeDef.color);
+	typeBadge.style.setProperty('color', getContrastColor(typeDef.color));
+	typeBadge.textContent = typeDef.name;
+
+	// Universe cell
+	const universeCell = row.createEl('td', { cls: 'cr-org-cell-universe' });
+	universeCell.textContent = org.universe || '—';
+
+	// Members cell
+	if (showMembers) {
+		const membersCell = row.createEl('td', { cls: 'cr-org-cell-members' });
+		membersCell.textContent = memberCount > 0 ? String(memberCount) : '—';
+	}
+
+	// Media cell — read-only badge (no click handler)
+	const mediaCell = row.createEl('td', { cls: 'cr-org-cell-media' });
+	const mediaCount = org.media?.length || 0;
+	if (mediaCount > 0) {
+		const mediaBadge = mediaCell.createEl('span', {
+			cls: 'crc-person-list-badge crc-person-list-badge--media',
+			attr: { title: `${mediaCount} media file${mediaCount !== 1 ? 's' : ''}` }
+		});
+		const mediaIcon = createLucideIcon('image', 12);
+		mediaBadge.appendChild(mediaIcon);
+		mediaBadge.appendText(mediaCount.toString());
+	} else {
+		mediaCell.createEl('span', { text: '—', cls: 'crc-text-muted' });
+	}
+
+	// Actions cell — open note button
+	const actionsCell = row.createEl('td', { cls: 'cr-org-cell-actions' });
+	const openBtn = actionsCell.createEl('button', {
+		cls: 'crc-btn crc-btn--small crc-btn--ghost',
+		attr: { title: 'Open organization note' }
+	});
+	const fileIcon = createLucideIcon('file-text', 14);
+	openBtn.appendChild(fileIcon);
+
+	openBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		if (org.file instanceof TFile) {
+			void (async () => {
+				await plugin.trackRecentFile(org.file, 'organization');
+				void plugin.app.workspace.getLeaf(false).openFile(org.file);
+			})();
+		}
+	});
 }
