@@ -4,6 +4,9 @@
  * Renders the Relationships tab in the Control Center, showing
  * relationship types, relationships list with filter/sort/pagination,
  * context menus, and statistics.
+ *
+ * The list rendering is extracted into `renderRelationshipsList()` so it
+ * can be shared between the modal card and the dockable ItemView.
  */
 
 import { setIcon, Menu, TFile } from 'obsidian';
@@ -20,12 +23,29 @@ import { renderRelationshipTypeManagerCard } from './relationship-type-manager-c
 /**
  * Filter options for relationships list
  */
-type RelationshipFilter = 'all' | 'defined' | 'inferred' | `type_${string}` | `category_${string}` | `person_${string}`;
+export type RelationshipFilter = 'all' | 'defined' | 'inferred' | `type_${string}` | `category_${string}` | `person_${string}`;
 
 /**
  * Sort options for relationships list
  */
-type RelationshipSort = 'from_asc' | 'from_desc' | 'to_asc' | 'to_desc' | 'type' | 'date_asc' | 'date_desc';
+export type RelationshipSort = 'from_asc' | 'from_desc' | 'to_asc' | 'to_desc' | 'type' | 'date_asc' | 'date_desc';
+
+/**
+ * Options for rendering the relationships list.
+ * Used by both the modal card and the dockable ItemView.
+ */
+export interface RelationshipsListOptions {
+	container: HTMLElement;
+	plugin: CanvasRootsPlugin;
+	/** Navigation callback — used by the modal for tab switching. Optional in ItemView context. */
+	showTab?: (tabId: string) => void;
+	/** Initial filter state for restoration */
+	initialFilter?: RelationshipFilter;
+	/** Initial sort state for restoration */
+	initialSort?: RelationshipSort;
+	/** Callback invoked when filter/sort state changes (for persistence) */
+	onStateChange?: (filter: RelationshipFilter, sort: RelationshipSort) => void;
+}
 
 /**
  * Render the Relationships tab content
@@ -44,19 +64,18 @@ export function renderRelationshipsTab(
 	});
 
 	// Relationships Overview card
-	renderRelationshipsOverviewCard(container, plugin, relationshipService, createCard, showTab);
+	renderRelationshipsOverviewCard(container, plugin, createCard, showTab);
 
 	// Statistics card
 	renderRelationshipStatsCard(container, relationshipService, createCard);
 }
 
 /**
- * Render Custom Relationships card with filter/sort/pagination table
+ * Render Custom Relationships card — thin wrapper around renderRelationshipsList()
  */
 function renderRelationshipsOverviewCard(
 	container: HTMLElement,
 	plugin: CanvasRootsPlugin,
-	service: RelationshipService,
 	createCard: (options: { title: string; icon?: LucideIconName; subtitle?: string }) => HTMLElement,
 	showTab: (tabId: string) => void
 ): void {
@@ -66,8 +85,25 @@ function renderRelationshipsOverviewCard(
 	});
 	const content = card.querySelector('.crc-card__content') as HTMLElement;
 
+	renderRelationshipsList({
+		container: content,
+		plugin,
+		showTab
+	});
+
+	container.appendChild(card);
+}
+
+/**
+ * Render the relationships list with filter/sort/pagination and context menus.
+ * Shared between the modal card and the dockable ItemView.
+ */
+export function renderRelationshipsList(options: RelationshipsListOptions): void {
+	const { container, plugin, showTab, onStateChange } = options;
+	const service = new RelationshipService(plugin);
+
 	// Loading
-	const loading = content.createDiv({ cls: 'crc-loading' });
+	const loading = container.createDiv({ cls: 'crc-loading' });
 	loading.createSpan({ text: 'Loading relationships...' });
 
 	try {
@@ -77,7 +113,7 @@ function renderRelationshipsOverviewCard(
 		loading.remove();
 
 		if (relationships.length === 0) {
-			const emptyState = content.createDiv({ cls: 'crc-empty-state' });
+			const emptyState = container.createDiv({ cls: 'crc-empty-state' });
 			setIcon(emptyState.createSpan({ cls: 'crc-empty-icon' }), 'link-2');
 			emptyState.createEl('p', { text: 'No custom relationships found.' });
 			emptyState.createEl('p', {
@@ -86,7 +122,7 @@ function renderRelationshipsOverviewCard(
 			});
 		} else {
 			// Summary row
-			const summaryRow = content.createDiv({ cls: 'crc-relationship-summary-row' });
+			const summaryRow = container.createDiv({ cls: 'crc-relationship-summary-row' });
 			summaryRow.createSpan({
 				text: `${stats.totalDefined} defined relationships`,
 				cls: 'crc-relationship-stat'
@@ -101,12 +137,12 @@ function renderRelationshipsOverviewCard(
 			});
 
 			// State for filters, sorting, and pagination
-			let currentFilter: RelationshipFilter = 'all';
-			let currentSort: RelationshipSort = 'from_asc';
+			let currentFilter: RelationshipFilter = options.initialFilter ?? 'all';
+			let currentSort: RelationshipSort = options.initialSort ?? 'from_asc';
 			let displayLimit = 25;
 
 			// Filter and sort controls
-			const controls = content.createDiv({ cls: 'crc-relationship-controls' });
+			const controls = container.createDiv({ cls: 'crc-relationship-controls' });
 
 			// Filter dropdown
 			const filterContainer = controls.createDiv({ cls: 'crc-filter-container' });
@@ -167,6 +203,9 @@ function renderRelationshipsOverviewCard(
 				}
 			}
 
+			// Set initial filter value
+			filterSelect.value = currentFilter;
+
 			// Sort dropdown
 			const sortContainer = controls.createDiv({ cls: 'crc-filter-container' });
 			sortContainer.createEl('label', { text: 'Sort: ', cls: 'crc-text-small crc-text-muted' });
@@ -179,8 +218,11 @@ function renderRelationshipsOverviewCard(
 			sortSelect.createEl('option', { value: 'date_asc', text: 'Date (oldest)' });
 			sortSelect.createEl('option', { value: 'date_desc', text: 'Date (newest)' });
 
+			// Set initial sort value
+			sortSelect.value = currentSort;
+
 			// Table container (for refreshing)
-			const tableContainer = content.createDiv({ cls: 'crc-relationships-table-container' });
+			const tableContainer = container.createDiv({ cls: 'crc-relationships-table-container' });
 
 			// Filter function
 			const filterRelationships = (rels: ParsedRelationship[]): ParsedRelationship[] => {
@@ -291,11 +333,13 @@ function renderRelationshipsOverviewCard(
 				currentFilter = filterSelect.value as RelationshipFilter;
 				displayLimit = 25; // Reset pagination on filter change
 				renderTable();
+				onStateChange?.(currentFilter, currentSort);
 			});
 
 			sortSelect.addEventListener('change', () => {
 				currentSort = sortSelect.value as RelationshipSort;
 				renderTable();
+				onStateChange?.(currentFilter, currentSort);
 			});
 
 			// Initial render
@@ -303,13 +347,11 @@ function renderRelationshipsOverviewCard(
 		}
 	} catch (error) {
 		loading.remove();
-		content.createEl('p', {
+		container.createEl('p', {
 			cls: 'crc-error',
 			text: `Failed to load relationships: ${error instanceof Error ? error.message : String(error)}`
 		});
 	}
-
-	container.appendChild(card);
 }
 
 /**
@@ -319,7 +361,7 @@ function renderRelationshipRow(
 	tbody: HTMLTableSectionElement,
 	rel: ParsedRelationship,
 	plugin: CanvasRootsPlugin,
-	showTab: (tabId: string) => void
+	showTab?: (tabId: string) => void
 ): void {
 	const row = tbody.createEl('tr');
 	if (rel.isInferred) {
@@ -383,7 +425,7 @@ function showRelationshipContextMenu(
 	rel: ParsedRelationship,
 	event: MouseEvent,
 	plugin: CanvasRootsPlugin,
-	showTab: (tabId: string) => void
+	showTab?: (tabId: string) => void
 ): void {
 	const menu = new Menu();
 
@@ -448,17 +490,19 @@ function showRelationshipContextMenu(
 		});
 	}
 
-	menu.addSeparator();
+	// View in People tab (only in modal context)
+	if (showTab) {
+		menu.addSeparator();
 
-	// View in People tab
-	menu.addItem((item) => {
-		item
-			.setTitle('View in People tab')
-			.setIcon('users')
-			.onClick(() => {
-				showTab('people');
-			});
-	});
+		menu.addItem((item) => {
+			item
+				.setTitle('View in People tab')
+				.setIcon('users')
+				.onClick(() => {
+					showTab('people');
+				});
+		});
+	}
 
 	menu.showAtMouseEvent(event);
 }
