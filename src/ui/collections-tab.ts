@@ -63,6 +63,7 @@ export function renderCollectionsTab(options: CollectionsTabOptions): void {
 			}));
 
 	container.appendChild(browseCard);
+	addCollectionsDockButton(browseCard, plugin);
 
 	// Generate Overview Canvas button
 	const overviewCard = createCard({
@@ -482,6 +483,24 @@ function loadAnalyticsData(container: HTMLElement, plugin: CanvasRootsPlugin): v
 			cls: 'crc-error-text'
 		});
 	}
+}
+
+/**
+ * Add a dock button to a card header for opening the Collections sidebar view.
+ */
+function addCollectionsDockButton(card: HTMLElement, plugin: CanvasRootsPlugin): void {
+	const header = card.querySelector('.crc-card__header');
+	if (!header) return;
+
+	const dockBtn = document.createElement('button');
+	dockBtn.className = 'crc-card__dock-btn clickable-icon';
+	dockBtn.setAttribute('aria-label', 'Open in sidebar');
+	setIcon(dockBtn, 'panel-right');
+	dockBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		void plugin.activateCollectionsView();
+	});
+	header.appendChild(dockBtn);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
