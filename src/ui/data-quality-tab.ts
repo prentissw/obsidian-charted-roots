@@ -14,7 +14,7 @@ import { createLucideIcon } from './lucide-icons';
 import { FamilyGraphService } from '../core/family-graph';
 import { FolderFilterService } from '../core/folder-filter';
 import { DataQualityService } from '../core/data-quality';
-import type { DataQualityReport, DataQualityIssue, IssueSeverity, IssueCategory, BidirectionalInconsistency, ImpossibleDateIssue } from '../core/data-quality';
+import type { DataQualityReport, DataQualityIssue, IssueSeverity, IssueCategory, BidirectionalInconsistency, ImpossibleDateIssue, BatchOperationResult } from '../core/data-quality';
 import { PlaceGraphService } from '../core/place-graph';
 import { PlaceGeneratorModal } from '../enhancement/ui/place-generator-modal';
 import { FlattenNestedPropertiesModal } from './flatten-nested-properties-modal';
@@ -1598,7 +1598,7 @@ async function runBatchOperation(
 		dataQualityService.setPersonIndex(plugin.personIndex);
 	}
 
-	let result: { processed: number; modified: number; errors: string[] };
+	let result: BatchOperationResult;
 	let operationName: string;
 
 	try {

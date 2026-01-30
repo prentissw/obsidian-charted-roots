@@ -16,6 +16,7 @@ interface PlacesViewState {
 	filter?: PlaceListFilter;
 	sort?: PlaceListSort;
 	search?: string;
+	[key: string]: unknown;
 }
 
 export class PlacesView extends ItemView {

@@ -17,6 +17,7 @@ interface UniversesViewState {
 	filter?: UniverseListFilter;
 	sort?: UniverseListSort;
 	search?: string;
+	[key: string]: unknown;
 }
 
 export class UniversesView extends ItemView {

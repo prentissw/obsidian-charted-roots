@@ -3,6 +3,7 @@
  */
 
 import type * as L from 'leaflet';
+import type { EventTypeDefinition } from '../../events/types/event-types';
 
 // ============================================================================
 // Core Map Data Types
@@ -572,7 +573,7 @@ export interface MapSettings {
 	/** Event icon display mode */
 	eventIconMode?: 'text' | 'icon' | 'both';
 	/** Custom event type definitions */
-	customEventTypes?: { type: string; name: string; icon: string; color: string; category?: string }[];
+	customEventTypes?: EventTypeDefinition[];
 	/** Whether to show built-in event types */
 	showBuiltInEventTypes?: boolean;
 }

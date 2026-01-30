@@ -14,8 +14,8 @@ import type { DataQualityFilter } from './data-quality-tab';
 export const VIEW_TYPE_DATA_QUALITY = 'canvas-roots-data-quality';
 
 interface DataQualityViewState {
-	filter?: DataQualityFilter;
 	search?: string;
+	[key: string]: unknown;
 }
 
 export class DataQualityView extends ItemView {
@@ -143,7 +143,7 @@ export class DataQualityView extends ItemView {
 	// eslint-disable-next-line @typescript-eslint/require-await -- ItemView.setState requires async signature
 	async setState(state: Partial<DataQualityViewState>): Promise<void> {
 		if (state.filter) {
-			this.currentFilter = state.filter;
+			this.currentFilter = state.filter as DataQualityFilter;
 		}
 		if (state.search !== undefined) {
 			this.currentSearch = state.search;

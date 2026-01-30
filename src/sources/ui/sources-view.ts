@@ -17,6 +17,7 @@ interface SourcesViewState {
 	filter?: SourceListFilter;
 	sort?: SourceListSort;
 	search?: string;
+	[key: string]: unknown;
 }
 
 export class SourcesView extends ItemView {

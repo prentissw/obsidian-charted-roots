@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-charted-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2026-01-30 22:14:44 UTC
+ * - Generated: 2026-01-30 23:30:10 UTC
  * - Components: 44 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -6400,7 +6400,7 @@ settings:
    COMPONENT: ENTITY-CREATE-MODALS.CSS
    ========================================================================== */
 
-/* Component Size: 1094 lines, 22.41 KB */
+/* Component Size: 1090 lines, 22.39 KB */
 
 /* ==========================================================================
    PERSON PICKER MODAL
@@ -7399,11 +7399,7 @@ settings:
   bottom: 0;
   margin-top: var(--size-4-4);
   padding: var(--size-4-3) 0;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    var(--modal-background) 20%
-  );
+  background: linear-gradient(to bottom, transparent 0%, var(--modal-background) 20%);
   z-index: 10;
 }
 
@@ -37317,11 +37313,11 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2026-01-30 22:14:45 UTC
+ * Build completed: 2026-01-30 23:30:10 UTC
  * Components processed: 44
- * Total lines: 36898
- * Total size: 733.1 KB
- * Build duration: 0.93 seconds
+ * Total lines: 36894
+ * Total size: 733.09 KB
+ * Build duration: 0.01 seconds
  *
  * Component breakdown:
  * - variables.css: 56 lines, 1.61 KB
@@ -37330,7 +37326,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - layout.css: 22 lines, 0.25 KB
  * - settings.css: 131 lines, 3.53 KB
  * - control-center.css: 5747 lines, 106.74 KB
- * - entity-create-modals.css: 1094 lines, 22.41 KB
+ * - entity-create-modals.css: 1090 lines, 22.39 KB
  * - place-modals.css: 1406 lines, 27.04 KB
  * - media-modals.css: 1928 lines, 36.72 KB
  * - import-export-wizard.css: 2187 lines, 41.08 KB

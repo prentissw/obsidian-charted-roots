@@ -99,6 +99,7 @@ export type LucideIconName =
 	| 'plus'           // Add/create
 	| 'minus'          // Remove
 	| 'edit'           // Edit
+	| 'pencil'         // Edit/pencil icon
 	| 'trash'          // Delete
 	| 'refresh-cw'     // Refresh/recalculate
 	| 'download'       // Download/export
@@ -119,6 +120,7 @@ export type LucideIconName =
 	| 'arrow-up'       // Direction up
 	| 'arrow-down'     // Direction down
 	| 'arrow-right'    // Direction right/lateral
+	| 'arrow-right-left' // Transfer/lateral movement
 	| 'copy'           // Copy to clipboard
 	| 'circle'         // Neutral/dot indicator
 	| 'home'           // Family/home
@@ -141,6 +143,7 @@ export type LucideIconName =
 	| 'file-code'      // Templates/code files
 	| 'lightbulb'      // Ideas/concepts
 	| 'list-checks'    // Task lists
+	| 'clipboard-list' // Census/list icon
 	| 'map'            // Map view
 	| 'more-vertical' // Overflow menu
 	| 'clipboard-check' // Schema validation

@@ -15,6 +15,7 @@ export const VIEW_TYPE_RELATIONSHIPS = 'canvas-roots-relationships';
 interface RelationshipsViewState {
 	filter?: RelationshipFilter;
 	sort?: RelationshipSort;
+	[key: string]: unknown;
 }
 
 export class RelationshipsView extends ItemView {

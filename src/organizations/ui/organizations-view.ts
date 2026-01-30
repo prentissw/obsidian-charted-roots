@@ -14,9 +14,9 @@ import type { OrgListFilter, OrgListSort } from './organizations-tab';
 export const VIEW_TYPE_ORGANIZATIONS = 'canvas-roots-organizations';
 
 interface OrganizationsViewState {
-	filter?: OrgListFilter;
-	sort?: OrgListSort;
+	filter?: string;
 	search?: string;
+	[key: string]: unknown;
 }
 
 export class OrganizationsView extends ItemView {
@@ -148,10 +148,10 @@ export class OrganizationsView extends ItemView {
 	// eslint-disable-next-line @typescript-eslint/require-await -- ItemView.setState requires async signature
 	async setState(state: Partial<OrganizationsViewState>): Promise<void> {
 		if (state.filter) {
-			this.currentFilter = state.filter;
+			this.currentFilter = state.filter as OrgListFilter;
 		}
 		if (state.sort) {
-			this.currentSort = state.sort;
+			this.currentSort = state.sort as OrgListSort;
 		}
 		if (state.search !== undefined) {
 			this.currentSearch = state.search;

@@ -267,8 +267,8 @@ export class CreateSourceModal extends Modal {
 				}
 
 				this.personRoles.push({
-					crId: personCrId,
-					name: personName,
+					crId: personCrId || linkTarget,
+					name: personName || linkTarget,
 					role: prop,
 					details
 				});

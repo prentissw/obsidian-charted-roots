@@ -16,6 +16,7 @@ interface EventsViewState {
 	typeFilter?: string;
 	personFilter?: string;
 	search?: string;
+	[key: string]: unknown;
 }
 
 export class EventsView extends ItemView {

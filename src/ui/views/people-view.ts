@@ -16,6 +16,7 @@ interface PeopleViewState {
 	filter?: PersonListFilter;
 	sort?: PersonListSort;
 	search?: string;
+	[key: string]: unknown;
 }
 
 export class PeopleView extends ItemView {

@@ -16,6 +16,7 @@ export const VIEW_TYPE_COLLECTIONS = 'canvas-roots-collections';
 interface CollectionsViewState {
 	mode?: CollectionBrowseMode;
 	search?: string;
+	[key: string]: unknown;
 }
 
 export class CollectionsView extends ItemView {

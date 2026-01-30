@@ -622,7 +622,7 @@ function addSourcesDockButton(card: HTMLElement, plugin: CanvasRootsPlugin): voi
 export function renderSourcesList(options: SourcesListOptions): void {
 	const { container, plugin, onStateChange } = options;
 
-	const sourceService = new SourceService(plugin);
+	const sourceService = new SourceService(plugin.app, plugin.settings);
 
 	// Loading indicator
 	container.empty();

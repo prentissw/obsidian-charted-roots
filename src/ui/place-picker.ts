@@ -63,6 +63,8 @@ export class PlacePickerModal extends Modal {
 	private loadingEl?: HTMLElement;
 	private directory?: string;
 	private plugin?: CanvasRootsPlugin;
+	private titleOverride?: string;
+	private subtitleOverride?: string;
 
 	constructor(
 		app: App,
@@ -73,6 +75,8 @@ export class PlacePickerModal extends Modal {
 			settings?: CanvasRootsSettings;
 			directory?: string;
 			plugin?: CanvasRootsPlugin;
+			title?: string;
+			subtitle?: string;
 		}
 	) {
 		super(app);
@@ -82,6 +86,8 @@ export class PlacePickerModal extends Modal {
 		this.settings = options?.settings;
 		this.directory = options?.directory;
 		this.plugin = options?.plugin;
+		this.titleOverride = options?.title;
+		this.subtitleOverride = options?.subtitle;
 	}
 
 	onOpen(): void {
@@ -211,7 +217,11 @@ export class PlacePickerModal extends Modal {
 		const titleSection = header.createDiv({ cls: 'crc-picker-title' });
 		const icon = createLucideIcon('map-pin', 20);
 		titleSection.appendChild(icon);
-		titleSection.appendText('Select place');
+		titleSection.appendText(this.titleOverride || 'Select place');
+
+		if (this.subtitleOverride) {
+			header.createDiv({ cls: 'crc-picker-subtitle', text: this.subtitleOverride });
+		}
 
 		// Search section
 		const searchSection = contentEl.createDiv({ cls: 'crc-picker-search' });
