@@ -2,7 +2,7 @@
 
 Planning document for [#239](https://github.com/banisterious/obsidian-charted-roots/discussions/239).
 
-**Status:** 📋 Planning
+**Status:** ✅ Phase 1 complete | 📋 Phase 2 planning
 
 ---
 
@@ -75,9 +75,11 @@ In Phase 1 (component extraction), these remain as callbacks. In Phase 2 (ItemVi
 
 ---
 
-## Phase 1: Component Extraction
+## Phase 1: Component Extraction ✅
 
 **Goal:** Extract each embedded tab into its own file, following the existing pattern established by `dashboard-tab.ts` and `places-tab.ts`. The Control Center modal remains the host — no user-facing changes.
+
+**Result:** `control-center.ts` reduced from ~13,760 to ~1,451 lines (89% reduction). All 9 extraction commits completed on `feature/control-center-modularization` branch.
 
 ### Extraction Pattern
 
@@ -186,7 +188,55 @@ Each extraction is a pure refactor — no user-facing behavior should change. Af
 
 ## Phase 2: ItemView Migration
 
-**Goal:** Each tab component becomes an independent `ItemView` that can be docked, pinned, and used alongside notes. The Control Center modal remains available as an alternative interface.
+**Goal:** Create dockable workspace views for entity browsing. Each dockable view contains a **focused subset** of its modal tab — the entity list with filter/sort/search — not a 1:1 clone of the full tab. Actions, batch operations, configuration, statistics, and type managers stay modal-only.
+
+### Design Principles
+
+1. **Focused subset, not full clone.** Dockable views contain only the browsable entity list (filter/sort/search/table/context menus). Everything else stays in the modal.
+2. **Single instance per view type.** Clicking the dock button when a view is already open focuses the existing instance rather than creating a duplicate.
+3. **Modal stays open on dock.** The dock button opens/focuses the ItemView without closing the Control Center modal, so users can dock multiple lists in one session.
+4. **Modal is not deprecated.** Both the modal and ItemViews share the same extracted tab components. No maintenance overhead from supporting both.
+
+### Dock Button UX
+
+Each dockable card in the Control Center modal gets a small dock button in its card header:
+
+- **Icon:** `panel-right` (Lucide), small, right-aligned in the card header bar
+- **Scope:** Only on cards identified as dockable (see table below)
+- **On click:** Opens the content as a dockable ItemView; modal stays open
+- **Already docked:** Focuses the existing view instance (single-instance)
+
+### Dockable Views (8 total)
+
+| Tab | Dockable card | Content in dockable view |
+|-----|--------------|--------------------------|
+| **People** | People list | Filter/sort/search table with expandable details, context menus |
+| **Places** | Place notes list | Filter/sort/search table with category badges, coordinates, context menus |
+| **Events** | Timeline table | Type/person/search filters, sortable table, context menus |
+| **Sources** | Sources list | Filter/sort table with type/confidence badges, context menus |
+| **Organizations** | Organizations list | Filter/sort table with type badges, member counts, context menus |
+| **Relationships** | Relationships table | Table with type badges, filter/sort (to be added — currently missing) |
+| **Universes** | Universe list | Filter/sort/search table with status badges, entity counts, context menus |
+| **Collections** | Browse card | Mode switcher (all people / detected families / user collections) + corresponding list |
+
+### Modal-Only Tabs (no dockable view)
+
+| Tab | Reason |
+|-----|--------|
+| **Data Quality** | Entirely tooling — analysis, batch operations, diagnostics. No browsable entity list. |
+| **Schemas** | Configuration and validation tooling. No browsable entity list. |
+| **Trees & Reports** | Wizard launchers, configuration, export actions. No browsable entity list. |
+| **Maps** | Already has a dedicated full ItemView (`map-view.ts`). Modal tab is for management. |
+| **Dashboard** | Navigation hub and overview. No entity list. |
+
+### Relationships Tab Enhancement
+
+The Relationships tab currently has a minimal read-only table (hard-capped at 50 rows, no filter/sort, no context menu). Before or during Phase 2, add:
+
+- Filter dropdown (by type, by category, by person)
+- Sort dropdown (by type, by from-person, by to-person, by date)
+- Pagination (load more pattern, matching other tabs)
+- Context menus on rows
 
 ### ItemView Pattern
 
@@ -204,7 +254,8 @@ export class PeopleView extends ItemView {
     async onOpen(): Promise<void> {
         const container = this.containerEl.children[1];
         container.empty();
-        renderPeopleTab({
+        // Render only the dockable subset — the people list component
+        renderPeopleList({
             container: container as HTMLElement,
             plugin: this.plugin,
             app: this.app,
@@ -236,6 +287,16 @@ In Phase 1, tabs navigate via `switchTab('places')` callback. In Phase 2, this b
 await this.plugin.activatePlacesView();
 ```
 
+### State Persistence
+
+Each ItemView persists its filter/sort state via `getState()`/`setState()` so preferences survive across sessions. State to persist:
+
+- Filter selection (e.g., `currentFilter: 'all'`)
+- Sort selection (e.g., `currentSort: 'name_asc'`)
+- Search query (optional — may be better to clear on reopen)
+- Pagination position (reset on reopen)
+- For Collections: selected browse mode (`'all' | 'families' | 'collections'`)
+
 ### Coexistence with Control Center Modal
 
 The Control Center modal is **not deprecated**. Both the modal and ItemViews share the same extracted tab components (from Phase 1), so there is no maintenance overhead from supporting both. The modal remains available for users who prefer quick, transient access — open, act, close — while ItemViews serve users who want persistent, dockable views for extended sessions.
@@ -253,6 +314,5 @@ Same order as Phase 1 extraction. Each tab can be migrated independently once it
 ## Open Questions
 
 1. **Workspace layout presets** — Should we provide a "Control Center layout" command that opens all views in a predefined arrangement?
-2. **State persistence** — Each ItemView should persist its filter/sort state via `getState()`/`setState()`. What state should persist across sessions?
-3. **Auto-refresh** — Should entity views auto-refresh when vault files change (like Statistics does), or require manual refresh?
-4. **Navigation hub** — Should Dashboard become a lightweight "home" view that links to all other views?
+2. **Auto-refresh** — Should entity views auto-refresh when vault files change (like Statistics does), or require manual refresh?
+3. **Navigation hub** — Should Dashboard become a lightweight "home" view that links to all other views?
