@@ -539,3 +539,57 @@
 .crc-relationship-stat {
   font-size: 0.9em;
 }
+
+/* ==========================================================================
+   Dock Button (card header action to open dockable view)
+   ========================================================================== */
+
+.crc-card__dock-btn {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.crc-card__header:hover .crc-card__dock-btn {
+  opacity: 1;
+}
+
+.crc-card__dock-btn:hover {
+  color: var(--text-normal);
+  background-color: var(--background-modifier-hover);
+}
+
+/* ==========================================================================
+   Relationships Dockable View
+   ========================================================================== */
+
+.cr-relationships-view {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.cr-rv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-rv-title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.cr-rv-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.cr-rv-content {
+  display: flex;
+  flex-direction: column;
+}

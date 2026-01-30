@@ -83,6 +83,9 @@ function renderRelationshipsOverviewCard(
 		title: 'Custom relationships',
 		icon: 'users'
 	});
+
+	addDockButton(card, plugin);
+
 	const content = card.querySelector('.crc-card__content') as HTMLElement;
 
 	renderRelationshipsList({
@@ -92,6 +95,25 @@ function renderRelationshipsOverviewCard(
 	});
 
 	container.appendChild(card);
+}
+
+/**
+ * Add a dock button to a card header that opens the relationships view
+ * in the right sidebar.
+ */
+function addDockButton(card: HTMLElement, plugin: CanvasRootsPlugin): void {
+	const header = card.querySelector('.crc-card__header');
+	if (!header) return;
+
+	const dockBtn = document.createElement('button');
+	dockBtn.className = 'crc-card__dock-btn clickable-icon';
+	dockBtn.setAttribute('aria-label', 'Open in sidebar');
+	setIcon(dockBtn, 'panel-right');
+	dockBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		void plugin.activateRelationshipsView();
+	});
+	header.appendChild(dockBtn);
 }
 
 /**
