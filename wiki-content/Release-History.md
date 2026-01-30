@@ -8,6 +8,8 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
 
 ## Table of Contents
 
+- [v0.20.x](#v020x)
+  - [Control Center Modularization](#control-center-modularization)
 - [v0.19.x](#v019x)
   - [Inheritance & Succession Tracking](#inheritance--succession-tracking)
   - [Organization Member Management](#organization-member-management)
@@ -103,6 +105,51 @@ For version-specific changes, see the [CHANGELOG](../CHANGELOG.md) and [GitHub R
   - [Maps Tab](#maps-tab-v062)
   - [Geographic Features](#geographic-features-v060)
   - [Import/Export Enhancements](#importexport-enhancements-v060)
+
+---
+
+## v0.20.x
+
+### Control Center Modularization
+
+Break the Control Center modal into modular, independently dockable workspace views. The Control Center remains available for quick, transient access while dockable views serve extended work sessions.
+
+**GitHub Discussion:** [#239](https://github.com/banisterious/obsidian-charted-roots/discussions/239), [#240](https://github.com/banisterious/obsidian-charted-roots/discussions/240)
+
+**Phase 1 — Component Extraction:**
+
+Extracted all 16 tabs from the monolithic `control-center.ts` (~13,760 lines) into individual component files, reducing it to ~1,450 lines (89% reduction). Removed 3 legacy redirect tabs (Status, Guide, Statistics). No user-facing changes.
+
+**Phase 2 — Dockable ItemViews:**
+
+Created 9 dockable sidebar views, each accessible via a dock button on the corresponding Control Center card header or via the command palette.
+
+| View | Command | Icon | Content |
+|------|---------|------|---------|
+| People | `Open people` | `user` | Filter/sort/search table with expandable details, context menus |
+| Places | `Open places` | `map-pin` | Filter/sort/search table with category badges, coordinates |
+| Events | `Open events` | `calendar` | Type/person/date filters, sortable timeline table |
+| Sources | `Open sources` | `book-open` | Filter/sort table with type/confidence badges |
+| Organizations | `Open organizations` | `building` | Filter/sort table with type badges, member counts |
+| Relationships | `Open relationships` | `users` | Filter by type/category/person, sort, context menus |
+| Universes | `Open universes` | `globe` | Filter/sort/search with status badges, entity counts |
+| Collections | `Open collections` | `folder-tree` | Mode switcher (all people / families / collections) |
+| Data quality | `Open data quality` | `shield-check` | Research gaps, source conflicts, auto-running vault-wide analysis |
+
+**Key design decisions:**
+- The Control Center modal is **not deprecated** — modal and dockable views share the same extracted components
+- Each view is single-instance (clicking the dock button focuses an existing view rather than creating a duplicate)
+- Views auto-refresh on vault changes (debounced 2s) and persist filter/sort/search state across sessions
+- Data Quality view is a read-only dashboard (not an entity list) — batch operations, wizards, and data tools remain modal-only
+- Dock buttons appear on hover over card headers, using the `panel-right` icon
+
+**Relationships tab enhancements** (prerequisite for dockable view):
+- Added filter dropdowns (by type, category, person)
+- Added sort options (by type, from-person, to-person, date)
+- Added pagination with load-more pattern
+- Added context menus on rows
+
+See [Control Center Modularization Planning Document](https://github.com/banisterious/obsidian-charted-roots/blob/main/docs/planning/control-center-modularization.md) for full specifications.
 
 ---
 
