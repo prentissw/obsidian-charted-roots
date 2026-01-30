@@ -8,7 +8,7 @@
  * GitHub: https://github.com/banisterious/obsidian-charted-roots
  *
  * BUILD INFORMATION:
- * - Generated: 2026-01-30 17:45:54 UTC
+ * - Generated: 2026-01-30 18:45:26 UTC
  * - Components: 41 files
  * - Build System: Node.js CSS Build Script v1.0.0
  *
@@ -644,7 +644,7 @@ settings:
    COMPONENT: CONTROL-CENTER.CSS
    ========================================================================== */
 
-/* Component Size: 5673 lines, 105.32 KB */
+/* Component Size: 5710 lines, 106.03 KB */
 
 /* ==========================================================================
    Charted Roots Control Center - Styling
@@ -6317,6 +6317,43 @@ settings:
 
 .cr-modal-resume-banner__btn--restore:hover {
   background: var(--interactive-accent-hover);
+}
+
+/* ==========================================================================
+   People Dockable View
+   ========================================================================== */
+
+.cr-people-view {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.cr-pv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-pv-title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.cr-pv-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.cr-pv-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Browse-only rows have default cursor (no row-click-to-edit) */
+.crc-person-table__row--browse {
+  cursor: default;
 }
 
 
@@ -36978,11 +37015,11 @@ body:has(.cr-media-linker) .suggestion-container {
    ========================================================================== */
 
 /*
- * Build completed: 2026-01-30 17:45:56 UTC
+ * Build completed: 2026-01-30 18:45:28 UTC
  * Components processed: 41
- * Total lines: 36586
- * Total size: 727.32 KB
- * Build duration: 1.17 seconds
+ * Total lines: 36623
+ * Total size: 728.03 KB
+ * Build duration: 1.2 seconds
  *
  * Component breakdown:
  * - variables.css: 56 lines, 1.61 KB
@@ -36990,7 +37027,7 @@ body:has(.cr-media-linker) .suggestion-container {
  * - base.css: 87 lines, 1.22 KB
  * - layout.css: 22 lines, 0.25 KB
  * - settings.css: 131 lines, 3.53 KB
- * - control-center.css: 5673 lines, 105.32 KB
+ * - control-center.css: 5710 lines, 106.03 KB
  * - entity-create-modals.css: 1094 lines, 22.41 KB
  * - place-modals.css: 1406 lines, 27.04 KB
  * - media-modals.css: 1928 lines, 36.72 KB
