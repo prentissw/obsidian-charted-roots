@@ -5,7 +5,7 @@
  * place statistics, lists, references, and data quality issues.
  */
 
-import { Menu, Modal, Notice, Setting, TFile } from 'obsidian';
+import { Menu, Modal, Notice, Setting, TFile, setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../main';
 import type { LucideIconName } from './lucide-icons';
 import { createLucideIcon } from './lucide-icons';
@@ -22,6 +22,22 @@ import { renderPlaceTypeManagerCard } from '../places/ui/place-type-manager-card
 import { BulkGeocodeModal } from '../maps/ui/bulk-geocode-modal';
 import { EnrichPlaceHierarchyModal } from '../maps/ui/enrich-place-hierarchy-modal';
 import { OrganizePlacesModal, findMisplacedPlaces } from './organize-places-modal';
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Types for the dockable Places list (renderPlacesList)
+   ────────────────────────────────────────────────────────────────────────── */
+
+export type PlaceListFilter = 'all' | 'real' | 'historical' | 'disputed' | 'legendary' | 'mythological' | 'fictional' | 'has_coordinates' | 'no_coordinates';
+export type PlaceListSort = 'name_asc' | 'name_desc' | 'people_desc' | 'people_asc' | 'category' | 'type';
+
+export interface PlacesListOptions {
+	container: HTMLElement;
+	plugin: CanvasRootsPlugin;
+	initialFilter?: PlaceListFilter;
+	initialSort?: PlaceListSort;
+	initialSearch?: string;
+	onStateChange?: (filter: PlaceListFilter, sort: PlaceListSort, search: string) => void;
+}
 
 /**
  * Render the Places tab content
@@ -1717,4 +1733,366 @@ function showNormalizePlaceNamesApply(plugin: CanvasRootsPlugin, showTab: (tabId
 		// Refresh the Places tab
 		showTab('places');
 	})();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Dockable Places List — standalone renderer for the sidebar ItemView
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Render a browsable places list for the dockable sidebar view.
+ *
+ * Standalone function with closure-scoped state, independent of the modal's
+ * `loadPlaceList()`. Provides category/coordinate filters, sort, search,
+ * pagination, and a simplified table without row-click-to-edit or media actions.
+ */
+export function renderPlacesList(options: PlacesListOptions): void {
+	const { container, plugin, onStateChange } = options;
+
+	const placeService = new PlaceGraphService(plugin.app);
+	placeService.setSettings(plugin.settings);
+	placeService.setValueAliases(plugin.settings.valueAliases);
+	placeService.reloadCache();
+
+	const allPlaces = placeService.getAllPlaces();
+
+	if (allPlaces.length === 0) {
+		const emptyState = container.createDiv({ cls: 'crc-empty-state' });
+		emptyState.createEl('p', {
+			text: 'No place notes found.',
+			cls: 'crc-text-muted'
+		});
+		emptyState.createEl('p', {
+			text: 'Create place notes to see them here.',
+			cls: 'crc-text-muted'
+		});
+		return;
+	}
+
+	// Build people count map
+	const peopleCountMap = new Map<string, number>();
+	for (const place of allPlaces) {
+		const peopleAtPlace = placeService.getPeopleAtPlace(place.id);
+		peopleCountMap.set(place.id, peopleAtPlace.length);
+	}
+
+	// Closure-scoped state
+	let currentFilter: PlaceListFilter = options.initialFilter ?? 'all';
+	let currentSort: PlaceListSort = options.initialSort ?? 'name_asc';
+	let currentSearch = options.initialSearch ?? '';
+	let displayLimit = 25;
+
+	// Controls row
+	const controlsRow = container.createDiv({ cls: 'crc-place-controls crc-mb-3' });
+
+	// Filter dropdown
+	const filterSelect = controlsRow.createEl('select', { cls: 'dropdown' });
+	const filterOptions: Array<{ value: PlaceListFilter; label: string }> = [
+		{ value: 'all', label: 'All places' },
+		{ value: 'real', label: 'Real' },
+		{ value: 'historical', label: 'Historical' },
+		{ value: 'disputed', label: 'Disputed' },
+		{ value: 'legendary', label: 'Legendary' },
+		{ value: 'mythological', label: 'Mythological' },
+		{ value: 'fictional', label: 'Fictional' },
+		{ value: 'has_coordinates', label: 'Has coordinates' },
+		{ value: 'no_coordinates', label: 'No coordinates' }
+	];
+	for (const opt of filterOptions) {
+		const el = filterSelect.createEl('option', { value: opt.value, text: opt.label });
+		if (opt.value === currentFilter) el.selected = true;
+	}
+	filterSelect.value = currentFilter;
+
+	// Sort dropdown
+	const sortSelect = controlsRow.createEl('select', { cls: 'dropdown' });
+	const sortOptions: Array<{ value: PlaceListSort; label: string }> = [
+		{ value: 'name_asc', label: 'Name (A–Z)' },
+		{ value: 'name_desc', label: 'Name (Z–A)' },
+		{ value: 'people_desc', label: 'People (most)' },
+		{ value: 'people_asc', label: 'People (least)' },
+		{ value: 'category', label: 'Category' },
+		{ value: 'type', label: 'Type' }
+	];
+	for (const opt of sortOptions) {
+		const el = sortSelect.createEl('option', { value: opt.value, text: opt.label });
+		if (opt.value === currentSort) el.selected = true;
+	}
+	sortSelect.value = currentSort;
+
+	// Search input
+	const searchInput = controlsRow.createEl('input', {
+		cls: 'crc-filter-input',
+		attr: {
+			type: 'text',
+			placeholder: `Search ${allPlaces.length} places...`
+		}
+	});
+	searchInput.value = currentSearch;
+
+	// Table container
+	const tableContainer = container.createDiv({ cls: 'crc-place-table-container' });
+
+	// Filter + sort logic
+	const getFilteredSorted = () => {
+		const filtered = allPlaces.filter(place => {
+			if (currentSearch) {
+				const query = currentSearch.toLowerCase();
+				const matchesSearch = place.name.toLowerCase().includes(query) ||
+					(place.placeType && place.placeType.toLowerCase().includes(query)) ||
+					place.category.toLowerCase().includes(query);
+				if (!matchesSearch) return false;
+			}
+
+			switch (currentFilter) {
+				case 'all':
+					return true;
+				case 'real':
+				case 'historical':
+				case 'disputed':
+				case 'legendary':
+				case 'mythological':
+				case 'fictional':
+					return place.category === currentFilter;
+				case 'has_coordinates':
+					return place.coordinates !== undefined;
+				case 'no_coordinates':
+					return place.coordinates === undefined;
+				default:
+					return true;
+			}
+		});
+
+		filtered.sort((a, b) => {
+			switch (currentSort) {
+				case 'name_asc':
+					return a.name.localeCompare(b.name);
+				case 'name_desc':
+					return b.name.localeCompare(a.name);
+				case 'people_desc':
+					return (peopleCountMap.get(b.id) || 0) - (peopleCountMap.get(a.id) || 0);
+				case 'people_asc':
+					return (peopleCountMap.get(a.id) || 0) - (peopleCountMap.get(b.id) || 0);
+				case 'category': {
+					const catOrder = ['real', 'historical', 'disputed', 'legendary', 'mythological', 'fictional'];
+					return catOrder.indexOf(a.category) - catOrder.indexOf(b.category);
+				}
+				case 'type':
+					return (a.placeType || '').localeCompare(b.placeType || '');
+				default:
+					return 0;
+			}
+		});
+
+		return filtered;
+	};
+
+	// Render function
+	const renderTable = () => {
+		tableContainer.empty();
+
+		const filtered = getFilteredSorted();
+
+		if (filtered.length === 0) {
+			tableContainer.createEl('p', {
+				text: 'No places match the current filter.',
+				cls: 'crc-text-muted crc-text-center'
+			});
+			return;
+		}
+
+		const table = tableContainer.createEl('table', { cls: 'crc-place-table' });
+
+		// Header
+		const thead = table.createEl('thead');
+		const headerRow = thead.createEl('tr');
+		headerRow.createEl('th', { text: 'Name' });
+		headerRow.createEl('th', { text: 'Category' });
+		headerRow.createEl('th', { text: 'Type' });
+		headerRow.createEl('th', { text: 'Coordinates' });
+		headerRow.createEl('th', { text: 'People' });
+		headerRow.createEl('th', { text: 'Media', cls: 'crc-place-th--center' });
+		headerRow.createEl('th', { text: '', cls: 'crc-place-th--actions' });
+
+		// Body
+		const tbody = table.createEl('tbody');
+		const displayedPlaces = filtered.slice(0, displayLimit);
+
+		for (const place of displayedPlaces) {
+			const row = tbody.createEl('tr', { cls: 'crc-place-row crc-place-row--browse' });
+
+			// Context menu (simplified: open note, open in new tab only)
+			row.addEventListener('contextmenu', (e) => {
+				e.preventDefault();
+				const file = plugin.app.vault.getAbstractFileByPath(place.filePath);
+				if (!(file instanceof TFile)) return;
+
+				const menu = new Menu();
+
+				menu.addItem((item) => {
+					item
+						.setTitle('Open note')
+						.setIcon('file')
+						.onClick(async () => {
+							await plugin.trackRecentFile(file, 'place');
+							void plugin.app.workspace.getLeaf(false).openFile(file);
+						});
+				});
+
+				menu.addItem((item) => {
+					item
+						.setTitle('Open in new tab')
+						.setIcon('file-plus')
+						.onClick(async () => {
+							await plugin.trackRecentFile(file, 'place');
+							void plugin.app.workspace.getLeaf('tab').openFile(file);
+						});
+				});
+
+				menu.showAtMouseEvent(e);
+			});
+
+			// Name cell
+			const nameCell = row.createEl('td', { cls: 'crc-place-cell-name' });
+			nameCell.createEl('span', { text: place.name });
+			if (place.universe) {
+				nameCell.createEl('span', {
+					text: place.universe,
+					cls: 'crc-badge crc-badge--accent crc-badge--small crc-ml-1'
+				});
+			}
+
+			// Category cell
+			const categoryCell = row.createEl('td', { cls: 'crc-place-cell-category' });
+			categoryCell.createEl('span', {
+				text: formatPlaceCategoryName(place.category),
+				cls: `crc-category-badge crc-category-badge--${place.category}`
+			});
+
+			// Type cell
+			const typeCell = row.createEl('td', { cls: 'crc-place-cell-type' });
+			if (place.placeType) {
+				typeCell.textContent = place.placeType;
+			} else {
+				typeCell.createEl('span', { text: '—', cls: 'crc-text-muted' });
+			}
+
+			// Coordinates cell
+			const coordsCell = row.createEl('td', { cls: 'crc-place-cell-coords' });
+			if (place.coordinates) {
+				const coordsWrapper = coordsCell.createDiv({ cls: 'crc-place-coords-wrapper' });
+
+				const lat = place.coordinates.lat.toFixed(4);
+				const lng = place.coordinates.long.toFixed(4);
+				coordsWrapper.createEl('span', {
+					text: `${lat}, ${lng}`,
+					cls: 'crc-place-coords-text'
+				});
+
+				// Map button
+				const mapBtn = coordsWrapper.createEl('button', {
+					cls: 'crc-place-map-btn clickable-icon',
+					attr: { 'aria-label': 'Show on map' }
+				});
+				const mapIcon = createLucideIcon('map', 14);
+				mapBtn.appendChild(mapIcon);
+				mapBtn.addEventListener('click', (e) => {
+					e.stopPropagation();
+					void plugin.activateMapView(undefined, false, undefined, {
+						lat: place.coordinates!.lat,
+						lng: place.coordinates!.long,
+						zoom: 12
+					});
+				});
+			} else {
+				coordsCell.createEl('span', { text: '—', cls: 'crc-text-muted' });
+			}
+
+			// People cell
+			const peopleCell = row.createEl('td', { cls: 'crc-place-cell-people' });
+			const peopleCount = peopleCountMap.get(place.id) || 0;
+			if (peopleCount > 0) {
+				peopleCell.textContent = peopleCount.toString();
+			} else {
+				peopleCell.createEl('span', { text: '—', cls: 'crc-text-muted' });
+			}
+
+			// Media cell (read-only badge, no click handler)
+			const mediaCell = row.createEl('td', { cls: 'crc-place-cell-media' });
+			const mediaCount = place.media?.length || 0;
+			if (mediaCount > 0) {
+				const mediaBadge = mediaCell.createEl('span', {
+					cls: 'crc-person-list-badge crc-person-list-badge--media',
+					attr: { title: `${mediaCount} media file${mediaCount !== 1 ? 's' : ''}` }
+				});
+				const mediaIcon = createLucideIcon('image', 12);
+				mediaBadge.appendChild(mediaIcon);
+				mediaBadge.appendText(mediaCount.toString());
+			} else {
+				mediaCell.createEl('span', { text: '—', cls: 'crc-text-muted' });
+			}
+
+			// Actions cell with open note button
+			const actionsCell = row.createEl('td', { cls: 'crc-place-cell-actions' });
+			const openBtn = actionsCell.createEl('button', {
+				cls: 'crc-place-open-btn clickable-icon',
+				attr: { 'aria-label': 'Open note' }
+			});
+			const fileIcon = createLucideIcon('file-text', 14);
+			openBtn.appendChild(fileIcon);
+			openBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const file = plugin.app.vault.getAbstractFileByPath(place.filePath);
+				if (file instanceof TFile) {
+					void (async () => {
+						await plugin.trackRecentFile(file, 'place');
+						void plugin.app.workspace.getLeaf(false).openFile(file);
+					})();
+				}
+			});
+		}
+
+		// Footer with count and load more
+		const footer = tableContainer.createDiv({ cls: 'crc-place-table-footer crc-mt-2' });
+
+		const countText = footer.createEl('span', {
+			cls: 'crc-text-muted crc-text-small'
+		});
+		countText.textContent = `Showing ${displayedPlaces.length} of ${filtered.length} place${filtered.length !== 1 ? 's' : ''}`;
+
+		if (filtered.length > displayLimit) {
+			const loadMoreBtn = footer.createEl('button', {
+				text: `Load more (${Math.min(25, filtered.length - displayLimit)} more)`,
+				cls: 'crc-btn crc-btn--small crc-btn--ghost crc-ml-2'
+			});
+			loadMoreBtn.addEventListener('click', () => {
+				displayLimit += 25;
+				renderTable();
+			});
+		}
+	};
+
+	// Event handlers
+	filterSelect.addEventListener('change', () => {
+		currentFilter = filterSelect.value as PlaceListFilter;
+		displayLimit = 25;
+		renderTable();
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+	});
+
+	sortSelect.addEventListener('change', () => {
+		currentSort = sortSelect.value as PlaceListSort;
+		renderTable();
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+	});
+
+	searchInput.addEventListener('input', () => {
+		currentSearch = searchInput.value;
+		displayLimit = 25;
+		renderTable();
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+	});
+
+	// Initial render
+	renderTable();
 }
