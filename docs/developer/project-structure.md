@@ -137,7 +137,7 @@ canvas-roots/
 │       ├── tree-preview.ts       # Interactive SVG preview
 │       ├── settings-tab.ts       # Plugin settings tab
 │       └── ...
-├── styles/                    # CSS source files (30 components)
+├── styles/                    # CSS source files (44 components)
 │   ├── variables.css          # CSS custom properties
 │   ├── modals.css             # Modal styling
 │   ├── control-center.css     # Control Center component styles
