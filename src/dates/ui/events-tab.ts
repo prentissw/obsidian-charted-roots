@@ -212,6 +212,25 @@ function renderEventNotesCard(
 }
 
 /**
+ * Add a dock button to a card header that opens the events view
+ * in the right sidebar.
+ */
+function addEventsDockButton(card: HTMLElement, plugin: CanvasRootsPlugin): void {
+	const header = card.querySelector('.crc-card__header');
+	if (!header) return;
+
+	const dockBtn = document.createElement('button');
+	dockBtn.className = 'crc-card__dock-btn clickable-icon';
+	dockBtn.setAttribute('aria-label', 'Open in sidebar');
+	setIcon(dockBtn, 'panel-right');
+	dockBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		void plugin.activateEventsView();
+	});
+	header.appendChild(dockBtn);
+}
+
+/**
  * Render the Timeline card with event list, filtering, and gap analysis
  */
 function renderTimelineCard(
@@ -228,6 +247,9 @@ function renderTimelineCard(
 		icon: 'clock',
 		subtitle: 'All events in chronological order'
 	});
+
+	addEventsDockButton(card, plugin);
+
 	const content = card.querySelector('.crc-card__content') as HTMLElement;
 
 	// Get all events
