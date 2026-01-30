@@ -5,7 +5,7 @@
  * universe list, orphan detection, and quick actions.
  */
 
-import { Menu, Notice } from 'obsidian';
+import { Menu, Notice, setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import type { LucideIconName } from '../../ui/lucide-icons';
 import { createLucideIcon, setLucideIcon } from '../../ui/lucide-icons';
@@ -18,11 +18,26 @@ import { getErrorMessage } from '../../core/error-utils';
 
 const logger = getLogger('UniversesTab');
 
+export type UniverseListFilter = 'all' | 'active' | 'draft' | 'archived' | 'has-entities' | 'empty';
+export type UniverseListSort = 'name-asc' | 'name-desc' | 'created-asc' | 'created-desc' | 'entities-asc' | 'entities-desc';
+
+export interface UniversesListOptions {
+	container: HTMLElement;
+	plugin: CanvasRootsPlugin;
+	initialFilter?: UniverseListFilter;
+	initialSort?: UniverseListSort;
+	initialSearch?: string;
+	onStateChange?: (filter: UniverseListFilter, sort: UniverseListSort, search: string) => void;
+}
+
+type UnivFilter = UniverseListFilter;
+type UnivSort = UniverseListSort;
+
 /** Module-level state for universe list filter */
-let universeListFilter: 'all' | 'active' | 'draft' | 'archived' | 'has-entities' | 'empty' = 'all';
+let universeListFilter: UnivFilter = 'all';
 
 /** Module-level state for universe list sort */
-let universeListSort: 'name-asc' | 'name-desc' | 'created-asc' | 'created-desc' | 'entities-asc' | 'entities-desc' = 'name-asc';
+let universeListSort: UnivSort = 'name-asc';
 
 /**
  * Render the Universes tab content
@@ -504,4 +519,292 @@ function showUniverseContextMenu(
 		}));
 
 	menu.showAtMouseEvent(event);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Dockable Universes List — standalone renderer for the sidebar ItemView
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Render a browsable universes list for the dockable sidebar view.
+ * Uses closure-scoped state so it operates independently of the modal tab.
+ */
+export function renderUniversesList(options: UniversesListOptions): void {
+	const {
+		container,
+		plugin,
+		initialFilter = 'all',
+		initialSort = 'name-asc',
+		initialSearch = '',
+		onStateChange
+	} = options;
+
+	const app = plugin.app;
+
+	// Closure-scoped state
+	let currentFilter: UnivFilter = initialFilter;
+	let currentSort: UnivSort = initialSort;
+	let currentSearch = initialSearch;
+	let displayLimit = 25;
+
+	// Load data
+	const universeService = new UniverseService(plugin);
+	const universes = universeService.getAllUniverses();
+
+	// Build universe items with entity counts
+	const universeItems = universes.map(u => {
+		const counts = universeService.getEntityCountsForUniverse(u.crId);
+		const totalEntities = counts.people + counts.places + counts.events +
+			counts.organizations + counts.maps + counts.calendars;
+		return { ...u, counts, totalEntities };
+	});
+
+	container.empty();
+
+	if (universeItems.length === 0) {
+		const emptyState = container.createDiv({ cls: 'crc-empty-state' });
+		emptyState.createEl('p', {
+			text: 'No universe notes found.',
+			cls: 'crc-text--muted'
+		});
+		return;
+	}
+
+	// Controls row
+	const controlsRow = container.createDiv({ cls: 'crc-person-controls' });
+
+	// Filter dropdown
+	const filterSelect = controlsRow.createEl('select', { cls: 'dropdown' });
+	const filterOptions: { value: UnivFilter; label: string }[] = [
+		{ value: 'all', label: 'All universes' },
+		{ value: 'active', label: 'Active' },
+		{ value: 'draft', label: 'Draft' },
+		{ value: 'archived', label: 'Archived' },
+		{ value: 'has-entities', label: 'Has entities' },
+		{ value: 'empty', label: 'Empty' }
+	];
+	filterOptions.forEach(opt => {
+		const option = filterSelect.createEl('option', { text: opt.label, value: opt.value });
+		if (opt.value === currentFilter) option.selected = true;
+	});
+
+	// Sort dropdown
+	const sortSelect = controlsRow.createEl('select', { cls: 'dropdown' });
+	const sortOptions: { value: UnivSort; label: string }[] = [
+		{ value: 'name-asc', label: 'Name (A\u2013Z)' },
+		{ value: 'name-desc', label: 'Name (Z\u2013A)' },
+		{ value: 'created-asc', label: 'Created (oldest)' },
+		{ value: 'created-desc', label: 'Created (newest)' },
+		{ value: 'entities-asc', label: 'Entities (fewest)' },
+		{ value: 'entities-desc', label: 'Entities (most)' }
+	];
+	sortOptions.forEach(opt => {
+		const option = sortSelect.createEl('option', { text: opt.label, value: opt.value });
+		if (opt.value === currentSort) option.selected = true;
+	});
+
+	// Search input
+	const searchInput = controlsRow.createEl('input', {
+		cls: 'crc-filter-input',
+		attr: {
+			type: 'text',
+			placeholder: `Search ${universeItems.length} universes...`
+		}
+	});
+	if (currentSearch) searchInput.value = currentSearch;
+
+	// List container
+	const listContainer = container.createDiv({ cls: 'crc-person-list' });
+
+	const applyFiltersAndRender = () => {
+		const query = searchInput.value.toLowerCase();
+
+		// Filter by search query
+		let filtered = universeItems.filter(u =>
+			u.name.toLowerCase().includes(query) ||
+			(u.description && u.description.toLowerCase().includes(query)) ||
+			(u.author && u.author.toLowerCase().includes(query)) ||
+			(u.genre && u.genre.toLowerCase().includes(query))
+		);
+
+		// Apply category filter
+		switch (currentFilter) {
+			case 'active':
+				filtered = filtered.filter(u => u.status === 'active');
+				break;
+			case 'draft':
+				filtered = filtered.filter(u => u.status === 'draft');
+				break;
+			case 'archived':
+				filtered = filtered.filter(u => u.status === 'archived');
+				break;
+			case 'has-entities':
+				filtered = filtered.filter(u => u.totalEntities > 0);
+				break;
+			case 'empty':
+				filtered = filtered.filter(u => u.totalEntities === 0);
+				break;
+		}
+
+		// Apply sort
+		filtered.sort((a, b) => {
+			switch (currentSort) {
+				case 'name-asc':
+					return a.name.localeCompare(b.name);
+				case 'name-desc':
+					return b.name.localeCompare(a.name);
+				case 'created-asc':
+					return (a.created || '0000').localeCompare(b.created || '0000');
+				case 'created-desc':
+					return (b.created || '9999').localeCompare(a.created || '9999');
+				case 'entities-asc':
+					return a.totalEntities - b.totalEntities;
+				case 'entities-desc':
+					return b.totalEntities - a.totalEntities;
+				default:
+					return 0;
+			}
+		});
+
+		// Render with pagination
+		listContainer.empty();
+
+		if (filtered.length === 0) {
+			listContainer.createEl('p', {
+				text: 'No matching universes found.',
+				cls: 'crc-text--muted'
+			});
+			return;
+		}
+
+		const table = listContainer.createEl('table', { cls: 'crc-person-table' });
+		const thead = table.createEl('thead');
+		const headerRow = thead.createEl('tr');
+		headerRow.createEl('th', { text: 'Name', cls: 'crc-person-table__th' });
+		headerRow.createEl('th', { text: 'Status', cls: 'crc-person-table__th' });
+		headerRow.createEl('th', { text: 'Entities', cls: 'crc-person-table__th' });
+		headerRow.createEl('th', { text: '', cls: 'crc-person-table__th crc-person-table__th--icon' });
+
+		const tbody = table.createEl('tbody');
+
+		const visible = filtered.slice(0, displayLimit);
+		for (const universe of visible) {
+			renderBrowseUniverseRow(tbody, universe, app);
+		}
+
+		// Load more button
+		if (filtered.length > displayLimit) {
+			const remaining = filtered.length - displayLimit;
+			const loadMore = listContainer.createEl('button', {
+				text: `Load more (${remaining} remaining)`,
+				cls: 'crc-btn crc-btn--secondary crc-btn--full-width crc-mt-3'
+			});
+			loadMore.addEventListener('click', () => {
+				displayLimit += 25;
+				applyFiltersAndRender();
+			});
+		}
+	};
+
+	// Event handlers
+	searchInput.addEventListener('input', () => {
+		currentSearch = searchInput.value;
+		displayLimit = 25;
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+		applyFiltersAndRender();
+	});
+	filterSelect.addEventListener('change', () => {
+		currentFilter = filterSelect.value as UnivFilter;
+		displayLimit = 25;
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+		applyFiltersAndRender();
+	});
+	sortSelect.addEventListener('change', () => {
+		currentSort = sortSelect.value as UnivSort;
+		displayLimit = 25;
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+		applyFiltersAndRender();
+	});
+
+	// Initial render
+	applyFiltersAndRender();
+}
+
+/**
+ * Render a universe row for the browse-only dockable view.
+ * No click-to-edit, simplified context menu (open note only).
+ */
+function renderBrowseUniverseRow(
+	tbody: HTMLElement,
+	universe: UniverseInfo & { counts: UniverseEntityCounts; totalEntities: number },
+	app: CanvasRootsPlugin['app']
+): void {
+	const row = tbody.createEl('tr', { cls: 'crc-person-table__row cr-universe-row--browse' });
+
+	// Name cell
+	const nameCell = row.createEl('td', { cls: 'crc-person-table__td crc-person-table__td--name' });
+	nameCell.createSpan({ text: universe.name });
+	if (universe.description) {
+		nameCell.createEl('br');
+		nameCell.createSpan({
+			text: universe.description,
+			cls: 'crc-text--muted crc-text--small'
+		});
+	}
+
+	// Status cell
+	const statusCell = row.createEl('td', { cls: 'crc-person-table__td' });
+	statusCell.createSpan({
+		text: universe.status || 'active',
+		cls: `crc-badge crc-badge--${universe.status || 'active'}`
+	});
+
+	// Entities cell
+	const entitiesCell = row.createEl('td', { cls: 'crc-person-table__td crc-person-table__td--date' });
+	if (universe.totalEntities > 0) {
+		const countParts: string[] = [];
+		if (universe.counts.people > 0) countParts.push(`${universe.counts.people} people`);
+		if (universe.counts.places > 0) countParts.push(`${universe.counts.places} places`);
+		if (universe.counts.events > 0) countParts.push(`${universe.counts.events} events`);
+		if (universe.counts.organizations > 0) countParts.push(`${universe.counts.organizations} orgs`);
+		if (universe.counts.maps > 0) countParts.push(`${universe.counts.maps} maps`);
+		if (universe.counts.calendars > 0) countParts.push(`${universe.counts.calendars} calendars`);
+		entitiesCell.setText(countParts.join(', '));
+	} else {
+		entitiesCell.setText('\u2014');
+	}
+
+	// Actions cell
+	const actionsCell = row.createEl('td', { cls: 'crc-person-table__td crc-person-table__td--actions' });
+	const openBtn = actionsCell.createEl('button', {
+		cls: 'crc-person-table__open-btn clickable-icon',
+		attr: { 'aria-label': 'Open note' }
+	});
+	setIcon(openBtn, 'file-text');
+	openBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		void app.workspace.getLeaf(false).openFile(universe.file);
+	});
+
+	// Context menu — open note only (no edit/delete)
+	row.addEventListener('contextmenu', (e) => {
+		e.preventDefault();
+		const menu = new Menu();
+
+		menu.addItem(item => item
+			.setTitle('Open note')
+			.setIcon('file-text')
+			.onClick(() => {
+				void app.workspace.getLeaf(false).openFile(universe.file);
+			}));
+
+		menu.addItem(item => item
+			.setTitle('Open in new tab')
+			.setIcon('file-plus')
+			.onClick(() => {
+				void app.workspace.getLeaf('tab').openFile(universe.file);
+			}));
+
+		menu.showAtMouseEvent(e);
+	});
 }
