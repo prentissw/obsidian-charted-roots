@@ -118,6 +118,7 @@ export function renderPlacesTab(
 		icon: 'globe',
 		subtitle: 'Defined place notes in your vault'
 	});
+	addPlacesDockButton(listCard, plugin);
 
 	const listContent = listCard.querySelector('.crc-card__content') as HTMLElement;
 	listContent.createEl('p', {
@@ -1733,6 +1734,29 @@ function showNormalizePlaceNamesApply(plugin: CanvasRootsPlugin, showTab: (tabId
 		// Refresh the Places tab
 		showTab('places');
 	})();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Dock Button
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Add a dock button to a card header that opens the places view
+ * in the right sidebar.
+ */
+function addPlacesDockButton(card: HTMLElement, plugin: CanvasRootsPlugin): void {
+	const header = card.querySelector('.crc-card__header');
+	if (!header) return;
+
+	const dockBtn = document.createElement('button');
+	dockBtn.className = 'crc-card__dock-btn clickable-icon';
+	dockBtn.setAttribute('aria-label', 'Open in sidebar');
+	setIcon(dockBtn, 'panel-right');
+	dockBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		void plugin.activatePlacesView();
+	});
+	header.appendChild(dockBtn);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
