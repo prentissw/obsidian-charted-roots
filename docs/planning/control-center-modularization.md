@@ -205,6 +205,7 @@ Each dockable card in the Control Center modal gets a small dock button in its c
 - **Scope:** Only on cards identified as dockable (see table below)
 - **On click:** Opens the content as a dockable ItemView; modal stays open
 - **Already docked:** Focuses the existing view instance (single-instance)
+- **Default placement:** Right sidebar via `getRightLeaf(false)` — entity lists are reference panels used alongside notes, matching Obsidian's Outline/Backlinks convention. Users can drag to the main area if they want more space.
 
 ### Dockable Views (8 total)
 
