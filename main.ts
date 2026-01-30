@@ -33,6 +33,7 @@ import { RelationshipHistoryModal } from './src/ui/relationship-history-modal';
 import { FamilyChartView, VIEW_TYPE_FAMILY_CHART } from './src/ui/views/family-chart-view';
 import { MapView, VIEW_TYPE_MAP } from './src/maps/map-view';
 import { StatisticsView, VIEW_TYPE_STATISTICS } from './src/statistics';
+import { RelationshipsView, VIEW_TYPE_RELATIONSHIPS } from './src/relationships/ui/relationships-view';
 import { TreePreviewRenderer } from './src/ui/tree-preview';
 import { FolderFilterService } from './src/core/folder-filter';
 import { TemplateFilterService } from './src/core/template-filter';
@@ -341,6 +342,12 @@ export default class CanvasRootsPlugin extends Plugin {
 			(leaf) => new StatisticsView(leaf, this)
 		);
 
+		// Register relationships view
+		this.registerView(
+			VIEW_TYPE_RELATIONSHIPS,
+			(leaf) => new RelationshipsView(leaf, this)
+		);
+
 		// Register migration notice view (for upgrade notifications)
 		this.registerView(
 			VIEW_TYPE_MIGRATION_NOTICE,
@@ -438,6 +445,15 @@ export default class CanvasRootsPlugin extends Plugin {
 			name: 'Open statistics dashboard',
 			callback: () => {
 				void this.activateStatisticsView();
+			}
+		});
+
+		// Add command: Open Relationships view
+		this.addCommand({
+			id: 'open-relationships-view',
+			name: 'Open relationships',
+			callback: () => {
+				void this.activateRelationshipsView();
 			}
 		});
 
@@ -8540,6 +8556,28 @@ export default class CanvasRootsPlugin extends Plugin {
 			active: true
 		});
 		void workspace.revealLeaf(leaf);
+	}
+
+	/**
+	 * Open or focus the Relationships dockable view in the right sidebar
+	 */
+	async activateRelationshipsView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_RELATIONSHIPS);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_RELATIONSHIPS,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
 	}
 
 	/**
