@@ -39,6 +39,7 @@ import { EventsView, VIEW_TYPE_EVENTS } from './src/dates/ui/events-view';
 import { PlacesView, VIEW_TYPE_PLACES } from './src/ui/views/places-view';
 import { OrganizationsView, VIEW_TYPE_ORGANIZATIONS } from './src/organizations/ui/organizations-view';
 import { SourcesView, VIEW_TYPE_SOURCES } from './src/sources/ui/sources-view';
+import { UniversesView, VIEW_TYPE_UNIVERSES } from './src/universes/ui/universes-view';
 import { TreePreviewRenderer } from './src/ui/tree-preview';
 import { FolderFilterService } from './src/core/folder-filter';
 import { TemplateFilterService } from './src/core/template-filter';
@@ -383,6 +384,12 @@ export default class CanvasRootsPlugin extends Plugin {
 			(leaf) => new SourcesView(leaf, this)
 		);
 
+		// Register universes view
+		this.registerView(
+			VIEW_TYPE_UNIVERSES,
+			(leaf) => new UniversesView(leaf, this)
+		);
+
 		// Register migration notice view (for upgrade notifications)
 		this.registerView(
 			VIEW_TYPE_MIGRATION_NOTICE,
@@ -534,6 +541,15 @@ export default class CanvasRootsPlugin extends Plugin {
 			name: 'Open sources',
 			callback: () => {
 				void this.activateSourcesView();
+			}
+		});
+
+		// Add command: Open Universes view
+		this.addCommand({
+			id: 'open-universes-view',
+			name: 'Open universes',
+			callback: () => {
+				void this.activateUniversesView();
 			}
 		});
 
@@ -8761,6 +8777,25 @@ export default class CanvasRootsPlugin extends Plugin {
 		if (leaf) {
 			await leaf.setViewState({
 				type: VIEW_TYPE_SOURCES,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	async activateUniversesView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_UNIVERSES);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_UNIVERSES,
 				active: true
 			});
 			void workspace.revealLeaf(leaf);

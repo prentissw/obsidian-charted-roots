@@ -1,0 +1,40 @@
+/**
+ * Universes Styles
+ * Universe notes UI in Control Center and dockable view
+ */
+
+/* ==========================================================================
+   Universes Dockable View
+   ========================================================================== */
+
+.cr-universes-view {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.cr-uv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-uv-title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.cr-uv-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.cr-uv-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.cr-universe-row--browse {
+  cursor: default;
+}

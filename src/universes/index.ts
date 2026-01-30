@@ -14,3 +14,4 @@ export { UniverseWizardModal } from './ui/universe-wizard';
 // UI Components
 export { renderUniversesTab, renderUniversesList } from './ui/universes-tab';
 export type { UniverseListFilter, UniverseListSort, UniversesListOptions } from './ui/universes-tab';
+export { UniversesView, VIEW_TYPE_UNIVERSES } from './ui/universes-view';

@@ -60,6 +60,7 @@ const CONFIG = {
     'statistics.css',    // Statistics tab and view
     'dashboard.css',     // Dashboard tab (Control Center home)
     'universe-wizard.css', // Universe setup wizard modal
+    'universes.css',     // Universes tab and dockable view
     'family-wizard.css', // Family creation wizard modal
     'map-wizard.css',    // Map creation wizard modal
     'preferences.css',   // Preferences tab
