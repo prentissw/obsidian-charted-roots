@@ -176,6 +176,7 @@ function renderSourcesListCard(
 		title: 'Sources',
 		icon: 'file-text'
 	});
+	addSourcesDockButton(card, plugin);
 	const content = card.querySelector('.crc-card__content') as HTMLElement;
 
 	// Create source button
@@ -589,6 +590,21 @@ function getContrastColor(hexColor: string): string {
 	const b = parseInt(hex.substring(4, 6), 16);
 	const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 	return luminance > 0.5 ? '#000000' : '#ffffff';
+}
+
+function addSourcesDockButton(card: HTMLElement, plugin: CanvasRootsPlugin): void {
+	const header = card.querySelector('.crc-card__header');
+	if (!header) return;
+
+	const dockBtn = document.createElement('button');
+	dockBtn.className = 'crc-card__dock-btn clickable-icon';
+	dockBtn.setAttribute('aria-label', 'Open in sidebar');
+	setIcon(dockBtn, 'panel-right');
+	dockBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		void plugin.activateSourcesView();
+	});
+	header.appendChild(dockBtn);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
