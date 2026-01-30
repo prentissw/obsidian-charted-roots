@@ -208,6 +208,7 @@ export function renderDataQualityTab(options: DataQualityTabOptions): void {
 				runDataQualityAnalysis(resultsContainer, selectedScope, selectedFolder, options);
 			}));
 
+	addDataQualityDockButton(analysisCard, plugin);
 	container.appendChild(analysisCard);
 
 	// === CROSS-DOMAIN BATCH OPERATIONS ===
@@ -1195,6 +1196,25 @@ function formatCategoryName(category: IssueCategory): string {
 		legacy_membership: 'Legacy membership',
 	};
 	return names[category] || category;
+}
+
+// ---------------------------------------------------------------------------
+// Dock button
+// ---------------------------------------------------------------------------
+
+function addDataQualityDockButton(card: HTMLElement, plugin: CanvasRootsPlugin): void {
+	const header = card.querySelector('.crc-card__header');
+	if (!header) return;
+
+	const dockBtn = document.createElement('button');
+	dockBtn.className = 'crc-card__dock-btn clickable-icon';
+	dockBtn.setAttribute('aria-label', 'Open in sidebar');
+	setIcon(dockBtn, 'panel-right');
+	dockBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		void plugin.activateDataQualityView();
+	});
+	header.appendChild(dockBtn);
 }
 
 // ---------------------------------------------------------------------------
