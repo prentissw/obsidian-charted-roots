@@ -39,7 +39,7 @@ export class PeopleView extends ItemView {
 	}
 
 	getIcon(): string {
-		return 'users';
+		return 'user';
 	}
 
 	// eslint-disable-next-line @typescript-eslint/require-await -- ItemView.onOpen requires async signature

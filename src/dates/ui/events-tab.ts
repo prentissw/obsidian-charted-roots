@@ -5,7 +5,7 @@
  * event notes management, date systems configuration, and temporal data statistics.
  */
 
-import { App, Menu, Modal, Notice, Setting, TFile } from 'obsidian';
+import { App, Menu, Modal, Notice, Setting, TFile, setIcon } from 'obsidian';
 import type CanvasRootsPlugin from '../../../main';
 import type { LucideIconName } from '../../ui/lucide-icons';
 import { createLucideIcon } from '../../ui/lucide-icons';
@@ -21,6 +21,19 @@ import { isEventNote, isPersonNote } from '../../utils/note-type-detection';
 import { PropertyAliasService } from '../../core/property-alias-service';
 import { TemplateSnippetsModal } from '../../ui/template-snippets-modal';
 import { DEFAULT_DATE_SYSTEMS } from '../constants/default-date-systems';
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Types for the dockable Events list (renderEventsList)
+   ────────────────────────────────────────────────────────────────────────── */
+
+export interface EventsListOptions {
+	container: HTMLElement;
+	plugin: CanvasRootsPlugin;
+	initialTypeFilter?: string;
+	initialPersonFilter?: string;
+	initialSearch?: string;
+	onStateChange?: (typeFilter: string, personFilter: string, search: string) => void;
+}
 
 /**
  * Render the Events tab content
@@ -1772,4 +1785,297 @@ async function confirmOverwriteCanvas(app: App, canvasPath: string): Promise<boo
 
 		modal.open();
 	});
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Dockable Events List — standalone renderer for the sidebar ItemView
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Render a browsable events list for the dockable sidebar view.
+ *
+ * This is a standalone function with closure-scoped state, independent of
+ * the modal's `renderTimelineCard()` / `renderEventTable()`. It provides
+ * type/person filters, search, and a simplified table without row-click-to-edit,
+ * media actions, delete, or gap analysis.
+ */
+export function renderEventsList(options: EventsListOptions): void {
+	const { container, plugin, onStateChange } = options;
+
+	const eventService = plugin.getEventService();
+	if (!eventService) {
+		container.createEl('p', {
+			text: 'Event service is not available.',
+			cls: 'crc-text-muted'
+		});
+		return;
+	}
+
+	// Closure-scoped state
+	let currentTypeFilter = options.initialTypeFilter ?? '';
+	let currentPersonFilter = options.initialPersonFilter ?? '';
+	let currentSearch = options.initialSearch ?? '';
+
+	// Get all events
+	const allEvents = eventService.getAllEvents();
+
+	if (allEvents.length === 0) {
+		const emptyState = container.createDiv({ cls: 'crc-empty-state' });
+		emptyState.createEl('p', {
+			text: 'No events yet.',
+			cls: 'crc-text-muted'
+		});
+		emptyState.createEl('p', {
+			text: 'Create event notes to see them here.',
+			cls: 'crc-text-muted'
+		});
+		return;
+	}
+
+	// Filter controls
+	const filterRow = container.createDiv({ cls: 'crc-timeline-filters' });
+
+	// Event type filter
+	const typeFilterEl = filterRow.createEl('select', { cls: 'dropdown' });
+	typeFilterEl.createEl('option', { value: '', text: 'All types' });
+
+	const eventTypes = getAllEventTypes(
+		plugin.settings.customEventTypes || [],
+		plugin.settings.showBuiltInEventTypes !== false,
+		plugin.settings.eventTypeCustomizations,
+		plugin.settings.hiddenEventTypes
+	);
+	for (const type of eventTypes) {
+		const opt = typeFilterEl.createEl('option', { value: type.id, text: type.name });
+		if (type.id === currentTypeFilter) opt.selected = true;
+	}
+	typeFilterEl.value = currentTypeFilter;
+
+	// Person filter
+	const personFilterEl = filterRow.createEl('select', { cls: 'dropdown' });
+	personFilterEl.createEl('option', { value: '', text: 'All people' });
+
+	const uniquePeople = eventService.getUniquePeople();
+	for (const person of uniquePeople) {
+		const displayName = person.replace(/^\[\[/, '').replace(/\]\]$/, '');
+		const opt = personFilterEl.createEl('option', { value: person, text: displayName });
+		if (person === currentPersonFilter) opt.selected = true;
+	}
+	personFilterEl.value = currentPersonFilter;
+
+	// Search input
+	const searchInput = filterRow.createEl('input', {
+		cls: 'crc-timeline-search',
+		attr: {
+			type: 'text',
+			placeholder: 'Search events...'
+		}
+	});
+	searchInput.value = currentSearch;
+
+	// Table container
+	const tableContainer = container.createDiv({ cls: 'crc-timeline-table-container' });
+
+	// Render function
+	const renderTable = (events: EventNote[]) => {
+		tableContainer.empty();
+
+		if (events.length === 0) {
+			tableContainer.createEl('p', {
+				text: 'No matching events.',
+				cls: 'crc-text-muted crc-text-center'
+			});
+			return;
+		}
+
+		const table = tableContainer.createEl('table', { cls: 'crc-timeline-table' });
+
+		// Header
+		const thead = table.createEl('thead');
+		const headerRow = thead.createEl('tr');
+		headerRow.createEl('th', { text: 'Date' });
+		headerRow.createEl('th', { text: 'Event' });
+		headerRow.createEl('th', { text: 'Type' });
+		headerRow.createEl('th', { text: 'Person' });
+		headerRow.createEl('th', { text: 'Place' });
+		headerRow.createEl('th', { text: 'Media', cls: 'crc-timeline-th--center' });
+		headerRow.createEl('th', { text: '', cls: 'crc-timeline-th--actions' });
+
+		// Body
+		const tbody = table.createEl('tbody');
+
+		for (const event of events) {
+			const row = tbody.createEl('tr', { cls: 'crc-timeline-row crc-timeline-row--browse' });
+
+			// Context menu (simplified: open note, open in new tab only)
+			row.addEventListener('contextmenu', (e) => {
+				e.preventDefault();
+				const menu = new Menu();
+
+				menu.addItem((item) => {
+					item
+						.setTitle('Open note')
+						.setIcon('file')
+						.onClick(async () => {
+							await plugin.trackRecentFile(event.file, 'event');
+							void plugin.app.workspace.getLeaf(false).openFile(event.file);
+						});
+				});
+
+				menu.addItem((item) => {
+					item
+						.setTitle('Open in new tab')
+						.setIcon('file-plus')
+						.onClick(async () => {
+							await plugin.trackRecentFile(event.file, 'event');
+							void plugin.app.workspace.getLeaf('tab').openFile(event.file);
+						});
+				});
+
+				menu.showAtMouseEvent(e);
+			});
+
+			// Date cell
+			const dateCell = row.createEl('td', { cls: 'crc-timeline-cell-date' });
+			if (event.date) {
+				dateCell.textContent = event.date;
+				if (event.dateEnd) {
+					dateCell.textContent += ` – ${event.dateEnd}`;
+				}
+			} else {
+				dateCell.createEl('span', { text: 'Unknown', cls: 'crc-text-muted' });
+			}
+
+			// Event title cell
+			const titleCell = row.createEl('td', { cls: 'crc-timeline-cell-title' });
+			titleCell.textContent = event.title;
+
+			// Type cell with badge
+			const typeCell = row.createEl('td', { cls: 'crc-timeline-cell-type' });
+			const typeDef = getEventType(
+				event.eventType,
+				plugin.settings.customEventTypes || [],
+				plugin.settings.showBuiltInEventTypes !== false,
+				plugin.settings.eventTypeCustomizations
+			);
+			if (typeDef) {
+				const badge = typeCell.createEl('span', { cls: 'crc-event-type-badge' });
+				badge.style.setProperty('background-color', typeDef.color);
+				badge.style.setProperty('color', getContrastColor(typeDef.color));
+				const icon = createLucideIcon(typeDef.icon, 12);
+				badge.appendChild(icon);
+				badge.appendText(` ${typeDef.name}`);
+			} else {
+				typeCell.textContent = event.eventType;
+			}
+
+			// Person cell
+			const personCell = row.createEl('td', { cls: 'crc-timeline-cell-person' });
+			const allPeople: string[] = [];
+			if (event.person) {
+				allPeople.push(event.person.replace(/^\[\[/, '').replace(/\]\]$/, ''));
+			}
+			if (event.persons && event.persons.length > 0) {
+				allPeople.push(...event.persons.map(p => p.replace(/^\[\[/, '').replace(/\]\]$/, '')));
+			}
+
+			if (allPeople.length > 0) {
+				personCell.textContent = allPeople.join(', ');
+			} else {
+				personCell.createEl('span', { text: '—', cls: 'crc-text-muted' });
+			}
+
+			// Place cell
+			const placeCell = row.createEl('td', { cls: 'crc-timeline-cell-place' });
+			if (event.place) {
+				placeCell.textContent = event.place.replace(/^\[\[/, '').replace(/\]\]$/, '');
+			} else {
+				placeCell.createEl('span', { text: '—', cls: 'crc-text-muted' });
+			}
+
+			// Media cell (read-only badge, no click handler)
+			const mediaCell = row.createEl('td', { cls: 'crc-timeline-cell-media' });
+			const mediaCount = event.media?.length || 0;
+			if (mediaCount > 0) {
+				const mediaBadge = mediaCell.createEl('span', {
+					cls: 'crc-person-list-badge crc-person-list-badge--media',
+					attr: { title: `${mediaCount} media file${mediaCount !== 1 ? 's' : ''}` }
+				});
+				const mediaIcon = createLucideIcon('image', 12);
+				mediaBadge.appendChild(mediaIcon);
+				mediaBadge.appendText(mediaCount.toString());
+			} else {
+				mediaCell.createEl('span', { text: '—', cls: 'crc-text-muted' });
+			}
+
+			// Actions cell with open note button
+			const actionsCell = row.createEl('td', { cls: 'crc-timeline-cell-actions' });
+			const openBtn = actionsCell.createEl('button', {
+				cls: 'crc-timeline-open-btn clickable-icon',
+				attr: { 'aria-label': 'Open note' }
+			});
+			const fileIcon = createLucideIcon('file-text', 14);
+			openBtn.appendChild(fileIcon);
+			openBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				void (async () => {
+					await plugin.trackRecentFile(event.file, 'event');
+					void plugin.app.workspace.getLeaf(false).openFile(event.file);
+				})();
+			});
+		}
+
+		// Show count
+		tableContainer.createEl('p', {
+			text: `Showing ${events.length} event${events.length !== 1 ? 's' : ''}`,
+			cls: 'crc-text-muted crc-text-small crc-mt-2'
+		});
+	};
+
+	// Filter logic
+	const filterEvents = (typeValue: string, personValue: string, searchValue: string): EventNote[] => {
+		return allEvents.filter(event => {
+			if (typeValue && event.eventType !== typeValue) return false;
+
+			if (personValue) {
+				const normalizedPersonFilter = personValue.replace(/^\[\[/, '').replace(/\]\]$/, '').toLowerCase();
+				const singlePerson = event.person?.replace(/^\[\[/, '').replace(/\]\]$/, '').toLowerCase() || '';
+				const multiplePeople = event.persons?.map(p => p.replace(/^\[\[/, '').replace(/\]\]$/, '').toLowerCase()) || [];
+
+				if (!singlePerson.includes(normalizedPersonFilter) && !multiplePeople.some(p => p.includes(normalizedPersonFilter))) return false;
+			}
+
+			if (searchValue) {
+				const searchableText = [
+					event.title,
+					event.date || '',
+					event.place || '',
+					event.description || ''
+				].join(' ').toLowerCase();
+				if (!searchableText.includes(searchValue)) return false;
+			}
+
+			return true;
+		});
+	};
+
+	// Apply filters and render
+	const applyFilters = () => {
+		currentTypeFilter = typeFilterEl.value;
+		currentPersonFilter = personFilterEl.value;
+		currentSearch = searchInput.value;
+
+		const filtered = filterEvents(currentTypeFilter, currentPersonFilter, currentSearch.toLowerCase());
+		renderTable(sortEventsChronologically([...filtered]));
+
+		onStateChange?.(currentTypeFilter, currentPersonFilter, currentSearch);
+	};
+
+	typeFilterEl.addEventListener('change', applyFilters);
+	personFilterEl.addEventListener('change', applyFilters);
+	searchInput.addEventListener('input', applyFilters);
+
+	// Initial render
+	const initialFiltered = filterEvents(currentTypeFilter, currentPersonFilter, currentSearch.toLowerCase());
+	renderTable(sortEventsChronologically([...initialFiltered]));
 }
