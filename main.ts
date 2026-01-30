@@ -36,6 +36,7 @@ import { StatisticsView, VIEW_TYPE_STATISTICS } from './src/statistics';
 import { RelationshipsView, VIEW_TYPE_RELATIONSHIPS } from './src/relationships/ui/relationships-view';
 import { PeopleView, VIEW_TYPE_PEOPLE } from './src/ui/views/people-view';
 import { EventsView, VIEW_TYPE_EVENTS } from './src/dates/ui/events-view';
+import { PlacesView, VIEW_TYPE_PLACES } from './src/ui/views/places-view';
 import { TreePreviewRenderer } from './src/ui/tree-preview';
 import { FolderFilterService } from './src/core/folder-filter';
 import { TemplateFilterService } from './src/core/template-filter';
@@ -362,6 +363,12 @@ export default class CanvasRootsPlugin extends Plugin {
 			(leaf) => new EventsView(leaf, this)
 		);
 
+		// Register places view
+		this.registerView(
+			VIEW_TYPE_PLACES,
+			(leaf) => new PlacesView(leaf, this)
+		);
+
 		// Register migration notice view (for upgrade notifications)
 		this.registerView(
 			VIEW_TYPE_MIGRATION_NOTICE,
@@ -486,6 +493,15 @@ export default class CanvasRootsPlugin extends Plugin {
 			name: 'Open events',
 			callback: () => {
 				void this.activateEventsView();
+			}
+		});
+
+		// Add command: Open Places view
+		this.addCommand({
+			id: 'open-places-view',
+			name: 'Open places',
+			callback: () => {
+				void this.activatePlacesView();
 			}
 		});
 
@@ -8650,6 +8666,28 @@ export default class CanvasRootsPlugin extends Plugin {
 		if (leaf) {
 			await leaf.setViewState({
 				type: VIEW_TYPE_EVENTS,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	/**
+	 * Open or focus the Places dockable view in the right sidebar
+	 */
+	async activatePlacesView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_PLACES);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_PLACES,
 				active: true
 			});
 			void workspace.revealLeaf(leaf);
