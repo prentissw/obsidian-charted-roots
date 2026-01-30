@@ -9,9 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.20.0] - 2026-01-30
+
 ### Added
 
-- **Dockable sidebar views for all entity tabs** ([#240](https://github.com/banisterious/obsidian-charted-roots/discussions/240)): Every entity browsing tab in the Control Center can now be opened as a persistent, dockable workspace view in the sidebar. Views include filter/sort/search controls, context menus, and auto-refresh on vault changes. State (filters, search, sort) persists across sessions.
+- **Control Center modularization — Phase 1** ([#239](https://github.com/banisterious/obsidian-charted-roots/discussions/239)): Extracted all embedded tabs from the monolithic `control-center.ts` (13,760 lines) into independent component files, reducing the modal shell to ~1,451 lines (89% reduction). Each tab follows a consistent `render*Tab()` pattern with typed options interfaces.
+
+- **Control Center modularization — Phase 2: Dockable sidebar views** ([#240](https://github.com/banisterious/obsidian-charted-roots/discussions/240)): Nine entity browsing tabs can now be opened as persistent, dockable workspace views in the sidebar. Views include filter/sort/search controls, context menus, and auto-refresh on vault changes. State (filters, search, sort) persists across sessions.
   - **People** — filterable/sortable person list with expandable details
   - **Places** — place notes with category badges and coordinates
   - **Events** — timeline table with type/person/date filters
@@ -25,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dock buttons on Control Center cards** ([#240](https://github.com/banisterious/obsidian-charted-roots/discussions/240)): Hovering over a dockable card header reveals a sidebar icon that opens (or focuses) the corresponding dockable view. The modal stays open so users can dock multiple views in one session.
 
 - **Relationships tab enhancements** ([#240](https://github.com/banisterious/obsidian-charted-roots/discussions/240)): The Relationships tab now has filter dropdowns (by type, category, person), sort options, pagination with load-more, and context menus on rows.
+
+### Changed
+
+- **Control Center reduced from 17 to 14 tabs**: Removed legacy redirect tabs (Status, Guide, Statistics) that were superseded by the Dashboard tab.
 
 ### Fixed
 
