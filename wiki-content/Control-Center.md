@@ -131,11 +131,44 @@ These entries open dedicated modals or views instead of switching tabs:
 | **Reports** | Narrative reports and visual charts |
 | **Import/Export** | Import and export genealogical data (opens hub modal) |
 
-### Settings
+---
 
-| Tab | Purpose |
-|-----|---------|
-| **Preferences** | Aliases, folders, and display settings |
+## Dockable Sidebar Views
+
+Many Control Center tabs include a **dock button** (panel icon) in their card headers. Clicking the dock button opens the entity list as a persistent, dockable sidebar view that stays open alongside your notes.
+
+### Available Dockable Views
+
+| View | Content | Command |
+|------|---------|---------|
+| **People** | Filter/sort/search table with expandable details | `Open people` |
+| **Places** | Filter/sort/search table with category badges | `Open places` |
+| **Events** | Type/person/search filters, sortable table | `Open events` |
+| **Sources** | Filter/sort table with type/confidence badges | `Open sources` |
+| **Organizations** | Filter/sort table with type badges, member counts | `Open organizations` |
+| **Relationships** | Table with type badges, filter/sort | `Open relationships` |
+| **Universes** | Filter/sort/search table with status badges | `Open universes` |
+| **Collections** | Mode switcher + corresponding list | `Open collections` |
+| **Data Quality** | Read-only dashboard with quality score and issues | `Open data quality` |
+
+### Key Behaviors
+
+- **Single instance**: Clicking the dock button when a view is already open focuses the existing instance
+- **Modal stays open**: The dock button opens the view without closing the Control Center
+- **State persistence**: Filter, sort, and search preferences persist across sessions
+- **Auto-refresh**: All dockable views refresh automatically when vault files change (debounced 2s)
+- **Default placement**: Views open in the right sidebar, matching Obsidian's convention for reference panels
+
+### Modal-Only Tabs
+
+These tabs do not have dockable views:
+
+| Tab | Reason |
+|-----|--------|
+| **Dashboard** | Navigation hub, not an entity list |
+| **Schemas** | Configuration tooling, no browsable list |
+| **Visual Trees** | Wizard launchers and export actions |
+| **Maps** | Already has a dedicated full Map View |
 
 ---
 

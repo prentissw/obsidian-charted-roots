@@ -52,7 +52,7 @@ There are several entry points to create a new universe:
 |--------|-----|
 | **Command palette** | `Ctrl/Cmd+P` → "Charted Roots: Create universe" |
 | **Universes tab** | Open Control Center → Universes tab → "Create Universe" tile |
-| **Statistics tab** | Open Control Center → Statistics tab → Universes section → Create button |
+| **Statistics Dashboard** | Open Statistics Dashboard → Universes section → Create button |
 
 ### Using the Create Universe Wizard
 

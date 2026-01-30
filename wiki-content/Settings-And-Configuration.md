@@ -20,17 +20,21 @@ The Control Center (`Cmd/Ctrl+Shift+F`) is the main hub for Charted Roots featur
 
 | Tab | Description |
 |-----|-------------|
-| **Getting Started** | Quick start guide, essential properties reference, key concepts |
-| **Tree Generation** | Generate family tree canvases from person notes |
+| **Dashboard** | Quick actions, vault health, recent files |
 | **People** | Browse, search, and manage person notes |
+| **Events** | View and manage life events with timeline visualization |
 | **Places** | Manage place notes, view place hierarchy |
 | **Sources** | Manage source notes and evidence |
 | **Organizations** | Manage organization notes and memberships |
-| **Events** | View and manage life events with timeline visualization |
-| **Canvas Settings** | Layout dimensions, arrow styling, node coloring, spouse edges |
-| **Schemas** | Create and run validation schemas |
-| **Import/Export** | Import GEDCOM, CSV, Gramps; export data |
+| **Universes** | Fictional universe management |
+| **Collections** | Family groups and custom collections |
 | **Data Quality** | Validation issues, duplicate detection, research gaps |
+| **Schemas** | Create and run validation schemas |
+| **Relationships** | Custom relationship type definitions |
+| **Visual Trees** | Canvas tree generation with preview |
+| **Maps** | Interactive map view, custom image maps |
+
+Most entity tabs also support **dockable sidebar views** — see [Control Center](Control-Center#dockable-sidebar-views) for details.
 
 ---
 

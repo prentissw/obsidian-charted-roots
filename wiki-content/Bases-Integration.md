@@ -60,11 +60,6 @@ Charted Roots provides ready-to-use templates for five entity types:
 
 ### Creating Base Templates
 
-**From Control Center (Guide tab):**
-1. Open Control Center → **Guide** tab
-2. Find the **Base templates** card
-3. Click any template type to create it
-
 **From Control Center (Data Quality tab):**
 1. Open Control Center → **Data quality** tab
 2. Find the **Data tools** section

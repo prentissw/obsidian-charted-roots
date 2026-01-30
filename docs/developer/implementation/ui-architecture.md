@@ -13,6 +13,11 @@ This document covers the user interface implementation including context menus, 
   - [Navigation and Routing](#navigation-and-routing)
   - [Public API](#public-api)
   - [Mobile Adaptations](#mobile-adaptations-1)
+- [Dockable Views](#dockable-views)
+  - [Architecture](#architecture)
+  - [Implementation Pattern](#implementation-pattern)
+  - [Key Patterns](#key-patterns)
+  - [Registration (main.ts)](#registration-maints)
 - [Wizard Modals](#wizard-modals)
   - [Map Creation Wizard](#map-creation-wizard)
   - [State Persistence](#state-persistence)
@@ -154,7 +159,7 @@ See [Mobile Styling](../styling.md#mobile-styling) for CSS implementation detail
 
 ## Control Center Architecture
 
-The Control Center (`src/ui/control-center.ts`) is the primary user interface for Charted Roots, providing a centralized modal with 17 tabs covering all plugin functionality. At 17,000+ lines, it's the largest file in the codebase.
+The Control Center (`src/ui/control-center.ts`) is the primary user interface for Charted Roots, providing a centralized modal with 14 tabs covering all plugin functionality. After Phase 1 modularization, the modal shell is ~1,451 lines with tab rendering delegated to extracted component files in `src/ui/tabs/`. Nine tabs also have dockable sidebar ItemViews (see [Dockable Views](#dockable-views)).
 
 ### Modal Structure
 
@@ -163,14 +168,14 @@ The Control Center (`src/ui/control-center.ts`) is the primary user interface fo
 │  [≡]  Charted Roots Control Center            [Tab Title]   │  ← Sticky Header
 ├─────────────────────────────────────────────────────────────┤
 │  ┌──────────┐  ┌─────────────────────────────────────────┐  │
-│  │ Status   │  │                                         │  │
-│  │ Guide    │  │                                         │  │
-│  │ Import   │  │         Content Area                    │  │
+│  │Dashboard │  │                                         │  │
 │  │ People   │  │                                         │  │
-│  │ Events   │  │         (Tab-specific content)          │  │
+│  │ Events   │  │         Content Area                    │  │
 │  │ Places   │  │                                         │  │
-│  │ Maps     │  │                                         │  │
-│  │ Sources  │  │                                         │  │
+│  │ Sources  │  │         (Tab-specific content)          │  │
+│  │ Orgs     │  │                                         │  │
+│  │ Data Qly │  │                                         │  │
+│  │ Schemas  │  │                                         │  │
 │  │ ...      │  │                                         │  │
 │  └──────────┘  └─────────────────────────────────────────┘  │
 │   Drawer              Content Container                      │
@@ -186,7 +191,7 @@ class ControlCenterModal extends Modal {
   private appBar: HTMLElement;           // Sticky header
   private drawerBackdrop: HTMLElement;   // Mobile overlay
 
-  private activeTab: string = 'status';  // Current tab ID
+  private activeTab: string = 'dashboard';  // Current tab ID
 }
 ```
 
@@ -205,33 +210,32 @@ interface TabConfig {
 }
 
 export const TAB_CONFIGS: TabConfig[] = [
-  { id: 'status', name: 'Status', icon: 'activity', description: '...' },
-  { id: 'guide', name: 'Guide', icon: 'book-open', description: '...' },
-  // ... 15 more tabs
+  { id: 'dashboard', name: 'Dashboard', icon: 'layout-dashboard', description: '...' },
+  { id: 'people', name: 'People', icon: 'users', description: '...' },
+  // ... 12 more tabs
 ];
 ```
 
-**All 17 tabs:**
+**All 14 tabs:**
 
-| Tab ID | Name | Purpose |
-|--------|------|---------|
-| `dashboard` | Dashboard | Quick-action tiles, vault health, recent files |
-| `guide` | Guide | Getting started documentation |
-| `import-export` | Import/Export | GEDCOM, Gramps, CSV import/export |
-| `people` | People | Person notes list, batch operations |
-| `events` | Events | Event notes, date systems, timelines |
-| `places` | Places | Place notes, geocoding, hierarchy |
-| `maps` | Maps | Map views, custom image maps |
-| `sources` | Sources | Source notes, citations, media |
-| `schemas` | Schemas | Validation schemas |
-| `relationships` | Relationships | Custom relationship types |
-| `organizations` | Organizations | Organization notes |
-| `universes` | Universes | Fictional universe management |
-| `collections` | Collections | Family groups, custom collections |
-| `data-quality` | Data Quality | Issue detection, batch fixes |
-| `statistics` | Statistics | Vault analytics, reports |
-| `tree-generation` | Tree Output | Canvas/chart generation |
-| `preferences` | Preferences | Aliases, folders, display settings |
+| Tab ID | Name | Purpose | Dockable |
+|--------|------|---------|----------|
+| `dashboard` | Dashboard | Quick-action tiles, vault health, recent files | — |
+| `people` | People | Person notes list, batch operations | ✓ |
+| `events` | Events | Event notes, date systems, timelines | ✓ |
+| `places` | Places | Place notes, geocoding, hierarchy | ✓ |
+| `sources` | Sources | Source notes, citations, media | ✓ |
+| `organizations` | Organizations | Organization notes | ✓ |
+| `universes` | Universes | Fictional universe management | ✓ |
+| `collections` | Collections | Family groups, custom collections | ✓ |
+| `data-quality` | Data Quality | Issue detection, batch fixes | ✓ |
+| `schemas` | Schemas | Validation schemas | — |
+| `relationships` | Relationships | Custom relationship types | ✓ |
+| `tree-generation` | Visual Trees | Canvas/chart generation | — |
+| `maps` | Maps | Map views, custom image maps | — |
+| `preferences` | Preferences | Deprecated; canvas layout/styling cards used by Visual Trees | — |
+
+**Removed in Phase 1 modularization (v0.20.0):** Status, Guide, Statistics (legacy redirect tabs).
 
 **Dashboard tiles:**
 
@@ -259,13 +263,13 @@ private showTab(tabId: string): void {
   this.contentContainer.empty();
 
   switch (tabId) {
-    case 'status':
-      void this.showStatusTab();
+    case 'dashboard':
+      void this.showDashboardTab();
       break;
     case 'people':
       void this.showPeopleTab();
       break;
-    // ... 15 more cases
+    // ... 12 more cases
     default:
       this.showPlaceholderTab(tabId);
   }
@@ -398,6 +402,65 @@ private closeMobileDrawer(): void {
 // Auto-close after tab selection on mobile
 if (Platform.isMobile) {
   this.closeMobileDrawer();
+}
+```
+
+---
+
+## Dockable Views
+
+Nine entity tabs have corresponding dockable ItemViews that open as persistent sidebar panels. Each view follows a dual-renderer architecture where the modal and dockable view share extracted tab components.
+
+### Architecture
+
+```
+Modal Tab (full feature set)          Dockable View (browse-only subset)
+┌────────────────────────┐           ┌────────────────────────┐
+│ renderPeopleTab()      │           │ PeopleView extends     │
+│ - Entity list          │ shared ←→ │   ItemView             │
+│ - Batch operations     │ renderer  │ - renderPeopleList()   │
+│ - Configuration        │           │ - Filter/sort/search   │
+│ - Statistics           │           │ - Context menus        │
+│ - Type managers        │           │ - State persistence    │
+└────────────────────────┘           └────────────────────────┘
+```
+
+### Implementation Pattern
+
+Each dockable view follows a 3-commit pattern:
+
+1. **Add `render*List()` function** — Exported from the tab file, contains the browsable entity list with closure-scoped state
+2. **Create ItemView class** — Registered in `main.ts` with command, CSS in `styles/`
+3. **Add dock button** — `panel-right` icon in the modal card header, calls `plugin.activate*View()`
+
+### Key Patterns
+
+- **Single instance**: `getLeavesOfType()` checks for existing view; `revealLeaf()` focuses it
+- **Default placement**: `getRightLeaf(false)` — right sidebar, matching Obsidian conventions
+- **State persistence**: `getState()`/`setState()` for filter/sort/search across sessions
+- **Auto-refresh**: Vault change listeners (modify/create/delete) with 2s debounce
+- **CSS prefix**: `cr-XX-` pattern (e.g., `cr-pv-` for People View, `cr-dqv-` for Data Quality View)
+
+### Registration (main.ts)
+
+```typescript
+this.registerView(VIEW_TYPE_PEOPLE, (leaf) => new PeopleView(leaf, this));
+this.addCommand({
+    id: 'open-people-view',
+    name: 'Open people',
+    callback: () => this.activatePeopleView()
+});
+
+async activatePeopleView(): Promise<void> {
+    const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_PEOPLE);
+    if (existing.length) {
+        this.app.workspace.revealLeaf(existing[0]);
+        return;
+    }
+    const leaf = this.app.workspace.getRightLeaf(false);
+    if (leaf) {
+        await leaf.setViewState({ type: VIEW_TYPE_PEOPLE, active: true });
+    }
 }
 ```
 
