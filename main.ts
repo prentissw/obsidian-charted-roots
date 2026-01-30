@@ -40,6 +40,7 @@ import { PlacesView, VIEW_TYPE_PLACES } from './src/ui/views/places-view';
 import { OrganizationsView, VIEW_TYPE_ORGANIZATIONS } from './src/organizations/ui/organizations-view';
 import { SourcesView, VIEW_TYPE_SOURCES } from './src/sources/ui/sources-view';
 import { UniversesView, VIEW_TYPE_UNIVERSES } from './src/universes/ui/universes-view';
+import { CollectionsView, VIEW_TYPE_COLLECTIONS } from './src/ui/collections-view';
 import { TreePreviewRenderer } from './src/ui/tree-preview';
 import { FolderFilterService } from './src/core/folder-filter';
 import { TemplateFilterService } from './src/core/template-filter';
@@ -390,6 +391,12 @@ export default class CanvasRootsPlugin extends Plugin {
 			(leaf) => new UniversesView(leaf, this)
 		);
 
+		// Register collections view
+		this.registerView(
+			VIEW_TYPE_COLLECTIONS,
+			(leaf) => new CollectionsView(leaf, this)
+		);
+
 		// Register migration notice view (for upgrade notifications)
 		this.registerView(
 			VIEW_TYPE_MIGRATION_NOTICE,
@@ -550,6 +557,15 @@ export default class CanvasRootsPlugin extends Plugin {
 			name: 'Open universes',
 			callback: () => {
 				void this.activateUniversesView();
+			}
+		});
+
+		// Add command: Open Collections view
+		this.addCommand({
+			id: 'open-collections-view',
+			name: 'Open collections',
+			callback: () => {
+				void this.activateCollectionsView();
 			}
 		});
 
@@ -8796,6 +8812,25 @@ export default class CanvasRootsPlugin extends Plugin {
 		if (leaf) {
 			await leaf.setViewState({
 				type: VIEW_TYPE_UNIVERSES,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	async activateCollectionsView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_COLLECTIONS);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_COLLECTIONS,
 				active: true
 			});
 			void workspace.revealLeaf(leaf);
