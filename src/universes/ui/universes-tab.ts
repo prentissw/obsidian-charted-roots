@@ -146,6 +146,7 @@ export function renderUniversesTab(
 		icon: 'globe',
 		subtitle: 'All universe notes in your vault'
 	});
+	addUniversesDockButton(listCard, plugin);
 	const listContent = listCard.querySelector('.crc-card__content') as HTMLElement;
 
 	if (universeItems.length === 0) {
@@ -519,6 +520,21 @@ function showUniverseContextMenu(
 		}));
 
 	menu.showAtMouseEvent(event);
+}
+
+function addUniversesDockButton(card: HTMLElement, plugin: CanvasRootsPlugin): void {
+	const header = card.querySelector('.crc-card__header');
+	if (!header) return;
+
+	const dockBtn = document.createElement('button');
+	dockBtn.className = 'crc-card__dock-btn clickable-icon';
+	dockBtn.setAttribute('aria-label', 'Open in sidebar');
+	setIcon(dockBtn, 'panel-right');
+	dockBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		void plugin.activateUniversesView();
+	});
+	header.appendChild(dockBtn);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
