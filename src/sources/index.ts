@@ -73,7 +73,9 @@ export {
 } from './services/citation-service';
 
 // UI Components
-export { renderSourcesTab } from './ui/sources-tab';
+export { renderSourcesTab, renderSourcesList } from './ui/sources-tab';
+export type { SourceListFilter, SourceListSort, SourcesListOptions } from './ui/sources-tab';
+export { SourcesView, VIEW_TYPE_SOURCES } from './ui/sources-view';
 export { CreateSourceModal } from './ui/create-source-modal';
 export type { SourceModalOptions } from './ui/create-source-modal';
 export { SourcePickerModal } from './ui/source-picker-modal';

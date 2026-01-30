@@ -31,7 +31,9 @@ export {
 
 // UI Components
 export { createDateSystemsCard } from './ui/date-systems-card';
-export { renderEventsTab } from './ui/events-tab';
+export { renderEventsTab, renderEventsList } from './ui/events-tab';
+export type { EventsListOptions } from './ui/events-tab';
+export { EventsView, VIEW_TYPE_EVENTS } from './ui/events-view';
 
 // Services
 export { DateService, createDateService } from './services/date-service';

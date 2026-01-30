@@ -33,6 +33,15 @@ import { RelationshipHistoryModal } from './src/ui/relationship-history-modal';
 import { FamilyChartView, VIEW_TYPE_FAMILY_CHART } from './src/ui/views/family-chart-view';
 import { MapView, VIEW_TYPE_MAP } from './src/maps/map-view';
 import { StatisticsView, VIEW_TYPE_STATISTICS } from './src/statistics';
+import { RelationshipsView, VIEW_TYPE_RELATIONSHIPS } from './src/relationships/ui/relationships-view';
+import { PeopleView, VIEW_TYPE_PEOPLE } from './src/ui/views/people-view';
+import { EventsView, VIEW_TYPE_EVENTS } from './src/dates/ui/events-view';
+import { PlacesView, VIEW_TYPE_PLACES } from './src/ui/views/places-view';
+import { OrganizationsView, VIEW_TYPE_ORGANIZATIONS } from './src/organizations/ui/organizations-view';
+import { SourcesView, VIEW_TYPE_SOURCES } from './src/sources/ui/sources-view';
+import { UniversesView, VIEW_TYPE_UNIVERSES } from './src/universes/ui/universes-view';
+import { CollectionsView, VIEW_TYPE_COLLECTIONS } from './src/ui/collections-view';
+import { DataQualityView, VIEW_TYPE_DATA_QUALITY } from './src/ui/data-quality-view';
 import { TreePreviewRenderer } from './src/ui/tree-preview';
 import { FolderFilterService } from './src/core/folder-filter';
 import { TemplateFilterService } from './src/core/template-filter';
@@ -341,6 +350,60 @@ export default class CanvasRootsPlugin extends Plugin {
 			(leaf) => new StatisticsView(leaf, this)
 		);
 
+		// Register relationships view
+		this.registerView(
+			VIEW_TYPE_RELATIONSHIPS,
+			(leaf) => new RelationshipsView(leaf, this)
+		);
+
+		// Register people view
+		this.registerView(
+			VIEW_TYPE_PEOPLE,
+			(leaf) => new PeopleView(leaf, this)
+		);
+
+		// Register events view
+		this.registerView(
+			VIEW_TYPE_EVENTS,
+			(leaf) => new EventsView(leaf, this)
+		);
+
+		// Register places view
+		this.registerView(
+			VIEW_TYPE_PLACES,
+			(leaf) => new PlacesView(leaf, this)
+		);
+
+		// Register organizations view
+		this.registerView(
+			VIEW_TYPE_ORGANIZATIONS,
+			(leaf) => new OrganizationsView(leaf, this)
+		);
+
+		// Register sources view
+		this.registerView(
+			VIEW_TYPE_SOURCES,
+			(leaf) => new SourcesView(leaf, this)
+		);
+
+		// Register universes view
+		this.registerView(
+			VIEW_TYPE_UNIVERSES,
+			(leaf) => new UniversesView(leaf, this)
+		);
+
+		// Register collections view
+		this.registerView(
+			VIEW_TYPE_COLLECTIONS,
+			(leaf) => new CollectionsView(leaf, this)
+		);
+
+		// Register data quality view
+		this.registerView(
+			VIEW_TYPE_DATA_QUALITY,
+			(leaf) => new DataQualityView(leaf, this)
+		);
+
 		// Register migration notice view (for upgrade notifications)
 		this.registerView(
 			VIEW_TYPE_MIGRATION_NOTICE,
@@ -438,6 +501,87 @@ export default class CanvasRootsPlugin extends Plugin {
 			name: 'Open statistics dashboard',
 			callback: () => {
 				void this.activateStatisticsView();
+			}
+		});
+
+		// Add command: Open Relationships view
+		this.addCommand({
+			id: 'open-relationships-view',
+			name: 'Open relationships',
+			callback: () => {
+				void this.activateRelationshipsView();
+			}
+		});
+
+		// Add command: Open People view
+		this.addCommand({
+			id: 'open-people-view',
+			name: 'Open people',
+			callback: () => {
+				void this.activatePeopleView();
+			}
+		});
+
+		// Add command: Open Events view
+		this.addCommand({
+			id: 'open-events-view',
+			name: 'Open events',
+			callback: () => {
+				void this.activateEventsView();
+			}
+		});
+
+		// Add command: Open Places view
+		this.addCommand({
+			id: 'open-places-view',
+			name: 'Open places',
+			callback: () => {
+				void this.activatePlacesView();
+			}
+		});
+
+		// Add command: Open Organizations view
+		this.addCommand({
+			id: 'open-organizations-view',
+			name: 'Open organizations',
+			callback: () => {
+				void this.activateOrganizationsView();
+			}
+		});
+
+		// Add command: Open Sources view
+		this.addCommand({
+			id: 'open-sources-view',
+			name: 'Open sources',
+			callback: () => {
+				void this.activateSourcesView();
+			}
+		});
+
+		// Add command: Open Universes view
+		this.addCommand({
+			id: 'open-universes-view',
+			name: 'Open universes',
+			callback: () => {
+				void this.activateUniversesView();
+			}
+		});
+
+		// Add command: Open Collections view
+		this.addCommand({
+			id: 'open-collections-view',
+			name: 'Open collections',
+			callback: () => {
+				void this.activateCollectionsView();
+			}
+		});
+
+		// Add command: Open Data Quality view
+		this.addCommand({
+			id: 'open-data-quality-view',
+			name: 'Open data quality',
+			callback: () => {
+				void this.activateDataQualityView();
 			}
 		});
 
@@ -8540,6 +8684,192 @@ export default class CanvasRootsPlugin extends Plugin {
 			active: true
 		});
 		void workspace.revealLeaf(leaf);
+	}
+
+	/**
+	 * Open or focus the Relationships dockable view in the right sidebar
+	 */
+	async activateRelationshipsView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_RELATIONSHIPS);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_RELATIONSHIPS,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	/**
+	 * Open or focus the People dockable view in the right sidebar
+	 */
+	async activatePeopleView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_PEOPLE);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_PEOPLE,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	/**
+	 * Open or focus the Events dockable view in the right sidebar
+	 */
+	async activateEventsView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_EVENTS);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_EVENTS,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	/**
+	 * Open or focus the Places dockable view in the right sidebar
+	 */
+	async activatePlacesView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_PLACES);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_PLACES,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	/**
+	 * Open or focus the Organizations dockable view in the right sidebar
+	 */
+	async activateOrganizationsView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_ORGANIZATIONS);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_ORGANIZATIONS,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	async activateSourcesView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_SOURCES);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_SOURCES,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	async activateUniversesView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_UNIVERSES);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_UNIVERSES,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	async activateCollectionsView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_COLLECTIONS);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_COLLECTIONS,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
+	}
+
+	async activateDataQualityView(): Promise<void> {
+		const { workspace } = this.app;
+
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_DATA_QUALITY);
+		if (leaves.length > 0) {
+			void workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
+		const leaf = workspace.getRightLeaf(false);
+		if (leaf) {
+			await leaf.setViewState({
+				type: VIEW_TYPE_DATA_QUALITY,
+				active: true
+			});
+			void workspace.revealLeaf(leaf);
+		}
 	}
 
 	/**

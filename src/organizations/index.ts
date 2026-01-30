@@ -45,6 +45,8 @@ export {
 } from './services/membership-service';
 
 // UI Components
-export { renderOrganizationsTab } from './ui/organizations-tab';
+export { renderOrganizationsTab, renderOrganizationsList } from './ui/organizations-tab';
+export type { OrgListFilter, OrgListSort, OrganizationsListOptions } from './ui/organizations-tab';
+export { OrganizationsView, VIEW_TYPE_ORGANIZATIONS } from './ui/organizations-view';
 export { CreateOrganizationModal } from './ui/create-organization-modal';
 export { AddMembershipModal } from './ui/add-membership-modal';

@@ -23,12 +23,28 @@ import { ExtractEventsModal } from '../../events/ui/extract-events-modal';
 /**
  * Filter options for sources list
  */
-type SourceFilter = 'all' | 'has_media' | 'no_media' | 'confidence_high' | 'confidence_medium' | 'confidence_low' | `type_${string}`;
+export type SourceListFilter = 'all' | 'has_media' | 'no_media' | 'confidence_high' | 'confidence_medium' | 'confidence_low' | `type_${string}`;
 
 /**
  * Sort options for sources list
  */
-type SourceSort = 'title_asc' | 'title_desc' | 'date_asc' | 'date_desc' | 'type' | 'confidence';
+export type SourceListSort = 'title_asc' | 'title_desc' | 'date_asc' | 'date_desc' | 'type' | 'confidence';
+
+/**
+ * Options for the standalone sources list renderer (dockable view)
+ */
+export interface SourcesListOptions {
+	container: HTMLElement;
+	plugin: CanvasRootsPlugin;
+	initialFilter?: SourceListFilter;
+	initialSort?: SourceListSort;
+	initialSearch?: string;
+	onStateChange?: (filter: SourceListFilter, sort: SourceListSort, search: string) => void;
+}
+
+// Internal aliases used by the modal renderer
+type SourceFilter = SourceListFilter;
+type SourceSort = SourceListSort;
 
 /**
  * Render the Sources tab content
@@ -160,6 +176,7 @@ function renderSourcesListCard(
 		title: 'Sources',
 		icon: 'file-text'
 	});
+	addSourcesDockButton(card, plugin);
 	const content = card.querySelector('.crc-card__content') as HTMLElement;
 
 	// Create source button
@@ -234,7 +251,6 @@ function renderSourcesListCard(
 
 		// Filter dropdown
 		const filterContainer = controls.createDiv({ cls: 'crc-filter-container' });
-		filterContainer.createEl('label', { text: 'Filter: ', cls: 'crc-text-small crc-text-muted' });
 		const filterSelect = filterContainer.createEl('select', { cls: 'dropdown crc-filter-select' });
 
 		// Build filter options
@@ -265,7 +281,6 @@ function renderSourcesListCard(
 
 		// Sort dropdown
 		const sortContainer = controls.createDiv({ cls: 'crc-filter-container' });
-		sortContainer.createEl('label', { text: 'Sort: ', cls: 'crc-text-small crc-text-muted' });
 		const sortSelect = sortContainer.createEl('select', { cls: 'dropdown crc-filter-select' });
 		sortSelect.createEl('option', { value: 'title_asc', text: 'Title A-Z' });
 		sortSelect.createEl('option', { value: 'title_desc', text: 'Title Z-A' });
@@ -575,5 +590,362 @@ function getContrastColor(hexColor: string): string {
 	const b = parseInt(hex.substring(4, 6), 16);
 	const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 	return luminance > 0.5 ? '#000000' : '#ffffff';
+}
+
+function addSourcesDockButton(card: HTMLElement, plugin: CanvasRootsPlugin): void {
+	const header = card.querySelector('.crc-card__header');
+	if (!header) return;
+
+	const dockBtn = document.createElement('button');
+	dockBtn.className = 'crc-card__dock-btn clickable-icon';
+	dockBtn.setAttribute('aria-label', 'Open in sidebar');
+	setIcon(dockBtn, 'panel-right');
+	dockBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		void plugin.activateSourcesView();
+	});
+	header.appendChild(dockBtn);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Dockable Sources List — standalone renderer for the sidebar ItemView
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Render a browsable sources list for the dockable sidebar view.
+ *
+ * Standalone function with closure-scoped state, independent of the modal's
+ * `renderSourcesListCard()`. Provides type/confidence/media filters, sort,
+ * search, pagination, and a simplified table without row-click-to-edit or
+ * extract events actions.
+ */
+export function renderSourcesList(options: SourcesListOptions): void {
+	const { container, plugin, onStateChange } = options;
+
+	const sourceService = new SourceService(plugin);
+
+	// Loading indicator
+	container.empty();
+	container.createEl('p', { text: 'Loading sources...', cls: 'crc-text--muted' });
+
+	// Load data
+	const allSources = sourceService.getAllSources();
+
+	container.empty();
+
+	if (allSources.length === 0) {
+		const emptyState = container.createDiv({ cls: 'crc-empty-state' });
+		setIcon(emptyState.createSpan({ cls: 'crc-empty-icon' }), 'archive');
+		emptyState.createEl('p', { text: 'No sources found.' });
+		emptyState.createEl('p', {
+			cls: 'crc-text-muted',
+			text: 'Create source notes with cr_type: source in frontmatter.'
+		});
+		return;
+	}
+
+	// Closure-scoped state
+	let currentFilter: SourceListFilter = options.initialFilter ?? 'all';
+	let currentSort: SourceListSort = options.initialSort ?? 'title_asc';
+	let currentSearch = options.initialSearch ?? '';
+	let displayLimit = 25;
+
+	// Controls row
+	const controls = container.createDiv({ cls: 'crc-source-controls' });
+
+	// Filter dropdown
+	const filterContainer = controls.createDiv({ cls: 'crc-filter-container' });
+	const filterSelect = filterContainer.createEl('select', { cls: 'dropdown crc-filter-select' });
+
+	filterSelect.createEl('option', { value: 'all', text: 'All sources' });
+
+	const sourceTypes = getAllSourceTypes(
+		plugin.settings.customSourceTypes,
+		plugin.settings.showBuiltInSourceTypes
+	);
+	if (sourceTypes.length > 0) {
+		const typeGroup = filterSelect.createEl('optgroup', { attr: { label: 'By type' } });
+		for (const st of sourceTypes) {
+			typeGroup.createEl('option', { value: `type_${st.id}`, text: st.name });
+		}
+	}
+
+	const confGroup = filterSelect.createEl('optgroup', { attr: { label: 'By confidence' } });
+	confGroup.createEl('option', { value: 'confidence_high', text: 'High confidence' });
+	confGroup.createEl('option', { value: 'confidence_medium', text: 'Medium confidence' });
+	confGroup.createEl('option', { value: 'confidence_low', text: 'Low confidence' });
+
+	const mediaGroup = filterSelect.createEl('optgroup', { attr: { label: 'By media' } });
+	mediaGroup.createEl('option', { value: 'has_media', text: 'Has media' });
+	mediaGroup.createEl('option', { value: 'no_media', text: 'No media' });
+
+	filterSelect.value = currentFilter;
+
+	// Sort dropdown
+	const sortContainer = controls.createDiv({ cls: 'crc-filter-container' });
+	const sortSelect = sortContainer.createEl('select', { cls: 'dropdown crc-filter-select' });
+	sortSelect.createEl('option', { value: 'title_asc', text: 'Title A-Z' });
+	sortSelect.createEl('option', { value: 'title_desc', text: 'Title Z-A' });
+	sortSelect.createEl('option', { value: 'date_desc', text: 'Date (newest)' });
+	sortSelect.createEl('option', { value: 'date_asc', text: 'Date (oldest)' });
+	sortSelect.createEl('option', { value: 'type', text: 'Type' });
+	sortSelect.createEl('option', { value: 'confidence', text: 'Confidence' });
+	sortSelect.value = currentSort;
+
+	// Search input
+	const searchContainer = controls.createDiv({ cls: 'crc-filter-container' });
+	const searchInput = searchContainer.createEl('input', {
+		type: 'search',
+		placeholder: 'Search sources...',
+		cls: 'crc-filter-search',
+		value: currentSearch
+	});
+
+	// Table container
+	const tableContainer = container.createDiv({ cls: 'crc-source-table-container' });
+
+	// Filter function
+	const filterSources = (sources: SourceNote[]): SourceNote[] => {
+		let filtered = sources;
+
+		// Apply type/confidence/media filter
+		filtered = filtered.filter(source => {
+			switch (currentFilter) {
+				case 'all':
+					return true;
+				case 'has_media':
+					return source.media && source.media.length > 0;
+				case 'no_media':
+					return !source.media || source.media.length === 0;
+				case 'confidence_high':
+					return source.confidence === 'high';
+				case 'confidence_medium':
+					return source.confidence === 'medium';
+				case 'confidence_low':
+					return source.confidence === 'low';
+				default:
+					if (currentFilter.startsWith('type_')) {
+						const typeId = currentFilter.replace('type_', '');
+						return source.sourceType === typeId;
+					}
+					return true;
+			}
+		});
+
+		// Apply search
+		if (currentSearch.trim()) {
+			const q = currentSearch.trim().toLowerCase();
+			filtered = filtered.filter(source =>
+				source.title.toLowerCase().includes(q) ||
+				(source.repository || '').toLowerCase().includes(q) ||
+				(source.sourceType || '').toLowerCase().includes(q) ||
+				(source.date || '').toLowerCase().includes(q)
+			);
+		}
+
+		return filtered;
+	};
+
+	// Sort function
+	const sortSources = (sources: SourceNote[]): SourceNote[] => {
+		return [...sources].sort((a, b) => {
+			switch (currentSort) {
+				case 'title_asc':
+					return a.title.localeCompare(b.title);
+				case 'title_desc':
+					return b.title.localeCompare(a.title);
+				case 'date_asc':
+					return (a.date || '').localeCompare(b.date || '');
+				case 'date_desc':
+					return (b.date || '').localeCompare(a.date || '');
+				case 'type':
+					return (a.sourceType || '').localeCompare(b.sourceType || '');
+				case 'confidence': {
+					const order = { high: 0, medium: 1, low: 2, unknown: 3 };
+					return (order[a.confidence] ?? 3) - (order[b.confidence] ?? 3);
+				}
+				default:
+					return 0;
+			}
+		});
+	};
+
+	// Render table
+	const renderTable = () => {
+		tableContainer.empty();
+
+		const filtered = filterSources(allSources);
+		const sorted = sortSources(filtered);
+		const displayed = sorted.slice(0, displayLimit);
+
+		if (filtered.length === 0) {
+			const noResults = tableContainer.createDiv({ cls: 'crc-empty-state' });
+			noResults.createEl('p', { text: 'No sources match the current filter.' });
+			return;
+		}
+
+		const table = tableContainer.createEl('table', { cls: 'cr-source-table' });
+
+		// Header
+		const thead = table.createEl('thead');
+		const headerRow = thead.createEl('tr');
+		headerRow.createEl('th', { text: 'Title' });
+		headerRow.createEl('th', { text: 'Type' });
+		headerRow.createEl('th', { text: 'Date' });
+		headerRow.createEl('th', { text: 'Repository' });
+		headerRow.createEl('th', { text: 'Confidence' });
+		headerRow.createEl('th', { text: '', cls: 'cr-source-th-actions' });
+
+		// Body
+		const tbody = table.createEl('tbody');
+		for (const source of displayed) {
+			renderBrowseSourceRow(tbody, source, plugin);
+		}
+
+		// Pagination
+		if (filtered.length > displayLimit) {
+			const loadMoreContainer = tableContainer.createDiv({ cls: 'crc-load-more-container' });
+			loadMoreContainer.createSpan({
+				text: `Showing ${displayed.length} of ${filtered.length} sources`,
+				cls: 'crc-text-muted'
+			});
+			const loadMoreBtn = loadMoreContainer.createEl('button', { cls: 'mod-cta' });
+			loadMoreBtn.textContent = 'Load more';
+			loadMoreBtn.addEventListener('click', () => {
+				displayLimit += 25;
+				renderTable();
+			});
+		} else if (filtered.length > 0) {
+			const countInfo = tableContainer.createDiv({ cls: 'crc-count-info' });
+			countInfo.createSpan({
+				text: `Showing all ${filtered.length} source${filtered.length !== 1 ? 's' : ''}`,
+				cls: 'crc-text-muted'
+			});
+		}
+	};
+
+	// Event listeners
+	filterSelect.addEventListener('change', () => {
+		currentFilter = filterSelect.value as SourceListFilter;
+		displayLimit = 25;
+		renderTable();
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+	});
+
+	sortSelect.addEventListener('change', () => {
+		currentSort = sortSelect.value as SourceListSort;
+		renderTable();
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+	});
+
+	searchInput.addEventListener('input', () => {
+		currentSearch = searchInput.value;
+		displayLimit = 25;
+		renderTable();
+		onStateChange?.(currentFilter, currentSort, currentSearch);
+	});
+
+	// Initial render
+	renderTable();
+}
+
+/**
+ * Render a simplified source row for the dockable browse view.
+ * No row-click-to-edit, no extract events in context menu.
+ */
+function renderBrowseSourceRow(
+	tbody: HTMLTableSectionElement,
+	source: SourceNote,
+	plugin: CanvasRootsPlugin
+): void {
+	const typeDef = getSourceType(
+		source.sourceType,
+		plugin.settings.customSourceTypes,
+		plugin.settings.showBuiltInSourceTypes
+	);
+
+	const row = tbody.createEl('tr', { cls: 'cr-source-row cr-source-row--browse' });
+
+	// Context menu — open only
+	row.addEventListener('contextmenu', (e) => {
+		e.preventDefault();
+		const menu = new Menu();
+
+		menu.addItem((item) => {
+			item
+				.setTitle('Open note')
+				.setIcon('file')
+				.onClick(async () => {
+					const file = plugin.app.vault.getAbstractFileByPath(source.filePath);
+					if (file instanceof TFile) {
+						await plugin.trackRecentFile(file, 'source');
+						void plugin.app.workspace.getLeaf(false).openFile(file);
+					}
+				});
+		});
+
+		menu.addItem((item) => {
+			item
+				.setTitle('Open in new tab')
+				.setIcon('file-plus')
+				.onClick(async () => {
+					const file = plugin.app.vault.getAbstractFileByPath(source.filePath);
+					if (file instanceof TFile) {
+						await plugin.trackRecentFile(file, 'source');
+						void plugin.app.workspace.getLeaf('tab').openFile(file);
+					}
+				});
+		});
+
+		menu.showAtMouseEvent(e);
+	});
+
+	// Title cell
+	const titleCell = row.createEl('td', { cls: 'cr-source-cell-title' });
+	titleCell.createSpan({ text: source.title });
+
+	// Type cell with badge
+	const typeCell = row.createEl('td', { cls: 'cr-source-cell-type' });
+	if (typeDef) {
+		const typeBadge = typeCell.createSpan({ cls: 'cr-source-type-badge' });
+		typeBadge.style.setProperty('background-color', typeDef.color);
+		typeBadge.style.setProperty('color', getContrastColor(typeDef.color));
+		typeBadge.textContent = typeDef.name;
+	} else {
+		typeCell.textContent = source.sourceType;
+	}
+
+	// Date cell
+	const dateCell = row.createEl('td', { cls: 'cr-source-cell-date' });
+	dateCell.textContent = source.date || '—';
+
+	// Repository cell
+	const repoCell = row.createEl('td', { cls: 'cr-source-cell-repository' });
+	repoCell.textContent = source.repository || '—';
+
+	// Confidence cell with colored indicator
+	const confCell = row.createEl('td', { cls: 'cr-source-cell-confidence' });
+	const confBadge = confCell.createSpan({ cls: `cr-confidence-badge cr-confidence-${source.confidence}` });
+	confBadge.textContent = source.confidence;
+
+	// Actions cell — open note button only (no extract events)
+	const actionsCell = row.createEl('td', { cls: 'cr-source-cell-actions' });
+	const openBtn = actionsCell.createEl('button', {
+		cls: 'crc-btn crc-btn--small crc-btn--ghost',
+		attr: { title: 'Open source note' }
+	});
+	const fileIcon = createLucideIcon('file-text', 14);
+	openBtn.appendChild(fileIcon);
+
+	openBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		const file = plugin.app.vault.getAbstractFileByPath(source.filePath);
+		if (file instanceof TFile) {
+			void (async () => {
+				await plugin.trackRecentFile(file, 'source');
+				void plugin.app.workspace.getLeaf(false).openFile(file);
+			})();
+		}
+	});
 }
 

@@ -31,7 +31,7 @@ To avoid confusion, Charted Roots uses distinct terms:
 
 | Term | Description |
 |------|-------------|
-| **Family links** | Standard genealogical connections (father, mother, spouse, children) shown in the Status tab |
+| **Family links** | Standard genealogical connections (father, mother, spouse, children) shown in the People tab |
 | **Custom relationships** | Extended relationship types managed in the Relationships tab |
 
 ---

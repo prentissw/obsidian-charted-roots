@@ -1,0 +1,40 @@
+/**
+ * Collections Styles
+ * Collections UI in Control Center and dockable view
+ */
+
+/* ==========================================================================
+   Collections Dockable View
+   ========================================================================== */
+
+.cr-collections-view {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.cr-cv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-cv-title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.cr-cv-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.cr-cv-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.cr-collection-row--browse {
+  cursor: default;
+}

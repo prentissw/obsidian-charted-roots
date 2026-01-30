@@ -243,7 +243,9 @@ Users with Style Settings installed can customize these values in Settings → S
 | `family-wizard.css` | Family creation wizard | 15 KB |
 | `canvas-navigation.css` | Canvas navigation and split wizard | 15 KB |
 | `family-chart-export.css` | Family chart export wizard | 15 KB |
+| `map-wizard.css` | Map creation wizard modal | 13 KB |
 | `universe-wizard.css` | Universe setup wizard | 11 KB |
+| `staging-manager.css` | Staging management modal | 11 KB |
 | `entity-create-modals.css` | Person picker, create forms, relationships | 11 KB |
 | `timeline-callouts.css` | Timeline callout styles for markdown export | 11 KB |
 | `dynamic-content.css` | Dynamic content blocks | 11 KB |
@@ -261,6 +263,9 @@ Users with Style Settings installed can customize these values in Settings → S
 | `folder-scan.css` | Folder scan modal | 3 KB |
 | `find-on-canvas.css` | Find on canvas modal | 2 KB |
 | `validation.css` | Validation results modal | 2 KB |
+| `universes.css` | Universes tab and dockable view | 1 KB |
+| `collections.css` | Collections tab and dockable view | 1 KB |
+| `data-quality-view.css` | Data quality dockable view | 1 KB |
 | `layout.css` | Layout utilities | 1 KB |
 | `responsive.css` | Responsive breakpoints | <1 KB |
 

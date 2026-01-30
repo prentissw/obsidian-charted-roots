@@ -137,7 +137,7 @@ canvas-roots/
 │       ├── tree-preview.ts       # Interactive SVG preview
 │       ├── settings-tab.ts       # Plugin settings tab
 │       └── ...
-├── styles/                    # CSS source files (30 components)
+├── styles/                    # CSS source files (44 components)
 │   ├── variables.css          # CSS custom properties
 │   ├── modals.css             # Modal styling
 │   ├── control-center.css     # Control Center component styles
@@ -394,7 +394,7 @@ canvas-roots/
 
 | Component | Status | Purpose |
 |-----------|--------|---------|
-| `control-center.ts` | ✅ Complete | Main Control Center modal with 17 tabs for all plugin functionality |
+| `control-center.ts` | ✅ Complete | Main Control Center modal with 14 tabs for all plugin functionality |
 | `dashboard-tab.ts` | ✅ Complete | Dashboard tab with quick-action tiles, vault health, and recent files |
 | `settings-tab.ts` | ✅ Complete | Plugin settings tab in Obsidian settings |
 | `canvas-style-modal.ts` | ✅ Complete | Modal for canvas styling options |
@@ -502,20 +502,33 @@ canvas-roots/
 
 | Tab | Status | Purpose |
 |-----|--------|---------|
-| Dashboard | ✅ Complete | Quick-action tiles (9), vault health section, recent files with context menu |
-| Guide | ✅ Complete | In-app documentation and getting started guide |
-| Import/Export | ✅ Complete | Import/export GEDCOM, GEDCOM X, Gramps XML, CSV with pre-import quality preview |
+| Dashboard | ✅ Complete | Quick-action tiles, vault health section, recent files with context menu |
 | People | ✅ Complete | Person notes table, parent claim conflicts, batch operations, data entry |
 | Events | ✅ Complete | Event notes table, timeline export (markdown/canvas), event type management |
 | Places | ✅ Complete | Place notes table, place hierarchy, geocoding, place type management |
-| Maps | ✅ Complete | Leaflet map view with markers, custom image maps, bulk geocoding |
 | Sources | ✅ Complete | Source notes, media gallery, citation generator, proof summaries |
-| Schemas | ✅ Complete | Validation schemas for note type consistency |
-| Relationships | ✅ Complete | Custom relationship type definitions and management |
 | Organizations | ✅ Complete | Organization notes, membership tracking, organization types |
 | Universes | ✅ Complete | Manage fictional universes and worlds |
 | Collections | ✅ Complete | Family components and user collections with cross-collection detection |
 | Data Quality | ✅ Complete | Comprehensive data quality analysis: orphan refs, duplicates, date issues, bidirectional sync |
-| Statistics | ✅ Complete | Vault statistics, data completeness, quality metrics, drill-down lists |
-| Tree Output | ✅ Complete | Tree generation with layout options, color schemes, interactive preview, export to Canvas/Excalidraw/PNG/SVG |
-| Preferences | ✅ Complete | Property aliases, folder locations, canvas styling, logging settings |
+| Schemas | ✅ Complete | Validation schemas for note type consistency |
+| Relationships | ✅ Complete | Custom relationship type definitions and management |
+| Visual Trees | ✅ Complete | Tree generation with layout options, color schemes, interactive preview, export to Canvas/Excalidraw/PNG/SVG |
+| Maps | ✅ Complete | Leaflet map view with markers, custom image maps, bulk geocoding |
+| Preferences | 🟡 Deprecated | Settings consolidated into Plugin Settings; retained for canvas layout/styling cards used by Visual Trees |
+
+### Dockable Sidebar Views
+
+9 entity tabs support dockable ItemViews that open as persistent sidebar panels:
+
+| View | View Type | Content |
+|------|-----------|---------|
+| PeopleView | `canvas-roots-people` | Filter/sort/search table with expandable details |
+| PlacesView | `canvas-roots-places` | Filter/sort/search table with category badges |
+| EventsView | `canvas-roots-events` | Type/person/search filters, sortable table |
+| SourcesView | `canvas-roots-sources` | Filter/sort table with type/confidence badges |
+| OrganizationsView | `canvas-roots-organizations` | Filter/sort table with type badges, member counts |
+| RelationshipsView | `canvas-roots-relationships` | Table with type badges, filter/sort |
+| UniversesView | `canvas-roots-universes` | Filter/sort/search table with status badges |
+| CollectionsView | `canvas-roots-collections` | Mode switcher + corresponding list |
+| DataQualityView | `canvas-roots-data-quality` | Read-only dashboard with quality score and issues |

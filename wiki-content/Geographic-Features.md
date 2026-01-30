@@ -641,7 +641,7 @@ Beyond the built-in types (city, state, country, etc.), you can use custom types
 Charted Roots and Obsidian Maps work well together. Your place notes already include `coordinates` properties that Obsidian Maps can use:
 
 1. **Install Obsidian Maps** from Community Plugins (requires Obsidian 1.10+)
-2. **Create a Places Base** using the Charted Roots template (Guide tab → Base templates → Places)
+2. **Create a Places Base** using the Charted Roots template (Data Quality tab → Data tools → Places, or command palette)
 3. **Add a Map view** to your Base:
    - In the Base, click the view dropdown → Map
    - Set "Marker coordinates" to `coordinates`

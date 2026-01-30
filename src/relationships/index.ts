@@ -43,5 +43,6 @@ export {
 export { RelationshipService } from './services/relationship-service';
 
 // UI Components
-export { renderRelationshipsTab } from './ui/relationships-tab';
+export { renderRelationshipsTab, renderRelationshipsList } from './ui/relationships-tab';
 export { RelationshipTypeEditorModal } from './ui/relationship-type-editor-modal';
+export { RelationshipsView, VIEW_TYPE_RELATIONSHIPS } from './ui/relationships-view';

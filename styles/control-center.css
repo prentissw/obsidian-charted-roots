@@ -5670,3 +5670,77 @@
 .cr-modal-resume-banner__btn--restore:hover {
   background: var(--interactive-accent-hover);
 }
+
+/* ==========================================================================
+   People Dockable View
+   ========================================================================== */
+
+.cr-people-view {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.cr-pv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-pv-title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.cr-pv-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.cr-pv-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Browse-only rows have default cursor (no row-click-to-edit) */
+.crc-person-table__row--browse {
+  cursor: default;
+}
+
+/* ==========================================================================
+   Places Dockable View
+   ========================================================================== */
+
+.cr-places-view {
+  padding: var(--size-4-4);
+  overflow-y: auto;
+}
+
+.cr-plv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--size-4-4);
+}
+
+.cr-plv-title {
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  margin: 0;
+}
+
+.cr-plv-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.cr-plv-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Browse-only place rows have default cursor (no row-click-to-edit) */
+.crc-place-row--browse {
+  cursor: default;
+}

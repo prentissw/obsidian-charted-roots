@@ -29,7 +29,7 @@ The Statistics & Reports system provides:
 
 - **Statistics Dashboard**: A dedicated workspace view with metrics, drill-down lists, and demographic analysis
 - **Reports Generator**: Create formatted genealogical reports (Family Group Sheets, Pedigree Charts, etc.)
-- **Control Center Summary**: Quick-glance metrics in the Statistics tab
+- **Control Center Summary**: Quick-glance metrics in the Dashboard tab
 
 The system uses a shared data layer ensuring consistency between dashboard metrics and generated reports.
 
@@ -43,7 +43,7 @@ The Statistics Dashboard is a full-featured workspace view that provides detaile
 
 There are several ways to open the Statistics Dashboard:
 
-1. **From Control Center**: Statistics tab → "Open Statistics Dashboard" button
+1. **From Control Center**: Dashboard tab → "Statistics" tile
 2. **Command Palette**: "Charted Roots: Open Statistics Dashboard"
 3. **Ribbon icon**: Click the statistics icon in the left ribbon (if enabled)
 
@@ -338,12 +338,12 @@ This ensures your family data never leaves your computer during report generatio
 
 ## Control Center Summary
 
-The Statistics tab in Control Center provides a quick overview:
+The Dashboard tab in Control Center provides a quick overview via the **Vault health** section:
 
 - Entity counts at a glance
 - Research completeness percentage
 - Data quality warning indicators
-- "Open Statistics Dashboard" button for full details
+- "Statistics" tile to open the full Statistics Dashboard
 
 This summary is useful for quick health checks without opening the full dashboard.
 

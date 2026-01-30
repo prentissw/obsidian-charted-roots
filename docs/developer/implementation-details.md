@@ -26,7 +26,7 @@ The implementation details have been organized into focused sub-documents for ea
 
 | Document | Description |
 |----------|-------------|
-| [UI Architecture](implementation/ui-architecture.md) | Context menus, Control Center (17 tabs), settings, mobile adaptations |
+| [UI Architecture](implementation/ui-architecture.md) | Context menus, Control Center (14 tabs), dockable views, settings, mobile adaptations |
 
 ### Specialized Features
 
@@ -51,7 +51,9 @@ See [Canvas and Charts](implementation/canvas-and-charts.md) for full details.
 
 ### Control Center Tabs
 
-17 tabs: Status, Guide, Import/Export, People, Events, Places, Maps, Sources, Schemas, Relationships, Organizations, Universes, Collections, Data Quality, Statistics, Tree Output, Preferences
+14 tabs: Dashboard, People, Events, Places, Sources, Organizations, Universes, Collections, Data Quality, Schemas, Relationships, Maps, Visual Trees, Preferences
+
+9 dockable sidebar views: People, Places, Events, Sources, Organizations, Relationships, Universes, Collections, Data Quality
 
 See [UI Architecture](implementation/ui-architecture.md) for full details.
 
