@@ -502,6 +502,25 @@ export function renderPeopleList(options: PeopleListOptions): void {
 	applyFiltersAndRender();
 }
 
+/**
+ * Add a dock button to a card header that opens the people view
+ * in the right sidebar.
+ */
+function addPeopleDockButton(card: HTMLElement, plugin: CanvasRootsPlugin): void {
+	const header = card.querySelector('.crc-card__header');
+	if (!header) return;
+
+	const dockBtn = document.createElement('button');
+	dockBtn.className = 'crc-card__dock-btn clickable-icon';
+	dockBtn.setAttribute('aria-label', 'Open in sidebar');
+	setIcon(dockBtn, 'panel-right');
+	dockBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		void plugin.activatePeopleView();
+	});
+	header.appendChild(dockBtn);
+}
+
 // ---------------------------------------------------------------------------
 // Main entry point
 // ---------------------------------------------------------------------------
@@ -752,6 +771,8 @@ export function renderPeopleTab(options: PeopleTabOptions): void {
 		icon: 'user',
 		subtitle: 'All person notes in your vault'
 	});
+
+	addPeopleDockButton(listCard, plugin);
 
 	const listContent = listCard.querySelector('.crc-card__content') as HTMLElement;
 	listContent.createEl('p', {
