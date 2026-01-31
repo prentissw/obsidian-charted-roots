@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Sources dockable view stuck on "Loading sources..."** ([#241](https://github.com/banisterious/obsidian-charted-roots/pull/241), thanks @prentissw): The `renderSourcesList` function was passing the wrong arguments to the `SourceService` constructor, preventing the Sources view from loading.
+
 ---
 
 ## [0.20.0] - 2026-01-30
